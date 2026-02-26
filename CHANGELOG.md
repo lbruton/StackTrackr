@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.32.45] - 2026-02-26
+
+### Added — Filter Anomalous Vendor Price Spikes from 24h Retail Chart
+
+- **Added**: Two-pass anomaly detection in 24h retail chart — temporal spike detection (before/after ±5% neighbor consensus) nulls single-window spikes, cross-vendor median (>40%) as safety net (STAK-325)
+- **Added**: Anomalous table cells shown with line-through styling for visual distinction
+- **Added**: `RETAIL_SPIKE_NEIGHBOR_TOLERANCE` (0.05) and `RETAIL_ANOMALY_THRESHOLD` (0.40) constants for configurable sensitivity
+
+---
+
 ## [3.32.44] - 2026-02-25
 
 ### Added — Kilo and Pound Weight Units

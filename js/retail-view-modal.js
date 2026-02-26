@@ -201,6 +201,107 @@ const _forwardFillVendors = (bucketed) => {
 };
 
 /**
+ * Flags anomalous vendor prices using two passes:
+ *
+ * Pass 1 — Temporal spike detection (primary):
+ *   For each vendor at window[t], compare price[t-1] and price[t+1].
+ *   If the neighbors are within ±RETAIL_SPIKE_NEIGHBOR_TOLERANCE of each other
+ *   (stable neighborhood) but price[t] deviates significantly from their average,
+ *   replace price[t] with the neighbor average. This catches single-window scrape spikes.
+ *
+ * Pass 2 — Cross-vendor median consensus (safety net):
+ *   For each window with 3+ vendors, any vendor deviating >RETAIL_ANOMALY_THRESHOLD
+ *   from the median is nulled. Catches multi-window vendor drift.
+ *
+ * Flagged chart prices are nulled so Chart.js gaps over them via spanGaps.
+ * Original prices preserved in _anomalyOriginals for table display.
+ * Pure function — input array is not mutated.
+ *
+ * @param {Array} bucketed - Chronologically sorted windows from _forwardFillVendors
+ * @returns {Array} New array with _anomalousVendors: Set on each window
+ */
+const _flagAnomalies = (bucketed) => {
+  if (!bucketed || bucketed.length === 0) return [];
+  const neighborTol = typeof RETAIL_SPIKE_NEIGHBOR_TOLERANCE !== 'undefined' ? RETAIL_SPIKE_NEIGHBOR_TOLERANCE : 0.05;
+  const medianThreshold = typeof RETAIL_ANOMALY_THRESHOLD !== 'undefined' ? RETAIL_ANOMALY_THRESHOLD : 0.40;
+  const knownSet = typeof RETAIL_VENDOR_NAMES !== 'undefined' ? Object.keys(RETAIL_VENDOR_NAMES) : null;
+
+  // Deep-copy vendors so we don't mutate input
+  const result = bucketed.map((w) => ({
+    ...w,
+    vendors: w.vendors ? { ...w.vendors } : {},
+    _anomalousVendors: new Set(),
+    _anomalyOriginals: {}
+  }));
+
+  // --- Pass 1: Temporal spike detection (per-vendor, per-window) ---
+  // Collect all vendor IDs across all windows
+  const allVendors = new Set();
+  for (const w of result) {
+    for (const k of Object.keys(w.vendors)) {
+      if (!knownSet || knownSet.includes(k)) allVendors.add(k);
+    }
+  }
+
+  for (const vendorId of allVendors) {
+    // Skip t=0 and t=last: no neighbor pair available at boundaries.
+    // Pass 2 (cross-vendor median) provides a safety net for boundary windows.
+    for (let t = 1; t < result.length - 1; t++) {
+      const curr = result[t].vendors[vendorId];
+      const prev = result[t - 1].vendors[vendorId];
+      const next = result[t + 1].vendors[vendorId];
+      // Need numeric values for all three windows
+      if (typeof curr !== 'number' || isNaN(curr)) continue;
+      if (typeof prev !== 'number' || isNaN(prev)) continue;
+      if (typeof next !== 'number' || isNaN(next)) continue;
+      if (prev === 0 && next === 0) continue;
+      // Check if before/after form a stable neighborhood (within ±tolerance of each other)
+      const neighborAvg = (prev + next) / 2;
+      if (neighborAvg === 0) continue;
+      const neighborDrift = Math.abs(prev - next) / neighborAvg;
+      if (neighborDrift > neighborTol) continue; // neighbors disagree — not a spike
+      // Check if current price deviates from the neighbor average
+      const deviation = Math.abs(curr - neighborAvg) / neighborAvg;
+      if (deviation > neighborTol) {
+        // Spike detected — replace with neighbor average for chart, preserve original for table
+        result[t]._anomalyOriginals[vendorId] = curr;
+        result[t].vendors[vendorId] = null;
+        result[t]._anomalousVendors.add(vendorId);
+      }
+    }
+  }
+
+  // --- Pass 2: Cross-vendor median consensus (safety net for extreme outliers) ---
+  for (const w of result) {
+    const entries = Object.entries(w.vendors).filter(([k, p]) => typeof p === 'number' && !isNaN(p) && (!knownSet || knownSet.includes(k)));
+    if (entries.length < 3) continue;
+    const prices = entries.map(([, p]) => p).sort((a, b) => a - b);
+    const mid = Math.floor(prices.length / 2);
+    const median = prices.length % 2 === 0 ? (prices[mid - 1] + prices[mid]) / 2 : prices[mid];
+    if (median === 0) continue;
+    let flagged = 0;
+    const candidates = [];
+    for (const [vendorId, price] of entries) {
+      if (Math.abs(price - median) / median > medianThreshold) {
+        candidates.push(vendorId);
+        flagged++;
+      }
+    }
+    // Guard: don't flag all vendors
+    if (flagged >= entries.length) continue;
+    for (const vendorId of candidates) {
+      if (!w._anomalousVendors.has(vendorId)) {
+        w._anomalyOriginals[vendorId] = w.vendors[vendorId];
+        w.vendors[vendorId] = null;
+        w._anomalousVendors.add(vendorId);
+      }
+    }
+  }
+
+  return result;
+};
+
+/**
  * Renders the intraday data table for a given slug.
  * Accepts an optional pre-bucketed array; if omitted, re-buckets from retailIntradayData.
  * Slices to the _intradayRowCount most recent rows.
@@ -215,12 +316,18 @@ const _buildIntradayTable = (slug, bucketed) => {
   if (!bucketed) {
     const intraday = typeof retailIntradayData !== "undefined" ? retailIntradayData[slug] : null;
     const windows = intraday && Array.isArray(intraday.windows_24h) ? intraday.windows_24h : [];
-    bucketed = _forwardFillVendors(_bucketWindows(windows));
+    const filled = _forwardFillVendors(_bucketWindows(windows));
+    try {
+      bucketed = _flagAnomalies(filled);
+    } catch (e) {
+      console.error('[retail] _flagAnomalies threw unexpectedly — anomaly detection skipped', e);
+      bucketed = filled;
+    }
   }
 
   // Collect the vendor set across all bucketed entries
   const knownVendors = typeof RETAIL_VENDOR_NAMES !== "undefined" ? Object.keys(RETAIL_VENDOR_NAMES) : [];
-  const activeVendors = knownVendors.filter((v) => bucketed.some((w) => w.vendors && w.vendors[v] != null));
+  const activeVendors = knownVendors.filter((v) => bucketed.some((w) => (w.vendors && w.vendors[v] != null) || (w._anomalyOriginals && w._anomalyOriginals[v] != null)));
   const useVendorLines = activeVendors.length > 0;
 
   // Update table header — per-vendor when data available, median+low fallback otherwise
@@ -258,10 +365,20 @@ const _buildIntradayTable = (slug, bucketed) => {
       // Per-vendor (or median/low) cells — each gets its own trend glyph + color
       if (useVendorLines) {
         activeVendors.forEach((v) => {
+          const isAnomalous = w._anomalousVendors && w._anomalousVendors.has(v);
+          const anomalyVal = isAnomalous && w._anomalyOriginals ? w._anomalyOriginals[v] : null;
           const isCarried = w._carriedVendors && w._carriedVendors.has(v);
           const currVal = w.vendors && w.vendors[v] != null ? w.vendors[v] : null;
           const td = document.createElement("td");
-          if (currVal == null) {
+          if (isAnomalous && anomalyVal != null) {
+            const prevAnom = idx + 1 < recent.length && recent[idx + 1]._anomalyOriginals
+              ? recent[idx + 1]._anomalyOriginals[v] : null;
+            const cls = _trendClass(anomalyVal, prevAnom);
+            td.className = cls || '';
+            td.style.textDecoration = 'line-through';
+            td.style.opacity = '0.45';
+            td.textContent = fmt(anomalyVal);
+          } else if (currVal == null) {
             td.textContent = '\u2014';
           } else if (isCarried) {
             td.className = 'text-muted fst-italic';
@@ -319,7 +436,14 @@ const _buildIntradayChart = (slug) => {
 
   const intraday = typeof retailIntradayData !== "undefined" ? retailIntradayData[slug] : null;
   const windows = intraday && Array.isArray(intraday.windows_24h) ? intraday.windows_24h : [];
-  const bucketed = _forwardFillVendors(_bucketWindows(windows));
+  const filled = _forwardFillVendors(_bucketWindows(windows));
+  let bucketed;
+  try {
+    bucketed = _flagAnomalies(filled);
+  } catch (e) {
+    console.error('[retail] _flagAnomalies threw unexpectedly — anomaly detection skipped', e);
+    bucketed = filled;
+  }
 
   if (noDataEl) noDataEl.style.display = bucketed.length < 2 ? "" : "none";
   if (canvas) canvas.style.display = bucketed.length >= 2 ? "" : "none";
@@ -331,7 +455,7 @@ const _buildIntradayChart = (slug) => {
 
   // Collect the vendor set across all bucketed entries (preserves display order from RETAIL_VENDOR_NAMES)
   const knownVendors = typeof RETAIL_VENDOR_NAMES !== "undefined" ? Object.keys(RETAIL_VENDOR_NAMES) : [];
-  const activeVendors = knownVendors.filter((v) => bucketed.some((w) => w.vendors && w.vendors[v] != null));
+  const activeVendors = knownVendors.filter((v) => bucketed.some((w) => (w.vendors && w.vendors[v] != null) || (w._anomalyOriginals && w._anomalyOriginals[v] != null)));
   // Fall back to median+low when windows predate the per-vendor format
   const useVendorLines = activeVendors.length > 0;
 
@@ -646,6 +770,7 @@ if (typeof window !== "undefined") {
   window._switchRetailViewTab = _switchRetailViewTab;
   window._bucketWindows = _bucketWindows;
   window._forwardFillVendors = _forwardFillVendors;
+  window._flagAnomalies = _flagAnomalies;
   window._buildIntradayTable = _buildIntradayTable;
 }
 
