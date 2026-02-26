@@ -1212,7 +1212,7 @@ const renderCatalogIdAction = (catalogId) => {
   const numistaUrl = buildNumistaCatalogUrl(catalogId);
   const catalogIdLabel = `N#${escapeHtmlCatalog(catalogId)}`;
   return numistaUrl
-    ? `<a class="numista-result-id numista-result-id-link" href="${escapeHtmlCatalog(numistaUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Open ${catalogIdLabel} on Numista">${catalogIdLabel}</a>`
+    ? `<button type="button" class="numista-result-id numista-result-id-link" onclick="openNumistaModal('${escapeHtmlCatalog(catalogId)}','')" aria-label="Open ${catalogIdLabel} on Numista">${catalogIdLabel}</button>`
     : `<span class="numista-result-id">${catalogIdLabel}</span>`;
 };
 
@@ -2080,7 +2080,7 @@ document.addEventListener('DOMContentLoaded', function() {
   if (numistaResultsList) {
     numistaResultsList.addEventListener('click', function(e) {
       // Let N# links open Numista without also selecting the row.
-      const catalogLink = e.target.closest('a.numista-result-id-link');
+      const catalogLink = e.target.closest('.numista-result-id-link');
       if (catalogLink) {
         e.stopPropagation();
         return;
