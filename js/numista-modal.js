@@ -41,6 +41,7 @@ function openNumistaModal(numistaId, coinName) {
   if (!popup) {
     appAlert(`Popup blocked! Please allow popups or manually visit:\n${url}`);
   } else {
+    popup.opener = null; // Security: prevent reverse tabnabbing
     popup.focus();
   }
 }
