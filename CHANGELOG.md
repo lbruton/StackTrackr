@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.32.47] - 2026-02-26
+
+### Changed — Clean Release ZIP
+
+- **Changed**: Overhauled `.gitattributes` export-ignore rules — release ZIP now contains only runtime files (81 files, ~4MB). Removed dev tooling, tests, AI config, screenshots, and raw data from downloads
+- **Added**: Release ZIP audit step in release skill to verify clean archives every release
+
+---
+
 ## [3.32.45] - 2026-02-26
 
 ### Added — Filter Anomalous Vendor Price Spikes from 24h Retail Chart

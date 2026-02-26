@@ -1,35 +1,57 @@
-# Exclude developer tooling from GitHub Release zip/tar.gz downloads.
-# These files are useful in the repo but not needed by end users
-# who just want to run StakTrakr.
+# ── .gitattributes ─────────────────────────────────────────────
+# Exclude everything except the runtime app from GitHub Release
+# zip/tar.gz downloads.  Only HTML, JS, CSS, vendor libs,
+# images, manifest, and README ship to end users.
+# ───────────────────────────────────────────────────────────────
 
-# Claude Code configuration
+# AI / agent configuration
+.agents/              export-ignore
 .claude/              export-ignore
 CLAUDE.md             export-ignore
 AGENTS.md             export-ignore
 GEMINI.md             export-ignore
 
-# Documentation (generated)
-docs/api/             export-ignore
-
-# DevOps tooling
+# DevOps & build tooling
 devops/               export-ignore
+functions/            export-ignore
+package.json          export-ignore
 
-# GitHub & CI config
+# GitHub & hosting infrastructure
 .github/              export-ignore
+CNAME                 export-ignore
+
+# Git housekeeping (exclude themselves)
 .gitattributes        export-ignore
 .gitignore            export-ignore
 .dockerignore         export-ignore
 
 # Linting & code quality
 .codacy/              export-ignore
+.codacy.yml           export-ignore
 .eslintrc.json        export-ignore
+eslint.config.js      export-ignore
+.markdownlint.json    export-ignore
 ruleset.xml           export-ignore
 
-# Project management
+# Tests
+tests/                export-ignore
+
+# Documentation & project management (internal)
+about/                export-ignore
+docs/                 export-ignore
 ROADMAP.md            export-ignore
 SPRINT.md             export-ignore
 CHANGELOG.md          export-ignore
-version.json          export-ignore
 
-# Repo assets (not needed to run the app)
+# Dev reference pages
+design-preview.html   export-ignore
+style.html            export-ignore
+
+# Data files not needed at runtime (bundle.js is the runtime artifact)
+data/hourly/          export-ignore
+data/retail/          export-ignore
+data/spot-history-*.json  export-ignore
+
+# Misc repo assets
 ScreenshotStakTrakr.png  export-ignore
+version.json          export-ignore
