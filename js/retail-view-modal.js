@@ -215,8 +215,9 @@ const _flagAnomalies = (bucketed) => {
   return bucketed.map((w) => {
     const vendors = w.vendors ? { ...w.vendors } : {};
     const anomalousVendors = new Set();
-    // Collect non-null vendor prices
-    const entries = Object.entries(vendors).filter(([, p]) => p != null);
+    // Collect numeric vendor prices, restricted to known vendors (match chart/table rendering)
+    const knownSet = typeof RETAIL_VENDOR_NAMES !== 'undefined' ? Object.keys(RETAIL_VENDOR_NAMES) : null;
+    const entries = Object.entries(vendors).filter(([k, p]) => typeof p === 'number' && !isNaN(p) && (!knownSet || knownSet.includes(k)));
     if (entries.length < 3) {
       return { ...w, vendors, _anomalousVendors: anomalousVendors };
     }
@@ -268,7 +269,7 @@ const _buildIntradayTable = (slug, bucketed) => {
 
   // Collect the vendor set across all bucketed entries
   const knownVendors = typeof RETAIL_VENDOR_NAMES !== "undefined" ? Object.keys(RETAIL_VENDOR_NAMES) : [];
-  const activeVendors = knownVendors.filter((v) => bucketed.some((w) => w.vendors && w.vendors[v] != null));
+  const activeVendors = knownVendors.filter((v) => bucketed.some((w) => (w.vendors && w.vendors[v] != null) || (w._anomalyOriginals && w._anomalyOriginals[v] != null)));
   const useVendorLines = activeVendors.length > 0;
 
   // Update table header — per-vendor when data available, median+low fallback otherwise
@@ -312,6 +313,10 @@ const _buildIntradayTable = (slug, bucketed) => {
           const currVal = w.vendors && w.vendors[v] != null ? w.vendors[v] : null;
           const td = document.createElement("td");
           if (isAnomalous && anomalyVal != null) {
+            const prevAnom = idx + 1 < recent.length && recent[idx + 1]._anomalyOriginals
+              ? recent[idx + 1]._anomalyOriginals[v] : null;
+            const cls = _trendClass(anomalyVal, prevAnom);
+            td.className = cls || '';
             td.style.textDecoration = 'line-through';
             td.style.opacity = '0.45';
             td.textContent = fmt(anomalyVal);
@@ -387,7 +392,7 @@ const _buildIntradayChart = (slug) => {
 
   // Collect the vendor set across all bucketed entries (preserves display order from RETAIL_VENDOR_NAMES)
   const knownVendors = typeof RETAIL_VENDOR_NAMES !== "undefined" ? Object.keys(RETAIL_VENDOR_NAMES) : [];
-  const activeVendors = knownVendors.filter((v) => bucketed.some((w) => w.vendors && w.vendors[v] != null));
+  const activeVendors = knownVendors.filter((v) => bucketed.some((w) => (w.vendors && w.vendors[v] != null) || (w._anomalyOriginals && w._anomalyOriginals[v] != null)));
   // Fall back to median+low when windows predate the per-vendor format
   const useVendorLines = activeVendors.length > 0;
 
