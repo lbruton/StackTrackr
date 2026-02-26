@@ -1601,14 +1601,15 @@ const setupItemFormListeners = () => {
   const swapBtn = safeGetElement('swapImagesBtn');
   if (swapBtn) {
     swapBtn.addEventListener('click', async () => {
-      // Load cached images into pending blobs if not already present (PR #551 review)
-      // Without this, swapping existing-only images is visual-only and lost on save.
+      // Hydrate each missing side from IndexedDB before swap (PR #551 review)
+      // Must hydrate per-side (not gated on both null) to handle mixed
+      // upload+swap: user uploads one side, then swaps before saving.
       const uuid = editingIndex !== null ? inventory[editingIndex]?.uuid : null;
-      if (uuid && !_pendingObverseBlob && !_pendingReverseBlob && window.imageCache?.isAvailable()) {
+      if (uuid && (!_pendingObverseBlob || !_pendingReverseBlob) && window.imageCache?.isAvailable()) {
         try {
           const rec = await imageCache.getUserImage(uuid);
-          if (rec?.obverse) _pendingObverseBlob = rec.obverse;
-          if (rec?.reverse) _pendingReverseBlob = rec.reverse;
+          if (!_pendingObverseBlob && rec?.obverse) _pendingObverseBlob = rec.obverse;
+          if (!_pendingReverseBlob && rec?.reverse) _pendingReverseBlob = rec.reverse;
         } catch { /* ignore — blobs stay null */ }
       }
 
