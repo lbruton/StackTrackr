@@ -518,7 +518,7 @@ const RETAIL_SYNC_LOG_KEY = "retailSyncLog";
 const RETAIL_AVAILABILITY_KEY = "retailAvailability";
 
 /** @constant {number} RETAIL_ANOMALY_THRESHOLD - Max fractional deviation from window median before a vendor price is flagged anomalous */
-const RETAIL_ANOMALY_THRESHOLD = 0.40;
+const RETAIL_ANOMALY_THRESHOLD = 0.15;
 
 /** @constant {string} GOLDBACK_ENABLED_KEY - LocalStorage key for Goldback pricing toggle (STACK-45) */
 const GOLDBACK_ENABLED_KEY = "goldback-enabled";

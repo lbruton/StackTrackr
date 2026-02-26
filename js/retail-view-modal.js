@@ -211,7 +211,7 @@ const _forwardFillVendors = (bucketed) => {
  */
 const _flagAnomalies = (bucketed) => {
   if (!bucketed || bucketed.length === 0) return [];
-  const threshold = typeof RETAIL_ANOMALY_THRESHOLD !== 'undefined' ? RETAIL_ANOMALY_THRESHOLD : 0.40;
+  const threshold = typeof RETAIL_ANOMALY_THRESHOLD !== 'undefined' ? RETAIL_ANOMALY_THRESHOLD : 0.15;
   return bucketed.map((w) => {
     const vendors = w.vendors ? { ...w.vendors } : {};
     const anomalousVendors = new Set();
