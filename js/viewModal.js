@@ -256,7 +256,10 @@ function _buildImageCertGrade(item, authority, certNum, pcgsNo) {
         : certUrlTemplate.replace(/\{certNumber\}/g, encodeURIComponent(certNum)).replace(/\{grade\}/g, encodeURIComponent(item.grade || ''));
       const popupName = `cert_${authority}_${certNum || pcgsNo}`.replace(/[^a-zA-Z0-9_]/g, '_');
       const popup = window.open(url, popupName, 'width=1250,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no');
-      if (popup) popup.focus();
+      if (popup) {
+        popup.opener = null; // Security: prevent reverse tabnabbing
+        popup.focus();
+      }
     });
   } else {
     gradeSpan.title = authority ? `Graded by ${authority}: ${item.grade}${certNum ? ` — Cert #${certNum}` : ''}` : `Grade: ${item.grade}`;
@@ -945,6 +948,7 @@ function _openExternalPopup(url, name) {
     // Popup blocked — let user know
     appAlert(`Popup blocked! Please allow popups or manually visit:\n${url}`);
   } else {
+    popup.opener = null; // Security: prevent reverse tabnabbing
     popup.focus();
   }
 }
