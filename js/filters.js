@@ -867,8 +867,39 @@ const filterInventoryAdvanced = () => {
   return result.filter(item => {
     if (!terms.length) return true;
 
-    const formattedDate = formatDisplayDate(item.date).toLowerCase();
+    // Retrieve or compute cached search data
+    let cached = searchCache.get(item);
     
+    // Upgrade legacy cache (string) to object or handle cache miss
+    if (!cached || typeof cached === 'string') {
+      const _searchTags = typeof getItemTags === 'function' ? getItemTags(item.uuid).join(' ') : '';
+      // Optimization: Cache formatted date to avoid re-parsing on every search
+      const _formattedDate = formatDisplayDate(item.date).toLowerCase();
+
+      const itemText = [
+        item.metal,
+        item.composition || '',
+        item.name,
+        item.type,
+        item.purchaseLocation,
+        item.storageLocation || '',
+        item.notes || '',
+        String(item.year || ''),
+        item.grade || '',
+        item.gradingAuthority || '',
+        String(item.certNumber || ''),
+        String(item.numistaId || ''),
+        item.serialNumber || '',
+        _searchTags,
+        _formattedDate // Include date in multi-word search text
+      ].join(' ').toLowerCase();
+
+      cached = { text: itemText, formattedDate: _formattedDate };
+      searchCache.set(item, cached);
+    }
+
+    const { text: itemText, formattedDate } = cached;
+
     // Handle comma-separated terms (OR logic between comma terms)
     return terms.some(q => {
       // Split each comma term into individual words for AND logic
@@ -886,28 +917,6 @@ const filterInventoryAdvanced = () => {
         // For multi-word searches, check if the exact phrase exists or
         // if all words exist as separate word boundaries without conflicting words
         const exactPhrase = q.toLowerCase();
-        // STAK-126: include tags in searchable text
-        let itemText = searchCache.get(item);
-        if (itemText === undefined) {
-          const _searchTags = typeof getItemTags === 'function' ? getItemTags(item.uuid).join(' ') : '';
-          itemText = [
-            item.metal,
-            item.composition || '',
-            item.name,
-            item.type,
-            item.purchaseLocation,
-            item.storageLocation || '',
-            item.notes || '',
-            String(item.year || ''),
-            item.grade || '',
-            item.gradingAuthority || '',
-            String(item.certNumber || ''),
-            String(item.numistaId || ''),
-            item.serialNumber || '',
-            _searchTags
-          ].join(' ').toLowerCase();
-          searchCache.set(item, itemText);
-        }
 
         // Check for exact phrase match first
         if (itemText.includes(exactPhrase)) {
@@ -1205,3 +1214,15 @@ window.filterInventoryAdvanced = filterInventoryAdvanced;
 window.renderActiveFilters = renderActiveFilters;
 
 // =============================================================================
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    filterInventoryAdvanced,
+    clearAllFilters,
+    applyQuickFilter,
+    applyColumnFilter,
+    renderActiveFilters,
+    invalidateSearchCache: typeof window !== 'undefined' ? window.invalidateSearchCache : null,
+    resetSearchCache: typeof window !== 'undefined' ? window.resetSearchCache : null
+  };
+}
