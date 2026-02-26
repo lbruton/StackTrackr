@@ -125,6 +125,17 @@ const processUploadedImage = async (file, side = 'obverse') => {
     sizeInfo.textContent = `${origKB} KB → ${compKB} KB (${result.format.split('/')[1]})`;
   }
   if (removeBtn) removeBtn.style.display = '';
+  updateSwapButtonVisibility();
+};
+
+/** Show/hide swap button based on whether both image sides have previews (STAK-341) */
+const updateSwapButtonVisibility = () => {
+  const wrapper = document.getElementById('swapImagesBtnWrapper');
+  if (!wrapper) return;
+  const obvPreview = document.getElementById('itemImagePreviewObv');
+  const revPreview = document.getElementById('itemImagePreviewRev');
+  const bothVisible = obvPreview?.style.display !== 'none' && revPreview?.style.display !== 'none';
+  wrapper.classList.toggle('d-none', !bothVisible);
 };
 
 /**
@@ -186,6 +197,10 @@ const clearUploadState = () => {
   if (sizeRev) sizeRev.textContent = '';
   if (removeRev) removeRev.style.display = 'none';
   if (fileRev) fileRev.value = '';
+
+  // Hide swap button (STAK-341)
+  const swapWrapper = document.getElementById('swapImagesBtnWrapper');
+  if (swapWrapper) swapWrapper.classList.add('d-none');
 
   // Reset pattern toggle state
   const patternToggle = document.getElementById('imagePatternToggle');
@@ -1540,6 +1555,7 @@ const setupItemFormListeners = () => {
           // STAK-332: Flag item to ignore pattern rule images after explicit removal
           const ignorePatternCheckbox = document.getElementById('itemIgnorePatternImages');
           if (ignorePatternCheckbox) ignorePatternCheckbox.checked = true;
+          updateSwapButtonVisibility();
 
           // STAK-244: Also clear Numista image cache if user is removing a catalog-synced image
           const catalogId = elements.itemCatalog?.value?.trim() || '';
@@ -1578,6 +1594,54 @@ const setupItemFormListeners = () => {
         }
       });
     }
+  }
+
+  // SWAP OBVERSE/REVERSE BUTTON (STAK-341)
+  const swapBtn = safeGetElement('swapImagesBtn');
+  if (swapBtn) {
+    swapBtn.addEventListener('click', () => {
+      // Swap pending blobs
+      const tmpBlob = _pendingObverseBlob;
+      _pendingObverseBlob = _pendingReverseBlob;
+      _pendingReverseBlob = tmpBlob;
+
+      // Swap preview URLs
+      const tmpUrl = _pendingObversePreviewUrl;
+      _pendingObversePreviewUrl = _pendingReversePreviewUrl;
+      _pendingReversePreviewUrl = tmpUrl;
+
+      // Swap delete flags
+      const tmpDel = _deleteObverseOnSave;
+      _deleteObverseOnSave = _deleteReverseOnSave;
+      _deleteReverseOnSave = tmpDel;
+
+      // Swap visible preview images
+      const imgObv = document.getElementById('itemImagePreviewImgObv');
+      const imgRev = document.getElementById('itemImagePreviewImgRev');
+      if (imgObv && imgRev) {
+        const tmpSrc = imgObv.src;
+        imgObv.src = imgRev.src;
+        imgRev.src = tmpSrc;
+      }
+
+      // Swap URL fields
+      const urlObv = elements.itemObverseImageUrl;
+      const urlRev = elements.itemReverseImageUrl;
+      if (urlObv && urlRev) {
+        const tmpVal = urlObv.value;
+        urlObv.value = urlRev.value;
+        urlRev.value = tmpVal;
+      }
+
+      // Swap size info text
+      const sizeObv = document.getElementById('itemImageSizeInfoObv');
+      const sizeRev = document.getElementById('itemImageSizeInfoRev');
+      if (sizeObv && sizeRev) {
+        const tmpText = sizeObv.textContent;
+        sizeObv.textContent = sizeRev.textContent;
+        sizeRev.textContent = tmpText;
+      }
+    });
   }
 
   // SEARCH NUMISTA BUTTON — lookup by N# or search by name

@@ -1220,7 +1220,13 @@ const startCellEdit = (idx, field, element) => {
     }
     
     // Set input value based on field type
-    if (field === 'weight' && item.weight < 1) {
+    if (field === 'weight' && item.weightUnit === 'kg') {
+      input.value = oztToKg(current).toFixed(4);
+      input.dataset.unit = 'kg';
+    } else if (field === 'weight' && item.weightUnit === 'lb') {
+      input.value = oztToLb(current).toFixed(4);
+      input.dataset.unit = 'lb';
+    } else if (field === 'weight' && (item.weightUnit === 'g' || item.weight < 1)) {
       input.value = oztToGrams(current).toFixed(2);
       input.dataset.unit = 'g';
     } else if (['weight', 'price', 'marketValue'].includes(field)) {
@@ -1255,6 +1261,10 @@ const startCellEdit = (idx, field, element) => {
       finalValue = parseFloat(value);
       if (field === 'weight' && input.dataset.unit === 'g') {
         finalValue = gramsToOzt(finalValue);
+      } else if (field === 'weight' && input.dataset.unit === 'kg') {
+        finalValue = kgToOzt(finalValue);
+      } else if (field === 'weight' && input.dataset.unit === 'lb') {
+        finalValue = lbToOzt(finalValue);
       }
     } else {
       finalValue = value.trim();
@@ -2278,10 +2288,13 @@ const editItem = (idx, logIdx = null) => {
       }
     }).catch(() => {
       showUrlPreviewFallback({ obverse: false, reverse: false });
+    }).finally(() => {
+      if (typeof updateSwapButtonVisibility === 'function') updateSwapButtonVisibility();
     });
   } else {
     // No IndexedDB — go straight to URL fallback
     showUrlPreviewFallback({ obverse: false, reverse: false });
+    if (typeof updateSwapButtonVisibility === 'function') updateSwapButtonVisibility();
   }
 
   // Update Numista API status dot (STAK-173)
