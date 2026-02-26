@@ -201,51 +201,102 @@ const _forwardFillVendors = (bucketed) => {
 };
 
 /**
- * Flags anomalous vendor prices using cross-vendor median consensus.
- * For each 30-min window with 3+ active vendors, any vendor deviating more than
- * RETAIL_ANOMALY_THRESHOLD from the median is flagged. Flagged prices are nulled
- * in the returned copy so Chart.js gaps over them via spanGaps.
+ * Flags anomalous vendor prices using two passes:
+ *
+ * Pass 1 — Temporal spike detection (primary):
+ *   For each vendor at window[t], compare price[t-1] and price[t+1].
+ *   If the neighbors are within ±RETAIL_SPIKE_NEIGHBOR_TOLERANCE of each other
+ *   (stable neighborhood) but price[t] deviates significantly from their average,
+ *   replace price[t] with the neighbor average. This catches single-window scrape spikes.
+ *
+ * Pass 2 — Cross-vendor median consensus (safety net):
+ *   For each window with 3+ vendors, any vendor deviating >RETAIL_ANOMALY_THRESHOLD
+ *   from the median is nulled. Catches multi-window vendor drift.
+ *
+ * Flagged chart prices are nulled so Chart.js gaps over them via spanGaps.
+ * Original prices preserved in _anomalyOriginals for table display.
  * Pure function — input array is not mutated.
+ *
  * @param {Array} bucketed - Chronologically sorted windows from _forwardFillVendors
  * @returns {Array} New array with _anomalousVendors: Set on each window
  */
 const _flagAnomalies = (bucketed) => {
   if (!bucketed || bucketed.length === 0) return [];
-  const threshold = typeof RETAIL_ANOMALY_THRESHOLD !== 'undefined' ? RETAIL_ANOMALY_THRESHOLD : 0.15;
-  return bucketed.map((w) => {
-    const vendors = w.vendors ? { ...w.vendors } : {};
-    const anomalousVendors = new Set();
-    // Collect numeric vendor prices, restricted to known vendors (match chart/table rendering)
-    const knownSet = typeof RETAIL_VENDOR_NAMES !== 'undefined' ? Object.keys(RETAIL_VENDOR_NAMES) : null;
-    const entries = Object.entries(vendors).filter(([k, p]) => typeof p === 'number' && !isNaN(p) && (!knownSet || knownSet.includes(k)));
-    if (entries.length < 3) {
-      return { ...w, vendors, _anomalousVendors: anomalousVendors };
+  const neighborTol = typeof RETAIL_SPIKE_NEIGHBOR_TOLERANCE !== 'undefined' ? RETAIL_SPIKE_NEIGHBOR_TOLERANCE : 0.05;
+  const medianThreshold = typeof RETAIL_ANOMALY_THRESHOLD !== 'undefined' ? RETAIL_ANOMALY_THRESHOLD : 0.40;
+  const knownSet = typeof RETAIL_VENDOR_NAMES !== 'undefined' ? Object.keys(RETAIL_VENDOR_NAMES) : null;
+
+  // Deep-copy vendors so we don't mutate input
+  const result = bucketed.map((w) => ({
+    ...w,
+    vendors: w.vendors ? { ...w.vendors } : {},
+    _anomalousVendors: new Set(),
+    _anomalyOriginals: {}
+  }));
+
+  // --- Pass 1: Temporal spike detection (per-vendor, per-window) ---
+  // Collect all vendor IDs across all windows
+  const allVendors = new Set();
+  for (const w of result) {
+    for (const k of Object.keys(w.vendors)) {
+      if (!knownSet || knownSet.includes(k)) allVendors.add(k);
     }
-    // Compute median
+  }
+
+  for (const vendorId of allVendors) {
+    for (let t = 1; t < result.length - 1; t++) {
+      const curr = result[t].vendors[vendorId];
+      const prev = result[t - 1].vendors[vendorId];
+      const next = result[t + 1].vendors[vendorId];
+      // Need numeric values for all three windows
+      if (typeof curr !== 'number' || isNaN(curr)) continue;
+      if (typeof prev !== 'number' || isNaN(prev)) continue;
+      if (typeof next !== 'number' || isNaN(next)) continue;
+      if (prev === 0 && next === 0) continue;
+      // Check if before/after form a stable neighborhood (within ±tolerance of each other)
+      const neighborAvg = (prev + next) / 2;
+      if (neighborAvg === 0) continue;
+      const neighborDrift = Math.abs(prev - next) / neighborAvg;
+      if (neighborDrift > neighborTol) continue; // neighbors disagree — not a spike
+      // Check if current price deviates from the neighbor average
+      const deviation = Math.abs(curr - neighborAvg) / neighborAvg;
+      if (deviation > neighborTol) {
+        // Spike detected — replace with neighbor average for chart, preserve original for table
+        result[t]._anomalyOriginals[vendorId] = curr;
+        result[t].vendors[vendorId] = null;
+        result[t]._anomalousVendors.add(vendorId);
+      }
+    }
+  }
+
+  // --- Pass 2: Cross-vendor median consensus (safety net for extreme outliers) ---
+  for (const w of result) {
+    const entries = Object.entries(w.vendors).filter(([k, p]) => typeof p === 'number' && !isNaN(p) && (!knownSet || knownSet.includes(k)));
+    if (entries.length < 3) continue;
     const prices = entries.map(([, p]) => p).sort((a, b) => a - b);
     const mid = Math.floor(prices.length / 2);
     const median = prices.length % 2 === 0 ? (prices[mid - 1] + prices[mid]) / 2 : prices[mid];
-    if (median === 0) {
-      return { ...w, vendors, _anomalousVendors: anomalousVendors };
-    }
-    // Flag outliers
+    if (median === 0) continue;
+    let flagged = 0;
+    const candidates = [];
     for (const [vendorId, price] of entries) {
-      if (Math.abs(price - median) / median > threshold) {
-        anomalousVendors.add(vendorId);
+      if (Math.abs(price - median) / median > medianThreshold) {
+        candidates.push(vendorId);
+        flagged++;
       }
     }
-    // Guard: if all vendors would be flagged, skip flagging entirely
-    if (anomalousVendors.size >= entries.length) {
-      return { ...w, vendors, _anomalousVendors: new Set() };
+    // Guard: don't flag all vendors
+    if (flagged >= entries.length) continue;
+    for (const vendorId of candidates) {
+      if (!w._anomalousVendors.has(vendorId)) {
+        w._anomalyOriginals[vendorId] = w.vendors[vendorId];
+        w.vendors[vendorId] = null;
+        w._anomalousVendors.add(vendorId);
+      }
     }
-    // Preserve original prices for table display, null for chart gap rendering
-    const anomalyOriginals = {};
-    for (const vendorId of anomalousVendors) {
-      anomalyOriginals[vendorId] = vendors[vendorId];
-      vendors[vendorId] = null;
-    }
-    return { ...w, vendors, _anomalousVendors: anomalousVendors, _anomalyOriginals: anomalyOriginals };
-  });
+  }
+
+  return result;
 };
 
 /**
