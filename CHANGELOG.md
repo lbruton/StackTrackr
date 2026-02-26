@@ -13,9 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added — Filter Anomalous Vendor Price Spikes from 24h Retail Chart
 
-- **Added**: Cross-vendor anomaly detection in 24h retail chart — vendor prices deviating >15% from window median are suppressed (STAK-325)
+- **Added**: Two-pass anomaly detection in 24h retail chart — temporal spike detection (before/after ±5% neighbor consensus) replaces spikes with neighbor average, cross-vendor median (>40%) as safety net (STAK-325)
 - **Added**: Anomalous table cells shown with line-through styling for visual distinction
-- **Added**: `RETAIL_ANOMALY_THRESHOLD` constant (0.15) for configurable detection sensitivity
+- **Added**: `RETAIL_SPIKE_NEIGHBOR_TOLERANCE` (0.05) and `RETAIL_ANOMALY_THRESHOLD` (0.40) constants for configurable sensitivity
 
 ---
 
