@@ -315,7 +315,12 @@ const _buildIntradayTable = (slug, bucketed) => {
     const intraday = typeof retailIntradayData !== "undefined" ? retailIntradayData[slug] : null;
     const windows = intraday && Array.isArray(intraday.windows_24h) ? intraday.windows_24h : [];
     const filled = _forwardFillVendors(_bucketWindows(windows));
-    try { bucketed = _flagAnomalies(filled); } catch (e) { console.warn('_flagAnomalies failed, using unfiltered data', e); bucketed = filled; }
+    try {
+      bucketed = _flagAnomalies(filled);
+    } catch (e) {
+      console.warn('_flagAnomalies failed, using unfiltered data', e);
+      bucketed = filled;
+    }
   }
 
   // Collect the vendor set across all bucketed entries
@@ -431,7 +436,12 @@ const _buildIntradayChart = (slug) => {
   const windows = intraday && Array.isArray(intraday.windows_24h) ? intraday.windows_24h : [];
   const filled = _forwardFillVendors(_bucketWindows(windows));
   let bucketed;
-  try { bucketed = _flagAnomalies(filled); } catch (e) { console.warn('_flagAnomalies failed, using unfiltered data', e); bucketed = filled; }
+  try {
+    bucketed = _flagAnomalies(filled);
+  } catch (e) {
+    console.warn('_flagAnomalies failed, using unfiltered data', e);
+    bucketed = filled;
+  }
 
   if (noDataEl) noDataEl.style.display = bucketed.length < 2 ? "" : "none";
   if (canvas) canvas.style.display = bucketed.length >= 2 ? "" : "none";
