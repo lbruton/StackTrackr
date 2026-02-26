@@ -1176,11 +1176,46 @@ const escapeHtmlCatalog = (str) =>
     .replace(/'/g, '&#39;');
 
 /**
+ * Build a safe Numista catalogue URL from a catalog id.
+ * Supports piece ids (e.g. "75250", "N#75250") and set ids (e.g. "S123", "N#S123").
+ *
+ * @param {string} catalogId - Raw catalog id
+ * @returns {string} Absolute Numista URL or empty string when invalid
+ */
+const buildNumistaCatalogUrl = (catalogId) => {
+  const raw = String(catalogId || '').trim();
+  if (!raw) return '';
+
+  // Strip N# prefix first, THEN detect S for sets
+  const stripped = raw.replace(/^N#\s*/i, '').trim();
+  const isSet = /^S/i.test(stripped);
+  const clean = isSet ? stripped.replace(/^S/i, '').trim() : stripped;
+  if (!/^\d+$/.test(clean)) return '';
+
+  return isSet
+    ? `https://en.numista.com/catalogue/set.php?id=${clean}`
+    : `https://en.numista.com/catalogue/pieces${clean}.html`;
+};
+
+/**
  * Render a single result card HTML string
  * @param {Object} result - Normalized Numista item data
  * @param {number} index - Index in results array
  * @returns {string} HTML string
  */
+/**
+ * Render catalog ID as a clickable link (when URL is available) or plain span.
+ * @param {string} catalogId - Raw catalog ID from Numista
+ * @returns {string} HTML string
+ */
+const renderCatalogIdAction = (catalogId) => {
+  const numistaUrl = buildNumistaCatalogUrl(catalogId);
+  const catalogIdLabel = `N#${escapeHtmlCatalog(catalogId)}`;
+  return numistaUrl
+    ? `<button type="button" class="numista-result-id numista-result-id-link" onclick="openNumistaModal('${escapeHtmlCatalog(catalogId)}','')" aria-label="Open ${catalogIdLabel} on Numista">${catalogIdLabel}</button>`
+    : `<span class="numista-result-id">${catalogIdLabel}</span>`;
+};
+
 const renderNumistaResultCard = (result, index) => {
   const placeholder = `<div class="numista-img-placeholder">🪙</div>`;
   const obverseImg = result.imageUrl
@@ -1196,13 +1231,16 @@ const renderNumistaResultCard = (result, index) => {
     result.weight ? `${result.weight}g` : '',
     result.type
   ].filter(Boolean).join(' · ');
+  const catalogIdAction = renderCatalogIdAction(result.catalogId);
 
   return `<div class="numista-result-card" data-result-index="${index}">
     <div class="numista-result-images">${obverseImg}${reverseImg}</div>
     <div class="numista-result-info">
       <div class="numista-result-name">${escapeHtmlCatalog(result.name)}</div>
       <div class="numista-result-meta">${escapeHtmlCatalog(meta)}</div>
-      <div class="numista-result-id">N#${escapeHtmlCatalog(result.catalogId)}</div>
+      <div class="numista-result-footer">
+        ${catalogIdAction}
+      </div>
     </div>
   </div>`;
 };
@@ -1227,12 +1265,15 @@ const renderNumistaSelectedItem = (result) => {
     result.weight ? `${result.weight}g` : '',
     result.type
   ].filter(Boolean).join(' · ');
+  const catalogIdAction = renderCatalogIdAction(result.catalogId);
 
   return `<div class="numista-result-images">${obverseImg}${reverseImg}</div>
     <div class="numista-result-info">
       <div class="numista-result-name">${escapeHtmlCatalog(result.name)}</div>
       <div class="numista-result-meta">${escapeHtmlCatalog(meta)}</div>
-      <div class="numista-result-id">N#${escapeHtmlCatalog(result.catalogId)}</div>
+      <div class="numista-result-footer">
+        ${catalogIdAction}
+      </div>
     </div>`;
 };
 
@@ -2038,11 +2079,18 @@ document.addEventListener('DOMContentLoaded', function() {
   // Delegated click on result cards → select and show field picker
   if (numistaResultsList) {
     numistaResultsList.addEventListener('click', function(e) {
+      // Let N# links open Numista without also selecting the row.
+      const catalogLink = e.target.closest('.numista-result-id-link');
+      if (catalogLink) {
+        e.stopPropagation();
+        return;
+      }
+
+      const results = numistaResultsList._numistaResults;
       const card = e.target.closest('.numista-result-card');
       if (!card) return;
 
       const index = parseInt(card.dataset.resultIndex, 10);
-      const results = numistaResultsList._numistaResults;
       if (!results || !results[index]) return;
 
       // Highlight selected card

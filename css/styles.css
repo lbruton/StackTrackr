@@ -2523,6 +2523,18 @@ input[type="submit"] {
   flex: 1;
   min-width: 0;
 }
+.image-swap-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  padding-top: 1.2rem;
+}
+.image-swap-wrapper .btn-icon {
+  font-size: 1.1rem;
+  padding: 0.2rem 0.4rem;
+  line-height: 1;
+}
 .image-side-label {
   display: block;
   font-size: 0.75rem;
@@ -8312,6 +8324,12 @@ th {
   transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
+/* Solid backgrounds for OS-native <option> popups (STAK-353) */
+#inventoryForm select option {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
 #inventoryForm input:focus,
 #inventoryForm select:focus {
   background: var(--glass-input-focus-bg, rgba(0, 0, 0, 0.05));
@@ -8807,6 +8825,35 @@ th {
   font-size: 0.7rem;
   color: var(--primary);
   font-weight: 600;
+}
+
+.numista-result-id-link {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.numista-result-id-link:hover {
+  color: color-mix(in srgb, var(--primary) 75%, white 25%);
+}
+
+.numista-result-id-link:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+.numista-result-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
 }
 
 /* Field picker area */
