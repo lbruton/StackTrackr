@@ -517,6 +517,12 @@ const RETAIL_SYNC_LOG_KEY = "retailSyncLog";
 /** Retail price availability data (out-of-stock detection) */
 const RETAIL_AVAILABILITY_KEY = "retailAvailability";
 
+/** @constant {number} RETAIL_ANOMALY_THRESHOLD - Max fractional deviation from window median before a vendor price is flagged anomalous (cross-vendor pass) */
+const RETAIL_ANOMALY_THRESHOLD = 0.40;
+
+/** @constant {number} RETAIL_SPIKE_NEIGHBOR_TOLERANCE - Max fractional deviation between before/after prices to consider them a stable neighborhood (temporal pass) */
+const RETAIL_SPIKE_NEIGHBOR_TOLERANCE = 0.05;
+
 /** @constant {string} GOLDBACK_ENABLED_KEY - LocalStorage key for Goldback pricing toggle (STACK-45) */
 const GOLDBACK_ENABLED_KEY = "goldback-enabled";
 
@@ -1690,6 +1696,8 @@ if (typeof window !== "undefined") {
   window.HEADER_RESTORE_BTN_KEY = HEADER_RESTORE_BTN_KEY;
   window.HEADER_BTN_SHOW_TEXT_KEY = HEADER_BTN_SHOW_TEXT_KEY;
   window.RETAIL_MANIFEST_TS_KEY = RETAIL_MANIFEST_TS_KEY;
+  window.RETAIL_ANOMALY_THRESHOLD = RETAIL_ANOMALY_THRESHOLD;
+  window.RETAIL_SPIKE_NEIGHBOR_TOLERANCE = RETAIL_SPIKE_NEIGHBOR_TOLERANCE;
 }
 
 // Expose APP_VERSION globally for non-module usage
