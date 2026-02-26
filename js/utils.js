@@ -2981,7 +2981,8 @@ function openEbayBuySearch(searchTerm) {
   const encodedTerm = encodeURIComponent(cleanTerm);
   // eBay active listings URL — items currently for sale, sorted by best match
   const ebayUrl = `https://www.ebay.com/sch/i.html?_from=R40&_nkw=${encodedTerm}&_sacat=0&LH_BIN=1&_sop=12`;
-  window.open(ebayUrl, `ebay_buy_${Date.now()}`, 'width=1250,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no');
+  // Use noopener,noreferrer to prevent tabnabbing and privacy leaks
+  window.open(ebayUrl, `ebay_buy_${Date.now()}`, 'width=1250,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no,noopener,noreferrer');
 }
 
 function openEbaySoldSearch(searchTerm) {
@@ -2990,7 +2991,8 @@ function openEbaySoldSearch(searchTerm) {
   const encodedTerm = encodeURIComponent(cleanTerm);
   // eBay sold listings URL — completed sales, sorted by most recent
   const ebayUrl = `https://www.ebay.com/sch/i.html?_from=R40&_nkw=${encodedTerm}&_sacat=0&LH_Sold=1&LH_Complete=1&_sop=13`;
-  window.open(ebayUrl, `ebay_sold_${Date.now()}`, 'width=1250,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no');
+  // Use noopener,noreferrer to prevent tabnabbing and privacy leaks
+  window.open(ebayUrl, `ebay_sold_${Date.now()}`, 'width=1250,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no,noopener,noreferrer');
 }
 
 

@@ -2489,7 +2489,7 @@ const showProviderInfo = (providerKey) => {
           <li>Keep your API key secure and never share it publicly</li>
         </ul>
       </div>
-      <a class="btn info-docs-btn" href="${provider.documentation}" target="_blank" rel="noopener">
+      <a class="btn info-docs-btn" href="${provider.documentation}" target="_blank" rel="noopener noreferrer">
         📄 ${provider.name} Documentation & Key Management
       </a>
     `;
