@@ -561,8 +561,7 @@ const _cardChipsHTML = (item, small = false) => {
   if (item.grade) h += `<span class="cv-chip cv-chip-grade"${s}>${sanitizeHtml(item.grade)}</span>`;
   const qty = Number(item.qty) || 1;
   if (qty > 1) h += `<span class="cv-chip cv-chip-qty"${s}>x${qty}</span>`;
-  const _wUnit = (item.weightUnit || 'oz').toLowerCase() === 'gb' ? 'gb' : (item.weightUnit || 'oz');
-  h += `<span class="cv-chip cv-chip-weight"${s}>${sanitizeHtml(item.weight || '')} ${sanitizeHtml(_wUnit)}</span>`;
+  h += `<span class="cv-chip cv-chip-weight"${s}>${sanitizeHtml(formatWeight(item.weight, item.weightUnit))}</span>`;
 
   // STAK-343: Inline tags in card view (show first 2, ellipsis if more)
   const _cardTags = typeof getItemTags === 'function' ? getItemTags(item.uuid) : [];

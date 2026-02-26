@@ -290,7 +290,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-12 - STACK-38/STACK-31: Responsive card view + mobile layout
  */
 
-const APP_VERSION = "3.32.43";
+const APP_VERSION = "3.32.44";
 
 /**
  * Numista metadata cache TTL: 30 days in milliseconds.
@@ -531,6 +531,12 @@ const GB_ESTIMATE_MODIFIER_KEY = "goldback-estimate-modifier";
 
 /** @constant {number} GB_TO_OZT - Conversion factor: 1 Goldback = 0.001 troy oz 24K gold */
 const GB_TO_OZT = 0.001;
+
+/** @constant {number} KG_TO_OZT - Conversion factor: 1 kilogram = 32.15075 troy ounces */
+const KG_TO_OZT = 32.15075;
+
+/** @constant {number} LB_TO_OZT - Conversion factor: 1 avoirdupois pound = 14.58333 troy ounces */
+const LB_TO_OZT = 14.58333;
 
 /**
  * Standard Goldback denominations with gold content.
