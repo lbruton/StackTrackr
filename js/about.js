@@ -283,12 +283,11 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
-    <li><strong>v3.32.47 &ndash; Clean Release ZIP</strong>: Overhauled .gitattributes export-ignore rules &mdash; release ZIP now ships only runtime files (81 files, ~4MB). Dev tooling, tests, AI config, screenshots, and raw data removed from downloads</li>
-    <li><strong>v3.32.45 &ndash; Retail Anomaly Filter</strong>: Two-pass anomaly detection in 24h retail chart &mdash; temporal spike smoothing (&plusmn;5% neighbor consensus) plus cross-vendor median safety net. Anomalous table cells shown with line-through styling (STAK-325).</li>
-    <li><strong>v3.32.44 &ndash; Kilo &amp; Pound Weight Units</strong>: Added kilogram and pound to the weight unit dropdown. Melt values convert correctly. Table, cards, and modals all display in the chosen unit (STAK-338).</li>
-    <li><strong>v3.32.43 &ndash; Numista Tag Fixes</strong>: Tags now visible in edit modal and card views. All tags (including Numista-applied) are removable per-item &mdash; no more stuck tags (STAK-343, STAK-344).</li>
-    <li><strong>v3.32.42 &ndash; Pattern Rule Promotion Fix</strong>: &ldquo;Apply to all matching items&rdquo; now works even when the item was saved previously (STAK-339-followup).</li>
-    <li><strong>v3.32.41 &ndash; Image Pipeline Simplification</strong>: Removed coinImages IDB cache layer entirely. CDN URLs are now the sole Numista image source (STAK-339).</li>
+    <li><strong>v3.32.47 &ndash; Cloud Sync, Image Pipeline &amp; Retail Charts</strong>: Unified encryption for cloud sync with ambient status icons. Removed coinImages IDB cache &mdash; CDN-only Numista images. Dynamic IndexedDB quota. 24h retail intraday chart with anomaly filtering. Kilogram and pound weight units. Numista tags visible in edit modal and card view. Reorderable header buttons. Tabnabbing hardening across all external links</li>
+    <li><strong>v3.32.45 &ndash; Retail Anomaly Filter</strong>: Two-pass anomaly detection in 24h retail chart &mdash; temporal spike smoothing (&plusmn;5% neighbor consensus) plus cross-vendor median safety net. Anomalous table cells shown with line-through styling (STAK-325)</li>
+    <li><strong>v3.32.44 &ndash; Kilo &amp; Pound Weight Units</strong>: Added kilogram and pound to the weight unit dropdown. Melt values convert correctly. Table, cards, and modals all display in the chosen unit (STAK-338)</li>
+    <li><strong>v3.32.43 &ndash; Numista Tag Fixes</strong>: Tags now visible in edit modal and card views. All tags (including Numista-applied) are removable per-item &mdash; no more stuck tags (STAK-343, STAK-344)</li>
+    <li><strong>v3.32.41 &ndash; Image Pipeline Simplification</strong>: Removed coinImages IDB cache layer entirely. CDN URLs are now the sole Numista image source (STAK-339)</li>
   `;
 };
 
