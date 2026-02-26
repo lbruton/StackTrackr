@@ -6,7 +6,7 @@ allowed-tools: Bash, Read, Write, Edit, Grep, Glob
 
 # Release — StakTrakr
 
-End-to-end release workflow: bump version across all 7 files, commit to dev, and create a PR to main.
+End-to-end release workflow: bump version across all 7 files, commit to the patch branch, and open a draft PR to dev. The `dev → main` PR is created separately at Phase 4.5 only when you explicitly say you're ready to ship.
 
 ## When to Run
 
@@ -59,63 +59,69 @@ git pull origin dev
 > **Why here and not later?** The worktree branches from current HEAD. If HEAD is stale,
 > every file diff in the PR will be relative to the wrong base. Pull first — worktree second.
 
-### Step 0a: Version Lock Check (REQUIRED FIRST)
+### Step 0a: Version Lock Claim (REQUIRED FIRST)
 
-Before anything else, check whether another agent has claimed the next version:
+The lock file uses a **claims array** — multiple agents can hold concurrent claims on
+different version numbers. Follow these steps in order:
+
+**1. Read and prune expired claims:**
 
 ```bash
 cat devops/version.lock 2>/dev/null || echo "UNLOCKED"
 ```
 
-**If locked and not expired** (`expires_at` is in the future): **STOP.** Report to the user:
-```
-⛔ Version lock held by: [locked_by]
-   Claimed version: [next_version]
-   Expires at: [expires_at]
-   Wait for that agent to finish, or ask the user if the lock is stale.
+Parse the `claims` array (or treat as `[]` if absent/empty). Remove any entries where
+`expires_at` < now. Write the pruned file back if anything was removed.
+
+**2. Compute your version:**
+
+- Find the highest `version` value in the remaining active claims
+- If no active claims exist, read `APP_VERSION` from `js/constants.js`
+- Increment the PATCH component by 1 → this is **your version**
+
+Example: active claims hold `3.32.29` → your version is `3.32.30`.  
+No active claims, `APP_VERSION` is `3.32.28` → your version is `3.32.29`.
+
+**3. Append your claim and write the file:**
+
+```json
+{
+  "claims": [
+    {
+      "version": "3.32.29",
+      "claimed_by": "claude / STAK-XXX brief description",
+      "issue": "STAK-XXX",
+      "claimed_at": "2026-XX-XXTXX:XX:XXZ",
+      "expires_at": "<claimed_at + 30 minutes>"
+    }
+  ]
+}
 ```
 
-**If absent or expired:** claim the lock immediately — before reading any files or computing the version. Compute `next_version` as `APP_VERSION + 1` (read `js/constants.js`), then write:
+Write the full `claims` array (existing active claims + your new entry) to `devops/version.lock`.
 
-```
-locked_by: Claude Code (session [first 6 chars of conversation ID or task hint])
-locked_at: [current ISO timestamp]
-next_version: [X.Y.Z]
-expires_at: [locked_at + 30 minutes]
-```
+Use the `version` from your claim as the target for all subsequent steps — do not re-derive it from `APP_VERSION` later.
+
+**4. Create the worktree + branch immediately:**
 
 ```bash
-# Write the lock
-cat > devops/version.lock << 'EOF'
-locked_by: Claude Code (session ...)
-locked_at: 2026-...
-next_version: 3.XX.YY
-expires_at: 2026-...
-EOF
+git worktree add .claude/worktrees/patch-VERSION -b patch/VERSION
 ```
 
-Use `next_version` as the target for all subsequent version bump steps — do not re-derive it from `APP_VERSION` later.
-
-**Create the worktree + branch immediately after writing the lock:**
-
-```bash
-git worktree add .claude/worktrees/patch-NEXT_VERSION -b patch/NEXT_VERSION
-```
-
-Example: `git worktree add .claude/worktrees/patch-3.32.09 -b patch/3.32.09`
+Example: `git worktree add .claude/worktrees/patch-3.32.29 -b patch/3.32.29`
 
 **All subsequent work (file edits, version bumps, commits) happens inside the worktree directory.**
 If you are running as an interactive Claude Code session, inform the user:
 
 ```
-Worktree created at: .claude/worktrees/patch-NEXT_VERSION/
-Branch: patch/NEXT_VERSION
+Worktree created at: .claude/worktrees/patch-VERSION/
+Branch: patch/VERSION
 
 All work for this release will happen in that worktree.
 After merging to dev, run cleanup:
-  git worktree remove .claude/worktrees/patch-NEXT_VERSION --force
-  git branch -d patch/NEXT_VERSION
-  rm devops/version.lock
+  git worktree remove .claude/worktrees/patch-VERSION --force
+  git branch -d patch/VERSION
+  Remove your claim entry from devops/version.lock (leave other active claims intact)
 ```
 
 See `devops/version-lock-protocol.md` for full protocol details.
@@ -281,7 +287,7 @@ Report any issues before proceeding.
 
 ## Phase 3: Commit
 
-Stage and commit to dev:
+Stage and commit **to the patch branch** (all work lives in the `patch/VERSION` worktree — NOT on `dev` directly):
 
 ```bash
 git add js/constants.js sw.js CHANGELOG.md docs/announcements.md js/about.js version.json data/spot-history-*.json
@@ -294,6 +300,12 @@ Commit message format: `vNEW_VERSION — TITLE`
 - Match the pattern from existing commits: `v3.23.01 — STAK-52: Goldback real-time estimation, Settings reorganization`
 
 If there are other uncommitted changes beyond the 5 version files, ask the user whether to include them in this commit or leave them staged separately.
+
+**After a successful commit, dispatch a background wiki update:**
+
+Invoke the `wiki-update` skill (Skill tool) as a background Task agent. It identifies
+which wiki pages were affected by this patch and pushes updates to `StakTrakrWiki`.
+Do not wait for it — proceed to Phase 4 immediately.
 
 **After a successful commit, push the patch branch and open a PR to dev** (Phase 4 covers this).
 **After the PR is merged to dev — tag the patch commit on dev and run worktree cleanup:**
@@ -313,34 +325,32 @@ git branch -d patch/VERSION
 # Delete the remote branch
 git push origin --delete patch/VERSION
 
-# Release the version lock
-rm -f devops/version.lock
+# Release the version lock — remove only your own claim entry by version match
+# Leave other active claims intact. If no other claims remain, the file may be deleted.
+# devops/version.lock is gitignored — safe to edit directly.
 ```
 
 > **Note:** This tag lands on `dev`, NOT `main`. A git tag is NOT a GitHub Release — it only appears in the Tags tab. The actual GitHub Release (`gh release create`) is created in Phase 5 after the `dev → main` merge. Do not skip Phase 5.
 
 ## Phase 4: Push & Draft PR
 
+> **⚠️ PR target reminder:** `patch/VERSION` → **`dev`** (QA preview). `dev` → `main` only via Phase 4.5, only when user says ready. Never create a patch PR targeting main.
+
 1. Push the patch branch:
    ```bash
    git push origin patch/VERSION
    ```
 
-2. Check whether a draft PR already exists from dev → main:
+2. **Create the `patch/VERSION → dev` draft PR** (this is the QA/preview PR — Cloudflare will generate a preview URL):
    ```bash
-   gh pr list --base main --head dev --state open --json number,title,isDraft,url
-   ```
-
-   **If no PR exists:** Create as a draft. The PR will grow to include all future commits — the title and body will be updated to be comprehensive before merge (Phase 4.5):
-   ```bash
-   gh pr create --base main --head dev --draft --label "codacy-review" \
-     --title "WIP: vNEW_VERSION — [brief description of initial work]" \
+   gh pr create --base dev --head patch/VERSION --draft --label "codacy-review" \
+     --title "vNEW_VERSION — [brief description]" \
      --body "$(cat <<'EOF'
-   > **Draft — do not merge.** PR description will be updated to reflect all changes before merge.
+   > **Draft — QA preview.** Merge to `dev` after QA passes. Do NOT target main.
 
-   ## Changes so far
+   ## Changes
 
-   - [brief bullet points for this commit/batch]
+   - [bullet points for this commit/batch]
 
    ## Linear Issues
 
@@ -351,54 +361,54 @@ rm -f devops/version.lock
    )"
    ```
 
-   **If a draft PR already exists:** Update it to reflect the new commits:
-   ```bash
-   gh pr edit [number] --body "$(cat <<'EOF'
-   [updated body — append new changes to existing list]
-   EOF
-   )"
-   ```
-
 3. (Optional — requires Linear MCP) If Linear issues are referenced, update status to **In Progress** (not Done — that happens at merge time).
 
-## Phase 4.5: Mark PR Ready (Pre-Merge — Run separately when ready to ship)
+> **No `dev → main` PR here.** The patch branch PRs to `dev` only. The `dev → main` PR is created at Phase 4.5, using version tags on `dev` as the changelog source. Do not create or touch any PR targeting `main` during Phase 4.
 
-This phase is triggered when the dev branch is QA-complete and ready to merge to main. It makes the draft PR comprehensive and opens it for final review.
+## Phase 4.5: Create `dev → main` PR and Ship (Run only when user says "release", "ready to ship", or "merge to main")
 
-**Do not run this as part of a normal version bump.** Run it only when the user explicitly says they are ready to release.
+This phase is triggered when `dev` is QA-complete and you want to ship to main. It collects the version tags on `dev` as the changelog source, creates the PR, and prepares it for final review.
+
+**Hard gate:** Do NOT run this unless the user has explicitly said they are ready to release in the current session.
 
 ### Step 1: Audit the branch
 
+Run both in parallel:
+
 ```bash
-git log --oneline main..dev
+git fetch origin
+git log --oneline main..origin/dev
+git tag --merged origin/dev --sort=-version:refname | grep '^v3\.' | head -20
 ```
 
-Collect every commit since the last merge. Group by feature/fix/chore. Identify all STAK-### references.
+The tag list gives you every patch breadcrumb on `dev` that hasn't shipped to main yet. These are your changelog source — more reliable than commit messages alone.
 
 ### Step 2: Fetch Linear issue titles
 
-For each STAK-### found, call `get_issue` (Linear MCP) to get the current title and status. This ensures the PR description is accurate, not just copy-pasted from commit messages.
+For each STAK-### found across commits and tag names, call `get_issue` (Linear MCP) to get the current title and status. This ensures the PR description is accurate, not just copy-pasted from commit messages.
 
-### Step 3: Write a comprehensive PR title and body
+### Step 3: Create the `dev → main` PR
 
-The PR title should reflect the **full contents of the branch**, not just the first day's work:
+The PR title should reflect the **full contents of the branch**:
 
 ```
-vNEW_VERSION — [primary feature/fix] + [secondary] + [tertiary if notable]
+vLATEST_VERSION — [primary feature/fix] + [secondary] + [tertiary if notable]
 ```
-
-The body should be a complete, accurate summary of everything in the branch:
 
 ```bash
-gh pr edit [number] --title "vNEW_VERSION — [comprehensive title]" --body "$(cat <<'EOF'
+gh pr create --base main --head dev --label "codacy-review" \
+  --title "vLATEST_VERSION — [comprehensive title]" \
+  --body "$(cat <<'EOF'
 ## Summary
 
-- [bullet per feature/fix, grouped logically]
-- [not just commit messages — user-readable descriptions]
+- [bullet per feature/fix, grouped logically by version tag]
+- [user-readable descriptions — not raw commit messages]
 
-## Files Changed
+## Version Tags Included
 
-- [key files, not a complete list — focus on non-obvious ones]
+- vX.X.X — [title]
+- vX.X.X — [title]
+- ...
 
 ## Linear Issues
 

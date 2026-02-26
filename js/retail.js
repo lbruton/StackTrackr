@@ -160,6 +160,18 @@ const loadRetailIntradayData = () => {
 };
 
 const saveRetailIntradayData = () => {
+  // STAK-300: cap windows_24h to last 96 entries per slug (24h of 15-min data)
+  // to prevent localStorage quota overflow on large collections
+  const pruned = {};
+  for (const [slug, entry] of Object.entries(retailIntradayData)) {
+    if (entry && Array.isArray(entry.windows_24h)) {
+      pruned[slug] = { ...entry, windows_24h: entry.windows_24h.slice(-96) };
+    } else {
+      pruned[slug] = entry;
+    }
+  }
+  retailIntradayData = pruned;
+  if (typeof window !== 'undefined') window.retailIntradayData = retailIntradayData;
   try {
     saveDataSync(RETAIL_INTRADAY_KEY, retailIntradayData);
   } catch (err) {
@@ -350,6 +362,10 @@ const syncRetailPrices = async ({ ui = true } = {}) => {
       manifest = ranked[0].manifest;
       _lastSuccessfulApiBase = apiBase;
       window._lastSuccessfulApiBase = apiBase;
+      // Save manifest generated_at for market health dot (STAK-314)
+      if (manifest.generated_at) {
+        try { localStorage.setItem(RETAIL_MANIFEST_TS_KEY, manifest.generated_at); } catch (e) { /* ignore */ }
+      }
       debugLog(`[retail] Using ${apiBase} (generated: ${ranked[0].ts}, ${ranked.length} endpoint(s) reachable)`, "info");
     } else {
       debugLog("[retail] All endpoints unreachable, using fallback slug list", "warn");
@@ -447,6 +463,7 @@ const syncRetailPrices = async ({ ui = true } = {}) => {
     if (ui) syncStatus.textContent = statusMsg;
     debugLog(`[retail] Sync complete: ${statusMsg}`, "info");
     _appendSyncLogEntry({ success: true, coins: successCount, window: manifest.latest_window || null, error: null });
+    if (typeof updateMarketHealthDot === 'function') updateMarketHealthDot();
   } catch (err) {
     debugLog(`[retail] Sync error: ${err.message}`, "warn");
     if (ui) syncStatus.textContent = `Sync failed: ${err.message}`;
@@ -709,7 +726,7 @@ const _buildRetailCard = (slug, meta, priceData) => {
     sortedVendorEntries.forEach(({ key, label, price, score, isAvailable }) => {
       if (!isAvailable) {
         // Render out-of-stock vendor
-        const oosRow = _buildOOSVendorRow(key, lastKnownPrices[key], lastKnownDates[key]);
+        const oosRow = _buildOOSVendorRow(key, lastKnownPrices[key], lastKnownDates[key], slug);
         vendors.appendChild(oosRow);
         return;
       }
@@ -816,16 +833,33 @@ const _buildConfidenceBar = (score) => {
  * @param {string} vendorId - Vendor key (e.g., "apmex")
  * @param {number|null} lastKnownPrice - Last known price before going OOS
  * @param {string|null} lastAvailableDate - Last date item was in stock (YYYY-MM-DD)
+ * @param {string} [slug] - Product slug for product-page link lookup
  * @returns {HTMLElement}
  */
-const _buildOOSVendorRow = (vendorId, lastKnownPrice, lastAvailableDate) => {
+const _buildOOSVendorRow = (vendorId, lastKnownPrice, lastAvailableDate, slug) => {
   const row = document.createElement("div");
   row.className = "retail-vendor-row retail-vendor-row--out-of-stock";
 
   const nameEl = document.createElement("span");
   nameEl.className = "retail-vendor-name text-muted";
   const vendorLabel = RETAIL_VENDOR_NAMES[vendorId] || vendorId;
-  nameEl.textContent = vendorLabel;
+  // Add vendor link (same pattern as in-stock rows)
+  const vendorUrl = (slug && retailProviders && retailProviders[slug] && retailProviders[slug][vendorId])
+    || RETAIL_VENDOR_URLS[vendorId];
+  if (vendorUrl) {
+    const link = document.createElement("a");
+    link.href = "#";
+    link.textContent = vendorLabel;
+    link.className = "retail-vendor-link text-muted";
+    link.addEventListener("click", (e) => {
+      e.preventDefault();
+      const popup = window.open(vendorUrl, `retail_vendor_${vendorId}`, "width=1250,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no");
+      if (!popup) window.open(vendorUrl, "_blank");
+    });
+    nameEl.appendChild(link);
+  } else {
+    nameEl.textContent = vendorLabel;
+  }
 
   const priceEl = document.createElement("span");
   priceEl.className = "retail-vendor-price";
@@ -1031,6 +1065,24 @@ const startRetailBackgroundSync = () => {
   // Set up periodic re-sync while the page is open
   _retailSyncIntervalId = setInterval(_runSilentSync, RETAIL_POLL_INTERVAL_MS);
 };
+
+/**
+ * Updates the #headerMarketDot color based on market manifest generated_at age.
+ * Green: < 60 min, Orange: 60 min – 24 hr, Red: > 24 hr or no data.
+ */
+const updateMarketHealthDot = () => {
+  const dot = safeGetElement('headerMarketDot');
+  if (!dot.classList) return;
+  dot.className = 'cloud-sync-dot header-cloud-dot';
+  let ts = null;
+  try { ts = localStorage.getItem(RETAIL_MANIFEST_TS_KEY); } catch (e) { /* ignore */ }
+  if (!ts) {
+    dot.classList.add('header-cloud-dot--red');
+    return;
+  }
+  dot.classList.add(`header-cloud-dot${getHealthStatusClass(ts)}`);
+};
+window.updateMarketHealthDot = updateMarketHealthDot;
 
 // ---------------------------------------------------------------------------
 // Global exposure

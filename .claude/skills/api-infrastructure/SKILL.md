@@ -11,11 +11,10 @@ All feeds served from `lbruton/StakTrakrApi` `main` branch via GitHub Pages at `
 
 | Feed | File | Poller | Threshold |
 |------|------|--------|-----------|
-| **Market prices** | `data/api/manifest.json` | Fly.io `staktrakr` cron (`*/30 min`) | 30 min |
-| **Spot prices** | `data/hourly/YYYY/MM/DD/HH.json` | `spot-poller.yml` GHA (`:05`, `:20`, `:35`, `:50`/hr) | 20 min |
-| **Spot prices (15-min)** | `data/15min/YYYY/MM/DD/HHMM.json` | `spot-poller.yml` GHA (`:05/:20/:35/:50`) | 20 min |
-| **Goldback** | `data/api/goldback-spot.json` | Fly.io `staktrakr` cron (daily 17:01 UTC) | 25h (info only) |
-| **Turso** | `price_snapshots` table | retail-poller only | internal write store |
+| **Market prices** | `data/api/manifest.json` | Fly.io `run-local.sh` + `run-publish.sh` | 30 min |
+| **Spot prices** | `data/hourly/YYYY/MM/DD/HH.json` | Fly.io `run-spot.sh` cron (`5,20,35,50 * * * *`) | 75 min |
+| **Goldback** | `data/api/goldback-spot.json` | Fly.io via `goldback-g1` coin in `run-local.sh` | 25h (info only) |
+| **Turso** | `price_snapshots` table | Dual-poller write-through (Fly.io `POLLER_ID=api` + home VM `POLLER_ID=home`). Home VM: `ssh -T homepoller` — see `homepoller-ssh` skill | internal |
 
 **Critical:** `spot-history-YYYY.json` is a **seed file** (noon UTC daily) — never use it for freshness checks. Live spot data is always in `data/hourly/`.
 
@@ -23,11 +22,12 @@ All feeds served from `lbruton/StakTrakrApi` `main` branch via GitHub Pages at `
 
 ## Fly.io Container (`staktrakr`)
 
-- **App:** `staktrakr` — region `iad`, always-on (min 1 machine, auto-stop off)
-- **Config:** `devops/retail-poller/fly.toml` + `Dockerfile`
-- **Runs:** Firecrawl + Playwright + retail-poller cron + goldback cron + serve.js
-- **NOT spot prices** — spot is pure GHA, no Docker, no Fly
-- **Deploy:** `cd devops/retail-poller && fly deploy`
+- **App:** `staktrakr` — region `dfw`, 4096MB RAM, 4 shared CPUs
+- **Config:** `StakTrakrApi/devops/fly-poller/fly.toml` + `Dockerfile` — **not in the StakTrakr repo**
+- **Runs:** Firecrawl + Playwright + Redis + RabbitMQ + PostgreSQL + retail cron + spot cron + goldback + serve.js
+- **Spot prices run here** — `run-spot.sh` at `5,20,35,50 * * * *` (NOT GHA)
+- **Deploy:** From `lbruton/StakTrakrApi` repo: `cd devops/fly-poller && fly deploy`
+- **NEVER run `fly deploy` from the StakTrakr or stakscrapr repos**
 - **Logs:** `fly logs --app staktrakr`
 - **SSH:** `fly ssh console --app staktrakr`
 
@@ -37,7 +37,7 @@ All feeds served from `lbruton/StakTrakrApi` `main` branch via GitHub Pages at `
 
 | Workflow | Repo | Schedule | Purpose |
 |----------|------|----------|---------|
-| `spot-poller.yml` | `StakTrakr` | `:05`, `:20`, `:35`, `:50` every hour | Python → MetalPriceAPI → `data/hourly/` |
+| `spot-poller.yml` | `StakTrakr` | **RETIRED 2026-02-23** — `workflow_dispatch` only | Was Python→MetalPriceAPI; now Fly.io `run-spot.sh` |
 | `Merge Poller Branches` | `StakTrakrApi` | `*/15 min` | Merges `api` → `main` → triggers GH Pages |
 
 ---
@@ -50,9 +50,8 @@ Turso is a free-tier cloud libSQL database — internal to the retail poller. NO
 - **Credentials:** `TURSO_DATABASE_URL` + `TURSO_AUTH_TOKEN` (Infisical)
 - **Table:** `price_snapshots` — one row per scrape attempt, per vendor, per 15-min window
 - **Used by:** `price-extract.js`, `extract-vision.js`, `api-export.js` (retail-poller only)
-- **NOT used by:** spot-poller (Python GHA), goldback-scraper
+- **NOT used by:** spot-poller (Python, writes to files directly — see STAK-331)
 - **Free tier:** zero cost, zero ops — no action needed
-- `prices.db` is a read-only SQLite snapshot exported to StakTrakrApi each cycle (offline use only)
 
 ---
 
@@ -61,12 +60,20 @@ Turso is a free-tier cloud libSQL database — internal to the retail poller. NO
 | Location | What to update |
 |----------|---------------|
 | `js/api-health.js` | Stale thresholds, feed URLs, `_normalizeTs` logic |
-| `docs/devops/api-infrastructure-runbook.md` | Architecture, per-feed details, diagnosis commands, Turso section if schema or credentials change |
 | `CLAUDE.md` API Infrastructure table | Feed/threshold/healthy-check summary |
-| Notion — **API Infrastructure** page | Human-readable runbook (sync from markdown) |
-| Notion — **CI/CD & Deployment** page | GHA workflow table if workflows change |
-| Notion — **Fly.io — All-in-One Container** page | If Fly config, crons, or VM spec changes |
+| StakTrakrWiki (single source of truth): | |
+| — `health.md` | Health checks, stale thresholds, diagnosis commands |
+| — `fly-container.md` | Fly config, crons, VM spec, GHA workflow table |
+| — `rest-api-reference.md` | Endpoint map, schemas, confidence tiers |
+| — `turso-schema.md` | Database tables, indexes, key queries |
+| — `cron-schedule.md` | Full cron timeline |
+| — `spot-pipeline.md` | Spot poller architecture |
+| — `goldback-pipeline.md` | Per-state slugs, denomination generation |
+| — `retail-pipeline.md` | Dual-poller, T1–T5 resilience |
 | `lbruton/StakTrakrApi` `README.md` | If endpoints, branches, or directory structure changes |
+
+> **Lookup:** Pull wiki → index → search via `mcp__claude-context__search_code` with `path: /Volumes/DATA/GitHub/StakTrakrWiki`.
+> **Deprecated:** `docs/devops/api-infrastructure-runbook.md` — do not update, will be deleted.
 
 ---
 
@@ -110,22 +117,12 @@ EOF
 
 ---
 
-## Active Issues (2026-02-22)
+## Deprecated Sources — Do NOT Update
 
-| Issue | Linear | Status |
-|-------|--------|--------|
-| Firecrawl cloud HTTP 402 — credits exhausted | STAK-268 | Open |
-| Goldback stale ~39h | STAK-269 | Open |
+| Source | Status |
+|--------|--------|
+| Notion infrastructure pages | Deprecated 2026-02-25 — do not update |
+| `docs/devops/api-infrastructure-runbook.md` | Deprecated — will be deleted after next wiki audit |
 
----
-
-## Notion Pages (Infrastructure WIKI)
-
-All under **StakTrakr — Infrastructure** (parent page ID `31090430-390b-81fe-bba2-e6e0d28f181c`):
-
-| Page | Notion ID | Keep in sync with |
-|------|-----------|-------------------|
-| API Infrastructure | `31090430-390b-811b-821b-cd6388650fa5` | `docs/devops/api-infrastructure-runbook.md` |
-| Fly.io — All-in-One Container | `31090430-390b-81d2-abb4-c471d25120cf` | `devops/retail-poller/fly.toml` + `Dockerfile` |
-| CI/CD & Deployment | `31090430-390b-8122-9e0f-c2f1dd1891e2` | `.github/workflows/` |
-| Secrets & Keys | `31090430-390b-8116-8384-ccd867bf54a2` | GHA secrets + Infisical |
+**StakTrakrWiki is the single source of truth.** All documentation changes go there.
+See `/wiki-search` for how to pull, index, and query the wiki.

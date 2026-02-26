@@ -271,29 +271,29 @@ const buildTagSection = (uuid, numistaTags, onChanged) => {
       const isNumista = numistaSet.has(tag.toLowerCase());
       chip.className = isNumista ? 'tag-chip tag-chip-numista' : 'tag-chip tag-chip-custom';
       chip.textContent = tag;
-      chip.title = isNumista ? `Numista tag: ${tag}` : `Custom tag: ${tag} (click × to remove)`;
+      chip.title = isNumista ? `Numista tag: ${tag} (click × to remove)` : `Custom tag: ${tag} (click × to remove)`;
 
-      if (!isNumista) {
-        const removeBtn = document.createElement('span');
-        removeBtn.className = 'tag-chip-remove';
-        removeBtn.textContent = '\u00d7';
-        removeBtn.setAttribute('role', 'button');
-        removeBtn.setAttribute('tabindex', '0');
-        removeBtn.setAttribute('aria-label', `Remove tag ${tag}`);
-        removeBtn.onclick = (e) => {
-          e.stopPropagation();
-          removeItemTag(uuid, tag);
-          renderTags();
-          if (typeof onChanged === 'function') onChanged();
-        };
-        removeBtn.onkeydown = (e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            removeBtn.onclick(e);
-          }
-        };
-        chip.appendChild(removeBtn);
-      }
+      // STAK-344: All tags are removable — User First, Numista Second.
+      // Once Numista writes a tag it becomes the user's property.
+      const removeBtn = document.createElement('span');
+      removeBtn.className = 'tag-chip-remove';
+      removeBtn.textContent = '\u00d7';
+      removeBtn.setAttribute('role', 'button');
+      removeBtn.setAttribute('tabindex', '0');
+      removeBtn.setAttribute('aria-label', `Remove tag ${tag}`);
+      removeBtn.onclick = (e) => {
+        e.stopPropagation();
+        removeItemTag(uuid, tag);
+        renderTags();
+        if (typeof onChanged === 'function') onChanged();
+      };
+      removeBtn.onkeydown = (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          removeBtn.onclick(e);
+        }
+      };
+      chip.appendChild(removeBtn);
 
       container.appendChild(chip);
     });
@@ -343,7 +343,9 @@ const showTagInput = (container, uuid, numistaTags, renderTags, onChanged) => {
   dropdown.className = 'tag-autocomplete-dropdown';
   dropdown.style.display = 'none';
 
-  const allTags = getAllUniqueTags();
+  const allTags = getAllUniqueTags().filter(t =>
+    typeof window.isBlacklisted === 'function' ? !window.isBlacklisted(t) : true
+  );
 
   const updateDropdown = () => {
     const val = input.value.trim().toLowerCase();

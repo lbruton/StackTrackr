@@ -92,47 +92,13 @@ const bindAppearanceAndHeaderListeners = () => {
     });
   }
 
-  wireStorageToggle('settingsHeaderThemeBtn', 'headerThemeBtnVisible', {
-    defaultVal: false,
-    onApply: () => applyHeaderToggleVisibility(),
-  });
-  wireStorageToggle('settingsHeaderThemeBtn_hdr', 'headerThemeBtnVisible', {
-    defaultVal: false,
-    onApply: () => applyHeaderToggleVisibility(),
-  });
-
+  // settingsHeaderCurrencyBtn still exists in the Currency settings panel
   wireStorageToggle('settingsHeaderCurrencyBtn', 'headerCurrencyBtnVisible', {
     defaultVal: false,
     onApply: () => applyHeaderToggleVisibility(),
   });
-  wireStorageToggle('settingsHeaderCurrencyBtn_hdr', 'headerCurrencyBtnVisible', {
-    defaultVal: false,
-    onApply: () => applyHeaderToggleVisibility(),
-  });
 
-  wireStorageToggle('settingsHeaderTrendBtn', HEADER_TREND_BTN_KEY, {
-    defaultVal: true,
-    onApply: () => applyHeaderToggleVisibility(),
-  });
-  wireStorageToggle('settingsHeaderTrendBtn_hdr', HEADER_TREND_BTN_KEY, {
-    defaultVal: true,
-    onApply: () => applyHeaderToggleVisibility(),
-  });
-
-  wireStorageToggle('settingsHeaderSyncBtn', HEADER_SYNC_BTN_KEY, {
-    defaultVal: true,
-    onApply: () => applyHeaderToggleVisibility(),
-  });
-  wireStorageToggle('settingsHeaderSyncBtn_hdr', HEADER_SYNC_BTN_KEY, {
-    defaultVal: true,
-    onApply: () => applyHeaderToggleVisibility(),
-  });
-
-  wireStorageToggle('settingsHeaderMarketBtn', HEADER_MARKET_BTN_KEY, {
-    defaultVal: true,
-    onApply: () => applyHeaderToggleVisibility(),
-  });
-  wireStorageToggle('settingsHeaderMarketBtn_hdr', HEADER_MARKET_BTN_KEY, {
+  wireStorageToggle('settingsHeaderShowText_hdr', HEADER_BTN_SHOW_TEXT_KEY, {
     defaultVal: true,
     onApply: () => applyHeaderToggleVisibility(),
   });
@@ -186,6 +152,22 @@ const bindAppearanceAndHeaderListeners = () => {
     });
   }
 
+  // Vault header button — opens Settings → System (backup/restore) (STAK-314).
+  const headerVaultBtn = safeGetElement('headerVaultBtn');
+  if (headerVaultBtn) {
+    headerVaultBtn.addEventListener('click', () => {
+      if (typeof showSettingsModal === 'function') showSettingsModal('system');
+    });
+  }
+
+  // Restore header button — opens Settings → System (backup/restore) (STAK-314).
+  const headerRestoreBtn = safeGetElement('headerRestoreBtn');
+  if (headerRestoreBtn) {
+    headerRestoreBtn.addEventListener('click', () => {
+      if (typeof showSettingsModal === 'function') showSettingsModal('system');
+    });
+  }
+
   const ippSelect = getExistingElement('settingsItemsPerPage');
   if (ippSelect) {
     ippSelect.addEventListener('change', () => {
@@ -204,6 +186,7 @@ const bindAppearanceAndHeaderListeners = () => {
       if (typeof updateAllSparklines === 'function') updateAllSparklines();
     });
   }
+
 };
 
 /**
@@ -519,6 +502,28 @@ const bindImageSyncListeners = () => {
     });
   }
 
+  const purgeNumistaUrlsBtn = getExistingElement('purgeNumistaUrlsBtn');
+  if (purgeNumistaUrlsBtn) {
+    purgeNumistaUrlsBtn.addEventListener('click', async () => {
+      const confirmed = await appConfirm(
+        'Remove all Numista CDN image URLs from inventory items?\nUser-uploaded images and pattern rule images are NOT affected.',
+        'Purge Numista URLs',
+      );
+      if (!confirmed) return;
+      const isNumistaUrl = (url) => url && /numista\.com/i.test(url);
+      let purged = 0;
+      for (const item of inventory) {
+        let changed = false;
+        if (isNumistaUrl(item.obverseImageUrl)) { item.obverseImageUrl = ''; changed = true; }
+        if (isNumistaUrl(item.reverseImageUrl)) { item.reverseImageUrl = ''; changed = true; }
+        if (changed) purged++;
+      }
+      if (purged > 0 && typeof saveInventory === 'function') saveInventory();
+      if (typeof renderTable === 'function') renderTable();
+      appAlert(`Purged Numista CDN URLs from ${purged} item(s).`);
+    });
+  }
+
   const syncImageUrlsBtn = getExistingElement('syncImageUrlsBtn');
   if (syncImageUrlsBtn) {
     syncImageUrlsBtn.addEventListener('click', async () => {
@@ -739,7 +744,7 @@ const bindCardAndTableImageListeners = () => {
   // Card style toggle (A/B/C/D chip buttons in Appearance > Inventory)
   const cardStyleToggleEl = getExistingElement('settingsCardStyleToggle');
   if (cardStyleToggleEl) {
-    const savedStyle = localStorage.getItem(CARD_STYLE_KEY) || 'A';
+    const savedStyle = localStorage.getItem(CARD_STYLE_KEY) || 'D';
     cardStyleToggleEl.querySelectorAll('.chip-sort-btn').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.style === savedStyle);
     });
@@ -819,9 +824,7 @@ const bindCardAndTableImageListeners = () => {
     });
   }
 
-  wireStorageToggle('numistaOverrideToggle', 'numistaOverridePersonal', {
-    defaultVal: false,
-  });
+
 };
 
 // ---------------------------------------------------------------------------
@@ -829,38 +832,11 @@ const bindCardAndTableImageListeners = () => {
 // ---------------------------------------------------------------------------
 
 /**
- * Converts a Blob to WebP format.
- * @param {Blob} blob - The source image blob.
- * @param {number} [quality=0.85] - WebP quality (0 to 1).
- * @returns {Promise<Blob|null>} WebP blob or null if failed.
- */
-const blobToWebP = (blob, quality = 0.85) => new Promise((resolve) => {
-  if (!blob) return resolve(null);
-  const url = URL.createObjectURL(blob);
-  const img = new Image();
-  img.onload = () => {
-    URL.revokeObjectURL(url);
-    const canvas = document.createElement('canvas');
-    canvas.width = img.naturalWidth;
-    canvas.height = img.naturalHeight;
-    canvas.getContext('2d').drawImage(img, 0, 0);
-    canvas.toBlob(resolve, 'image/webp', quality);
-  };
-  img.onerror = () => { URL.revokeObjectURL(url); resolve(blob); };
-  img.src = url;
-});
-
-/**
  * Builds a ZIP archive of all exported images.
- * @param {Object} options - Export options.
- * @param {boolean} [options.includeCdn=false] - Whether to include CDN images.
- * @param {Function} [options.onProgress=null] - Progress callback.
  * @returns {Promise<JSZip>} The generated ZIP object.
  */
-const buildImageExportZip = async ({ includeCdn = false, onProgress = null } = {}) => {
+const buildImageExportZip = async () => {
   const zip = new JSZip();
-  const manifest = [];
-  const addedCatalogIds = new Set();
 
   // 1. User images
   const userImages = await imageCache.exportAllUserImages();
@@ -878,99 +854,12 @@ const buildImageExportZip = async ({ includeCdn = false, onProgress = null } = {
   const customRules = NumistaLookup.listCustomRules();
   zip.file('pattern_rules.json', JSON.stringify(customRules, null, 2));
 
-  // 3. Existing coinImages from IndexedDB (always included)
-  const coinImages = await imageCache.exportAllCoinImages();
-  for (const rec of coinImages) {
-    const { catalogId } = rec;
-    addedCatalogIds.add(catalogId);
-    const obvWebP = await blobToWebP(rec.obverse);
-    const revWebP = await blobToWebP(rec.reverse);
-    if (obvWebP) zip.file(`cdn/${catalogId}_obverse.webp`, obvWebP);
-    if (revWebP) zip.file(`cdn/${catalogId}_reverse.webp`, revWebP);
-    const item = typeof inventory !== 'undefined'
-      ? inventory.find(i => BulkImageCache.resolveCatalogId(i) === catalogId)
-      : null;
-    manifest.push({
-      catalogId,
-      uuid: item?.uuid || '',
-      name: item?.name || '',
-      numistaId: item?.numistaId || '',
-      obverseFile: obvWebP ? `cdn/${catalogId}_obverse.webp` : null,
-      reverseFile: revWebP ? `cdn/${catalogId}_reverse.webp` : null,
-    });
-  }
-
-  // 4. Optionally fetch CDN images not yet in IndexedDB
-  if (includeCdn) {
-    const eligible = BulkImageCache.buildEligibleList();
-    const toFetch = eligible.filter(e => !addedCatalogIds.has(e.catalogId));
-    for (let i = 0; i < toFetch.length; i++) {
-      const { item, catalogId } = toFetch[i];
-      if (onProgress) onProgress(i + 1, toFetch.length, catalogId);
-      if (item.obverseImageUrl || item.reverseImageUrl) {
-        await imageCache.cacheImages(catalogId, item.obverseImageUrl || '', item.reverseImageUrl || '');
-      }
-      const rec = await imageCache.getImages(catalogId);
-      if (rec) {
-        const obvWebP = await blobToWebP(rec.obverse);
-        const revWebP = await blobToWebP(rec.reverse);
-        if (obvWebP) zip.file(`cdn/${catalogId}_obverse.webp`, obvWebP);
-        if (revWebP) zip.file(`cdn/${catalogId}_reverse.webp`, revWebP);
-        manifest.push({
-          catalogId,
-          uuid: item.uuid || '',
-          name: item.name || '',
-          numistaId: item.numistaId || '',
-          obverseFile: obvWebP ? `cdn/${catalogId}_obverse.webp` : null,
-          reverseFile: revWebP ? `cdn/${catalogId}_reverse.webp` : null,
-        });
-      }
-      await new Promise(r => setTimeout(r, 1000));
-    }
-  }
-
-  if (manifest.length > 0) {
-    zip.file('manifest.json', JSON.stringify(manifest, null, 2));
-  }
+  // (CDN coinImages export removed — STAK-339 image pipeline simplification)
 
   return zip;
 };
 
-/**
- * Restores CDN images from an imported ZIP file.
- * @param {JSZip} zip - The loaded ZIP object.
- */
-const _restoreCdnFolderFromZip = async (zip) => {
-  const cdnFolder = zip.folder('cdn');
-  if (!cdnFolder) return;
-  const cdnMap = new Map();
-  cdnFolder.forEach((relativePath, zipEntry) => {
-    const match = relativePath.match(/^(.+)_(obverse|reverse)\.webp$/);
-    if (match) {
-      const [, catalogId, side] = match;
-      if (!cdnMap.has(catalogId)) cdnMap.set(catalogId, {});
-      cdnMap.get(catalogId)[side] = zipEntry;
-    }
-  });
-  for (const [catalogId, sides] of cdnMap) {
-    const alreadyCached = await imageCache.hasImages(catalogId);
-    if (alreadyCached) continue;
-    const obverse = sides.obverse ? await sides.obverse.async('blob') : null;
-    const reverse = sides.reverse ? await sides.reverse.async('blob') : null;
-    const item = typeof inventory !== 'undefined'
-      ? inventory.find(i => BulkImageCache.resolveCatalogId(i) === catalogId)
-      : null;
-    await imageCache._put('coinImages', {
-      catalogId,
-      obverse,
-      reverse,
-      obverseUrl: item?.obverseImageUrl || '',
-      reverseUrl: item?.reverseImageUrl || '',
-      cachedAt: Date.now(),
-      size: (obverse?.size || 0) + (reverse?.size || 0),
-    });
-  }
-};
+// (_restoreCdnFolderFromZip removed — STAK-339 image pipeline simplification)
 
 /**
  * Binds listeners for image import/export buttons.
@@ -988,40 +877,11 @@ const bindImageImportExportListeners = () => {
         return;
       }
 
-      const eligibleCount = typeof BulkImageCache !== 'undefined'
-        ? BulkImageCache.buildEligibleList().length
-        : 0;
-      // nosemgrep: javascript.browser.security.insecure-document-method.insecure-document-method
-      const includeCdn = eligibleCount > 0 && await appConfirm(
-        'Download CDN catalog images for offline use?\n\n' +
-        'This fetches images for items with Numista IDs (1 second between each). ' +
-        'Already-cached images are included automatically.',
-        'Export Images',
-      );
-
-      let progressEl = null;
-      if (includeCdn) {
-        progressEl = document.createElement('div');
-        progressEl.id = 'imageCdnProgress';
-        progressEl.innerHTML = '<span id="imageCdnProgressText">Preparing\u2026</span>' +
-          '<progress id="imageCdnProgressBar" value="0" max="1"></progress>';
-        exportBtn.parentNode.insertBefore(progressEl, exportBtn.nextSibling);
-      }
-
       exportBtn.disabled = true;
       exportBtn.textContent = 'Exporting\u2026';
 
       try {
-        const zip = await buildImageExportZip({
-          includeCdn,
-          onProgress: (current, total, catalogId) => {
-            if (!progressEl) return;
-            const textEl = document.getElementById('imageCdnProgressText');
-            const barEl = document.getElementById('imageCdnProgressBar');
-            if (textEl) textEl.textContent = `Fetching ${catalogId} (${current} of ${total})\u2026`;
-            if (barEl) { barEl.value = current; barEl.max = total; }
-          },
-        });
+        const zip = await buildImageExportZip();
 
         const blob = await zip.generateAsync({ type: 'blob' });
         const url = URL.createObjectURL(blob);
@@ -1038,7 +898,6 @@ const bindImageImportExportListeners = () => {
       } finally {
         exportBtn.textContent = 'Export All Images';
         exportBtn.disabled = false;
-        if (progressEl) progressEl.remove();
       }
     });
   }
@@ -1113,9 +972,6 @@ const bindImageImportExportListeners = () => {
           }
         }
 
-        // Restore CDN catalog images
-        await _restoreCdnFolderFromZip(zip);
-
         populateImagesSection();
       } catch (err) {
         console.error('Image import failed:', err);
@@ -1163,6 +1019,7 @@ const renderCloudBackupList = (provider, backups) => {
     const sizeStr = b.size < 1024 ? b.size + ' B' :
       b.size < 1048576 ? (b.size / 1024).toFixed(0) + ' KB' :
         (b.size / 1048576).toFixed(1) + ' MB';
+    const label = b.name.includes(VAULT_IMAGE_FILE_SUFFIX) ? 'Image backup' : 'Inventory backup';
     const safeProvider = sanitizeHtml(provider);
     const safeFilename = sanitizeHtml(b.name);
     return '<div class="cloud-backup-row">' +
@@ -1170,6 +1027,7 @@ const renderCloudBackupList = (provider, backups) => {
         '" data-filename="' + safeFilename + '" data-size="' + b.size + '">' +
         '<span class="cloud-backup-name" title="' + safeFilename + '">' + sanitizeHtml(dateStr) + '</span>' +
         '<span class="cloud-backup-size">' + sanitizeHtml(sizeStr) + '</span>' +
+        '<span class="cloud-backup-type">' + label + '</span>' +
       '</button>' +
       '<button class="cloud-backup-delete-btn" data-provider="' + safeProvider +
         '" data-filename="' + safeFilename + '" title="Delete this backup from Dropbox" aria-label="Delete ' + safeFilename + '">' +
@@ -1184,14 +1042,7 @@ const renderCloudBackupList = (provider, backups) => {
  */
 const bindCloudCacheListeners = () => {
   // Session-only password cache — no toggle needed, auto-caches on first use
-  var idleSelect = safeGetElement('cloudVaultIdleTimeout');
-  if (idleSelect) {
-    idleSelect.addEventListener('change', function () {
-      var key = typeof CLOUD_VAULT_IDLE_TIMEOUT_KEY !== 'undefined' ? CLOUD_VAULT_IDLE_TIMEOUT_KEY : 'cloud_vault_idle_timeout';
-      localStorage.setItem(key, this.value);
-      if (typeof _resetIdleLockTimer === 'function') _resetIdleLockTimer();
-    });
-  }
+  // Idle timeout select removed with cloud-session-cache fieldset redesign
 };
 
 /**
@@ -1248,12 +1099,12 @@ const _cloudRestoreWithCachedPw = async (provider, password, fileBytes) => {
 };
 
 const bindCloudStorageListeners = () => {
-  var panel = document.getElementById('settingsPanel_cloud');
+  var panel = document.getElementById('inventoryCloudSection') || document.getElementById('settingsPanel_cloud');
   if (!panel) return;
 
   bindCloudCacheListeners();
 
-  panel.addEventListener('click', async function (e) {
+  var _cloudBtnHandler = async function (e) {
     var btn = e.target.closest('button');
     if (!btn) return;
     var provider = btn.dataset.provider;
@@ -1288,7 +1139,10 @@ const bindCloudStorageListeners = () => {
             return;
           }
         }
+        // Prefer session cache (hot path), fall back to localStorage so Backup
+        // works after a page reload without re-prompting when password is already stored.
         var cachedPw = typeof cloudGetCachedPassword === 'function' ? cloudGetCachedPassword(provider) : null;
+        if (!cachedPw) cachedPw = localStorage.getItem('cloud_vault_password') || null;
         if (cachedPw) {
           await _cloudBackupWithCachedPw(provider, cachedPw, btn);
           return;
@@ -1353,7 +1207,13 @@ const bindCloudStorageListeners = () => {
         }
       });
     }
-  });
+  };
+
+  panel.addEventListener('click', _cloudBtnHandler);
+
+  // Advanced modal is rendered at body level (outside settingsPanel_cloud), so it needs its own listener.
+  var advancedModal = document.getElementById('cloudSyncAdvancedModal');
+  if (advancedModal) advancedModal.addEventListener('click', _cloudBtnHandler);
 };
 
 /**

@@ -9,6 +9,256 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.32.45] - 2026-02-26
+
+### Added — Filter Anomalous Vendor Price Spikes from 24h Retail Chart
+
+- **Added**: Two-pass anomaly detection in 24h retail chart — temporal spike detection (before/after ±5% neighbor consensus) nulls single-window spikes, cross-vendor median (>40%) as safety net (STAK-325)
+- **Added**: Anomalous table cells shown with line-through styling for visual distinction
+- **Added**: `RETAIL_SPIKE_NEIGHBOR_TOLERANCE` (0.05) and `RETAIL_ANOMALY_THRESHOLD` (0.40) constants for configurable sensitivity
+
+---
+
+## [3.32.44] - 2026-02-25
+
+### Added — Kilo and Pound Weight Units
+
+- **Added**: Kilogram (kg) and pound (lb) weight units in add/edit/bulk-edit dropdowns (STAK-338)
+- **Added**: Eager conversion to troy ounces on save with reverse conversion for display — follows existing gram pattern
+- **Fixed**: Weight tooltip in inventory table now uses explicit unit lookup instead of `weight < 1` heuristic
+- **Fixed**: Card view weight chip now uses `formatWeight()` for correct unit display across all 5 unit types
+
+---
+
+## [3.32.43] - 2026-02-25
+
+### Fixed — Numista Tag Rendering + Per-Item Tag Deletion
+
+- **Fixed**: Numista tags now visible in edit modal — `numistaTagsChips` and `customTagsChips` containers populated with removable tag chips when editing an item (STAK-343)
+- **Fixed**: Tags now display as chips in card view (all 3 card styles A/B/C), matching the existing table inline behavior (STAK-343)
+- **Fixed**: All tags (including Numista-applied) are now removable per-item via `×` button — previously Numista tags were locked as read-only with no delete path (STAK-344)
+
+---
+
+## [3.32.42] - 2026-02-25
+
+### Fixed — Pattern Rule Promotion Bug
+
+- **Fixed**: "Apply to all matching items" now correctly promotes images to a pattern rule even when the item was saved previously — reads from existing per-item IDB record when no pending upload blobs are in memory (STAK-339-followup)
+- **Fixed**: Promoting to a pattern rule now removes the per-item `userImages` IDB record (avoids duplicate storage)
+
+---
+
+## [3.32.41] - 2026-02-25
+
+### Changed — Image Pipeline Simplification
+
+- **Removed**: `coinImages` IDB cache layer — CDN URLs on inventory items are now the sole Numista image source, eliminating the root cause of STAK-309/311/332/333/339 image bugs (STAK-339)
+- **Removed**: `numistaOverridePersonal` settings toggle — no longer meaningful without cached blobs to prioritize
+- **Removed**: CDN blob export/import from ZIP backup — CDN images are URLs, not local blobs
+- **Simplified**: Image resolution cascade is now: user upload → pattern image → CDN URL → placeholder
+
+---
+
+## [3.32.40] - 2026-02-25
+
+### Fixed — Numista Image Race Condition
+
+- **Fixed**: Numista images now appear in table/card views immediately after applying — cacheImages re-renders on completion instead of fire-and-forget (STAK-337)
+
+---
+
+## [3.32.39] - 2026-02-25
+
+### Fixed — Image Bug Fixes + API Health Refresh
+
+- **Fixed**: `resyncCachedEntry()` and bulk image cache no longer write CDN URLs back to inventory items — IDB cache is the correct storage location (STAK-333)
+- **Fixed**: Remove button now clears hidden URL input fields so deleted CDN URLs don't persist on save (STAK-308)
+- **Added**: Per-item "Ignore image pattern rules" checkbox — prevents pattern rule images from reappearing after explicit removal (STAK-332)
+- **Fixed**: Remaining image cross-contamination paths plugged by CDN writeback removal + pattern opt-out (STAK-311)
+- **Fixed**: API health badge no longer shows stale data due to service worker caching — cache-busting query param defeats SW match (STAK-334)
+
+---
+
+## [3.32.38] - 2026-02-25
+
+### Added — Home Poller SSH Skill + Skill Updates
+
+- **Added**: `homepoller-ssh` skill — SSH reference for direct access to the home poller VM (192.168.1.81) via `stakpoller` user with NOPASSWD sudo
+- **Changed**: `repo-boundaries` skill — fixed IP (192.168.1.48 → 192.168.1.81), replaced stakscrapr Claude delegation with SSH commands, corrected tinyproxy port (8889 → 8888)
+- **Changed**: `retail-poller` and `api-infrastructure` skills — added SSH diagnostic references for home VM
+- **Changed**: CLAUDE.md — added home poller SSH quick reference and `homepoller-ssh` to skills list
+
+---
+
+## [3.32.37] - 2026-02-25
+
+### Changed — Wiki-First Documentation Policy
+
+- **Changed**: StakTrakrWiki declared as sole source of truth; Notion infrastructure pages deprecated — do not update them
+- **Changed**: `docs/devops/api-infrastructure-runbook.md` deprecated with banner; wiki pages `health.md`, `fly-container.md`, `spot-pipeline.md` are now authoritative
+- **Added**: `wiki-search` skill for indexing and querying StakTrakrWiki via `mcp__claude-context__search_code` with `path: /Volumes/DATA/GitHub/StakTrakrWiki`
+- **Changed**: `mcp__claude-context__search_code` documented in CLAUDE.md for both code and wiki search
+- **Changed**: `finishing-a-development-branch` skill updated with mandatory Wiki Update Gate before PR creation
+- **Changed**: AGENTS.md, GEMINI.md, copilot-instructions.md updated with Documentation Policy section
+
+---
+
+## [3.32.36] - 2026-02-25
+
+### Fixed — STAK-309/STAK-311: Numista Data Integrity
+
+- **Fixed**: Numista image URLs no longer re-populate after being cleared in the edit form — removed stale `oldItem` fallback from the save path (STAK-309)
+- **Fixed**: Clearing the N# field now also wipes all associated Numista metadata (country, denomination, etc.) instead of silently preserving it (STAK-309)
+- **Fixed**: CDN backfill on page load removed — URLs were being re-applied from catalog cache on every reload, undoing deliberate clears (STAK-309)
+- **Fixed**: Numista images no longer cross-contaminate between items — view modal no longer mutates the live inventory item object (STAK-311)
+- **Changed**: N# field removed from custom pattern rules edit form — Numista lookup for pattern rules is handled via the pattern replacement query, not a direct catalog ID (STAK-306)
+- **Added**: "Purge Numista URLs" button in Settings → Images — removes all CDN image URLs from inventory items without touching user uploads or pattern rule images (STAK-312)
+
+---
+
+## [3.32.35] - 2026-02-24
+
+### Added — STAK-320: Header Buttons Reorder & Apply to Header
+
+- **Added**: Checkbox + arrow reorder table for header buttons in Settings → Appearance → Header Buttons; toggle visibility and reorder with ↑/↓ arrows (STAK-320)
+- **Added**: Order persists to `headerBtnOrder` in localStorage and is applied both to the settings table and the live app header (STAK-320)
+
+---
+
+## [3.32.34] - 2026-02-24
+
+### Added — STAK-324: Force Refresh button
+
+- **Added**: Force Refresh button in Settings → System → App Updates — unregisters all service workers and reloads to fetch the latest version from the network; inventory data is not affected (STAK-324)
+
+---
+
+## [3.32.33] - 2026-02-24
+
+### Fixed — STAK-303: 7-day sparklines straight line on fresh load
+
+- **Fixed**: 7-day sparklines now draw a full curved historical line on fresh load by extending the automatic hourly backfill from 24 h to 7 days when no recent hourly data is present — seed bundle LBMA data can lag ~9 days, leaving the 7-day window empty (STAK-303)
+
+---
+
+## [3.32.32] - 2026-02-24
+
+### Added — STAK-316: Cloud backup file type label
+
+- **Added**: File type label ("Inventory backup" / "Image backup") in each cloud backup row, derived from filename — makes it easy to distinguish between `.stvault` inventory and image backup files at a glance (STAK-316)
+
+---
+
+## [3.32.31] - 2026-02-24
+
+### Removed — STAK-321: Dead code cleanup
+
+- **Removed**: `generateItemDataTable()` from `js/utils.js` — zero call sites remaining after PR #490 removed its only caller `createStorageItemModal` (STAK-321)
+
+---
+
+## [3.32.30] - 2026-02-24
+
+### Added — STAK-314: Menu Enhancements
+
+- **Added**: Trend period labels (e.g. "90d") on spot card headers that update in sync with the trend cycle button (STAK-314)
+- **Added**: Health status dots on Sync and Market header buttons reflecting spot and market data freshness — green < 60 min, orange < 24 hr, red > 24 hr (STAK-314)
+- **Added**: Vault and Restore header buttons (shown by default; can be hidden in Settings → Header Buttons) that open Settings → System for backup/restore (STAK-314)
+- **Added**: Show Text toggle in Settings → Header Buttons that displays icon labels beneath all header buttons (STAK-314)
+- **Added**: `flex-direction: column` layout on header buttons for uniform sizing and show-text mode support (STAK-314)
+
+---
+
+## [3.32.29] - 2026-02-24
+
+### Added — Parallel Agent Workflow Improvements
+
+- **Added**: Claims-array version lock replaces binary lock — multiple agents can now hold concurrent patch versions without blocking each other (supports parallel agent development)
+- **Added**: Brainstorming skill project override with Phase 0 worktree gate — prevents implementation starting outside a `patch/VERSION` worktree
+- **Added**: `devops/version-lock-protocol.md` updated with full claims-array protocol, parallel agent example, and prune-on-read TTL rules
+
+---
+
+## [3.32.27] - 2026-02-23
+
+### Added — Image Storage Expansion — Dynamic Quota, Split Gauge, sharedImageId Foundation (STAK-305)
+
+- **Added**: Dynamic IndexedDB quota via `navigator.storage.estimate()` — replaces hardcoded 50 MB cap; adapts to 60% of available disk space (min 500 MB, max 4 GB)
+- **Added**: Persistent storage request on first photo upload — prevents browser from silently evicting user images
+- **Added**: Split storage gauge in Settings → Images → Storage — separate rows for Your Photos vs. Numista Cache, each with progress bar and byte count
+- **Added**: `sharedImageId` field on `userImages` records and `obverseSharedImageId`/`reverseSharedImageId` on inventory items — foundation for future image reuse across items
+
+---
+
+## [3.32.26] - 2026-02-23
+
+### Fixed — Storage Quota, Chrome Init Race, Numista Data Integrity
+
+- **Fixed**: `retailIntradayData` capped at 96 windows per slug — prevents localStorage quota overflow for users with large collections or many item images (STAK-300)
+- **Fixed**: Chrome initialization race — "Cannot access 'inventory' before initialization" error on page refresh no longer appears (STAK-301)
+- **Fixed**: Numista N# and photos no longer repopulate after being deleted from an item — `syncItem` now respects explicitly-cleared fields (STAK-302)
+- **Fixed**: Numista serial→catalogId mapping cleared on save when N# is removed — stale mappings no longer cause cross-item data bleed (STAK-302)
+
+---
+
+## [3.32.25] - 2026-02-23
+
+### Added — Vendor Price Carry-Forward + OOS Legend Links (STAK-299)
+
+- **Added**: `_forwardFillVendors` — post-bucketing enrichment pass that fills vendor gaps with the most recent known price, annotating each window with `_carriedVendors: Set`
+- **Added**: 24h chart carries forward vendor prices — carried data points render with `~` tooltip prefix and a muted/dashed dataset line; trend glyphs suppressed for carried entries
+- **Added**: "Recent windows" table carries forward vendor prices — gap windows show `~$XX.XX` in muted italic with no trend glyph
+- **Added**: OOS vendors shown in coin detail legend as clickable links — opens product page popup, `opacity: 0.5`, strikethrough last-known price, `OOS` badge in red
+- **Fixed**: Vendor legend was hidden for coins where all vendors are currently OOS — `hasAny` guard now includes availability feed check
+
+---
+
+## [3.32.24] - 2026-02-23
+
+### Fixed — Cloud Sync Reliability
+
+- **Fixed**: Vault-overwrite race condition — debounced startup push could overwrite remote vault during conflict resolution, causing "Keep Remote" to silently discard the other device's changes. Both devices must be on v3.32.24+ for the race to be fully closed.
+- **Fixed**: `getSyncPassword()` fast-path incorrectly gated on a plain localStorage read, breaking Simple-mode migration path on page reload.
+- **Fixed**: Manual Backup button now reads cached localStorage password on page reload — no re-entry required after refresh.
+- **Fixed**: Two bare `pullSyncVault()` calls in conflict modal had no `.catch()` — silent unhandled rejections on no-token pull failures now surface as status indicator errors.
+- **Fixed**: `changeLog` IIFE parse failures now emit `console.warn` instead of silently returning `[]`.
+
+---
+
+## [3.32.23] - 2026-02-23
+
+### Changed — Cloud Settings Redesign + Unified Encryption
+
+- **Changed**: Cloud settings compacted to ≤400px card — Dropbox configuration moved to Advanced sub-modal
+- **Changed**: Unified encryption mode — vault password stored in browser, combined with Dropbox account for zero-knowledge encryption (replaces Simple/Secure toggle)
+- **Fixed**: Action buttons (Disconnect, Backup, Restore) use compact app button style, removed from main card view
+- **Removed**: Encryption mode selector (Simple/Secure radio buttons) — single seamless mode replaces both
+
+---
+
+## [3.32.22] - 2026-02-23
+
+### Fixed — Sync UI Dark-Theme CSS Fix
+
+- **Fixed**: Cloud sync header popover now uses correct dark-theme CSS variables (`--bg-card`, `--border`, `--bg-tertiary`) — previously appeared white/light on dark theme
+- **Fixed**: Mode selector in Settings → Cloud uses correct border and background variables across all themes
+- **Fixed**: Backup warning banner uses transparent amber tint instead of hardcoded light-yellow (`#fff8e6`)
+- **Fixed**: Popover header label uses SVG lock icon matching the app's stroke-icon style
+
+---
+
+## [3.32.21] - 2026-02-23
+
+### Added — Sync UX Overhaul + Simple Mode
+
+- **Added**: "Simple" sync mode — Dropbox account acts as encryption key; no vault password needed on any device
+- **Added**: Mode selector in Settings → Cloud (Simple / Secure) with backup warning before switching modes
+- **Fixed**: Sync password modal no longer auto-opens on page load; replaced with ambient toast + orange header dot
+- **Changed**: Header cloud button is mode-aware — orange-simple reconnects Dropbox; orange (Secure) opens an inline password popover below the header button
+
+---
+
 ## [3.32.20] - 2026-02-23
 
 ### Added — api2 Backup Endpoint

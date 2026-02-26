@@ -226,12 +226,21 @@ const fetchStaktrakr15minRange = async (slotsBack = 96) => {
 
 
 /**
- * Backfills the last 24 hours of hourly spot data from StakTrakr into spotHistory.
+ * Backfills hourly spot data from StakTrakr into spotHistory.
+ * On a fresh load (no recent api-hourly entries), extends to 7 days to populate
+ * the sparkline window — the seed bundle can lag by ~9 days (LBMA data delay),
+ * so 24 h alone is not enough to draw a 7-day sparkline (STAK-303).
+ * On subsequent loads, only backfills the last 24 h for efficiency.
  * Only runs when STAKTRAKR is the primary provider (rank 1) and sync succeeded.
  * @returns {Promise<number>} Count of new entries added
  */
 const backfillStaktrakrHourly = async () => {
-  const { newCount, fetchCount } = await fetchStaktrakrHourlyRange(24);
+  const oneDayAgo = Date.now() - 24 * 3600000;
+  const hasRecentHourly = spotHistory.some(
+    (e) => e.source === 'api-hourly' && new Date(e.timestamp).getTime() >= oneDayAgo
+  );
+  const hoursBack = hasRecentHourly ? 24 : 7 * 24;
+  const { newCount, fetchCount } = await fetchStaktrakrHourlyRange(hoursBack);
   // Track usage per file fetched (each file = 1 API request)
   if (fetchCount > 0) {
     const config = loadApiConfig();
@@ -2480,7 +2489,7 @@ const showProviderInfo = (providerKey) => {
           <li>Keep your API key secure and never share it publicly</li>
         </ul>
       </div>
-      <a class="btn info-docs-btn" href="${provider.documentation}" target="_blank" rel="noopener">
+      <a class="btn info-docs-btn" href="${provider.documentation}" target="_blank" rel="noopener noreferrer">
         📄 ${provider.name} Documentation & Key Management
       </a>
     `;

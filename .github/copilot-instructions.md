@@ -316,6 +316,17 @@ The project uses `ruleset.xml` at the project root. PMD analyzes JavaScript for 
 | `ScopeError` | Variables used outside their declared scope |
 | `GlobalVariable` | Implicit global variable creation (missing `const`/`let`/`var`) |
 
+## Documentation Policy
+
+StakTrakrWiki (`lbruton/StakTrakrWiki`) is the single source of truth for all
+architecture, operational runbooks, and pattern documentation. Do not create
+new markdown documentation in this repo (except `docs/plans/` for planning artifacts).
+
+After any commit that changes behavior, update the relevant wiki page via `gh api`.
+Use `claude-context` to search the wiki: index path `/Volumes/DATA/GitHub/StakTrakrWiki`.
+
+---
+
 ## Review Focus Areas
 
 - **Error handling in async code**: Promise chains should have `.catch()` handlers, especially in service worker code and API calls

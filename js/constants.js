@@ -290,7 +290,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-12 - STACK-38/STACK-31: Responsive card view + mobile layout
  */
 
-const APP_VERSION = "3.32.20";
+const APP_VERSION = "3.32.46";
 
 /**
  * Numista metadata cache TTL: 30 days in milliseconds.
@@ -517,6 +517,12 @@ const RETAIL_SYNC_LOG_KEY = "retailSyncLog";
 /** Retail price availability data (out-of-stock detection) */
 const RETAIL_AVAILABILITY_KEY = "retailAvailability";
 
+/** @constant {number} RETAIL_ANOMALY_THRESHOLD - Max fractional deviation from window median before a vendor price is flagged anomalous (cross-vendor pass) */
+const RETAIL_ANOMALY_THRESHOLD = 0.40;
+
+/** @constant {number} RETAIL_SPIKE_NEIGHBOR_TOLERANCE - Max fractional deviation between before/after prices to consider them a stable neighborhood (temporal pass) */
+const RETAIL_SPIKE_NEIGHBOR_TOLERANCE = 0.05;
+
 /** @constant {string} GOLDBACK_ENABLED_KEY - LocalStorage key for Goldback pricing toggle (STACK-45) */
 const GOLDBACK_ENABLED_KEY = "goldback-enabled";
 
@@ -531,6 +537,12 @@ const GB_ESTIMATE_MODIFIER_KEY = "goldback-estimate-modifier";
 
 /** @constant {number} GB_TO_OZT - Conversion factor: 1 Goldback = 0.001 troy oz 24K gold */
 const GB_TO_OZT = 0.001;
+
+/** @constant {number} KG_TO_OZT - Conversion factor: 1 kilogram = 32.15075 troy ounces */
+const KG_TO_OZT = 32.15075;
+
+/** @constant {number} LB_TO_OZT - Conversion factor: 1 avoirdupois pound = 14.58333 troy ounces */
+const LB_TO_OZT = 14.58333;
 
 /**
  * Standard Goldback denominations with gold content.
@@ -567,8 +579,17 @@ const THEME_KEY = "appTheme";
 /** @constant {string} ACK_DISMISSED_KEY - LocalStorage key for acknowledgment dismissal */
 const ACK_DISMISSED_KEY = "ackDismissed";
 
+/** @constant {string} STORAGE_PERSIST_GRANTED_KEY - LocalStorage key for storage persistence permission grant */
+const STORAGE_PERSIST_GRANTED_KEY = 'storagePersistGranted';
+
+/** @constant {string} IMAGE_ZIP_MANIFEST_VERSION - Version string for the image ZIP export manifest format */
+const IMAGE_ZIP_MANIFEST_VERSION = '1.0';
+
 /** @constant {string} CLOUD_VAULT_IDLE_TIMEOUT_KEY - LocalStorage key for vault password idle lock timeout in minutes (15|30|60|120|0=never) */
 const CLOUD_VAULT_IDLE_TIMEOUT_KEY = "cloud_vault_idle_timeout";
+
+/** App-namespace salt for Simple mode key derivation. Never change — changing invalidates all Simple-mode syncs. */
+const STAKTRAKR_SIMPLE_SALT = '53544b52:53494d504c45:76310000';
 
 /** @constant {string} API_KEY_STORAGE_KEY - LocalStorage key for API provider information */
 const API_KEY_STORAGE_KEY = "metalApiConfig";
@@ -651,6 +672,18 @@ const HEADER_SYNC_BTN_KEY = "headerSyncBtnVisible";
 /** @constant {string} HEADER_MARKET_BTN_KEY - LocalStorage key for header market button visibility */
 const HEADER_MARKET_BTN_KEY = "headerMarketBtnVisible";
 
+/** @constant {string} HEADER_VAULT_BTN_KEY - LocalStorage key for header vault button visibility */
+const HEADER_VAULT_BTN_KEY = "headerVaultBtnVisible";
+
+/** @constant {string} HEADER_RESTORE_BTN_KEY - LocalStorage key for header restore button visibility */
+const HEADER_RESTORE_BTN_KEY = "headerRestoreBtnVisible";
+
+/** @constant {string} HEADER_BTN_SHOW_TEXT_KEY - LocalStorage key for show-text-under-icons toggle */
+const HEADER_BTN_SHOW_TEXT_KEY = "headerBtnShowText";
+
+/** @constant {string} RETAIL_MANIFEST_TS_KEY - LocalStorage key for market manifest generated_at timestamp */
+const RETAIL_MANIFEST_TS_KEY = "retailManifestGeneratedAt";
+
 // =============================================================================
 // IMAGE PROCESSOR DEFAULTS (STACK-95)
 // =============================================================================
@@ -669,6 +702,9 @@ const IMAGE_MAX_BYTES = 512000;
  * @constant {string[]}
  */
 const VAULT_FILE_EXTENSION = '.stvault';
+
+/** Filename suffix for the companion image vault file exported alongside a backup */
+const VAULT_IMAGE_FILE_SUFFIX = '-images';
 
 // =============================================================================
 // CLOUD AUTO-SYNC CONSTANTS (STAK-149)
@@ -764,6 +800,10 @@ const ALLOWED_STORAGE_KEYS = [
   HEADER_TREND_BTN_KEY,       // boolean string: "true"/"false" — header trend button visibility
   HEADER_SYNC_BTN_KEY,        // boolean string: "true"/"false" — header sync button visibility
   HEADER_MARKET_BTN_KEY,      // boolean string: "true"/"false" — header market button visibility
+  HEADER_VAULT_BTN_KEY,       // boolean string: null=show, "false"=hide, "true"=show — vault button visibility
+  HEADER_RESTORE_BTN_KEY,     // boolean string: "true"/"false" — restore button visibility
+  HEADER_BTN_SHOW_TEXT_KEY,   // boolean string: "true"/"false" — show text labels under header icons
+  RETAIL_MANIFEST_TS_KEY,     // string ISO timestamp — market manifest generated_at cache
   "layoutVisibility",         // JSON object: { spotPrices, totals, search, table } (STACK-54) — legacy, migrated to layoutSectionConfig
   "layoutSectionConfig",      // JSON array: ordered section config [{ id, label, enabled }] (STACK-54)
   LAST_VERSION_CHECK_KEY,     // timestamp: last remote version check (STACK-67)
@@ -776,7 +816,6 @@ const ALLOWED_STORAGE_KEYS = [
   "numistaViewFields",               // view modal Numista field visibility config (JSON object)
   TIMEZONE_KEY,                        // string: "auto" | "UTC" | IANA zone (STACK-63)
   "viewModalSectionConfig",            // JSON array: ordered view modal section config [{ id, label, enabled }]
-  "numistaOverridePersonal",           // boolean string: "true"/"false" — Numista API overrides user pattern images
   "tableImagesEnabled",                // boolean string: "true"/"false" — show thumbnail images in table rows
   "tableImageSides",                   // string: "both"|"obverse"|"reverse" — which sides to show in table (STAK-118)
   CARD_STYLE_KEY,                        // string: "A"|"B"|"C" — card view style (STAK-118)
@@ -802,6 +841,12 @@ const ALLOWED_STORAGE_KEYS = [
   "cloud_sync_cursor",                         // Dropbox rev string: for efficient change detection
   "cloud_sync_override_backup",                // JSON: { timestamp, itemCount, appVersion, data: {...} } — pre-pull local snapshot
   CLOUD_VAULT_IDLE_TIMEOUT_KEY,                // number string: vault password idle lock timeout in minutes (15|30|60|120|0=never)
+  "cloud_sync_mode",                           // DEPRECATED: kept for migration only — will be removed after v3.33
+  "cloud_dropbox_account_id",                  // string: Dropbox account_id for Simple mode key derivation
+  "cloud_vault_password",                      // string: user vault password stored for persistent unlock
+  STORAGE_PERSIST_GRANTED_KEY,                         // boolean string: "true"/"false" — storage persistence grant flag
+  "headerBtnOrder",                                    // JSON array: header button card order (STAK-320)
+  "headerAboutBtnVisible",                             // boolean string: "true"/"false" — about button visibility (STAK-320)
 ];
 
 // =============================================================================
@@ -1635,6 +1680,7 @@ if (typeof window !== "undefined") {
   // Multi-currency support (STACK-50)
   window.SUPPORTED_CURRENCIES = SUPPORTED_CURRENCIES;
   window.CLOUD_VAULT_IDLE_TIMEOUT_KEY = CLOUD_VAULT_IDLE_TIMEOUT_KEY;
+  window.STAKTRAKR_SIMPLE_SALT = STAKTRAKR_SIMPLE_SALT;
   window.DISPLAY_CURRENCY_KEY = DISPLAY_CURRENCY_KEY;
   window.EXCHANGE_RATES_KEY = EXCHANGE_RATES_KEY;
   window.EXCHANGE_RATE_API_URL = EXCHANGE_RATE_API_URL;
@@ -1642,6 +1688,16 @@ if (typeof window !== "undefined") {
   // STAK-222: API pipeline cache keys
   window.NUMISTA_RESPONSE_CACHE_KEY = NUMISTA_RESPONSE_CACHE_KEY;
   window.PCGS_RESPONSE_CACHE_KEY = PCGS_RESPONSE_CACHE_KEY;
+  // Image storage expansion (STAK-image-storage)
+  window.STORAGE_PERSIST_GRANTED_KEY = STORAGE_PERSIST_GRANTED_KEY;
+  window.IMAGE_ZIP_MANIFEST_VERSION = IMAGE_ZIP_MANIFEST_VERSION;
+  // Header button visibility keys (STAK-314)
+  window.HEADER_VAULT_BTN_KEY = HEADER_VAULT_BTN_KEY;
+  window.HEADER_RESTORE_BTN_KEY = HEADER_RESTORE_BTN_KEY;
+  window.HEADER_BTN_SHOW_TEXT_KEY = HEADER_BTN_SHOW_TEXT_KEY;
+  window.RETAIL_MANIFEST_TS_KEY = RETAIL_MANIFEST_TS_KEY;
+  window.RETAIL_ANOMALY_THRESHOLD = RETAIL_ANOMALY_THRESHOLD;
+  window.RETAIL_SPIKE_NEIGHBOR_TOLERANCE = RETAIL_SPIKE_NEIGHBOR_TOLERANCE;
 }
 
 // Expose APP_VERSION globally for non-module usage

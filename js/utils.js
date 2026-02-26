@@ -764,6 +764,38 @@ const gramsToOzt = (grams) => grams / 31.1035;
 const oztToGrams = (ozt) => ozt * 31.1035;
 
 /**
+ * Converts kilograms to troy ounces
+ *
+ * @param {number} kg - Weight in kilograms
+ * @returns {number} Weight in troy ounces
+ */
+const kgToOzt = (kg) => kg * KG_TO_OZT;
+
+/**
+ * Converts troy ounces to kilograms
+ *
+ * @param {number} ozt - Weight in troy ounces
+ * @returns {number} Weight in kilograms
+ */
+const oztToKg = (ozt) => ozt / KG_TO_OZT;
+
+/**
+ * Converts avoirdupois pounds to troy ounces
+ *
+ * @param {number} lb - Weight in pounds
+ * @returns {number} Weight in troy ounces
+ */
+const lbToOzt = (lb) => lb * LB_TO_OZT;
+
+/**
+ * Converts troy ounces to avoirdupois pounds
+ *
+ * @param {number} ozt - Weight in troy ounces
+ * @returns {number} Weight in pounds
+ */
+const oztToLb = (ozt) => ozt / LB_TO_OZT;
+
+/**
  * Formats a weight in troy ounces to either grams or ounces.
  * If weightUnit is 'gb', displays as Goldback denomination (no gram auto-conversion).
  *
@@ -777,6 +809,12 @@ const formatWeight = (ozt, weightUnit) => {
     return `${(w % 1 === 0) ? w : w.toFixed(1)} gb`;
   }
   const weight = parseFloat(ozt);
+  if (weightUnit === 'kg') {
+    return `${oztToKg(weight).toFixed(4)} kg`;
+  }
+  if (weightUnit === 'lb') {
+    return `${oztToLb(weight).toFixed(4)} lb`;
+  }
   if (weightUnit === 'g') {
     return `${oztToGrams(weight).toFixed(2)} g`;
   }
@@ -1789,97 +1827,6 @@ const getStorageItemDescription = (key) => {
   };
   
   return descriptions[key] || 'Application data stored in browser localStorage';
-};
-
-/**
- * Creates modal HTML for detailed item view
- */
-const createStorageItemModal = (item) => {
-  const modalId = `modal-${item.key}`;
-  
-  return `
-    <div id="${modalId}" class="storage-modal" style="display: none;">
-        <div class="modal-content-large">
-            <div class="modal-header">
-                <h3>${getStorageItemDisplayName(item.key)} Details</h3>
-                <button class="modal-close" onclick="toggleModal('${item.key}')">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="modal-stats">
-                    <div class="stat-item">
-                        <span class="stat-label">Size:</span>
-                        <span class="stat-value">${item.size.toFixed(2)} KB</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Type:</span>
-                        <span class="stat-value">${item.type}</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Records:</span>
-                        <span class="stat-value">${item.recordCount}</span>
-                    </div>
-                </div>
-                
-                ${generateItemDataTable(item)}
-            </div>
-        </div>
-    </div>
-  `;
-};
-
-/**
- * Generates data table for storage item
- */
-const generateItemDataTable = (item) => {
-  if (!item.parsedData) {
-    return `<div class="data-preview"><strong>Raw Data:</strong><pre>${item.value}</pre></div>`;
-  }
-  
-  if (Array.isArray(item.parsedData)) {
-    if (item.parsedData.length === 0) {
-      return '<p class="no-data">No records found</p>';
-    }
-    
-    // For inventory data, create a proper table
-    if (item.key === 'precious-metals-inventory') {
-      const headers = Object.keys(item.parsedData[0] || {});
-      return `
-        <div class="data-table-container">
-          <table class="data-table">
-            <thead>
-              <tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>
-            </thead>
-            <tbody>
-              ${item.parsedData.slice(0, 50).map(record => 
-                `<tr>${headers.map(h => `<td>${sanitizeHtml(record[h]?.toString() || '')}</td>`).join('')}</tr>`
-              ).join('')}
-            </tbody>
-          </table>
-          ${item.parsedData.length > 50 ? `<p class="truncated">Showing first 50 of ${item.parsedData.length} records</p>` : ''}
-        </div>
-      `;
-    }
-    
-    // For other arrays, show a summary
-    return `
-      <div class="array-summary">
-        <p><strong>Array with ${item.parsedData.length} items</strong></p>
-        <div class="data-preview"><pre>${JSON.stringify(item.parsedData.slice(0, 3), null, 2)}${item.parsedData.length > 3 ? '\n...and ' + (item.parsedData.length - 3) + ' more items' : ''}</pre></div>
-      </div>
-    `;
-  }
-  
-  if (typeof item.parsedData === 'object') {
-    const keys = Object.keys(item.parsedData);
-    return `
-      <div class="object-summary">
-        <p><strong>Object with ${keys.length} properties</strong></p>
-        <div class="data-preview"><pre>${JSON.stringify(item.parsedData, null, 2)}</pre></div>
-      </div>
-    `;
-  }
-  
-  return `<div class="data-preview"><pre>${JSON.stringify(item.parsedData, null, 2)}</pre></div>`;
 };
 
 /**
@@ -3034,7 +2981,8 @@ function openEbayBuySearch(searchTerm) {
   const encodedTerm = encodeURIComponent(cleanTerm);
   // eBay active listings URL — items currently for sale, sorted by best match
   const ebayUrl = `https://www.ebay.com/sch/i.html?_from=R40&_nkw=${encodedTerm}&_sacat=0&LH_BIN=1&_sop=12`;
-  window.open(ebayUrl, `ebay_buy_${Date.now()}`, 'width=1250,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no');
+  const popup = window.open(ebayUrl, `ebay_buy_${Date.now()}`, 'width=1250,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no');
+  if (popup) { popup.opener = null; popup.focus(); }
 }
 
 function openEbaySoldSearch(searchTerm) {
@@ -3043,7 +2991,8 @@ function openEbaySoldSearch(searchTerm) {
   const encodedTerm = encodeURIComponent(cleanTerm);
   // eBay sold listings URL — completed sales, sorted by most recent
   const ebayUrl = `https://www.ebay.com/sch/i.html?_from=R40&_nkw=${encodedTerm}&_sacat=0&LH_Sold=1&LH_Complete=1&_sop=13`;
-  window.open(ebayUrl, `ebay_sold_${Date.now()}`, 'width=1250,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no');
+  const popup = window.open(ebayUrl, `ebay_sold_${Date.now()}`, 'width=1250,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no');
+  if (popup) { popup.opener = null; popup.focus(); }
 }
 
 
@@ -3076,6 +3025,23 @@ const setButtonLoading = (btn, isLoading, loadingText = '') => {
     btn.disabled = false;
   }
 };
+
+/**
+ * Returns CSS modifier class for a health-status dot based on timestamp age.
+ * Handles both ISO and "YYYY-MM-DD HH:MM:SS" (local-stripped) formats.
+ * @param {string|null} timestamp
+ * @returns {'--green'|'--orange'|'--red'}
+ */
+function getHealthStatusClass(timestamp) {
+  if (!timestamp) return '--red';
+  const normalized = timestamp.replace(' ', 'T') +
+    (timestamp.includes('Z') || timestamp.includes('+') ? '' : 'Z');
+  const ageMin = Math.floor((Date.now() - new Date(normalized).getTime()) / 60000);
+  if (ageMin < 60) return '--green';
+  if (ageMin < 1440) return '--orange';
+  return '--red';
+}
+window.getHealthStatusClass = getHealthStatusClass;
 
 if (typeof window !== 'undefined') {
   window.getContrastColor = getContrastColor;

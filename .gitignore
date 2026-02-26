@@ -3,17 +3,28 @@
 .AppleDouble
 .LSOverride
 
-# Claude Code — 4 project-specific skills tracked in git;
+# Claude Code — project-specific skills tracked in git;
 # user-level skills live in ~/.claude/skills/ (outside repo)
 .claude/*
 !.claude/skills/
 .claude/skills/*
 !.claude/skills/coding-standards/
+!.claude/skills/finishing-a-development-branch/
 !.claude/skills/markdown-standards/
 !.claude/skills/release/
 !.claude/skills/seed-sync/
 !.claude/skills/ui-design/
 !.claude/skills/api-infrastructure/
+!.claude/skills/wiki-update/
+!.claude/skills/wiki-audit/
+!.claude/skills/wiki-sweep/
+!.claude/skills/wiki-search/
+!.claude/skills/ship/
+!.claude/skills/brainstorming/
+!.claude/skills/retail-poller/
+!.claude/skills/retail-provider-fix/
+!.claude/skills/repo-boundaries/
+!.claude/skills/homepoller-ssh/
 .claude/commands/
 .mcp.json
 SPRINT.md
@@ -33,6 +44,7 @@ generate-seed-data.py
 !.Jules/*.md
 verification/
 modify_*.py
+verify_*.py
 
 # Node modules (if added in future)
 node_modules/
