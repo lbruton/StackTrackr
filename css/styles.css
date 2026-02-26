@@ -8827,6 +8827,35 @@ th {
   font-weight: 600;
 }
 
+.numista-result-id-link {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.numista-result-id-link:hover {
+  color: color-mix(in srgb, var(--primary) 75%, white 25%);
+}
+
+.numista-result-id-link:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+.numista-result-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
 /* Field picker area */
 .numista-field-picker {
   padding: 0.5rem 0;
