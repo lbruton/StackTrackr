@@ -201,6 +201,53 @@ const _forwardFillVendors = (bucketed) => {
 };
 
 /**
+ * Flags anomalous vendor prices using cross-vendor median consensus.
+ * For each 30-min window with 3+ active vendors, any vendor deviating more than
+ * RETAIL_ANOMALY_THRESHOLD from the median is flagged. Flagged prices are nulled
+ * in the returned copy so Chart.js gaps over them via spanGaps.
+ * Pure function — input array is not mutated.
+ * @param {Array} bucketed - Chronologically sorted windows from _forwardFillVendors
+ * @returns {Array} New array with _anomalousVendors: Set on each window
+ */
+const _flagAnomalies = (bucketed) => {
+  if (!bucketed || bucketed.length === 0) return [];
+  const threshold = typeof RETAIL_ANOMALY_THRESHOLD !== 'undefined' ? RETAIL_ANOMALY_THRESHOLD : 0.40;
+  return bucketed.map((w) => {
+    const vendors = w.vendors ? { ...w.vendors } : {};
+    const anomalousVendors = new Set();
+    // Collect non-null vendor prices
+    const entries = Object.entries(vendors).filter(([, p]) => p != null);
+    if (entries.length < 3) {
+      return { ...w, vendors, _anomalousVendors: anomalousVendors };
+    }
+    // Compute median
+    const prices = entries.map(([, p]) => p).sort((a, b) => a - b);
+    const mid = Math.floor(prices.length / 2);
+    const median = prices.length % 2 === 0 ? (prices[mid - 1] + prices[mid]) / 2 : prices[mid];
+    if (median === 0) {
+      return { ...w, vendors, _anomalousVendors: anomalousVendors };
+    }
+    // Flag outliers
+    for (const [vendorId, price] of entries) {
+      if (Math.abs(price - median) / median > threshold) {
+        anomalousVendors.add(vendorId);
+      }
+    }
+    // Guard: if all vendors would be flagged, skip flagging entirely
+    if (anomalousVendors.size >= entries.length) {
+      return { ...w, vendors, _anomalousVendors: new Set() };
+    }
+    // Preserve original prices for table display, null for chart gap rendering
+    const anomalyOriginals = {};
+    for (const vendorId of anomalousVendors) {
+      anomalyOriginals[vendorId] = vendors[vendorId];
+      vendors[vendorId] = null;
+    }
+    return { ...w, vendors, _anomalousVendors: anomalousVendors, _anomalyOriginals: anomalyOriginals };
+  });
+};
+
+/**
  * Renders the intraday data table for a given slug.
  * Accepts an optional pre-bucketed array; if omitted, re-buckets from retailIntradayData.
  * Slices to the _intradayRowCount most recent rows.
@@ -215,7 +262,8 @@ const _buildIntradayTable = (slug, bucketed) => {
   if (!bucketed) {
     const intraday = typeof retailIntradayData !== "undefined" ? retailIntradayData[slug] : null;
     const windows = intraday && Array.isArray(intraday.windows_24h) ? intraday.windows_24h : [];
-    bucketed = _forwardFillVendors(_bucketWindows(windows));
+    const filled = _forwardFillVendors(_bucketWindows(windows));
+    try { bucketed = _flagAnomalies(filled); } catch (e) { console.warn('_flagAnomalies failed, using unfiltered data', e); bucketed = filled; }
   }
 
   // Collect the vendor set across all bucketed entries
@@ -258,10 +306,16 @@ const _buildIntradayTable = (slug, bucketed) => {
       // Per-vendor (or median/low) cells — each gets its own trend glyph + color
       if (useVendorLines) {
         activeVendors.forEach((v) => {
+          const isAnomalous = w._anomalousVendors && w._anomalousVendors.has(v);
+          const anomalyVal = isAnomalous && w._anomalyOriginals ? w._anomalyOriginals[v] : null;
           const isCarried = w._carriedVendors && w._carriedVendors.has(v);
           const currVal = w.vendors && w.vendors[v] != null ? w.vendors[v] : null;
           const td = document.createElement("td");
-          if (currVal == null) {
+          if (isAnomalous && anomalyVal != null) {
+            td.style.textDecoration = 'line-through';
+            td.style.opacity = '0.45';
+            td.textContent = fmt(anomalyVal);
+          } else if (currVal == null) {
             td.textContent = '\u2014';
           } else if (isCarried) {
             td.className = 'text-muted fst-italic';
@@ -319,7 +373,9 @@ const _buildIntradayChart = (slug) => {
 
   const intraday = typeof retailIntradayData !== "undefined" ? retailIntradayData[slug] : null;
   const windows = intraday && Array.isArray(intraday.windows_24h) ? intraday.windows_24h : [];
-  const bucketed = _forwardFillVendors(_bucketWindows(windows));
+  const filled = _forwardFillVendors(_bucketWindows(windows));
+  let bucketed;
+  try { bucketed = _flagAnomalies(filled); } catch (e) { console.warn('_flagAnomalies failed, using unfiltered data', e); bucketed = filled; }
 
   if (noDataEl) noDataEl.style.display = bucketed.length < 2 ? "" : "none";
   if (canvas) canvas.style.display = bucketed.length >= 2 ? "" : "none";
@@ -646,6 +702,7 @@ if (typeof window !== "undefined") {
   window._switchRetailViewTab = _switchRetailViewTab;
   window._bucketWindows = _bucketWindows;
   window._forwardFillVendors = _forwardFillVendors;
+  window._flagAnomalies = _flagAnomalies;
   window._buildIntradayTable = _buildIntradayTable;
 }
 

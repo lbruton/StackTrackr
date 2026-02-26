@@ -290,7 +290,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-12 - STACK-38/STACK-31: Responsive card view + mobile layout
  */
 
-const APP_VERSION = "3.32.44";
+const APP_VERSION = "3.32.45";
 
 /**
  * Numista metadata cache TTL: 30 days in milliseconds.
@@ -516,6 +516,9 @@ const RETAIL_SYNC_LOG_KEY = "retailSyncLog";
 
 /** Retail price availability data (out-of-stock detection) */
 const RETAIL_AVAILABILITY_KEY = "retailAvailability";
+
+/** @constant {number} RETAIL_ANOMALY_THRESHOLD - Max fractional deviation from window median before a vendor price is flagged anomalous */
+const RETAIL_ANOMALY_THRESHOLD = 0.40;
 
 /** @constant {string} GOLDBACK_ENABLED_KEY - LocalStorage key for Goldback pricing toggle (STACK-45) */
 const GOLDBACK_ENABLED_KEY = "goldback-enabled";
@@ -1690,6 +1693,7 @@ if (typeof window !== "undefined") {
   window.HEADER_RESTORE_BTN_KEY = HEADER_RESTORE_BTN_KEY;
   window.HEADER_BTN_SHOW_TEXT_KEY = HEADER_BTN_SHOW_TEXT_KEY;
   window.RETAIL_MANIFEST_TS_KEY = RETAIL_MANIFEST_TS_KEY;
+  window.RETAIL_ANOMALY_THRESHOLD = RETAIL_ANOMALY_THRESHOLD;
 }
 
 // Expose APP_VERSION globally for non-module usage
