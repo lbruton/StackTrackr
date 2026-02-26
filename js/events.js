@@ -134,7 +134,8 @@ const updateSwapButtonVisibility = () => {
   if (!wrapper) return;
   const obvPreview = document.getElementById('itemImagePreviewObv');
   const revPreview = document.getElementById('itemImagePreviewRev');
-  const bothVisible = obvPreview?.style.display !== 'none' && revPreview?.style.display !== 'none';
+  const isVisible = (el) => el && !el.classList.contains('d-none') && el.style.display !== 'none';
+  const bothVisible = isVisible(obvPreview) && isVisible(revPreview);
   wrapper.classList.toggle('d-none', !bothVisible);
 };
 
@@ -1599,7 +1600,18 @@ const setupItemFormListeners = () => {
   // SWAP OBVERSE/REVERSE BUTTON (STAK-341)
   const swapBtn = safeGetElement('swapImagesBtn');
   if (swapBtn) {
-    swapBtn.addEventListener('click', () => {
+    swapBtn.addEventListener('click', async () => {
+      // Load cached images into pending blobs if not already present (PR #551 review)
+      // Without this, swapping existing-only images is visual-only and lost on save.
+      const uuid = editingIndex !== null ? inventory[editingIndex]?.uuid : null;
+      if (uuid && !_pendingObverseBlob && !_pendingReverseBlob && window.imageCache?.isAvailable()) {
+        try {
+          const rec = await imageCache.getUserImage(uuid);
+          if (rec?.obverse) _pendingObverseBlob = rec.obverse;
+          if (rec?.reverse) _pendingReverseBlob = rec.reverse;
+        } catch { /* ignore — blobs stay null */ }
+      }
+
       // Swap pending blobs
       const tmpBlob = _pendingObverseBlob;
       _pendingObverseBlob = _pendingReverseBlob;
@@ -1641,6 +1653,12 @@ const setupItemFormListeners = () => {
         sizeObv.textContent = sizeRev.textContent;
         sizeRev.textContent = tmpText;
       }
+
+      // Clear file inputs to avoid filename mismatch (PR #551 review)
+      const fileObv = document.getElementById('itemImageFileObv');
+      const fileRev = document.getElementById('itemImageFileRev');
+      if (fileObv) fileObv.value = '';
+      if (fileRev) fileRev.value = '';
     });
   }
 
