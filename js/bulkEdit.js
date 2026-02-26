@@ -1034,6 +1034,16 @@ const applyBulkEdit = async () => {
       if (!isNaN(grams)) {
         valuesToApply.weight = String(gramsToOzt(grams));
       }
+    } else if (effectiveUnit === 'kg') {
+      const kg = parseFloat(valuesToApply.weight);
+      if (!isNaN(kg)) {
+        valuesToApply.weight = String(kgToOzt(kg));
+      }
+    } else if (effectiveUnit === 'lb') {
+      const lb = parseFloat(valuesToApply.weight);
+      if (!isNaN(lb)) {
+        valuesToApply.weight = String(lbToOzt(lb));
+      }
     }
   }
 

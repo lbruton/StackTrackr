@@ -1,5 +1,8 @@
 // INVENTORY FUNCTIONS
 
+/** Weight unit → tooltip label mapping (hoisted to avoid per-row allocation in renderTable) */
+const WEIGHT_UNIT_TOOLTIPS = { oz: 'Troy ounces (ozt)', g: 'Grams (g)', kg: 'Kilograms (kg)', lb: 'Pounds (lb)', gb: 'Goldback denomination' };
+
 /** Blob URLs created by _enhanceTableThumbnails — revoked on each re-render */
 let _thumbBlobUrls = [];
 
@@ -1661,7 +1664,7 @@ const renderTable = () => {
         </div>
       </td>
       <td class="shrink" data-column="qty" data-label="Qty">${filterLink('qty', item.qty, 'var(--text-primary)')}</td>
-      <td class="shrink" data-column="weight" data-label="Weight">${filterLink('weight', item.weight, 'var(--text-primary)', formatWeight(item.weight, item.weightUnit), ({ oz: 'Troy ounces (ozt)', g: 'Grams (g)', kg: 'Kilograms (kg)', lb: 'Pounds (lb)', gb: 'Goldback denomination' }[item.weightUnit] || 'Troy ounces (ozt)'))}</td>
+      <td class="shrink" data-column="weight" data-label="Weight">${filterLink('weight', item.weight, 'var(--text-primary)', formatWeight(item.weight, item.weightUnit), WEIGHT_UNIT_TOOLTIPS[item.weightUnit] || 'Troy ounces (ozt)')}</td>
       <td class="shrink" data-column="purchasePrice" data-label="Purchase" title="Purchase Price (${displayCurrency}) - Click to search eBay active listings" style="color: var(--text-primary);">
         <a href="#" class="ebay-buy-link ebay-price-link" data-search="${escapeAttribute(item.metal + (item.year ? ' ' + item.year : '') + ' ' + item.name)}" title="Search eBay active listings for ${escapeAttribute(item.metal)} ${escapeAttribute(item.name)}">
           ${formatCurrency(purchasePrice)} <svg class="ebay-search-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6" fill="none" stroke="currentColor" stroke-width="2.5"/><line x1="15" y1="15" x2="21" y2="21" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
