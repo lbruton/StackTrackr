@@ -726,7 +726,7 @@ const _buildRetailCard = (slug, meta, priceData) => {
     sortedVendorEntries.forEach(({ key, label, price, score, isAvailable }) => {
       if (!isAvailable) {
         // Render out-of-stock vendor
-        const oosRow = _buildOOSVendorRow(key, lastKnownPrices[key], lastKnownDates[key]);
+        const oosRow = _buildOOSVendorRow(key, lastKnownPrices[key], lastKnownDates[key], slug);
         vendors.appendChild(oosRow);
         return;
       }
@@ -833,16 +833,33 @@ const _buildConfidenceBar = (score) => {
  * @param {string} vendorId - Vendor key (e.g., "apmex")
  * @param {number|null} lastKnownPrice - Last known price before going OOS
  * @param {string|null} lastAvailableDate - Last date item was in stock (YYYY-MM-DD)
+ * @param {string} [slug] - Product slug for product-page link lookup
  * @returns {HTMLElement}
  */
-const _buildOOSVendorRow = (vendorId, lastKnownPrice, lastAvailableDate) => {
+const _buildOOSVendorRow = (vendorId, lastKnownPrice, lastAvailableDate, slug) => {
   const row = document.createElement("div");
   row.className = "retail-vendor-row retail-vendor-row--out-of-stock";
 
   const nameEl = document.createElement("span");
   nameEl.className = "retail-vendor-name text-muted";
   const vendorLabel = RETAIL_VENDOR_NAMES[vendorId] || vendorId;
-  nameEl.textContent = vendorLabel;
+  // Add vendor link (same pattern as in-stock rows)
+  const vendorUrl = (slug && retailProviders && retailProviders[slug] && retailProviders[slug][vendorId])
+    || RETAIL_VENDOR_URLS[vendorId];
+  if (vendorUrl) {
+    const link = document.createElement("a");
+    link.href = "#";
+    link.textContent = vendorLabel;
+    link.className = "retail-vendor-link text-muted";
+    link.addEventListener("click", (e) => {
+      e.preventDefault();
+      const popup = window.open(vendorUrl, `retail_vendor_${vendorId}`, "width=1250,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no");
+      if (!popup) window.open(vendorUrl, "_blank");
+    });
+    nameEl.appendChild(link);
+  } else {
+    nameEl.textContent = vendorLabel;
+  }
 
   const priceEl = document.createElement("span");
   priceEl.className = "retail-vendor-price";
