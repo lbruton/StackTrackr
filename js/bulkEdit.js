@@ -181,6 +181,8 @@ const BULK_EDITABLE_FIELDS = [
     options: [
       { value: 'oz', label: 'ounce' },
       { value: 'g',  label: 'gram' },
+      { value: 'kg', label: 'kilogram' },
+      { value: 'lb', label: 'pound' },
       { value: 'gb', label: 'goldback' }
     ] },
   { id: 'purity',           label: 'Purity',             inputType: 'select',
@@ -1031,6 +1033,16 @@ const applyBulkEdit = async () => {
       const grams = parseFloat(valuesToApply.weight);
       if (!isNaN(grams)) {
         valuesToApply.weight = String(gramsToOzt(grams));
+      }
+    } else if (effectiveUnit === 'kg') {
+      const kg = parseFloat(valuesToApply.weight);
+      if (!isNaN(kg)) {
+        valuesToApply.weight = String(kgToOzt(kg));
+      }
+    } else if (effectiveUnit === 'lb') {
+      const lb = parseFloat(valuesToApply.weight);
+      if (!isNaN(lb)) {
+        valuesToApply.weight = String(lbToOzt(lb));
       }
     }
   }
