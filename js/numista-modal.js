@@ -19,8 +19,10 @@ function openNumistaModal(numistaId, coinName) {
     return;
   }
 
-  const isSet = /^S/i.test(rawId);
-  const cleanId = rawId.replace(/^[NS]?#?\s*/i, '').trim();
+  // Strip N# prefix first, THEN detect S for sets
+  const stripped = rawId.replace(/^N#\s*/i, '').trim();
+  const isSet = /^S/i.test(stripped);
+  const cleanId = isSet ? stripped.replace(/^S/i, '').trim() : stripped;
   if (!/^\d+$/.test(cleanId)) {
     appAlert('Preview unavailable: invalid Numista catalog id.');
     return;
