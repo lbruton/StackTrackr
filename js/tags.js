@@ -343,7 +343,9 @@ const showTagInput = (container, uuid, numistaTags, renderTags, onChanged) => {
   dropdown.className = 'tag-autocomplete-dropdown';
   dropdown.style.display = 'none';
 
-  const allTags = getAllUniqueTags();
+  const allTags = getAllUniqueTags().filter(t =>
+    typeof window.isBlacklisted === 'function' ? !window.isBlacklisted(t) : true
+  );
 
   const updateDropdown = () => {
     const val = input.value.trim().toLowerCase();

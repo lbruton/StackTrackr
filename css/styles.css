@@ -2523,6 +2523,18 @@ input[type="submit"] {
   flex: 1;
   min-width: 0;
 }
+.image-swap-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  padding-top: 1.2rem;
+}
+.image-swap-wrapper .btn-icon {
+  font-size: 1.1rem;
+  padding: 0.2rem 0.4rem;
+  line-height: 1;
+}
 .image-side-label {
   display: block;
   font-size: 0.75rem;
@@ -8310,6 +8322,12 @@ th {
   font-size: 0.85rem;
   min-height: 0;
   transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Solid backgrounds for OS-native <option> popups (STAK-353) */
+#inventoryForm select option {
+  background: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 #inventoryForm input:focus,
