@@ -7,6 +7,8 @@
 # AI / agent configuration
 .agents/              export-ignore
 .claude/              export-ignore
+.jules/               export-ignore
+.spec-workflow/       export-ignore
 CLAUDE.md             export-ignore
 AGENTS.md             export-ignore
 GEMINI.md             export-ignore
@@ -51,6 +53,9 @@ style.html            export-ignore
 data/hourly/          export-ignore
 data/retail/          export-ignore
 data/spot-history-*.json  export-ignore
+
+# Deprecated / archived
+deprecated/           export-ignore
 
 # Misc repo assets
 ScreenshotStakTrakr.png  export-ignore
