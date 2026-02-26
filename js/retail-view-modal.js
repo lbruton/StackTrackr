@@ -244,6 +244,8 @@ const _flagAnomalies = (bucketed) => {
   }
 
   for (const vendorId of allVendors) {
+    // Skip t=0 and t=last: no neighbor pair available at boundaries.
+    // Pass 2 (cross-vendor median) provides a safety net for boundary windows.
     for (let t = 1; t < result.length - 1; t++) {
       const curr = result[t].vendors[vendorId];
       const prev = result[t - 1].vendors[vendorId];
@@ -318,7 +320,7 @@ const _buildIntradayTable = (slug, bucketed) => {
     try {
       bucketed = _flagAnomalies(filled);
     } catch (e) {
-      console.warn('_flagAnomalies failed, using unfiltered data', e);
+      console.error('[retail] _flagAnomalies threw unexpectedly — anomaly detection skipped', e);
       bucketed = filled;
     }
   }
@@ -439,7 +441,7 @@ const _buildIntradayChart = (slug) => {
   try {
     bucketed = _flagAnomalies(filled);
   } catch (e) {
-    console.warn('_flagAnomalies failed, using unfiltered data', e);
+    console.error('[retail] _flagAnomalies threw unexpectedly — anomaly detection skipped', e);
     bucketed = filled;
   }
 
