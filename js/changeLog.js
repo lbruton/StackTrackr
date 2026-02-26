@@ -129,7 +129,7 @@ const renderChangeLog = () => {
           if (snap && typeof snap === 'object' && snap.name) {
             const fmtFn = typeof formatCurrency === 'function' ? formatCurrency : (v) => '$' + Number(v).toFixed(2);
             const parts = [snap.metal, snap.type, snap.name];
-            if (snap.weight) parts.push(snap.weight + (snap.weightUnit === 'g' ? 'g' : ' oz'));
+            if (snap.weight) parts.push(typeof formatWeight === 'function' ? formatWeight(snap.weight, snap.weightUnit) : snap.weight + ' oz');
             if (snap.price) parts.push(fmtFn(snap.price));
             displayOld = sanitizeHtml(parts.filter(Boolean).join(' \u00B7 '));
           }

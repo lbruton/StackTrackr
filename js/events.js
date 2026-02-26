@@ -860,7 +860,7 @@ const setupTableSortListeners = () => {
  * Parses weight from form input, handling Goldback denominations,
  * fractions, and gram-to-troy-oz conversion.
  * @param {string} weightRaw - Raw weight input value
- * @param {string} weightUnit - Unit: 'oz', 'g', or 'gb'
+ * @param {string} weightUnit - Unit: 'oz', 'g', 'kg', 'lb', or 'gb'
  * @param {boolean} isEditing - Whether in edit mode
  * @param {Object} existingItem - Existing item (edit mode)
  * @returns {number} Weight in troy ounces (or denomination value for gb)
@@ -872,6 +872,10 @@ const parseWeight = (weightRaw, weightUnit, isEditing, existingItem) => {
   let weight = parseFraction(weightRaw);
   if (weightUnit === 'g') {
     weight = gramsToOzt(weight);
+  } else if (weightUnit === 'kg') {
+    weight = kgToOzt(weight);
+  } else if (weightUnit === 'lb') {
+    weight = lbToOzt(weight);
   }
   // gb: weight stays as raw denomination value (conversion happens in computeMeltValue)
   return isNaN(weight) ? 0 : parseFloat(weight.toFixed(6));

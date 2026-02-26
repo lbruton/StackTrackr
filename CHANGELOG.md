@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.32.44] - 2026-02-25
+
+### Added — Kilo and Pound Weight Units
+
+- **Added**: Kilogram (kg) and pound (lb) weight units in add/edit/bulk-edit dropdowns (STAK-338)
+- **Added**: Eager conversion to troy ounces on save with reverse conversion for display — follows existing gram pattern
+- **Fixed**: Weight tooltip in inventory table now uses explicit unit lookup instead of `weight < 1` heuristic
+- **Fixed**: Card view weight chip now uses `formatWeight()` for correct unit display across all 5 unit types
+
+---
+
 ## [3.32.43] - 2026-02-25
 
 ### Fixed — Numista Tag Rendering + Per-Item Tag Deletion
