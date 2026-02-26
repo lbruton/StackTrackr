@@ -1415,62 +1415,6 @@ const updateStorageStats = async () => {
 };
 
 /**
- * Shows storage report options with view and download actions
- */
-const downloadStorageReport = () => {
-  let modal = document.getElementById('storageOptionsModal');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'storageOptionsModal';
-    modal.className = 'modal';
-    modal.innerHTML = `
-      <div class="modal-content">
-        <div class="modal-header">
-          <h2>Storage Report</h2>
-          <button aria-label="Close modal" class="modal-close" id="storageOptionsClose">×</button>
-        </div>
-        <div class="modal-body">
-          <div class="options-buttons">
-            <button class="btn" id="viewStorageReportBtn">👁️ View Report</button>
-            <button class="btn secondary" id="downloadStorageZipBtn">📦 Download ZIP</button>
-          </div>
-        </div>
-      </div>`;
-    document.body.appendChild(modal);
-
-    const closeModal = () => {
-      modal.style.display = 'none';
-      document.body.style.overflow = '';
-    };
-
-    modal.addEventListener('click', (e) => {
-      if (e.target === modal) closeModal();
-    });
-    modal.querySelector('#storageOptionsClose').addEventListener('click', closeModal);
-
-    modal.querySelector('#viewStorageReportBtn').addEventListener('click', () => {
-      closeModal();
-      openStorageReportPopup();
-    });
-
-    modal.querySelector('#downloadStorageZipBtn').addEventListener('click', async () => {
-      closeModal();
-      try {
-        const zipContent = await generateStorageReportTar();
-        const timestamp = new Date().toISOString().split('T')[0];
-        downloadFile(`storage-report-${timestamp}.zip`, zipContent, 'application/zip');
-      } catch (error) {
-        console.error('Error creating ZIP file:', error);
-        appAlert('Error creating compressed report. Please try again.');
-      }
-    });
-  }
-
-  modal.style.display = 'flex';
-  document.body.style.overflow = 'hidden';
-};
-
-/**
  * Displays the storage report HTML inside a modal iframe
  */
 const openStorageReportPopup = async () => {
@@ -3069,7 +3013,6 @@ if (typeof window !== 'undefined') {
   window.closeModalById = closeModalById;
   window.openModalById = openModalById;
   window.updateStorageStats = updateStorageStats;
-  window.downloadStorageReport = downloadStorageReport;
   window.openStorageReportPopup = openStorageReportPopup;
   window.debounce = debounce;
   window.openEbayBuySearch = openEbayBuySearch;
