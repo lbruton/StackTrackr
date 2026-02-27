@@ -818,9 +818,6 @@ const formatWeight = (ozt, weightUnit) => {
   if (weightUnit === 'g') {
     return `${oztToGrams(weight).toFixed(2)} g`;
   }
-  if (weight < 1) {
-    return `${oztToGrams(weight).toFixed(2)} g`;
-  }
   return `${weight.toFixed(2)} oz`;
 };
 
