@@ -3297,6 +3297,8 @@ const importJson = (file, override = false) => {
         const uuid = raw.uuid || generateUUID();
         const obverseImageUrl = raw.obverseImageUrl || raw['Obverse Image URL'] || '';
         const reverseImageUrl = raw.reverseImageUrl || raw['Reverse Image URL'] || '';
+        const numistaData = raw.numistaData || undefined;
+        const fieldMeta = raw.fieldMeta || undefined;
 
         const processedItem = sanitizeImportedItem({
           metal,
@@ -3327,7 +3329,9 @@ const importJson = (file, override = false) => {
           serial,
           uuid,
           obverseImageUrl,
-          reverseImageUrl
+          reverseImageUrl,
+          ...(numistaData ? { numistaData } : {}),
+          ...(fieldMeta ? { fieldMeta } : {})
         });
 
         const validation = validateInventoryItem(processedItem);
@@ -3497,7 +3501,9 @@ const exportJson = () => {
     reverseImageUrl: item.reverseImageUrl || '',
     // Legacy fields preserved for backward compatibility
     spotPriceAtPurchase: item.spotPriceAtPurchase,
-    composition: item.composition
+    composition: item.composition,
+    numistaData: item.numistaData || null,
+    fieldMeta: item.fieldMeta || null
   }));
 
   const json = JSON.stringify(exportData, null, 2);

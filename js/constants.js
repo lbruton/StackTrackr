@@ -290,7 +290,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-12 - STACK-38/STACK-31: Responsive card view + mobile layout
  */
 
-const APP_VERSION = "3.33.00";
+const APP_VERSION = "3.33.01";
 
 /**
  * Numista metadata cache TTL: 30 days in milliseconds.
@@ -847,6 +847,8 @@ const ALLOWED_STORAGE_KEYS = [
   STORAGE_PERSIST_GRANTED_KEY,                         // boolean string: "true"/"false" — storage persistence grant flag
   "headerBtnOrder",                                    // JSON array: header button card order (STAK-320)
   "headerAboutBtnVisible",                             // boolean string: "true"/"false" — about button visibility (STAK-320)
+  "tagBlacklist",                                      // JSON array: tags excluded from auto-tagging
+  "numista_tags_auto",                                 // boolean string: "true"/"false" — auto-tag from Numista data
 ];
 
 // =============================================================================
