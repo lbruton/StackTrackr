@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.05] - 2026-02-27
+
+### Fixed — Daily Maintenance: Search Cache, Dead Code Cleanup
+
+- **Fixed**: Search cache upgraded from string to object — caches formatted date to avoid re-parsing on every keystroke. Formatted date now included in multi-word search text (STAK-368)
+- **Removed**: Dead `downloadStorageReport()` function (62 lines, zero callers) from utils.js (STAK-368)
+- **Removed**: Duplicate `window.MAX_LOCAL_FILE_SIZE` export from utils.js — already exported from constants.js (STAK-368)
+
+---
+
 ## [3.33.04] - 2026-02-27
 
 ### Fixed — Quick-Fix Batch (NGC Lookup, Fractional Oz, Cloud Sync Reorder)

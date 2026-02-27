@@ -1,9 +1,9 @@
 ## What's New
 
+- **Daily Maintenance (v3.33.05)**: Search cache optimized with formatted date caching. Dead code removed (downloadStorageReport, duplicate MAX_LOCAL_FILE_SIZE export)
 - **Quick-Fix Batch (v3.33.04)**: NGC cert lookup extracts numeric grade only. Fractional troy ounce weights display correctly as oz. Cloud Sync button added to reorderable header system
 - **Cloud Sync Safety Overhaul (v3.33.02)**: Empty-vault push guard prevents data loss. Cloud-side backup-before-overwrite. Dropbox folder restructuring with migration. DiffEngine restore preview modal. Configurable backup history depth. Multi-tab sync guard
 - **Numista Search Overhaul (v3.33.01)**: Per-field origin tracking with two-tier re-sync picker. Independent tag blacklist with Settings management. Auto-apply toggle for Numista tags. Backup export preserves Numista data and field metadata
-- **Cloud Sync, Image Pipeline & Retail Charts (v3.33.00)**: Unified encryption for cloud sync with ambient status icons. CDN-only Numista images. 24h retail intraday chart with anomaly filtering. Kilogram and pound weight units. Reorderable header buttons
 
 ## Development Roadmap
 
