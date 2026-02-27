@@ -1184,6 +1184,7 @@ async function cloudMigrateToV2(provider) {
     { from: SYNC_META_PATH_LEGACY, to: SYNC_META_PATH },
     { from: SYNC_IMAGES_PATH_LEGACY, to: SYNC_IMAGES_PATH },
   ];
+  var criticalMovesFailed = false;
   for (var mi = 0; mi < fileMoves.length; mi++) {
     try {
       var moveResp = await fetch('https://api.dropboxapi.com/2/files/move_v2', {
@@ -1203,9 +1204,12 @@ async function cloudMigrateToV2(provider) {
         debugLog('[CloudMigrate] Moved', fileMoves[mi].from, '→', fileMoves[mi].to);
       } else {
         var moveStatus = moveResp.status;
+        // 409 = file doesn't exist at old path (already migrated or never created) — not a failure
+        if (moveStatus !== 409) criticalMovesFailed = true;
         debugLog('[CloudMigrate] Move returned', moveStatus, 'for', fileMoves[mi].from, '(may not exist yet)');
       }
     } catch (moveErr) {
+      criticalMovesFailed = true;
       debugLog('[CloudMigrate] Move failed for', fileMoves[mi].from, ':', moveErr.message);
     }
   }
@@ -1255,9 +1259,13 @@ async function cloudMigrateToV2(provider) {
     debugLog('[CloudMigrate] List folder failed (backup move skipped):', listErr.message);
   }
 
-  // 4. Set migration flag
-  saveData('cloud_sync_migrated', 'v2');
-  debugLog('[CloudMigrate] Migration complete — flag set to v2');
+  // 4. Set migration flag only if critical file moves succeeded
+  if (!criticalMovesFailed) {
+    saveData('cloud_sync_migrated', 'v2');
+    debugLog('[CloudMigrate] Migration complete — flag set to v2');
+  } else {
+    debugLog('[CloudMigrate] Critical file moves failed — migration flag NOT set (will retry next sync)');
+  }
 }
 
 // ---------------------------------------------------------------------------

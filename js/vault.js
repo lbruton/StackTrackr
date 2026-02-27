@@ -474,11 +474,7 @@ async function vaultEncryptToBytesScoped(password) {
  * @returns {Promise<void>}
  */
 async function vaultDecryptAndRestore(fileBytes, password) {
-  var parsed = parseVaultFile(new Uint8Array(fileBytes));
-  var key = await vaultDeriveKey(password, parsed.salt, parsed.iterations);
-  var plainBytes = await vaultDecrypt(parsed.ciphertext, key, parsed.iv);
-  var payload = JSON.parse(new TextDecoder().decode(plainBytes));
-  if (!payload || !payload.data) throw new Error("Vault file appears corrupted.");
+  var payload = await vaultDecryptToData(fileBytes, password);
   await restoreVaultData(payload);
 }
 
@@ -1264,6 +1260,7 @@ window.closeVaultModal = closeVaultModal;
 window.vaultEncryptToBytes = vaultEncryptToBytes;
 window.vaultEncryptToBytesScoped = vaultEncryptToBytesScoped;
 window.vaultDecryptAndRestore = vaultDecryptAndRestore;
+window.vaultDecryptToData = vaultDecryptToData;
 window.collectVaultData = collectVaultData;
 window.collectAndHashImageVault = collectAndHashImageVault;
 window.vaultEncryptImageVault = vaultEncryptImageVault;
