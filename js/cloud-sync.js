@@ -47,6 +47,9 @@ var _syncTabOpenedAt = Date.now();
 /** @type {number|null} Timer for visibility-based leadership handoff */
 var _syncLeaderHiddenTimer = null;
 
+/** @type {object|null} Pull metadata stashed for deferred recording after preview apply */
+var _previewPullMeta = null;
+
 // ---------------------------------------------------------------------------
 // Device identity
 // ---------------------------------------------------------------------------
@@ -757,7 +760,7 @@ async function pushSyncVault() {
             showAppConfirm(
               'Your local vault is empty but the cloud has ' + guardMeta.itemCount + ' items. ' +
               'Push cancelled to prevent data loss. Pull from cloud instead?',
-              function () { pullSyncVault(); },
+              function () { pullWithPreview(); },
               null,
               'Pull from Cloud',
               'Cancel'
@@ -1559,11 +1562,20 @@ function showRestorePreviewModal(diffResult, settingsDiff, remotePayload, remote
         syncSaveOverrideBackup();
         restoreVaultData(remotePayload);
         debugLog('[CloudSync] Restore preview: applied changes');
+        // Record pull only on actual apply
+        if (typeof _previewPullMeta !== 'undefined' && _previewPullMeta) {
+          syncSetLastPull(_previewPullMeta);
+          _previewPullMeta = null;
+        }
         if (typeof showCloudToast === 'function') {
           showCloudToast('Sync update applied: ' + addedCount + ' added, ' + removedCount + ' removed, ' + modifiedCount + ' modified.');
         }
         updateSyncStatusIndicator('idle', 'just now');
         refreshSyncUI();
+        // Notify other tabs (Layer 7)
+        if (_syncChannel) {
+          try { _syncChannel.postMessage({ type: 'sync-pull-complete', tabId: getSyncDeviceId(), ts: Date.now() }); } catch (e) { /* ignore */ }
+        }
       } catch (applyErr) {
         debugLog('[CloudSync] Restore preview: apply failed:', applyErr);
         updateSyncStatusIndicator('error', 'Restore failed');
@@ -1643,21 +1655,22 @@ async function pullWithPreview(remoteMeta) {
         ? DiffEngine.compareSettings(localSettings, remoteSettings)
         : { changed: [], unchanged: [] };
 
+      // Stash pull metadata for deferred recording (applied by preview modal or fallback)
+      _previewPullMeta = {
+        syncId: remoteMeta ? remoteMeta.syncId : null,
+        timestamp: remoteMeta ? remoteMeta.timestamp : Date.now(),
+        rev: remoteMeta ? remoteMeta.rev : null,
+      };
+
       var shown = showRestorePreviewModal(diffResult, settingsDiff, remotePayload, remoteMeta);
       if (!shown) {
         // Modal not in DOM — fall back to direct restore
         debugLog('[CloudSync] Preview modal unavailable — falling back to direct restore');
         syncSaveOverrideBackup();
         await vaultDecryptAndRestore(bytes, password);
+        syncSetLastPull(_previewPullMeta);
+        _previewPullMeta = null;
       }
-
-      // Record pull after apply (handled by apply button or fallback)
-      var pullMeta = {
-        syncId: remoteMeta ? remoteMeta.syncId : null,
-        timestamp: remoteMeta ? remoteMeta.timestamp : Date.now(),
-        rev: remoteMeta ? remoteMeta.rev : null,
-      };
-      syncSetLastPull(pullMeta);
 
     } catch (decryptErr) {
       // Decryption or diff failed — offer fallback
