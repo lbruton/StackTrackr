@@ -7,7 +7,7 @@ const DEV_MODE = false; // Set to true during development — bypasses all cachi
 
 
 
-const CACHE_NAME = 'staktrakr-v3.33.02-b1772153590';
+const CACHE_NAME = 'staktrakr-v3.33.02-b1772153966';
 
 
 
@@ -30,6 +30,7 @@ const CORE_ASSETS = [
   './js/file-protocol-fix.js',
   './js/debug-log.js',
   './js/constants.js',
+  './js/field-meta.js',
   './js/state.js',
   './js/utils.js',
   './js/dialogs.js',
