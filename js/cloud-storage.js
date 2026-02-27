@@ -1137,6 +1137,162 @@ window.cloudAuthStart = cloudAuthStart;
 window.cloudDisconnect = cloudDisconnect;
 window.cloudUploadVault = cloudUploadVault;
 window.cloudDownloadVault = cloudDownloadVault;
+// ---------------------------------------------------------------------------
+// Cloud folder migration — flat layout → /sync/ + /backups/ (v2)
+// ---------------------------------------------------------------------------
+
+/**
+ * Migrate cloud files from the legacy flat /StakTrakr/ layout to the v2
+ * folder structure (/StakTrakr/sync/ and /StakTrakr/backups/).
+ * Idempotent: checks localStorage flag before running. Best-effort — logs
+ * failures but continues so partial migrations don't block sync.
+ * @param {string} provider - Cloud provider name (e.g. 'dropbox')
+ */
+async function cloudMigrateToV2(provider) {
+  debugLog('[CloudMigrate] Starting v2 folder migration…');
+  var token = typeof cloudGetToken === 'function' ? await cloudGetToken(provider) : null;
+  if (!token) {
+    debugLog('[CloudMigrate] No token — migration skipped');
+    return;
+  }
+
+  // 1. Create /StakTrakr/sync/ and /StakTrakr/backups/ folders (ignore 409 = already exists)
+  var folders = ['/StakTrakr/sync', '/StakTrakr/backups'];
+  for (var fi = 0; fi < folders.length; fi++) {
+    try {
+      var folderResp = await fetch('https://api.dropboxapi.com/2/files/create_folder_v2', {
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer ' + token,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ path: folders[fi], autorename: false }),
+      });
+      if (folderResp.ok || folderResp.status === 409) {
+        debugLog('[CloudMigrate] Folder OK:', folders[fi]);
+      } else {
+        debugLog('[CloudMigrate] Folder create returned', folderResp.status, 'for', folders[fi]);
+      }
+    } catch (folderErr) {
+      debugLog('[CloudMigrate] Folder create failed for', folders[fi], ':', folderErr.message);
+    }
+  }
+
+  // 2. Move each legacy sync file to /sync/ subfolder
+  var fileMoves = [
+    { from: SYNC_FILE_PATH_LEGACY, to: SYNC_FILE_PATH },
+    { from: SYNC_META_PATH_LEGACY, to: SYNC_META_PATH },
+    { from: SYNC_IMAGES_PATH_LEGACY, to: SYNC_IMAGES_PATH },
+  ];
+  for (var mi = 0; mi < fileMoves.length; mi++) {
+    try {
+      var moveResp = await fetch('https://api.dropboxapi.com/2/files/move_v2', {
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer ' + token,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from_path: fileMoves[mi].from,
+          to_path: fileMoves[mi].to,
+          autorename: false,
+          allow_ownership_transfer: false,
+        }),
+      });
+      if (moveResp.ok) {
+        debugLog('[CloudMigrate] Moved', fileMoves[mi].from, '→', fileMoves[mi].to);
+      } else {
+        var moveStatus = moveResp.status;
+        debugLog('[CloudMigrate] Move returned', moveStatus, 'for', fileMoves[mi].from, '(may not exist yet)');
+      }
+    } catch (moveErr) {
+      debugLog('[CloudMigrate] Move failed for', fileMoves[mi].from, ':', moveErr.message);
+    }
+  }
+
+  // 3. Move existing staktrakr-backup-* files from /StakTrakr/ to /StakTrakr/backups/
+  try {
+    var listResp = await fetch('https://api.dropboxapi.com/2/files/list_folder', {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer ' + token,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ path: '/StakTrakr', recursive: false, limit: 200 }),
+    });
+    if (listResp.ok) {
+      var listData = await listResp.json();
+      var entries = listData.entries || [];
+      for (var ei = 0; ei < entries.length; ei++) {
+        var entry = entries[ei];
+        if (entry.name && entry.name.indexOf('staktrakr-backup-') === 0) {
+          try {
+            var bkMoveResp = await fetch('https://api.dropboxapi.com/2/files/move_v2', {
+              method: 'POST',
+              headers: {
+                Authorization: 'Bearer ' + token,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                from_path: entry.path_lower || ('/StakTrakr/' + entry.name),
+                to_path: SYNC_BACKUP_FOLDER + '/' + entry.name,
+                autorename: false,
+                allow_ownership_transfer: false,
+              }),
+            });
+            if (bkMoveResp.ok) {
+              debugLog('[CloudMigrate] Moved backup', entry.name, '→ /backups/');
+            } else {
+              debugLog('[CloudMigrate] Backup move returned', bkMoveResp.status, 'for', entry.name);
+            }
+          } catch (bkErr) {
+            debugLog('[CloudMigrate] Backup move failed for', entry.name, ':', bkErr.message);
+          }
+        }
+      }
+    }
+  } catch (listErr) {
+    debugLog('[CloudMigrate] List folder failed (backup move skipped):', listErr.message);
+  }
+
+  // 4. Set migration flag
+  saveData('cloud_sync_migrated', 'v2');
+  debugLog('[CloudMigrate] Migration complete — flag set to v2');
+}
+
+// ---------------------------------------------------------------------------
+// Prune old backups — keeps only the newest `maxKeep` backups
+// ---------------------------------------------------------------------------
+
+async function cloudPruneBackups(provider, maxKeep) {
+  try {
+    var backups = await cloudListBackups(provider);
+    if (!backups || backups.length <= maxKeep) return;
+
+    // cloudListBackups returns newest-first; delete from the end (oldest)
+    var toDelete = backups.slice(maxKeep);
+    for (var i = 0; i < toDelete.length; i++) {
+      try {
+        await cloudDeleteBackup(provider, toDelete[i].name);
+        debugLog('[CloudPrune] Deleted old backup:', toDelete[i].name);
+      } catch (delErr) {
+        debugLog('[CloudPrune] Failed to delete backup:', toDelete[i].name, delErr.message);
+      }
+    }
+
+    if (typeof logCloudSyncActivity === 'function') {
+      logCloudSyncActivity('backup_prune', 'success', 'Pruned ' + toDelete.length + ' of ' + backups.length + ' backups (keep ' + maxKeep + ')');
+    }
+  } catch (err) {
+    debugLog('[CloudPrune] Prune failed:', err.message);
+    if (typeof logCloudSyncActivity === 'function') {
+      logCloudSyncActivity('backup_prune', 'fail', err.message);
+    }
+  }
+}
+
+window.cloudPruneBackups = cloudPruneBackups;
+window.cloudMigrateToV2 = cloudMigrateToV2;
 window.cloudDownloadVaultByName = cloudDownloadVaultByName;
 window.cloudDeleteBackup = cloudDeleteBackup;
 window.cloudListBackups = cloudListBackups;

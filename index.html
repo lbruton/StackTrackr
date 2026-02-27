@@ -3389,6 +3389,17 @@
                       </div>
                     </div>
 
+                    <!-- Backup history depth -->
+                    <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.6rem;border-top:1px solid var(--border);padding-top:0.6rem">
+                      <span class="cloud-status-label" style="flex:1"><strong>Backup history</strong></span>
+                      <select id="cloudBackupHistoryDepth" style="width:auto;min-width:60px;font-size:0.82rem;padding:0.25rem 0.4rem">
+                        <option value="3">3</option>
+                        <option value="5" selected>5</option>
+                        <option value="10">10</option>
+                        <option value="20">20</option>
+                      </select>
+                    </div>
+
                     <!-- Sync Now + Advanced -->
                     <div style="display:flex;gap:0.5rem;margin-top:0.6rem;align-items:center">
                       <button class="btn" id="cloudSyncNowBtn" disabled onclick="if(typeof pushSyncVault==='function')pushSyncVault();" style="font-size:0.8rem;padding:0.35rem 0.75rem;min-height:0;flex:1">
@@ -4381,6 +4392,32 @@
           <div class="encryption-actions" style="margin-top:1.2rem;gap:0.5rem;flex-wrap:wrap">
             <button class="btn success" id="syncUpdateAcceptBtn">Accept Update</button>
             <button class="btn" id="syncUpdateDismissBtn">Not Now</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STAK-186: Restore Preview Modal (Layer 5 — DiffEngine preview before sync restore) -->
+    <div class="modal" id="restorePreviewModal" style="display: none">
+      <div class="modal-content" style="max-width: 600px">
+        <div class="modal-header">
+          <h2>Restore Preview</h2>
+          <button aria-label="Close modal" class="modal-close" id="restorePreviewDismissX">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="cloud-sync-update-meta" id="restorePreviewMeta">
+            <div class="cloud-sync-update-row"><span>Remote items</span><strong id="restorePreviewRemoteCount">&mdash;</strong></div>
+            <div class="cloud-sync-update-row"><span>Local items</span><strong id="restorePreviewLocalCount">&mdash;</strong></div>
+            <div class="cloud-sync-update-row"><span>Device</span><strong id="restorePreviewDevice">&mdash;</strong></div>
+            <div class="cloud-sync-update-row"><span>Version</span><strong id="restorePreviewVersion">&mdash;</strong></div>
+          </div>
+          <div id="restorePreviewSummary" class="settings-subtext" style="margin:0.75rem 0;font-weight:600;"></div>
+          <div id="restorePreviewDiffList" style="max-height:320px;overflow-y:auto;border:1px solid var(--border-color,#ddd);border-radius:6px;padding:0.5rem;margin-bottom:1rem;font-size:0.9rem;"></div>
+          <div id="restorePreviewSettingsDiff" style="margin-bottom:1rem;"></div>
+          <div id="restorePreviewError" class="encryption-warning" style="display:none;margin-bottom:1rem;"></div>
+          <div class="encryption-actions" style="gap:0.5rem;flex-wrap:wrap">
+            <button class="btn success" id="restorePreviewApplyBtn">Apply Changes</button>
+            <button class="btn" id="restorePreviewCancelBtn">Cancel</button>
           </div>
         </div>
       </div>

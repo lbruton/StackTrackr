@@ -482,6 +482,23 @@ async function vaultDecryptAndRestore(fileBytes, password) {
   await restoreVaultData(payload);
 }
 
+/**
+ * Decrypt raw vault bytes and return the parsed payload WITHOUT restoring.
+ * Identical to vaultDecryptAndRestore() but returns data instead of side effects.
+ * Used by the restore preview flow (Layer 5) to compute diffs before applying.
+ * @param {Uint8Array|ArrayBuffer} fileBytes
+ * @param {string} password
+ * @returns {Promise<object>} Parsed vault payload { data, settings, ... }
+ */
+async function vaultDecryptToData(fileBytes, password) {
+  var parsed = parseVaultFile(new Uint8Array(fileBytes));
+  var key = await vaultDeriveKey(password, parsed.salt, parsed.iterations);
+  var plainBytes = await vaultDecrypt(parsed.ciphertext, key, parsed.iv);
+  var payload = JSON.parse(new TextDecoder().decode(plainBytes));
+  if (!payload || !payload.data) throw new Error("Vault file appears corrupted.");
+  return payload;
+}
+
 // =============================================================================
 // IMAGE VAULT (STAK-181) — cloud sync for user-uploaded IndexedDB photos
 // =============================================================================
