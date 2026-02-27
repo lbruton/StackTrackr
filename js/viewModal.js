@@ -879,12 +879,12 @@ async function loadViewNumistaData(item, container, apiResult) {
 
       // If tags were selected, apply them through the tag system
       if (selections.tags && meta.tags && meta.tags.length > 0 && item.uuid && typeof applyNumistaTags === 'function') {
-        applyNumistaTags(item.uuid, meta.tags);
+        applyNumistaTags(item.uuid, meta.tags, true, true);
       }
 
       // Persist inventory changes
-      if (typeof saveData === 'function' && typeof inventory !== 'undefined') {
-        saveData('inventory', inventory);
+      if (typeof saveInventory === 'function') {
+        saveInventory();
       }
 
       // Rebuild the tags section in the modal
@@ -1455,7 +1455,7 @@ function _valuesMatch(current, incoming) {
       current.every((v, i) => v === incoming[i]);
   }
   // Loose numeric comparison (e.g. "26.73" vs 26.73)
-  if (current != null && incoming != null && Number(current) === Number(incoming) && !isNaN(Number(current))) return true;
+  if (current !== null && current !== undefined && incoming !== null && incoming !== undefined && Number(current) === Number(incoming) && !isNaN(Number(current))) return true;
   return false;
 }
 
@@ -1480,7 +1480,7 @@ function showResyncPicker(item, normalizedData, onConfirm, onCancel) {
   const fieldDisabled = {};
 
   // Remove any existing picker modal
-  const existingModal = document.getElementById('resyncPickerModal');
+  const existingModal = safeGetElement('resyncPickerModal');
   if (existingModal) existingModal.remove();
 
   // Backdrop
@@ -1737,9 +1737,9 @@ function showResyncPicker(item, normalizedData, onConfirm, onCancel) {
   }
 
   function _cleanup() {
-    const m = document.getElementById('resyncPickerModal');
+    const m = safeGetElement('resyncPickerModal');
     if (m) m.remove();
-    const b = document.getElementById('resyncPickerBackdrop');
+    const b = safeGetElement('resyncPickerBackdrop');
     if (b) b.remove();
   }
 

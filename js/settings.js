@@ -2169,7 +2169,7 @@ const _handleStorageTinyToggle = () => {
  * Appended after the numistaBulkSyncGroup inside the Numista provider panel.
  */
 const renderNumistaTagSettings = () => {
-  const container = document.getElementById('numistaTagSettingsGroup');
+  const container = safeGetElement('numistaTagSettingsGroup');
   if (!container) return;
 
   // Clear previous render
