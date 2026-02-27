@@ -56,7 +56,8 @@ function initFieldMeta(normalizedData, source) {
     const val = normalizedData[key];
 
     // Non-empty check: skip null, undefined, empty string, 0, false, empty arrays
-    if (val === null || val === undefined || val === '' || val === 0 || val === false) continue;
+    if (val === null || val === undefined || val === '' || val === false) continue;
+    if (typeof val === 'number' && val === 0) continue;
     if (Array.isArray(val) && val.length === 0) continue;
 
     meta[key] = { source: src, userModified: false };
@@ -134,7 +135,8 @@ function applyPickerSelections(item, selections, normalizedData, source) {
 
     // Apply the value from normalized data
     if (fieldName in normalizedData) {
-      item[fieldName] = normalizedData[fieldName];
+      const val = normalizedData[fieldName];
+      item[fieldName] = Array.isArray(val) ? [...val] : val;
       item.fieldMeta[fieldName] = { source: src, userModified: false };
     }
   }

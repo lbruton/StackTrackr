@@ -287,12 +287,14 @@ const removeFromTagBlacklist = (tag) => {
 
 // =============================================================================
 
-const applyNumistaTags = (uuid, numistaTags, persist = true) => {
+const applyNumistaTags = (uuid, numistaTags, persist = true, force = false) => {
   if (!uuid || !Array.isArray(numistaTags) || numistaTags.length === 0) return 0;
 
-  // Check global auto-apply setting
-  const autoApply = loadDataSync('numista_tags_auto', true);
-  if (!autoApply) return 0;
+  // Check global auto-apply setting (skip when force=true, e.g. from re-sync picker)
+  if (!force) {
+    const autoApply = loadDataSync('numista_tags_auto', true);
+    if (!autoApply) return 0;
+  }
 
   let added = 0;
   for (const raw of numistaTags) {
