@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.04] - 2026-02-27
+
+### Fixed — Quick-Fix Batch (NGC Lookup, Fractional Oz, Cloud Sync Reorder)
+
+- **Fixed**: NGC cert lookup link now extracts numeric grade only — e.g. "65" instead of "MS 65 CAM" (STAK-357)
+- **Fixed**: Fractional troy ounce weights display as "0.25 oz" instead of auto-converting to grams (STAK-361)
+- **Added**: Cloud Sync button registered in reorderable header system — toggle and reorder via Settings (STAK-365)
+
+---
+
 ## [3.33.03] - 2026-02-27
 
 ### Fixed — Announcements Cleanup
