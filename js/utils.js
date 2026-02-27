@@ -3067,7 +3067,6 @@ if (typeof window !== 'undefined') {
 
   window.cleanupStorage = cleanupStorage;
   window.checkFileSize = checkFileSize;
-  window.MAX_LOCAL_FILE_SIZE = MAX_LOCAL_FILE_SIZE;
   window.closeModalById = closeModalById;
   window.openModalById = openModalById;
   window.updateStorageStats = updateStorageStats;
