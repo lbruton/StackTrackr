@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "suppressions": [],
+  "prompt_exclusions": [
+    "This is a vanilla JS single-page app with no build step — do not suggest framework migrations or build tool additions",
+    "Do not modify constants.js version numbers — versioning is managed externally by the /release skill",
+    "Do not add new files without updating sw.js CORE_ASSETS and index.html script order",
+    "Do not flag localStorage.getItem/setItem for scalar string preferences (timeout keys, boolean flags) — this is intentional"
+  ]
+}
