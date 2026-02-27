@@ -1,5 +1,7 @@
 # GEMINI.md - StakTrakr Context
 
+> Global workflow rules (push safety, version checkout gate, PR lifecycle, code search tiers) are in `~/.claude/CLAUDE.md` for Claude Code. Gemini should follow the same principles documented here.
+
 This file provides foundational mandates and project-specific context for Gemini CLI interactions within the StakTrakr repository.
 
 ## Project Overview
@@ -108,6 +110,17 @@ Automatically saves conversational context, preferences, and decisions across se
 
 **When to use:** Recall what was discussed in previous sessions, save preferences, store session insights, handoffs, decisions. Use mem0 for everything — do NOT call `mcp__memento__*` tools.
 
+**Entity scoping:**
+
+| Scope | Parameter | Contains |
+|-------|-----------|----------|
+| Project-specific | `agent_id: "staktrakr"` | Decisions, patterns, architecture, bugs for one project |
+| Cross-project | `user_id: "lbruton"` (default) | Workflow prefs, infra, tool configs shared across all projects |
+
+Agent IDs: `staktrakr`, `staktrakr-api`, `staktrakr-wiki`, `hextrackr`, `hellokittyfriends`, `whoseonfirst`, `playground`
+
+**Search rule:** Always run **two searches in parallel** — one with `agent_id` filter for the current project, one without (cross-project `user_id` scope). Merge and deduplicate results.
+
 **Tools available:**
 
 - `search_memories` — Find relevant memories by keyword or concept
@@ -119,12 +132,23 @@ Automatically saves conversational context, preferences, and decisions across se
 **Save format:**
 
 ```javascript
+// Project-specific
 mcp__mem0__add_memory({
   text: "StakTrakr <type>: <what, why, how to apply — self-contained>",
+  agent_id: "staktrakr",
   metadata: {
-    project: "staktrakr",
     category: "<frontend|backend|infra|security|workflow>",
     type: "<insight|decision|session|handoff>"
+  }
+})
+
+// Cross-project
+mcp__mem0__add_memory({
+  text: "<what to remember>",
+  user_id: "lbruton",
+  metadata: {
+    category: "<workflow|infra>",
+    type: "<decision|preference|fact>"
   }
 })
 ```
