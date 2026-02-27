@@ -860,6 +860,8 @@ const ALLOWED_STORAGE_KEYS = [
   STORAGE_PERSIST_GRANTED_KEY,                         // boolean string: "true"/"false" — storage persistence grant flag
   "headerBtnOrder",                                    // JSON array: header button card order (STAK-320)
   "headerAboutBtnVisible",                             // boolean string: "true"/"false" — about button visibility (STAK-320)
+  "tagBlacklist",                                      // JSON array: tags excluded from auto-tagging
+  "numista_tags_auto",                                 // boolean string: "true"/"false" — auto-tag from Numista data
   "cloud_sync_migrated",                               // string: "v2" — cloud folder migration flag (flat → /sync/ + /backups/)
   "cloud_backup_history_depth",                        // string: "3"|"5"|"10"|"20" — max cloud backups to retain
 ];

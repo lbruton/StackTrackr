@@ -1091,6 +1091,7 @@ const commitItemToInventory = (f, isEditing, editIdx) => {
       ...buildItemFields(f),
       numistaId: f.catalog,
       numistaData: f.numistaData,
+      fieldMeta: oldItem.fieldMeta || f.numistaData?.fieldMeta || undefined,
       currency: f.currency,
       // STAK-308: Use nullish coalescing — empty string is intentional (user cleared URL)
       obverseImageUrl: f.obverseImageUrl !== '' ? (f.obverseImageUrl || window.selectedNumistaResult?.imageUrl || '') : '',
@@ -1099,6 +1100,22 @@ const commitItemToInventory = (f, isEditing, editIdx) => {
       reverseSharedImageId: oldItem.reverseSharedImageId || null,
       ignorePatternImages: f.ignorePatternImages || false,
     };
+
+    // Track user-modified fields by comparing old vs new values
+    if (typeof window.markUserModified === 'function') {
+      const cur = inventory[editIdx];
+      const trackedFields = ['metal', 'composition', 'name', 'qty', 'type', 'weight',
+        'weightUnit', 'price', 'marketValue', 'date', 'purchaseLocation',
+        'storageLocation', 'serialNumber', 'notes', 'year', 'grade',
+        'gradingAuthority', 'certNumber', 'pcgsNumber', 'purity',
+        'country', 'denomination', 'shape', 'diameter', 'thickness',
+        'orientation', 'description', 'technique'];
+      for (const field of trackedFields) {
+        if (oldItem[field] !== cur[field]) {
+          window.markUserModified(cur, field);
+        }
+      }
+    }
 
     addCompositionOption(f.composition);
 
@@ -1155,6 +1172,7 @@ const commitItemToInventory = (f, isEditing, editIdx) => {
       uuid: generateUUID(),
       numistaId: f.catalog,
       numistaData: f.numistaData,
+      fieldMeta: window.selectedNumistaResult?.fieldMeta || f.numistaData?.fieldMeta || undefined,
       currency: f.currency,
       obverseImageUrl: f.obverseImageUrl !== '' ? (f.obverseImageUrl || window.selectedNumistaResult?.imageUrl || '') : '',
       reverseImageUrl: f.reverseImageUrl !== '' ? (f.reverseImageUrl || window.selectedNumistaResult?.reverseImageUrl || '') : '',

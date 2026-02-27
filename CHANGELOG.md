@@ -23,6 +23,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.01] - 2026-02-27
+
+### Added — Numista Search Overhaul
+
+- **Added**: Per-field origin tracking (fieldMeta) — tracks whether each field came from Numista, PCGS, CSV import, or manual entry (STAK-363)
+- **Added**: Two-tier re-sync picker modal with diff hints and smart pre-check defaults based on field origin (STAK-345)
+- **Added**: Independent tag blacklist with Settings UI management, separate from chip grouping blacklist (STAK-354)
+- **Added**: Auto-apply Numista tags toggle — global setting with per-action override in re-sync picker (STAK-346)
+- **Added**: Backup export/import now includes numistaData and fieldMeta for complete round-trip preservation (STAK-362)
+
+---
+
 ## [3.33.00] - 2026-02-26
 
 ### Added — Cloud Sync Overhaul, Image Pipeline, Numista Integrity, Menu UX, Retail Charts

@@ -78,6 +78,21 @@ function _syncFallbackUUID() {
 // ---------------------------------------------------------------------------
 
 /**
+ * Convert a SHA-256 ArrayBuffer to a hex string.
+ * Shared by computeInventoryHash and computeSettingsHash.
+ * @param {ArrayBuffer} buffer
+ * @returns {string}
+ */
+function sha256BufferToHex(buffer) {
+  var hashArray = new Uint8Array(buffer);
+  var hex = '';
+  for (var j = 0; j < hashArray.length; j++) {
+    hex += ('0' + hashArray[j].toString(16)).slice(-2);
+  }
+  return hex;
+}
+
+/**
  * Compute a deterministic SHA-256 hash of sorted item keys.
  * Returns hex string or null if hashing is unavailable (file:// protocol).
  * @param {object[]} items
@@ -95,12 +110,7 @@ async function computeInventoryHash(items) {
     var joined = keys.join('|');
     var encoded = new TextEncoder().encode(joined);
     var hashBuffer = await crypto.subtle.digest('SHA-256', encoded);
-    var hashArray = new Uint8Array(hashBuffer);
-    var hex = '';
-    for (var j = 0; j < hashArray.length; j++) {
-      hex += ('0' + hashArray[j].toString(16)).slice(-2);
-    }
-    return hex;
+    return sha256BufferToHex(hashBuffer);
   } catch (e) {
     debugLog('[CloudSync] computeInventoryHash failed:', e.message);
     return null;
@@ -156,12 +166,7 @@ async function computeSettingsHash() {
     var sorted = JSON.stringify(settings, Object.keys(settings).sort());
     var encoded = new TextEncoder().encode(sorted);
     var hashBuffer = await crypto.subtle.digest('SHA-256', encoded);
-    var hashArray = new Uint8Array(hashBuffer);
-    var hex = '';
-    for (var j = 0; j < hashArray.length; j++) {
-      hex += ('0' + hashArray[j].toString(16)).slice(-2);
-    }
-    return hex;
+    return sha256BufferToHex(hashBuffer);
   } catch (e) {
     debugLog('[CloudSync] computeSettingsHash failed:', e.message);
     return null;
