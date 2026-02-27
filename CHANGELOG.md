@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.03] - 2026-02-27
+
+### Fixed — Announcements Cleanup
+
+- **Fixed**: Removed stale v3.32.44/v3.32.45 entries from What's New — these were pre-release patches already rolled into v3.33.00
+- **Fixed**: Removed completed "Numista Field Origin Tracking" from roadmap — shipped in v3.33.01
+- **Fixed**: Restored "Cloud Backup Conflict Detection (STAK-150)" to roadmap as next priority
+
+---
+
 ## [3.33.02] - 2026-02-27
 
 ### Added — Cloud Sync Safety Overhaul
