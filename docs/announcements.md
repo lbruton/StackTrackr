@@ -1,10 +1,10 @@
 ## What's New
 
-- **Retail Anomaly Filter (v3.32.45)**: Two-pass anomaly detection in 24h retail chart — temporal spike smoothing (±5% neighbor consensus) plus cross-vendor median safety net. Anomalous table cells shown with line-through styling (STAK-325).
-- **Kilo &amp; Pound Weight Units (v3.32.44)**: Added kilogram and pound to the weight unit dropdown. Melt values convert correctly. Table, cards, and modals all display in the chosen unit (STAK-338).
-- **Numista Tag Fixes (v3.32.43)**: Tags now visible in edit modal and card views. All tags (including Numista-applied) are removable per-item — no more stuck tags (STAK-343, STAK-344).
-- **Pattern Rule Promotion Fix (v3.32.42)**: "Apply to all matching items" now works even when the item was saved previously (STAK-339-followup).
-- **Image Pipeline Simplification (v3.32.41)**: Removed coinImages IDB cache layer entirely. CDN URLs are now the sole Numista image source (STAK-339).
+- **Cloud Sync, Image Pipeline & Retail Charts (v3.33.00)**: Unified encryption for cloud sync with ambient status icons. Removed coinImages IDB cache — CDN-only Numista images. Dynamic IndexedDB quota. 24h retail intraday chart with anomaly filtering. Kilogram and pound weight units. Numista tags visible in edit modal and card view. Reorderable header buttons. Tabnabbing hardening across all external links
+- **Retail Anomaly Filter (v3.32.45)**: Two-pass anomaly detection in 24h retail chart — temporal spike smoothing (±5% neighbor consensus) plus cross-vendor median safety net. Anomalous table cells shown with line-through styling (STAK-325)
+- **Kilo & Pound Weight Units (v3.32.44)**: Added kilogram and pound to the weight unit dropdown. Melt values convert correctly. Table, cards, and modals all display in the chosen unit (STAK-338)
+- **Numista Tag Fixes (v3.32.43)**: Tags now visible in edit modal and card views. All tags (including Numista-applied) are removable per-item — no more stuck tags (STAK-343, STAK-344)
+- **Image Pipeline Simplification (v3.32.41)**: Removed coinImages IDB cache layer entirely. CDN URLs are now the sole Numista image source (STAK-339)
 
 ## Development Roadmap
 
