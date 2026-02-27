@@ -256,7 +256,7 @@ function _buildImageCertGrade(item, authority, certNum, pcgsNo) {
       e.stopPropagation();
       const url = hasCoinFacts
         ? _buildPcgsCoinFactsUrl(item.grade || '', pcgsNo)
-        : certUrlTemplate.replace(/\{certNumber\}/g, encodeURIComponent(certNum)).replace(/\{grade\}/g, encodeURIComponent(item.grade || ''));
+        : certUrlTemplate.replace(/\{certNumber\}/g, encodeURIComponent(certNum)).replace(/\{grade\}/g, encodeURIComponent(_extractNumericGrade(item.grade)));
       const popupName = `cert_${authority}_${certNum || pcgsNo}`.replace(/[^a-zA-Z0-9_]/g, '_');
       const popup = window.open(url, popupName, 'width=1250,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no');
       if (popup) {
@@ -270,8 +270,12 @@ function _buildImageCertGrade(item, authority, certNum, pcgsNo) {
   return gradeSpan;
 }
 
+function _extractNumericGrade(gradeText) {
+  return (gradeText || '').match(/\d+/)?.[0] || '';
+}
+
 function _buildPcgsCoinFactsUrl(gradeText, pcgsNo) {
-  const gradeNum = gradeText.match(/\d+/)?.[0] || '';
+  const gradeNum = _extractNumericGrade(gradeText);
   return gradeNum
     ? `https://www.pcgs.com/coinfacts/coin/detail/${encodeURIComponent(pcgsNo)}/${encodeURIComponent(gradeNum)}`
     : `https://www.pcgs.com/coinfacts/coin/${encodeURIComponent(pcgsNo)}`;
@@ -558,7 +562,7 @@ function _attachGradingCertLink(certItem, item) {
   if (!item.gradingAuthority || typeof CERT_LOOKUP_URLS === 'undefined' || !CERT_LOOKUP_URLS[item.gradingAuthority]) return;
   const url = CERT_LOOKUP_URLS[item.gradingAuthority]
     .replace(/{certNumber}/g, encodeURIComponent(item.certNumber))
-    .replace(/{grade}/g, encodeURIComponent(item.grade || ''));
+    .replace(/{grade}/g, encodeURIComponent(_extractNumericGrade(item.grade)));
   const valEl = certItem.querySelector('.view-detail-value');
   if (!valEl) return;
   valEl.textContent = '';
