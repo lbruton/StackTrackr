@@ -605,7 +605,7 @@ class NumistaProvider extends CatalogProvider {
     // Denomination / face value
     const denomination = numistaData.value?.text || '';
 
-    return {
+    const result = {
       catalogId: numistaData.id?.toString() || '',
       name: numistaData.title || '',
       year: year.toString(),
@@ -638,6 +638,13 @@ class NumistaProvider extends CatalogProvider {
       reverseDesc: numistaData.reverse?.description || '',
       edgeDesc: numistaData.edge?.description || '',
     };
+
+    // Attach field-level origin tracking (fieldMeta) for re-sync picker
+    if (typeof window.initFieldMeta === 'function') {
+      result.fieldMeta = window.initFieldMeta(result, 'numista');
+    }
+
+    return result;
   }
 
   /**
