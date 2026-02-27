@@ -223,6 +223,13 @@ const syncSettingsUI = () => {
     ippSelect.value = itemsPerPage === Infinity ? 'all' : String(itemsPerPage);
   }
 
+  // Cloud backup history depth
+  var historySelect = safeGetElement('cloudBackupHistoryDepth');
+  if (historySelect) {
+    var savedDepth = loadData(CLOUD_BACKUP_HISTORY_KEY) || String(CLOUD_BACKUP_HISTORY_DEFAULT);
+    historySelect.value = savedDepth;
+  }
+
   // Chip min count — sync with inline control
   const chipMinSetting = document.getElementById('settingsChipMinCount');
   const chipMinInline = document.getElementById('chipMinCount');

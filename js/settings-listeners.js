@@ -1102,6 +1102,14 @@ const bindCloudStorageListeners = () => {
   var panel = document.getElementById('inventoryCloudSection') || document.getElementById('settingsPanel_cloud');
   if (!panel) return;
 
+  // Backup history depth selector
+  var historySelect = safeGetElement('cloudBackupHistoryDepth');
+  if (historySelect) {
+    historySelect.addEventListener('change', function () {
+      saveData(CLOUD_BACKUP_HISTORY_KEY, historySelect.value);
+    });
+  }
+
   bindCloudCacheListeners();
 
   var _cloudBtnHandler = async function (e) {
