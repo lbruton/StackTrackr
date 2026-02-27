@@ -216,14 +216,94 @@ const deleteTagGlobal = (tag) => {
  *   Pass false when calling in a loop; caller is responsible for a single saveItemTags() after.
  * @returns {number} Number of tags added
  */
+// =============================================================================
+// TAG BLACKLIST — independent from chip-grouping.js blacklist
+// =============================================================================
+
+/**
+ * Load the tag blacklist from localStorage.
+ * @returns {string[]} Array of blacklisted tag names
+ */
+const loadTagBlacklist = () => {
+  try {
+    const list = loadDataSync('tagBlacklist', []);
+    return Array.isArray(list) ? list : [];
+  } catch (e) {
+    console.error('Failed to load tag blacklist:', e);
+    return [];
+  }
+};
+
+/**
+ * Save the tag blacklist to localStorage.
+ * @param {string[]} list - Array of blacklisted tag names
+ */
+const saveTagBlacklist = (list) => {
+  saveDataSync('tagBlacklist', list);
+};
+
+/**
+ * Check if a tag is blacklisted (case-insensitive).
+ * @param {string} tag - Tag name to check
+ * @returns {boolean} True if blacklisted
+ */
+const isTagBlacklisted = (tag) => {
+  if (!tag) return false;
+  const lower = tag.toLowerCase();
+  return loadTagBlacklist().some(t => t.toLowerCase() === lower);
+};
+
+/**
+ * Add a tag to the blacklist.
+ * @param {string} tag - Tag name to blacklist
+ * @returns {boolean} True if added (false if already present)
+ */
+const addToTagBlacklist = (tag) => {
+  if (!tag) return false;
+  const trimmed = tag.trim();
+  if (!trimmed) return false;
+  const list = loadTagBlacklist();
+  if (list.some(t => t.toLowerCase() === trimmed.toLowerCase())) return false;
+  list.push(trimmed);
+  saveTagBlacklist(list);
+  return true;
+};
+
+/**
+ * Remove a tag from the blacklist.
+ * @param {string} tag - Tag name to remove
+ * @returns {boolean} True if removed
+ */
+const removeFromTagBlacklist = (tag) => {
+  if (!tag) return false;
+  const lower = tag.toLowerCase();
+  const list = loadTagBlacklist();
+  const idx = list.findIndex(t => t.toLowerCase() === lower);
+  if (idx === -1) return false;
+  list.splice(idx, 1);
+  saveTagBlacklist(list);
+  return true;
+};
+
+// =============================================================================
+
 const applyNumistaTags = (uuid, numistaTags, persist = true) => {
   if (!uuid || !Array.isArray(numistaTags) || numistaTags.length === 0) return 0;
+
+  // Check global auto-apply setting
+  const autoApply = loadDataSync('numista_tags_auto', true);
+  if (!autoApply) return 0;
+
   let added = 0;
   for (const raw of numistaTags) {
     const tag = String(raw).trim();
     if (!tag) continue;
     // Capitalize first letter
     const capitalized = tag.charAt(0).toUpperCase() + tag.slice(1);
+
+    // Skip blacklisted tags
+    if (isTagBlacklisted(capitalized)) continue;
+
     if (addItemTag(uuid, capitalized, false)) {
       added++;
     }
@@ -432,6 +512,11 @@ window.getAllUniqueTags = getAllUniqueTags;
 window.renameTag = renameTag;
 window.deleteTagGlobal = deleteTagGlobal;
 window.applyNumistaTags = applyNumistaTags;
+window.loadTagBlacklist = loadTagBlacklist;
+window.saveTagBlacklist = saveTagBlacklist;
+window.isTagBlacklisted = isTagBlacklisted;
+window.addToTagBlacklist = addToTagBlacklist;
+window.removeFromTagBlacklist = removeFromTagBlacklist;
 window.buildTagSection = buildTagSection;
 
 // =============================================================================

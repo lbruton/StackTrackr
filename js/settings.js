@@ -160,6 +160,11 @@ const switchProviderTab = (key) => {
       renderNumistaSyncUI();
     }
   }
+
+  // Render Numista tag settings (auto-apply toggle + blacklist)
+  if (key === 'NUMISTA') {
+    renderNumistaTagSettings();
+  }
 };
 
 /**
@@ -2157,6 +2162,167 @@ const _handleStorageTinyToggle = () => {
   renderStorageSection(true);
 };
 
+/**
+ * Builds and renders the Numista tag settings UI:
+ * 1. Auto-apply Numista tags toggle
+ * 2. Tag blacklist management section
+ * Appended after the numistaBulkSyncGroup inside the Numista provider panel.
+ */
+const renderNumistaTagSettings = () => {
+  const container = document.getElementById('numistaTagSettingsGroup');
+  if (!container) return;
+
+  // Clear previous render
+  container.innerHTML = '';
+
+  // ── 1. Auto-apply toggle ──────────────────────────────────────────────
+  const autoGroup = document.createElement('div');
+  autoGroup.className = 'settings-group';
+  autoGroup.style.cssText = 'margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 0.75rem;';
+
+  const autoLabel = document.createElement('div');
+  autoLabel.className = 'settings-group-label';
+  autoLabel.textContent = 'Auto-apply Numista tags on import';
+  autoGroup.appendChild(autoLabel);
+
+  const autoSubtext = document.createElement('p');
+  autoSubtext.className = 'settings-subtext';
+  autoSubtext.textContent = 'When enabled, tags from Numista are automatically applied to items during search and bulk sync. Disable to skip tag assignment entirely.';
+  autoGroup.appendChild(autoSubtext);
+
+  const toggleWrap = document.createElement('div');
+  toggleWrap.className = 'chip-sort-toggle';
+  toggleWrap.id = 'settingsNumistaTagsAuto';
+
+  const btnYes = document.createElement('button');
+  btnYes.type = 'button';
+  btnYes.className = 'chip-sort-btn';
+  btnYes.dataset.val = 'yes';
+  btnYes.textContent = 'On';
+
+  const btnNo = document.createElement('button');
+  btnNo.type = 'button';
+  btnNo.className = 'chip-sort-btn';
+  btnNo.dataset.val = 'no';
+  btnNo.textContent = 'Off';
+
+  toggleWrap.appendChild(btnYes);
+  toggleWrap.appendChild(btnNo);
+  autoGroup.appendChild(toggleWrap);
+  container.appendChild(autoGroup);
+
+  // Sync initial state
+  const autoOn = loadDataSync('numista_tags_auto', true);
+  syncChipToggle('settingsNumistaTagsAuto', autoOn);
+
+  // Wire toggle
+  toggleWrap.addEventListener('click', (e) => {
+    const btn = e.target.closest('.chip-sort-btn');
+    if (!btn) return;
+    const isEnabled = btn.dataset.val === 'yes';
+    saveDataSync('numista_tags_auto', isEnabled);
+    syncChipToggle('settingsNumistaTagsAuto', isEnabled);
+  });
+
+  // ── 2. Tag blacklist section ──────────────────────────────────────────
+  const blGroup = document.createElement('div');
+  blGroup.className = 'settings-group';
+  blGroup.style.cssText = 'margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 0.75rem;';
+
+  const blLabel = document.createElement('div');
+  blLabel.className = 'settings-group-label';
+  blLabel.textContent = 'Tag Blacklist';
+  blGroup.appendChild(blLabel);
+
+  const blSubtext = document.createElement('p');
+  blSubtext.className = 'settings-subtext';
+  blSubtext.textContent = 'Tags in this list will never be applied from Numista imports. Matching is case-insensitive.';
+  blGroup.appendChild(blSubtext);
+
+  // Input row
+  const inputRow = document.createElement('div');
+  inputRow.style.cssText = 'display:flex;gap:0.5rem;margin-bottom:0.5rem;';
+
+  const tagInput = document.createElement('input');
+  tagInput.type = 'text';
+  tagInput.id = 'numistaTagBlacklistInput';
+  tagInput.placeholder = 'e.g. Circulation';
+  tagInput.style.cssText = 'flex:1;padding:0.35rem 0.5rem;border:1px solid var(--border);border-radius:4px;font-size:0.85rem;background:var(--bg);color:var(--text);';
+
+  const addBtn = document.createElement('button');
+  addBtn.type = 'button';
+  addBtn.className = 'btn info';
+  addBtn.style.fontSize = '0.85rem';
+  addBtn.textContent = 'Add';
+
+  inputRow.appendChild(tagInput);
+  inputRow.appendChild(addBtn);
+  blGroup.appendChild(inputRow);
+
+  // Tag list container
+  const tagList = document.createElement('div');
+  tagList.id = 'numistaTagBlacklistList';
+  tagList.style.cssText = 'display:flex;flex-wrap:wrap;gap:0.35rem;';
+  blGroup.appendChild(tagList);
+
+  container.appendChild(blGroup);
+
+  // Render current blacklist
+  const renderBlacklist = () => {
+    tagList.innerHTML = '';
+    const blacklist = typeof window.loadTagBlacklist === 'function' ? window.loadTagBlacklist() : [];
+    if (blacklist.length === 0) {
+      const hint = document.createElement('span');
+      hint.className = 'settings-subtext';
+      hint.style.fontSize = '0.8rem';
+      hint.textContent = 'No blacklisted tags.';
+      tagList.appendChild(hint);
+      return;
+    }
+    for (const tag of blacklist) {
+      const chip = document.createElement('span');
+      chip.className = 'tag-chip';
+      chip.style.cssText = 'display:inline-flex;align-items:center;gap:0.25rem;padding:0.2rem 0.5rem;border-radius:12px;font-size:0.8rem;background:var(--bg-secondary, #eee);color:var(--text);';
+
+      const nameSpan = document.createElement('span');
+      nameSpan.textContent = sanitizeHtml(tag);
+      chip.appendChild(nameSpan);
+
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.textContent = '\u00d7';
+      removeBtn.title = 'Remove from blacklist';
+      removeBtn.style.cssText = 'background:none;border:none;cursor:pointer;font-size:1rem;line-height:1;padding:0 0.15rem;color:var(--text-secondary);';
+      removeBtn.addEventListener('click', () => {
+        if (typeof window.removeFromTagBlacklist === 'function') {
+          window.removeFromTagBlacklist(tag);
+          renderBlacklist();
+        }
+      });
+      chip.appendChild(removeBtn);
+      tagList.appendChild(chip);
+    }
+  };
+
+  // Wire add button
+  const doAdd = () => {
+    const val = tagInput.value.trim();
+    if (!val) return;
+    if (typeof window.addToTagBlacklist === 'function') {
+      window.addToTagBlacklist(val);
+    }
+    tagInput.value = '';
+    renderBlacklist();
+  };
+
+  addBtn.addEventListener('click', doAdd);
+  tagInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); doAdd(); }
+  });
+
+  renderBlacklist();
+};
+
 // Expose globally
 if (typeof window !== 'undefined') {
   window.showSettingsModal = showSettingsModal;
@@ -2174,4 +2340,5 @@ if (typeof window !== 'undefined') {
   window.renderCustomRuleTable = renderCustomRuleTable;
   window.populateImagesSection = populateImagesSection;
   window.renderStorageSection = renderStorageSection;
+  window.renderNumistaTagSettings = renderNumistaTagSettings;
 }
