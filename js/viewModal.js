@@ -256,7 +256,7 @@ function _buildImageCertGrade(item, authority, certNum, pcgsNo) {
       e.stopPropagation();
       const url = hasCoinFacts
         ? _buildPcgsCoinFactsUrl(item.grade || '', pcgsNo)
-        : certUrlTemplate.replace(/\{certNumber\}/g, encodeURIComponent(certNum)).replace(/\{grade\}/g, encodeURIComponent(item.grade || ''));
+        : certUrlTemplate.replace(/\{certNumber\}/g, encodeURIComponent(certNum)).replace(/\{grade\}/g, encodeURIComponent((item.grade || '').match(/\d+/)?.[0] || ''));
       const popupName = `cert_${authority}_${certNum || pcgsNo}`.replace(/[^a-zA-Z0-9_]/g, '_');
       const popup = window.open(url, popupName, 'width=1250,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no');
       if (popup) {

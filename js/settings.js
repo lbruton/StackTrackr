@@ -1139,6 +1139,7 @@ const applyHeaderToggleVisibility = () => {
     syncBtn:     'headerSyncBtn',
     vaultBtn:    'headerVaultBtn',
     restoreBtn:  'headerRestoreBtn',
+    cloudSyncBtn: 'headerCloudSyncWrapper',
     aboutBtn:    'aboutBtn',
     settingsBtn: 'settingsBtn',
   };
@@ -1160,9 +1161,6 @@ const applyHeaderToggleVisibility = () => {
       const btn = container.querySelector(`#${btnId}`);
       if (btn) container.append(btn);
     }
-    // Cloud sync wrapper is position-managed by the cloud feature; keep it first
-    const cloudWrapper = container.querySelector('#headerCloudSyncWrapper');
-    if (cloudWrapper) container.prepend(cloudWrapper);
   }
 
   // Show text toggle
@@ -1187,12 +1185,13 @@ const getHeaderBtnConfig = () => {
     syncBtn:     (() => { const v = localStorage.getItem(HEADER_SYNC_BTN_KEY); return v !== null ? v === 'true' : true; })(),
     vaultBtn:    (() => { const v = localStorage.getItem(HEADER_VAULT_BTN_KEY); return v !== null ? v === 'true' : true; })(),
     restoreBtn:  localStorage.getItem(HEADER_RESTORE_BTN_KEY) !== 'false',
+    cloudSyncBtn: (() => { const v = localStorage.getItem(HEADER_CLOUD_SYNC_BTN_KEY); return v !== null ? v === 'true' : true; })(),
     aboutBtn:    localStorage.getItem('headerAboutBtnVisible') !== 'false',
   };
   const labelMap = {
     themeBtn: 'Theme', currencyBtn: 'Currency', marketBtn: 'Market',
     trendBtn: 'Trend', syncBtn: 'Spot Sync', vaultBtn: 'Backup',
-    restoreBtn: 'Restore', aboutBtn: 'About',
+    restoreBtn: 'Restore', cloudSyncBtn: 'Cloud Sync', aboutBtn: 'About',
   };
   const defaultOrder = Object.keys(vis);
   const savedOrder = (() => {
@@ -1222,6 +1221,7 @@ const saveHeaderBtnConfig = (cfg) => {
     syncBtn:     HEADER_SYNC_BTN_KEY,
     vaultBtn:    HEADER_VAULT_BTN_KEY,
     restoreBtn:  HEADER_RESTORE_BTN_KEY,
+    cloudSyncBtn: HEADER_CLOUD_SYNC_BTN_KEY,
     aboutBtn:    'headerAboutBtnVisible',
   };
   for (const item of cfg) {
