@@ -283,6 +283,17 @@ Run the equivalent of `/verify full`:
 6. Check for updated seed data: `git diff --stat data/` — if the Docker poller has been running, these files will have new entries. Confirm they'll be included in the commit.
 7. `git diff --stat` — confirm version files + seed data files changed (6 version files + any updated spot-history-*.json)
 
+### Release ZIP audit (`.gitattributes`)
+
+8. **Verify `.gitattributes` export-ignore rules are current.** The release ZIP must contain ONLY runtime files (HTML, JS, CSS, vendor libs, images, manifest, README). Run:
+   ```bash
+   git archive --format=zip HEAD -o /tmp/staktrakr-release-check.zip && unzip -l /tmp/staktrakr-release-check.zip | tail -5
+   ```
+   - Confirm NO dev files appear: no `tests/`, `docs/`, `about/`, `.agents/`, `.claude/`, `devops/`, `functions/`, config files, raw `data/spot-history-*.json` source JSONs
+   - Confirm ALL runtime files ARE present: `index.html`, `js/*`, `css/*`, `vendor/*`, `images/*`, `data/spot-history-bundle.js`
+   - If any new tracked files or directories were added since last release, add `export-ignore` rules to `.gitattributes`
+   - Expected file count: ~75-85 files
+
 Report any issues before proceeding.
 
 ## Phase 3: Commit

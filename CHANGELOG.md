@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.00] - 2026-02-26
+
+### Added — Cloud Sync Overhaul, Image Pipeline, Numista Integrity, Menu UX, Retail Charts
+
+- **Added**: Unified encryption mode for cloud sync — zero-config for most users, ambient header status icon, configurable idle timeout
+- **Added**: 24h retail intraday chart with 30-min buckets, vendor carry-forward, two-pass anomaly filtering, OOS badges
+- **Added**: Kilogram (kg) and pound (lb) weight units with automatic troy ounce conversion
+- **Added**: Reorderable header buttons with show-text toggle, health status dots on Sync/Market buttons
+- **Changed**: Removed `coinImages` IDB cache — CDN URLs are now the sole Numista image source, dynamic IndexedDB quota
+- **Changed**: Overhauled `.gitattributes` export-ignore — release ZIP contains only runtime files (~4.5MB)
+- **Fixed**: N#/image/metadata re-population after edit+save, image cross-contamination between items
+- **Fixed**: Per-item Numista tag deletion, tags visible in edit modal and card view
+- **Security**: Sentinel tabnabbing hardening on all external links, OAuth CSRF/PKCE improvements
+
+---
+
 ## [3.32.45] - 2026-02-26
 
 ### Added — Filter Anomalous Vendor Price Spikes from 24h Retail Chart
