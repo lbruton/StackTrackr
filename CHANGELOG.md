@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.02] - 2026-02-27
+
+### Added — Cloud Sync Safety Overhaul
+
+- **Added**: Empty-vault push guard — blocks syncing 0-item vault over populated cloud data, offers pull instead (STAK-295)
+- **Added**: Cloud-side backup-before-overwrite — copies existing vault to /backups/ before every sync push
+- **Added**: Dropbox folder restructuring — /sync/ and /backups/ subfolders with automatic migration from flat layout
+- **Added**: Enhanced manifest schema v2 — inventory hash, metals summary, vault size for efficient change detection
+- **Added**: DiffEngine restore preview modal — full field-level diff before applying remote sync updates (STAK-190)
+- **Added**: Configurable backup history depth — Settings dropdown (3/5/10/20, default 5) with auto-prune
+- **Added**: Multi-tab sync guard — BroadcastChannel leader election prevents concurrent sync from multiple tabs (STAK-360)
+
+---
+
 ## [3.33.01] - 2026-02-27
 
 ### Added — Numista Search Overhaul

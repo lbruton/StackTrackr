@@ -290,7 +290,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-12 - STACK-38/STACK-31: Responsive card view + mobile layout
  */
 
-const APP_VERSION = "3.33.01";
+const APP_VERSION = "3.33.02";
 
 /**
  * Numista metadata cache TTL: 30 days in milliseconds.
@@ -716,14 +716,27 @@ const SYNC_POLL_INTERVAL = 600000;
 /** Debounce delay before pushing after a saveInventory() call (2 seconds) */
 const SYNC_PUSH_DEBOUNCE = 2000;
 
-/** Dropbox path for the rolling sync vault file */
-const SYNC_FILE_PATH = '/StakTrakr/staktrakr-sync.stvault';
+/** Legacy Dropbox paths (pre-v2 flat layout — used for migration detection only) */
+const SYNC_FILE_PATH_LEGACY = '/StakTrakr/staktrakr-sync.stvault';
+const SYNC_META_PATH_LEGACY = '/StakTrakr/staktrakr-sync.json';
+const SYNC_IMAGES_PATH_LEGACY = '/StakTrakr/staktrakr-images.stvault';
 
-/** Dropbox path for the lightweight sync metadata pointer */
-const SYNC_META_PATH = '/StakTrakr/staktrakr-sync.json';
+/** Dropbox path for the rolling sync vault file (v2 — /sync/ subfolder) */
+const SYNC_FILE_PATH = '/StakTrakr/sync/staktrakr-sync.stvault';
 
-/** Dropbox path for the encrypted user-image vault (IndexedDB photos) */
-const SYNC_IMAGES_PATH = '/StakTrakr/staktrakr-images.stvault';
+/** Dropbox path for the lightweight sync metadata pointer (v2 — /sync/ subfolder) */
+const SYNC_META_PATH = '/StakTrakr/sync/staktrakr-sync.json';
+
+/** Dropbox path for the encrypted user-image vault (v2 — /sync/ subfolder) */
+const SYNC_IMAGES_PATH = '/StakTrakr/sync/staktrakr-images.stvault';
+
+/** Dropbox folder for cloud-side backups */
+const SYNC_BACKUP_FOLDER = '/StakTrakr/backups';
+
+/** Cloud backup history depth — how many backups to retain */
+const CLOUD_BACKUP_HISTORY_KEY = 'cloud_backup_history_depth';
+const CLOUD_BACKUP_HISTORY_DEFAULT = 5;
+const CLOUD_BACKUP_HISTORY_OPTIONS = [3, 5, 10, 20];
 
 /**
  * Keys included in a sync vault (excludes API keys, tokens, spot history).
@@ -849,6 +862,8 @@ const ALLOWED_STORAGE_KEYS = [
   "headerAboutBtnVisible",                             // boolean string: "true"/"false" — about button visibility (STAK-320)
   "tagBlacklist",                                      // JSON array: tags excluded from auto-tagging
   "numista_tags_auto",                                 // boolean string: "true"/"false" — auto-tag from Numista data
+  "cloud_sync_migrated",                               // string: "v2" — cloud folder migration flag (flat → /sync/ + /backups/)
+  "cloud_backup_history_depth",                        // string: "3"|"5"|"10"|"20" — max cloud backups to retain
 ];
 
 // =============================================================================
@@ -1634,6 +1649,13 @@ if (typeof window !== "undefined") {
   window.SYNC_FILE_PATH = SYNC_FILE_PATH;
   window.SYNC_META_PATH = SYNC_META_PATH;
   window.SYNC_IMAGES_PATH = SYNC_IMAGES_PATH;
+  window.SYNC_FILE_PATH_LEGACY = SYNC_FILE_PATH_LEGACY;
+  window.SYNC_META_PATH_LEGACY = SYNC_META_PATH_LEGACY;
+  window.SYNC_IMAGES_PATH_LEGACY = SYNC_IMAGES_PATH_LEGACY;
+  window.SYNC_BACKUP_FOLDER = SYNC_BACKUP_FOLDER;
+  window.CLOUD_BACKUP_HISTORY_KEY = CLOUD_BACKUP_HISTORY_KEY;
+  window.CLOUD_BACKUP_HISTORY_DEFAULT = CLOUD_BACKUP_HISTORY_DEFAULT;
+  window.CLOUD_BACKUP_HISTORY_OPTIONS = CLOUD_BACKUP_HISTORY_OPTIONS;
   window.SYNC_SCOPE_KEYS = SYNC_SCOPE_KEYS;
   window.CERT_LOOKUP_URLS = CERT_LOOKUP_URLS;
   // Inline chip config

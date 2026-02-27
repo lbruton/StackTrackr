@@ -474,12 +474,25 @@ async function vaultEncryptToBytesScoped(password) {
  * @returns {Promise<void>}
  */
 async function vaultDecryptAndRestore(fileBytes, password) {
+  var payload = await vaultDecryptToData(fileBytes, password);
+  await restoreVaultData(payload);
+}
+
+/**
+ * Decrypt raw vault bytes and return the parsed payload WITHOUT restoring.
+ * Identical to vaultDecryptAndRestore() but returns data instead of side effects.
+ * Used by the restore preview flow (Layer 5) to compute diffs before applying.
+ * @param {Uint8Array|ArrayBuffer} fileBytes
+ * @param {string} password
+ * @returns {Promise<object>} Parsed vault payload { data, settings, ... }
+ */
+async function vaultDecryptToData(fileBytes, password) {
   var parsed = parseVaultFile(new Uint8Array(fileBytes));
   var key = await vaultDeriveKey(password, parsed.salt, parsed.iterations);
   var plainBytes = await vaultDecrypt(parsed.ciphertext, key, parsed.iv);
   var payload = JSON.parse(new TextDecoder().decode(plainBytes));
   if (!payload || !payload.data) throw new Error("Vault file appears corrupted.");
-  await restoreVaultData(payload);
+  return payload;
 }
 
 // =============================================================================
@@ -1247,6 +1260,7 @@ window.closeVaultModal = closeVaultModal;
 window.vaultEncryptToBytes = vaultEncryptToBytes;
 window.vaultEncryptToBytesScoped = vaultEncryptToBytesScoped;
 window.vaultDecryptAndRestore = vaultDecryptAndRestore;
+window.vaultDecryptToData = vaultDecryptToData;
 window.collectVaultData = collectVaultData;
 window.collectAndHashImageVault = collectAndHashImageVault;
 window.vaultEncryptImageVault = vaultEncryptImageVault;
