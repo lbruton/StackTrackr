@@ -176,6 +176,9 @@ const elements = {
   cloneItemSaveAnotherBtn: null,
   clonePickerCount: null,
 
+  // Date N/A toggle button (STAK-375)
+  itemDateNABtn: null,
+
   // About & acknowledgment modal elements
   aboutBtn: null,
   aboutModal: null,

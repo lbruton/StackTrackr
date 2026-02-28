@@ -24,9 +24,10 @@ let _cloneSessionCount = 0;
 let _cloneDirty = false;
 
 /**
- * @type {boolean} Flag set by Save & Close button to trigger modal close after commit
+ * @type {boolean} Flag set by Save & Close button to trigger modal close after commit.
+ *   Defaults to true so Enter-key (implicit) submits behave as Save & Close.
  */
-let _cloneSaveAndClose = false;
+let _cloneSaveAndClose = true;
 
 /**
  * @type {number|null} Inventory index of the source item (for "Back" button)
@@ -40,6 +41,18 @@ Object.defineProperty(window, '_cloneSessionCount', { get: () => _cloneSessionCo
 Object.defineProperty(window, '_cloneDirty', { get: () => _cloneDirty, set: (v) => { _cloneDirty = v; }, configurable: true });
 Object.defineProperty(window, '_cloneSaveAndClose', { get: () => _cloneSaveAndClose, set: (v) => { _cloneSaveAndClose = v; }, configurable: true });
 Object.defineProperty(window, '_cloneSourceIndex', { get: () => _cloneSourceIndex, set: (v) => { _cloneSourceIndex = v; }, configurable: true });
+
+/**
+ * Deep-clone a source inventory item with a compatibility fallback.
+ * @param {Object} item
+ * @returns {Object}
+ */
+function cloneItemDeep(item) {
+  if (typeof structuredClone === 'function') {
+    try { return structuredClone(item); } catch (_) { /* fall through */ }
+  }
+  return JSON.parse(JSON.stringify(item));
+}
 
 /**
  * Field definitions for clone checkboxes.
@@ -64,7 +77,7 @@ const CLONE_FIELDS = [
 ];
 
 /**
- * Section-level checkboxes for collapsible (now non-collapsible) sections.
+ * Section-level checkboxes for non-collapsible sections.
  */
 const CLONE_SECTIONS = [
   { sectionId: 'numistaDataSection', key: 'numistaData', defaultOn: true },
@@ -78,15 +91,15 @@ const CLONE_SECTIONS = [
 function enterCloneMode(inventoryIndex) {
   if (_cloneMode) return;
 
-  _cloneSourceItem = structuredClone(inventory[inventoryIndex]);
+  _cloneSourceItem = cloneItemDeep(inventory[inventoryIndex]);
   _cloneSourceIndex = inventoryIndex;
   editingIndex = null; // Form submit creates new item
   _cloneMode = true;
   _cloneSessionCount = 0;
   _cloneDirty = false;
-  _cloneSaveAndClose = false;
+  _cloneSaveAndClose = true;
 
-  const modal = document.getElementById('itemModal');
+  const modal = safeGetElement('itemModal');
   if (modal) modal.classList.add('clone-mode');
 
   // Inject field checkboxes
@@ -98,13 +111,16 @@ function enterCloneMode(inventoryIndex) {
     cb.className = 'clone-field-cb';
     cb.dataset.cloneField = key;
     cb.checked = defaultOn;
+    cb.setAttribute('aria-label', `Clone ${key}`);
     cb.addEventListener('change', () => toggleCloneField(key, cb.checked));
     label.prepend(cb);
+    // Apply initial dim state for defaultOff fields
+    if (!defaultOn) toggleCloneField(key, false);
   });
 
   // Inject section checkboxes
   CLONE_SECTIONS.forEach(({ sectionId, key, defaultOn }) => {
-    const section = document.getElementById(sectionId);
+    const section = safeGetElement(sectionId);
     if (!section) return;
     const header = section.querySelector('.form-section-header');
     if (!header) return;
@@ -113,8 +129,10 @@ function enterCloneMode(inventoryIndex) {
     cb.className = 'clone-section-cb';
     cb.dataset.cloneSection = key;
     cb.checked = defaultOn;
+    cb.setAttribute('aria-label', 'Clone section');
     cb.addEventListener('change', () => toggleCloneSection(sectionId, key, cb.checked));
     header.prepend(cb);
+    if (!defaultOn) toggleCloneSection(sectionId, key, false);
   });
 
   // Update modal UI
@@ -131,12 +149,13 @@ function enterCloneMode(inventoryIndex) {
 
 /**
  * Exits clone mode and restores the edit modal to normal state.
+ * @param {boolean} [silent=false] If true, skip re-opening edit mode (used during Save & Close)
  */
-function exitCloneMode() {
+function exitCloneMode(silent) {
   if (!_cloneMode) return;
   _cloneMode = false;
 
-  const modal = document.getElementById('itemModal');
+  const modal = safeGetElement('itemModal');
   if (modal) modal.classList.remove('clone-mode');
 
   // Remove injected checkboxes
@@ -157,11 +176,11 @@ function exitCloneMode() {
     renderTable();
   }
 
-  // Re-open source item in edit mode
+  // Re-open source item in edit mode (unless silent exit for Save & Close)
   const srcIdx = _cloneSourceIndex;
   _cloneSourceItem = null;
   _cloneSourceIndex = null;
-  if (srcIdx !== null && typeof editItem === 'function') {
+  if (!silent && srcIdx !== null && typeof editItem === 'function') {
     editItem(srcIdx);
   }
 }
@@ -190,7 +209,7 @@ function toggleCloneField(key, checked) {
  * @param {boolean} checked - Whether the checkbox is now checked
  */
 function toggleCloneSection(sectionId, key, checked) {
-  const section = document.getElementById(sectionId);
+  const section = safeGetElement(sectionId);
   if (!section) return;
   const body = section.querySelector('.form-section-body');
   if (body) {
@@ -214,13 +233,13 @@ function isCloneFieldChecked(key) {
 }
 
 /**
- * Reset unchecked fields after "Save & Clone Another".
- * Checked fields keep their values; unchecked fields are cleared.
+ * Clear unchecked clone fields in the DOM BEFORE parseItemFormFields reads them.
+ * This ensures the first clone respects checkbox state.
  */
-function resetUncheckedCloneFields() {
+function clearUncheckedCloneFields() {
   CLONE_FIELDS.forEach(({ labelFor, key }) => {
     if (isCloneFieldChecked(key)) return;
-    const el = document.getElementById(labelFor);
+    const el = safeGetElement(labelFor);
     if (!el) return;
     if (el.tagName === 'SELECT') {
       el.selectedIndex = 0;
@@ -229,12 +248,43 @@ function resetUncheckedCloneFields() {
     }
   });
 
-  // Reset unchecked sections
+  // Clear unchecked sections
+  CLONE_SECTIONS.forEach(({ sectionId, key }) => {
+    if (key === 'tags') return; // Tags handled separately via tag API
+    if (isCloneFieldChecked(key)) return;
+    const section = safeGetElement(sectionId);
+    if (!section) return;
+    section.querySelectorAll('input:not(.clone-section-cb), select').forEach(input => {
+      if (input.type === 'checkbox') input.checked = false;
+      else if (input.tagName === 'SELECT') input.selectedIndex = 0;
+      else input.value = '';
+    });
+  });
+}
+
+/**
+ * Reset unchecked fields after "Save & Clone Another".
+ * Checked fields keep their values; unchecked fields are cleared.
+ * Clone control checkboxes are preserved.
+ */
+function resetUncheckedCloneFields() {
+  CLONE_FIELDS.forEach(({ labelFor, key }) => {
+    if (isCloneFieldChecked(key)) return;
+    const el = safeGetElement(labelFor);
+    if (!el) return;
+    if (el.tagName === 'SELECT') {
+      el.selectedIndex = 0;
+    } else {
+      el.value = '';
+    }
+  });
+
+  // Reset unchecked sections (excluding clone control checkboxes)
   CLONE_SECTIONS.forEach(({ sectionId, key }) => {
     if (isCloneFieldChecked(key)) return;
-    const section = document.getElementById(sectionId);
+    const section = safeGetElement(sectionId);
     if (!section) return;
-    section.querySelectorAll('input, select').forEach(input => {
+    section.querySelectorAll('input:not(.clone-field-cb):not(.clone-section-cb), select').forEach(input => {
       if (input.type === 'checkbox') input.checked = false;
       else if (input.tagName === 'SELECT') input.selectedIndex = 0;
       else input.value = '';
@@ -259,5 +309,6 @@ function updateCloneCounter() {
 window.enterCloneMode = enterCloneMode;
 window.exitCloneMode = exitCloneMode;
 window.isCloneFieldChecked = isCloneFieldChecked;
+window.clearUncheckedCloneFields = clearUncheckedCloneFields;
 window.resetUncheckedCloneFields = resetUncheckedCloneFields;
 window.updateCloneCounter = updateCloneCounter;

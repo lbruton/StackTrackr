@@ -972,7 +972,7 @@ const parseItemFormFields = (isEditing, existingItem) => {
     storageLocation: elements.storageLocation.value.trim(),
     serialNumber: elements.itemSerialNumber?.value?.trim() ?? '',
     notes: elements.itemNotes.value.trim(),
-    date: document.getElementById('itemDateNABtn')?.classList.contains('active') ? '' : (elements.itemDate.value || (isEditing ? (existingItem.date || '') : todayStr())),
+    date: elements.itemDateNABtn?.classList.contains('active') ? '' : (elements.itemDate.value || (isEditing ? (existingItem.date || '') : todayStr())),
     catalog: elements.itemCatalog ? elements.itemCatalog.value.trim() : '',
     year: elements.itemYear?.value?.trim() ?? '',
     grade: elements.itemGrade?.value?.trim() ?? '',
@@ -1256,6 +1256,11 @@ const setupItemFormListeners = () => {
         const isEditing = editingIndex !== null;
         const existingItem = isEditing ? { ...inventory[editingIndex] } : {};
 
+        // Clone mode: clear unchecked fields BEFORE parsing so they aren't saved
+        if (window._cloneMode && typeof clearUncheckedCloneFields === 'function') {
+          clearUncheckedCloneFields();
+        }
+
         const fields = parseItemFormFields(isEditing, existingItem);
         const error = validateItemFields(fields);
         if (error) { appAlert(error); return; }
@@ -1268,10 +1273,11 @@ const setupItemFormListeners = () => {
         if (window._cloneMode) {
           const newItem = inventory[inventory.length - 1];
           // Copy tags from source to new clone (if tags checkbox is checked)
-          if (typeof getItemTags === 'function' && typeof setItemTags === 'function' && window._cloneSourceItem?.uuid) {
-            const sourceTags = getItemTags(window._cloneSourceItem.uuid);
-            if (sourceTags.length > 0 && typeof isCloneFieldChecked === 'function' && isCloneFieldChecked('tags')) {
-              setItemTags(newItem.uuid, [...sourceTags]);
+          if (typeof getItemTags === 'function' && typeof addItemTag === 'function' && typeof saveItemTags === 'function' && window._cloneSourceItem?.uuid) {
+            const sourceTags = getItemTags(window._cloneSourceItem.uuid) || [];
+            if (Array.isArray(sourceTags) && sourceTags.length > 0 && typeof isCloneFieldChecked === 'function' && isCloneFieldChecked('tags')) {
+              sourceTags.forEach(tag => addItemTag(newItem.uuid, tag, false));
+              saveItemTags();
             }
           }
 
@@ -1283,11 +1289,12 @@ const setupItemFormListeners = () => {
           if (elements.itemSpotPrice) elements.itemSpotPrice.value = '';
 
           if (window._cloneSaveAndClose) {
-            window._cloneSaveAndClose = false;
-            exitCloneMode();
+            window._cloneSaveAndClose = true; // Reset default for next session
+            if (typeof exitCloneMode === 'function') exitCloneMode(true); // silent — don't re-open edit
             // Fall through to normal close logic below
           } else {
             // Save & Clone Another — reset unchecked fields, stay open
+            window._cloneSaveAndClose = true; // Reset default for Enter-key safety
             if (typeof resetUncheckedCloneFields === 'function') resetUncheckedCloneFields();
             return; // Don't close modal, don't reset form
           }
@@ -1891,19 +1898,9 @@ const setupItemFormListeners = () => {
     );
   }
 
-  // SAVE & CLOSE IN CLONE MODE — intercept submit button click (STAK-375)
-  if (elements.itemModalSubmit) {
-    safeAttachListener(
-      elements.itemModalSubmit,
-      "click",
-      () => {
-        if (window._cloneMode) {
-          window._cloneSaveAndClose = true;
-        }
-      },
-      "Submit button clone mode intercept",
-    );
-  }
+  // SAVE & CLOSE IN CLONE MODE — _cloneSaveAndClose defaults to true, so
+  // Enter-key and submit-button clicks both route to Save & Close.
+  // Only the "Save & Clone Another" button sets it to false before requestSubmit().
 
   // VIEW ITEM BUTTON — open view modal from edit mode (STAK-173)
   if (elements.viewItemFromEditBtn) {
@@ -1936,14 +1933,13 @@ const setupItemFormListeners = () => {
   }
 
   // DATE N/A TOGGLE BUTTON (STAK-375)
-  const itemDateNABtn = document.getElementById("itemDateNABtn");
-  if (itemDateNABtn && elements.itemDate) {
+  if (elements.itemDateNABtn && elements.itemDate) {
     safeAttachListener(
-      itemDateNABtn,
+      elements.itemDateNABtn,
       "click",
       () => {
-        const isActive = itemDateNABtn.classList.toggle('active');
-        itemDateNABtn.setAttribute('aria-pressed', isActive);
+        const isActive = elements.itemDateNABtn.classList.toggle('active');
+        elements.itemDateNABtn.setAttribute('aria-pressed', isActive);
         elements.itemDate.disabled = isActive;
         if (isActive) {
           elements.itemDate.value = "";
@@ -2704,8 +2700,7 @@ const setupSearch = () => {
           if (elements.cloneItemBtn) elements.cloneItemBtn.style.display = 'none';
           if (elements.viewItemFromEditBtn) elements.viewItemFromEditBtn.style.display = 'none';
           // Reset date N/A toggle button
-          const addDateNABtn = document.getElementById('itemDateNABtn');
-          if (addDateNABtn) { addDateNABtn.classList.remove('active'); addDateNABtn.setAttribute('aria-pressed', 'false'); }
+          if (elements.itemDateNABtn) { elements.itemDateNABtn.classList.remove('active'); elements.itemDateNABtn.setAttribute('aria-pressed', 'false'); }
           if (elements.itemDate) elements.itemDate.disabled = false;
           // Reset estimate retail checkbox
           if (elements.estimateRetailFromSpot) elements.estimateRetailFromSpot.checked = false;
