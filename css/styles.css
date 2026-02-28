@@ -11551,6 +11551,7 @@ th {
 .retail-metal-badge--silver    { background: rgba(139,147,166,0.15); color: var(--bs-secondary-color, #6c757d); }
 .retail-metal-badge--platinum  { background: rgba(6,182,212,0.15);   color: #06b6d4; }
 .retail-metal-badge--palladium { background: rgba(148,163,184,0.15); color: #94a3b8; }
+.retail-metal-badge--goldback  { background: rgba(212,160,23,0.15);  color: #d4a017; }
 /* STAK-217: Trend indicator */
 .retail-trend {
   display: inline-flex;
