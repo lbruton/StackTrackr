@@ -777,68 +777,77 @@ const getChipColors = (field, value, index) => {
 const filterInventoryAdvanced = () => {
   let result = inventory;
 
-  // Apply advanced filters
-  Object.entries(activeFilters).forEach(([field, criteria]) => {
+  // Single pass performance optimization for advanced filters
+  const predicates = [];
+  const entries = Object.entries(activeFilters);
+  for (let j = 0; j < entries.length; j++) {
+    const [field, criteria] = entries[j];
     if (criteria && typeof criteria === 'object' && Array.isArray(criteria.values)) {
       const { values, exclude } = criteria;
       switch (field) {
         case 'name': {
-          const simplifiedValues = values.map(v => simplifyChipValue(v, field));
-          result = result.filter(item => {
+          const simplifiedValues = new Set(values.map(v => simplifyChipValue(v, field)));
+          predicates.push(item => {
             const itemName = simplifyChipValue(item.name || '', field);
-            const match = simplifiedValues.includes(itemName);
+            const match = simplifiedValues.has(itemName);
             return exclude ? !match : match;
           });
           break;
         }
         case 'metal': {
-          const lowerVals = values.map(v => v.toLowerCase());
-          result = result.filter(item => {
+          const lowerVals = new Set(values.map(v => v.toLowerCase()));
+          predicates.push(item => {
             const itemMetal = getCompositionFirstWords(item.composition || item.metal || '').toLowerCase();
-            const match = lowerVals.includes(itemMetal);
+            const match = lowerVals.has(itemMetal);
             return exclude ? !match : match;
           });
           break;
         }
-        case 'type':
-          result = result.filter(item => {
-            const match = values.includes(item.type);
+        case 'type': {
+          const valsSet = new Set(values);
+          predicates.push(item => {
+            const match = valsSet.has(item.type);
             return exclude ? !match : match;
           });
           break;
-        case 'purchaseLocation':
-          result = result.filter(item => {
+        }
+        case 'purchaseLocation': {
+          const valsSet = new Set(values);
+          predicates.push(item => {
             const loc = item.purchaseLocation;
             const normalized = (!loc || loc === 'Unknown' || loc === 'Numista Import') ? '—' : loc;
-            const match = values.includes(normalized);
+            const match = valsSet.has(normalized);
             return exclude ? !match : match;
           });
           break;
-        case 'storageLocation':
-          result = result.filter(item => {
+        }
+        case 'storageLocation': {
+          const valsSet = new Set(values);
+          predicates.push(item => {
             const loc = item.storageLocation;
             const normalized = (!loc || loc === 'Unknown' || loc === 'Numista Import') ? '—' : loc;
-            const match = values.includes(normalized);
+            const match = valsSet.has(normalized);
             return exclude ? !match : match;
           });
           break;
+        }
         case 'tags': {
           // STAK-126: Filter by item tags
           if (typeof getItemTags === 'function') {
-            const lowerVals = values.map(v => v.toLowerCase());
-            result = result.filter(item => {
+            const lowerVals = new Set(values.map(v => v.toLowerCase()));
+            predicates.push(item => {
               const tags = getItemTags(item.uuid);
-              const match = tags.some(t => lowerVals.includes(t.toLowerCase()));
+              const match = tags.some(t => lowerVals.has(t.toLowerCase()));
               return exclude ? !match : match;
             });
           }
           break;
         }
         default: {
-          const lowerVals = values.map(v => String(v).toLowerCase());
-          result = result.filter(item => {
+          const lowerVals = new Set(values.map(v => String(v).toLowerCase()));
+          predicates.push(item => {
             const fieldVal = String(item[field] ?? '').toLowerCase();
-            const match = lowerVals.includes(fieldVal);
+            const match = lowerVals.has(fieldVal);
             return exclude ? !match : match;
           });
           break;
@@ -848,14 +857,23 @@ const filterInventoryAdvanced = () => {
       const value = criteria;
       switch (field) {
         case 'dateFrom':
-          result = result.filter(item => item.date >= value);
+          predicates.push(item => item.date >= value);
           break;
         case 'dateTo':
-          result = result.filter(item => item.date <= value);
+          predicates.push(item => item.date <= value);
           break;
       }
     }
-  });
+  }
+
+  if (predicates.length > 0) {
+    result = result.filter(item => {
+      for (let j = 0; j < predicates.length; j++) {
+        if (!predicates[j](item)) return false;
+      }
+      return true;
+    });
+  }
 
   // Apply text search
   if (!searchQuery.trim()) return result;
@@ -863,10 +881,46 @@ const filterInventoryAdvanced = () => {
   let query = searchQuery.toLowerCase().trim();
 
   const terms = query.split(',').map(t => t.trim()).filter(t => t);
+  if (!terms.length) return result;
+
+  // Pre-calculate parsing and Regular Expressions to avoid O(N*W) recompilations
+  const parsedTerms = terms.map(q => {
+    const words = q.split(/\s+/).filter(w => w.length > 0);
+    const abbrevs = typeof METAL_ABBREVIATIONS !== 'undefined' ? METAL_ABBREVIATIONS : {};
+    const exactPhrase = q.toLowerCase();
+
+    // For phrase checking and multi-word processing
+    const expandedWords = words.map(w => abbrevs[w.toLowerCase()] || w);
+    const expandedPhrase = expandedWords.join(' ').toLowerCase();
+
+    // Prepare RegExes for word boundary searches
+    const phraseWordRegexes = words.map(word =>
+      new RegExp(`\\b${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i')
+    );
+
+    // Prepare RegExes for individual single-word searching with abbreviation expansion
+    const singleWordRegexes = words.map(word => {
+      const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const patterns = [escaped];
+      const expansion = abbrevs[word.toLowerCase()];
+      if (expansion) {
+        patterns.push(expansion.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+      }
+      const combined = patterns.join('|');
+      // nosemgrep: javascript.dos.rule-non-literal-regexp
+      return new RegExp(`\\b(?:${combined})`, 'i');
+    });
+
+    return { q, exactPhrase, expandedPhrase, words, phraseWordRegexes, singleWordRegexes };
+  });
+
+  const fuzzyEnabled = typeof window.featureFlags !== 'undefined' &&
+      window.featureFlags.isEnabled('FUZZY_AUTOCOMPLETE') &&
+      typeof fuzzyMatch === 'function';
+  const fuzzyThreshold = typeof AUTOCOMPLETE_CONFIG !== 'undefined'
+      ? AUTOCOMPLETE_CONFIG.threshold : 0.3;
 
   return result.filter(item => {
-    if (!terms.length) return true;
-
     // Retrieve or compute cached search data
     let cached = searchCache.get(item);
 
@@ -900,23 +954,13 @@ const filterInventoryAdvanced = () => {
     const { text: itemText, formattedDate } = cached;
 
     // Handle comma-separated terms (OR logic between comma terms)
-    return terms.some(q => {
-      // Split each comma term into individual words for AND logic
-      const words = q.split(/\s+/).filter(w => w.length > 0);
+    return parsedTerms.some(termObj => {
+      const { q, exactPhrase, expandedPhrase, words, phraseWordRegexes, singleWordRegexes } = termObj;
 
       // Special handling for multi-word searches to prevent partial matches
       // If searching for "American Eagle", it should only match items that have both words
       // but NOT match "American Gold Eagle" (which has an extra word in between)
       if (words.length >= 2) {
-        // STACK-62: Expand abbreviations in the query words for multi-word searches
-        const abbrevs = typeof METAL_ABBREVIATIONS !== 'undefined' ? METAL_ABBREVIATIONS : {};
-        const expandedWords = words.map(w => abbrevs[w.toLowerCase()] || w);
-        const expandedPhrase = expandedWords.join(' ').toLowerCase();
-
-        // For multi-word searches, check if the exact phrase exists or
-        // if all words exist as separate word boundaries without conflicting words
-        const exactPhrase = q.toLowerCase();
-
         // Check for exact phrase match first
         if (itemText.includes(exactPhrase)) {
           return true;
@@ -935,11 +979,7 @@ const filterInventoryAdvanced = () => {
 
         // For phrase searches like "American Eagle", be more restrictive
         // Check that all words are present as word boundaries
-        const allWordsPresent = words.every(word => {
-          // nosemgrep: javascript.dos.rule-non-literal-regexp
-          const wordRegex = new RegExp(`\\b${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
-          return wordRegex.test(itemText);
-        });
+        const allWordsPresent = phraseWordRegexes.every(wordRegex => wordRegex.test(itemText));
 
         if (!allWordsPresent) {
           return false;
@@ -991,20 +1031,11 @@ const filterInventoryAdvanced = () => {
       }
       
       // For single words, use word boundary matching with abbreviation expansion
-      const fieldMatch = words.every(word => {
-        // STACK-62: Build regex with original word + abbreviation expansion
-        const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const patterns = [escaped];
-        const abbrevs = typeof METAL_ABBREVIATIONS !== 'undefined' ? METAL_ABBREVIATIONS : {};
-        const expansion = abbrevs[word.toLowerCase()];
-        if (expansion) {
-          patterns.push(expansion.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-        }
-        const combined = patterns.join('|');
-        // nosemgrep: javascript.dos.rule-non-literal-regexp
-        const wordRegex = new RegExp(`\\b(?:${combined})`, 'i');
-
-        return (
+      let fieldMatch = true;
+      for (let k = 0; k < singleWordRegexes.length; k++) {
+        const wordRegex = singleWordRegexes[k];
+        const word = words[k]; // Only needed for includes string matches
+        if (!(
           wordRegex.test(item.metal) ||
           (item.composition && wordRegex.test(item.composition)) ||
           wordRegex.test(item.name) ||
@@ -1024,8 +1055,11 @@ const filterInventoryAdvanced = () => {
           (item.numistaId && wordRegex.test(String(item.numistaId))) ||
           (item.serialNumber && wordRegex.test(item.serialNumber)) ||
           (typeof getItemTags === 'function' && getItemTags(item.uuid).some(t => wordRegex.test(t)))
-        );
-      });
+        )) {
+            fieldMatch = false;
+            break;
+        }
+      }
       if (fieldMatch) return true;
 
       // STACK-23: Fall back to custom chip group label matching
@@ -1034,11 +1068,7 @@ const filterInventoryAdvanced = () => {
       }
 
       // STACK-62: Fuzzy fallback — score item fields when exact matching fails
-      if (typeof window.featureFlags !== 'undefined' &&
-          window.featureFlags.isEnabled('FUZZY_AUTOCOMPLETE') &&
-          typeof fuzzyMatch === 'function') {
-        const fuzzyThreshold = typeof AUTOCOMPLETE_CONFIG !== 'undefined'
-          ? AUTOCOMPLETE_CONFIG.threshold : 0.3;
+      if (fuzzyEnabled) {
         const fieldsToCheck = [item.name, item.purchaseLocation, item.storageLocation || '', item.notes || ''];
         for (const field of fieldsToCheck) {
           if (field && fuzzyMatch(q, field, { threshold: fuzzyThreshold }) > 0) {
