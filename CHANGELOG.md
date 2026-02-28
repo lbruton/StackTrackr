@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.07] - 2026-02-28
+
+### Added — Oklahoma Goldback G1 on Market Page
+
+- **Added**: Oklahoma Goldback G1 (`goldback-oklahoma-g1`) on market prices page with APMEX and Hero Bullion vendor tracking (STAK-370)
+- **Added**: Goldback vendor display name, brand color, and homepage URL in retail vendor config (STAK-370)
+
+---
+
 ## [3.33.06] - 2026-02-27
 
 ### Added — Market Page Redesign Phase 1
