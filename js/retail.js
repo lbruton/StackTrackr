@@ -936,7 +936,8 @@ const _buildMarketVendorLink = (vendorId, slug) => {
     el.addEventListener("click", (e) => {
       e.preventDefault();
       const popup = window.open(vendorUrl, `retail_vendor_${vendorId}`, "width=1250,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no");
-      if (!popup) window.open(vendorUrl, "_blank");
+      if (popup) popup.opener = null;
+      else window.open(vendorUrl, "_blank", "noopener,noreferrer");
     });
   }
   el.textContent = label;
@@ -984,13 +985,7 @@ const _buildMarketListCard = (slug, meta, priceData, historyData) => {
   weightRow.appendChild(badge);
   infoCol.appendChild(weightRow);
 
-  // GB Daily price for goldback items (playground shows "GB Daily: $X.XX")
-  if (meta.metal === "goldback" && typeof goldbackSpot !== "undefined" && goldbackSpot) {
-    const gbDaily = document.createElement("div");
-    gbDaily.className = "market-card-gb-daily";
-    gbDaily.textContent = `GB Daily: ${_fmtRetailPrice(goldbackSpot)}`;
-    infoCol.appendChild(gbDaily);
-  }
+  // GB Daily price placeholder — goldbackSpot not yet wired to live data source
 
   card.appendChild(infoCol);
 
@@ -1006,36 +1001,33 @@ const _buildMarketListCard = (slug, meta, priceData, historyData) => {
     const p = typeof v.price === "number" ? v.price : typeof v.avg === "number" ? v.avg : null;
     return p != null && isFinite(p) ? p : null;
   };
+  // Helper: compute average from in-stock vendor prices (deduplicates priceData / historyData branches)
+  const _calcVendorAvg = (vendorMap) => {
+    const vendorPrices = Object.values(vendorMap)
+      .filter((v) => v && v.inStock !== false)
+      .map(_vendorPrice)
+      .filter((p) => p != null);
+    return vendorPrices.length > 0 ? vendorPrices.reduce((a, b) => a + b, 0) / vendorPrices.length : null;
+  };
   if (priceData) {
     medVal = priceData.median_price;
     lowVal = priceData.lowest_price;
     // Compute average from in-stock vendor prices
     if (priceData.vendors) {
-      const vendorPrices = Object.values(priceData.vendors)
-        .filter((v) => v && v.inStock !== false)
-        .map(_vendorPrice)
-        .filter((p) => p != null);
-      if (vendorPrices.length > 0) {
-        avgVal = vendorPrices.reduce((a, b) => a + b, 0) / vendorPrices.length;
-      }
+      avgVal = _calcVendorAvg(priceData.vendors);
     }
   }
   // Fall back to latest history entry if priceData missing or didn't yield stats
+  // History is newest-first — index 0 is latest
   if (medVal == null && lowVal == null && historyData && historyData.length > 0) {
-    const latest = historyData[historyData.length - 1];
+    const latest = historyData[0];
     medVal = latest.avg_median || null;
     lowVal = latest.avg_low || null;
   }
   if (avgVal == null && historyData && historyData.length > 0) {
-    const latest = historyData[historyData.length - 1];
+    const latest = historyData[0];
     if (latest.vendors) {
-      const vendorPrices = Object.values(latest.vendors)
-        .filter((v) => v && v.inStock !== false)
-        .map(_vendorPrice)
-        .filter((p) => p != null);
-      if (vendorPrices.length > 0) {
-        avgVal = vendorPrices.reduce((a, b) => a + b, 0) / vendorPrices.length;
-      }
+      avgVal = _calcVendorAvg(latest.vendors);
     }
   }
 
@@ -1105,9 +1097,8 @@ const _buildMarketListCard = (slug, meta, priceData, historyData) => {
     sortedVendors.forEach(({ key, price, score, isAvailable }) => {
       const chip = document.createElement("span");
       chip.className = "vendor-chip";
-      const confClass = (!isAvailable ? "" : (score != null && score < 60) ? " low-conf" : "");
       if (!isAvailable) chip.classList.add("oos");
-      if (confClass) chip.className += confClass;
+      else if (score != null && score < 60) chip.classList.add("low-conf");
 
       if (isAvailable) {
         const medalIdx = top3Keys.indexOf(key);
@@ -1178,7 +1169,6 @@ const _buildMarketListCard = (slug, meta, priceData, historyData) => {
     // Let vendor chips, links, and the native summary toggle handle themselves
     if (e.target.closest(".vendor-chip") || e.target.closest("summary") || e.target.closest("a")) return;
     details.open = !details.open;
-    details.dispatchEvent(new Event("toggle"));
   });
 
   return card;
@@ -1209,7 +1199,7 @@ const _filterHistorySpikes = (entries, vendorIds) => {
     prices[vid] = [];
     estimated[vid] = [];
     let lastKnown = null;
-    // History is chronological (oldest first after .reverse()), so walk forward
+    // History was reversed to chronological (oldest first), so walk forward
     for (let t = 0; t < entries.length; t++) {
       const e = entries[t];
       const vd = e.vendors && e.vendors[vid];
@@ -1338,8 +1328,8 @@ const _initMarketCardChart = (slug, detailsEl) => {
   if (!(canvas instanceof HTMLCanvasElement)) return;
   const history = retailPriceHistory[slug];
   if (!history || history.length < 2) return;
-  // Data is already chronological (oldest first) — take last 7 entries for newest week
-  const last7 = history.slice(-7);
+  // History is newest-first — take first 7 entries and reverse to chronological order
+  const last7 = history.slice(0, 7).reverse();
   const knownVendors = Object.keys(RETAIL_VENDOR_NAMES);
   const activeVendors = knownVendors.filter((v) =>
     last7.some((e) => e.vendors && e.vendors[v] && e.vendors[v].avg != null)
@@ -1378,7 +1368,7 @@ const _initMarketCardChart = (slug, detailsEl) => {
     : [{
         label: "Avg Median",
         data: last7.map((e) => Number(e.avg_median)),
-        borderColor: "var(--accent-primary, #4a9eff)",
+        borderColor: "#4a9eff",
         backgroundColor: "transparent",
         borderWidth: 1.5,
         pointRadius: 3,
@@ -1406,7 +1396,7 @@ const _initMarketCardChart = (slug, detailsEl) => {
         },
       },
       scales: {
-        x: { ticks: { maxTicksToShow: 7, font: { size: 11 } } },
+        x: { ticks: { maxTicksLimit: 7, font: { size: 11 } } },
         y: { ticks: { callback: (v) => `$${Number(v).toFixed(0)}` } },
       },
       animation: false,
@@ -1558,13 +1548,13 @@ const _renderMarketListView = () => {
   footerRow.className = "market-footer-row";
   const footerText2 = document.createElement("div");
   footerText2.className = "market-footer-text";
-  footerText2.innerHTML = 'Item not found? Request it on <a href="https://reddit.com/r/staktrakr" target="_blank" rel="noopener">r/staktrakr</a> &mdash; supporters and early adopters get priority placement in the queue.';
+  footerText2.innerHTML = 'Item not found? Request it on <a href="https://reddit.com/r/staktrakr" target="_blank" rel="noopener noreferrer">r/staktrakr</a> &mdash; supporters and early adopters get priority placement in the queue.';
   footerRow.appendChild(footerText2);
   const sponsorBadge = document.createElement("a");
   sponsorBadge.className = "market-sponsor-badge";
   sponsorBadge.href = "https://github.com/sponsors/lbruton";
   sponsorBadge.target = "_blank";
-  sponsorBadge.rel = "noopener";
+  sponsorBadge.rel = "noopener noreferrer";
   sponsorBadge.textContent = "\u2665 Support";
   footerRow.appendChild(sponsorBadge);
   footer.appendChild(footerRow);
@@ -1609,6 +1599,7 @@ const _initMarketListViewListeners = () => {
     allDetails.forEach((d) => {
       if (allOpen) d.removeAttribute("open");
       else d.setAttribute("open", "");
+      d.dispatchEvent(new Event("toggle"));
     });
     expandBtn.textContent = allOpen ? "Expand All" : "Collapse All";
   });
