@@ -18,7 +18,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Added**: Vendor price chips with color-coded brand labels, medal rankings for best prices, OOS strikethrough styling (STAK-369)
 - **Added**: Computed MED/LOW/AVG stats row with live vendor + history fallback (STAK-369)
 - **Added**: Card click-to-expand chart interaction, functional search filtering, sort by name/metal/price/trend (STAK-369)
-- **Added**: Feature-flagged behind `?market_list_view=true` URL parameter (STAK-369)
+- **Added**: Enabled by default — disable with `?market_list_view=false` URL parameter (STAK-369)
+- **Added**: Sponsor badge with GitHub Sponsors link in market footer (STAK-369)
+- **Fixed**: Reverse tabnabbing protection on vendor links — `popup.opener = null` + `noopener,noreferrer` (STAK-369)
+- **Fixed**: Chart.js canvas color rendering — hex value instead of CSS `var()` (STAK-369)
+- **Fixed**: Chart.js `maxTicksLimit` option (was silently ignored `maxTicksToShow`) (STAK-369)
+- **Fixed**: Accessibility — `aria-label` on market search input (STAK-369)
+- **Fixed**: Mobile breakpoint — stats column spans full width at 767px (STAK-369)
 
 ---
 
