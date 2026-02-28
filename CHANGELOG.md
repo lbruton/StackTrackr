@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.12] - 2026-02-28
+
+### Fixed — Version Drift Correction
+
+- **Fixed**: Version number corrected to v3.33.12 — PR #591 (v3.33.11) merged before PR #590 (v3.33.10), reverting the version number
+
+---
+
 ## [3.33.10] - 2026-02-28
 
 ### Added — Mobile Long-Press Spot Price Entry (STAK-285)
