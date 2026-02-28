@@ -4722,6 +4722,24 @@
       </div>
     </div>
 
+    <!-- Clone Picker Modal -->
+    <div id="clonePickerModal" class="modal" style="display:none">
+      <div class="clone-picker-modal-content">
+        <div class="modal-header">
+          <h3 id="clonePickerTitle">Clone Item</h3>
+          <span id="clonePickerCloseBtn" class="modal-close">&times;</span>
+        </div>
+        <div id="clonePickerPreview" class="clone-picker-preview"></div>
+        <div id="clonePickerFields" class="clone-picker-fields"></div>
+        <div class="clone-picker-actions">
+          <span id="clonePickerCount" class="clone-picker-count" style="display:none"></span>
+          <button id="clonePickerCancelBtn" class="btn btn-secondary">Cancel</button>
+          <button id="clonePickerSaveAnotherBtn" class="btn btn-primary">Save &amp; Clone Another</button>
+          <button id="clonePickerSaveCloseBtn" class="btn btn-primary">Save &amp; Close</button>
+        </div>
+      </div>
+    </div>
+
     <!-- =============================================================================
        PCGS FIELD PICKER MODAL
 
@@ -5034,6 +5052,7 @@
     <script defer src="./js/settings.js"></script>
     <script defer src="./js/settings-listeners.js"></script>
     <script defer src="./js/bulkEdit.js"></script>
+    <script defer src="./js/clone-picker.js"></script>
     <script defer src="./js/events.js"></script>
     
     <!-- Test Scripts (Development) -->

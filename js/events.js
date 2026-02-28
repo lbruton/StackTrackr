@@ -1871,16 +1871,20 @@ const setupItemFormListeners = () => {
     );
   }
 
-  // CLONE ITEM BUTTON — duplicate current item as new entry (STAK-173)
+  // CLONE ITEM BUTTON — open clone picker modal (STAK-375), fallback to duplicateItem
   if (elements.cloneItemBtn) {
     safeAttachListener(
       elements.cloneItemBtn,
       "click",
       () => {
-        if (typeof editingIndex === 'number' && editingIndex >= 0 && typeof duplicateItem === 'function') {
-          const modal = document.getElementById('itemModal');
-          if (modal) modal.style.display = 'none';
-          duplicateItem(editingIndex);
+        if (typeof editingIndex === 'number' && editingIndex >= 0) {
+          if (typeof showClonePicker === 'function') {
+            showClonePicker(editingIndex);
+          } else if (typeof duplicateItem === 'function') {
+            const modal = document.getElementById('itemModal');
+            if (modal) modal.style.display = 'none';
+            duplicateItem(editingIndex);
+          }
         }
       },
       "Clone item button",

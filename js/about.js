@@ -283,10 +283,10 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.33.16 &ndash; Clone Picker Modal</strong>: Select/deselect fields when cloning items, edit variant values inline, batch-clone date/mint variants via Save &amp; Clone Another with live counter</li>
     <li><strong>v3.33.15 &ndash; Beta Domain Toast</strong>: Environment badge (BETA/PREVIEW/LOCAL) next to logo on non-production domains. One-time session toast explains data isolation between origins</li>
     <li><strong>v3.33.14 &ndash; Goldback G&frac12; Fix</strong>: Goldback G&frac12; denominations now display correctly on market page &mdash; slug parser accepts both ghalf and g0.5 formats</li>
     <li><strong>v3.33.13 &ndash; Market Page Phase 2</strong>: Manifest-driven coin discovery, 3-tier metadata resolution, Goldback vendor chip with goldback.com reference price and staleness indicator. All rendering uses resolver layer for dynamic coins</li>
-    <li><strong>v3.33.12 &ndash; Version Drift Fix</strong>: Version number corrected after concurrent PR merge reordering</li>
   `;
 };
 

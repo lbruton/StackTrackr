@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.16] - 2026-02-28
+
+### Added — Clone Picker Modal (STAK-375)
+
+- **Added**: Clone Picker Modal — select/deselect fields to keep when cloning inventory items, with inline editing for variant fields (year, mint mark, grade)
+- **Added**: Batch cloning via "Save & Clone Another" button — rapidly create date/mint variants without reopening the modal
+- **Added**: 4-group field layout (Variant, Identity, Grading, Location) with checkbox toggles and live clone counter
+- **Added**: Playwright E2E test suite covering basic clone, batch clone, field deselection, inline editing, cancel flows, and counter display
+
+---
+
 ## [3.33.15] - 2026-02-28
 
 ### Added — Beta Domain Toast (STAK-376)
