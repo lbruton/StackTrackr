@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.08] - 2026-02-28
+
+### Fixed — Vendor Medal Ranking
+
+- **Fixed**: Vendor medals now awarded to all in-stock vendors with a price, not just those with confidence >= 60 (STAK-370)
+
+---
+
 ## [3.33.07] - 2026-02-28
 
 ### Added — Oklahoma Goldback G1 on Market Page

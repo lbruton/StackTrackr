@@ -1096,7 +1096,7 @@ const _buildMarketListCard = (slug, meta, priceData, historyData) => {
         if (bHigh) return 1;
         return 0;
       });
-    const qualVendors = sortedVendors.filter(({ isAvailable, score }) => isAvailable && score != null && score >= 60);
+    const qualVendors = sortedVendors.filter(({ isAvailable, price }) => isAvailable && price != null);
     const top3Keys = qualVendors.slice(0, 3).map(({ key }) => key);
     sortedVendors.forEach(({ key, price, score, isAvailable }) => {
       const chip = document.createElement("span");
