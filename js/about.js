@@ -283,10 +283,10 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.33.14 &ndash; Goldback G&frac12; Fix</strong>: Goldback G&frac12; denominations now display correctly on market page &mdash; slug parser accepts both ghalf and g0.5 formats</li>
     <li><strong>v3.33.13 &ndash; Market Page Phase 2</strong>: Manifest-driven coin discovery, 3-tier metadata resolution, Goldback vendor chip with goldback.com reference price and staleness indicator. All rendering uses resolver layer for dynamic coins</li>
     <li><strong>v3.33.12 &ndash; Version Drift Fix</strong>: Version number corrected after concurrent PR merge reordering</li>
     <li><strong>v3.33.10 &ndash; Mobile Spot Entry</strong>: Long-press on spot price card opens manual input on mobile devices, mirroring desktop Shift+click. Hint text updated for discoverability</li>
-    <li><strong>v3.33.06 &ndash; Market Page Redesign Phase 1</strong>: New default market view with full-width list cards, inline 7-day trend charts with spike detection, vendor price chips with brand colors and medal rankings, computed MED/LOW/AVG stats, search and sort, click-to-expand charts, sponsor badge</li>
   `;
 };
 
