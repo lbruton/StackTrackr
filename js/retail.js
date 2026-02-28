@@ -27,7 +27,7 @@ const RETAIL_COIN_META = {
 
 /** Goldback denomination weights (troy oz) */
 const GOLDBACK_WEIGHTS = {
-  "g0.5": 0.0005, g1: 0.001, g2: 0.002, g5: 0.005,
+  "g0.5": 0.0005, ghalf: 0.0005, g1: 0.001, g2: 0.002, g5: 0.005,
   g10: 0.01, g25: 0.025, g50: 0.05,
 };
 
@@ -37,12 +37,12 @@ const GOLDBACK_WEIGHTS = {
  * @returns {{ name: string, weight: number, metal: string } | null}
  */
 const _parseGoldbackSlug = (slug) => {
-  const m = slug.match(/^goldback-(.+)-(g[\d.]+)$/);
+  const m = slug.match(/^goldback-(.+)-(g(?:[\d.]+|half))$/);
   if (!m) return null;
   const weight = GOLDBACK_WEIGHTS[m[2]];
   if (weight == null) return null;
   const state = m[1].replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-  const denom = m[2].toUpperCase();
+  const denom = m[2] === "ghalf" ? "G\u00BD" : m[2].toUpperCase();
   return { name: `${state} Goldback (${denom})`, weight, metal: "goldback" };
 };
 
