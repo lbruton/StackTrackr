@@ -1262,7 +1262,7 @@ const FEATURE_FLAGS = {
     phase: "beta"
   },
   MARKET_LIST_VIEW: {
-    enabled: false,
+    enabled: true,
     urlOverride: true,
     userToggle: true,
     description: "New single-row market card layout with search, sort, and inline charts",
