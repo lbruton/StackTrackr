@@ -45,9 +45,10 @@ ROADMAP.md            export-ignore
 SPRINT.md             export-ignore
 CHANGELOG.md          export-ignore
 
-# Dev reference pages
+# Dev reference pages & UI standards
 design-preview.html   export-ignore
-style.html            export-ignore
+ui-standards/         export-ignore
+images/inventory/     export-ignore
 
 # Data files not needed at runtime (bundle.js is the runtime artifact)
 data/hourly/          export-ignore

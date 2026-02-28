@@ -12662,6 +12662,30 @@ th {
   border-top: 1px solid var(--border);
 }
 
+/* Clone picker pill buttons — matches item modal standard */
+.clone-picker-actions .btn {
+  border-radius: 999px;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  min-height: unset;
+}
+
+.clone-picker-actions .btn.secondary {
+  background: var(--glass-input-bg, rgba(0, 0, 0, 0.04));
+  border: 1px solid var(--glass-input-border, var(--border));
+  color: var(--text-primary);
+}
+
+.clone-picker-actions .btn.secondary:hover {
+  background: var(--glass-input-focus-bg, rgba(0, 0, 0, 0.07));
+  border-color: var(--primary);
+}
+
+.clone-picker-actions .btn.premium {
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
 .clone-picker-count {
   margin-right: auto;
   font-size: 0.8rem;

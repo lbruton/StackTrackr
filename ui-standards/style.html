@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>StakTrakr Design System</title>
-  <link rel="stylesheet" href="./css/styles.css" />
+  <link rel="stylesheet" href="../css/styles.css" />
   <style>
     /* ── Style Guide Layout ── */
     .sg-page {
@@ -390,10 +390,38 @@
            ════════════════════════════════════════════════════════ -->
       <section class="sg-section" id="buttons">
         <h2>Buttons</h2>
-        <p class="sg-desc">All buttons use the <code>.btn</code> base class. Variants add semantic color via modifier classes.</p>
+        <p class="sg-desc">All buttons use the <code>.btn</code> base class. Variants add semantic color via space-separated modifier classes (e.g. <code>.btn.secondary</code>, <code>.btn.premium</code>).</p>
 
         <div class="sg-subsection">
-          <h3>Standard Variants</h3>
+          <h3>Modal Action Buttons (Pill) &mdash; NEW STANDARD</h3>
+          <p class="sg-desc">All new modal action bars <strong>must</strong> use pill-shaped buttons. This is the current standard as of v3.33.16. Existing modals still use the old square style and will be migrated over time.</p>
+          <div style="display:flex; justify-content:flex-end; gap:0.5rem; padding:0.75rem 1rem; border:1px solid var(--border); border-radius:var(--radius-lg); background:var(--bg-card);">
+            <button class="btn secondary" style="border-radius:999px; padding:0.35rem 0.9rem; font-size:0.78rem; font-weight:700; min-height:unset; background:var(--glass-input-bg, rgba(0,0,0,0.04)); border:1px solid var(--glass-input-border, var(--border)); color:var(--text-primary);">Cancel</button>
+            <button class="btn" style="border-radius:999px; padding:0.35rem 0.9rem; font-size:0.78rem; font-weight:700; min-height:unset;">Action</button>
+            <button class="btn premium" style="border-radius:999px; padding:0.35rem 1rem; font-size:0.78rem; font-weight:700; min-height:unset; box-shadow:0 4px 12px rgba(59,130,246,0.2);">Save</button>
+          </div>
+          <span class="sg-label">Cancel: .btn.secondary | Action: .btn | Primary: .btn.premium | border-radius: 999px, padding: 0.35rem 0.9rem, font-size: 0.78rem, font-weight: 700</span>
+          <div style="margin-top:0.75rem; padding:0.75rem; background:var(--bg-secondary); border-radius:var(--radius); font-size:0.75rem; font-family:'SF Mono','Fira Code',monospace; line-height:1.6;">
+            &lt;div class="<em>your-modal</em>-actions"&gt;<br>
+            &nbsp;&nbsp;&lt;button class="btn secondary"&gt;Cancel&lt;/button&gt;<br>
+            &nbsp;&nbsp;&lt;button class="btn"&gt;Action&lt;/button&gt;<br>
+            &nbsp;&nbsp;&lt;button class="btn premium"&gt;Save&lt;/button&gt;<br>
+            &lt;/div&gt;<br>
+            <br>
+            <em>/* CSS — scope to your modal's action bar */</em><br>
+            .<em>your-modal</em>-actions .btn {<br>
+            &nbsp;&nbsp;border-radius: 999px;<br>
+            &nbsp;&nbsp;padding: 0.35rem 0.9rem;<br>
+            &nbsp;&nbsp;font-size: 0.78rem;<br>
+            &nbsp;&nbsp;font-weight: 700;<br>
+            &nbsp;&nbsp;min-height: unset;<br>
+            }
+          </div>
+        </div>
+
+        <div class="sg-subsection">
+          <h3>Standard Variants (Page-Level)</h3>
+          <p class="sg-desc">Base <code>.btn</code> with <code>var(--radius)</code> corners. Used for page-level CTAs, settings panels, header buttons, and legacy modal footers.</p>
           <div class="sg-showcase">
             <div>
               <button class="btn">Primary</button>
@@ -448,6 +476,22 @@
               <span class="sg-label">.btn[disabled]</span>
             </div>
           </div>
+        </div>
+
+        <div class="sg-subsection">
+          <h3>Deprecated Patterns &mdash; Do Not Use</h3>
+          <p class="sg-desc">Bootstrap-style compound classes are <strong>not</strong> part of the StakTrakr design system. They have no matching CSS rules and fall back to the base <code>.btn</code> style with no variant styling.</p>
+          <div class="sg-showcase">
+            <div>
+              <button class="btn" style="opacity:0.5; text-decoration:line-through; pointer-events:none;">btn-primary</button>
+              <span class="sg-label" style="color:var(--danger);">.btn.btn-primary &mdash; WRONG</span>
+            </div>
+            <div>
+              <button class="btn" style="opacity:0.5; text-decoration:line-through; pointer-events:none;">btn-secondary</button>
+              <span class="sg-label" style="color:var(--danger);">.btn.btn-secondary &mdash; WRONG</span>
+            </div>
+          </div>
+          <p class="sg-desc" style="margin-top:0.5rem;">Use space-separated modifiers: <code>.btn secondary</code>, <code>.btn danger</code>, <code>.btn premium</code>.</p>
         </div>
       </section>
 
@@ -695,8 +739,8 @@
                 <p>Modal body content goes here. This is the standard glass-morphism modal shell with the gradient top accent line and blur background.</p>
               </div>
               <div style="display:flex; justify-content:flex-end; gap:0.5rem; padding-top:0.75rem; border-top:1px solid var(--border);">
-                <button class="btn secondary btn-sm">Cancel</button>
-                <button class="btn btn-sm">Save</button>
+                <button class="btn secondary" style="border-radius:999px; padding:0.35rem 0.9rem; font-size:0.78rem; font-weight:700; min-height:unset; background:var(--glass-input-bg, rgba(0,0,0,0.04)); border:1px solid var(--glass-input-border, var(--border)); color:var(--text-primary);">Cancel</button>
+                <button class="btn premium" style="border-radius:999px; padding:0.35rem 1rem; font-size:0.78rem; font-weight:700; min-height:unset; box-shadow:0 4px 12px rgba(59,130,246,0.2);">Save</button>
               </div>
             </div>
           </div>
