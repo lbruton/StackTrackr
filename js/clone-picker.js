@@ -28,12 +28,18 @@ let _cloneDirty = false;
  */
 let _cloneSaveAndClose = false;
 
+/**
+ * @type {number|null} Inventory index of the source item (for "Back" button)
+ */
+let _cloneSourceIndex = null;
+
 // Expose state on window for cross-file access
 Object.defineProperty(window, '_cloneMode', { get: () => _cloneMode, set: (v) => { _cloneMode = v; }, configurable: true });
 Object.defineProperty(window, '_cloneSourceItem', { get: () => _cloneSourceItem, set: (v) => { _cloneSourceItem = v; }, configurable: true });
 Object.defineProperty(window, '_cloneSessionCount', { get: () => _cloneSessionCount, set: (v) => { _cloneSessionCount = v; }, configurable: true });
 Object.defineProperty(window, '_cloneDirty', { get: () => _cloneDirty, set: (v) => { _cloneDirty = v; }, configurable: true });
 Object.defineProperty(window, '_cloneSaveAndClose', { get: () => _cloneSaveAndClose, set: (v) => { _cloneSaveAndClose = v; }, configurable: true });
+Object.defineProperty(window, '_cloneSourceIndex', { get: () => _cloneSourceIndex, set: (v) => { _cloneSourceIndex = v; }, configurable: true });
 
 /**
  * Field definitions for clone checkboxes.
@@ -73,6 +79,7 @@ function enterCloneMode(inventoryIndex) {
   if (_cloneMode) return;
 
   _cloneSourceItem = structuredClone(inventory[inventoryIndex]);
+  _cloneSourceIndex = inventoryIndex;
   editingIndex = null; // Form submit creates new item
   _cloneMode = true;
   _cloneSessionCount = 0;
@@ -116,6 +123,7 @@ function enterCloneMode(inventoryIndex) {
   if (elements.cloneItemSaveAnotherBtn) elements.cloneItemSaveAnotherBtn.style.display = '';
   if (elements.cloneItemBtn) elements.cloneItemBtn.style.display = 'none';
   if (elements.undoChangeBtn) elements.undoChangeBtn.style.display = 'none';
+  if (elements.cancelItemBtn) elements.cancelItemBtn.textContent = 'Back';
 
   // Clone counter (hidden until first save)
   updateCloneCounter();
@@ -143,11 +151,18 @@ function exitCloneMode() {
   if (elements.itemModalSubmit) elements.itemModalSubmit.textContent = 'Update Item';
   if (elements.cloneItemSaveAnotherBtn) elements.cloneItemSaveAnotherBtn.style.display = 'none';
   if (elements.clonePickerCount) elements.clonePickerCount.style.display = 'none';
-
-  _cloneSourceItem = null;
+  if (elements.cancelItemBtn) elements.cancelItemBtn.textContent = 'Cancel';
 
   if (_cloneDirty && typeof renderTable === 'function') {
     renderTable();
+  }
+
+  // Re-open source item in edit mode
+  const srcIdx = _cloneSourceIndex;
+  _cloneSourceItem = null;
+  _cloneSourceIndex = null;
+  if (srcIdx !== null && typeof editItem === 'function') {
+    editItem(srcIdx);
   }
 }
 
