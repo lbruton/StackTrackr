@@ -3550,8 +3550,7 @@ input[type="submit"] {
 #changeLogModal .modal-header,
 #detailsModal .modal-header,
 #storageReportModal .modal-header,
-#itemModal .modal-header,
-#clonePickerModal .modal-header {
+#itemModal .modal-header {
   background: linear-gradient(135deg, var(--primary), var(--primary-hover));
   color: #f8fafc;
   padding: var(--spacing-xl);
@@ -3563,8 +3562,7 @@ input[type="submit"] {
 #changeLogModal .modal-header h2,
 #detailsModal .modal-header h2,
 #storageReportModal .modal-header h2,
-#itemModal .modal-header h2,
-#clonePickerModal .modal-header h2 {
+#itemModal .modal-header h2 {
   margin: 0;
   color: #f8fafc;
   text-align: center;
@@ -12530,6 +12528,24 @@ th {
   flex-direction: column;
   padding: 0;
   overflow: hidden;
+}
+
+#clonePickerModal .modal-header {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  padding: var(--spacing) var(--spacing-xl);
+  border-bottom: 1px solid var(--border);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  box-shadow: none;
+}
+
+#clonePickerModal .modal-header h2 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-align: center;
 }
 
 .clone-picker-body {

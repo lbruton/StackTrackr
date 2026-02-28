@@ -267,6 +267,7 @@
       <a href="#collapsible">Collapsible Sections</a>
       <a href="#image-uploads">Image Uploads</a>
       <a href="#badges">Badges & Indicators</a>
+      <a href="#migration" style="color:var(--warning);">Migration Checklist</a>
     </nav>
 
     <!-- ── Main Content ── -->
@@ -725,26 +726,67 @@
            ════════════════════════════════════════════════════════ -->
       <section class="sg-section" id="modals">
         <h2>Modals</h2>
-        <p class="sg-desc">Modals use glass-morphism with <code>backdrop-filter: blur(16px)</code>. The gradient header line uses <code>var(--primary)</code>. Shown here as a static preview (not a functional overlay).</p>
+        <p class="sg-desc">Modals use glass-morphism with <code>backdrop-filter: blur(16px)</code>. The <code>::before</code> pseudo-element adds a <code>var(--primary)</code> gradient accent line. Shown here as static previews (not functional overlays).</p>
 
         <div class="sg-subsection">
-          <h3>Modal Content Shell</h3>
+          <h3>Current Standard &mdash; Glass Header</h3>
+          <p class="sg-desc">New modals use <code>background: var(--bg-secondary)</code> header with <code>border-bottom</code>. Title uses <code>var(--text-primary)</code>. Reference: item modal, clone picker, about modal.</p>
           <div class="sg-modal-preview">
-            <div class="modal-content" style="position:relative; max-height:none; animation:none;">
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; padding-bottom:0.75rem; border-bottom:1px solid var(--border);">
-                <h2 style="font-size:1.15rem; font-weight:700; margin:0;">Modal Title</h2>
-                <button class="btn btn-sm secondary" style="padding:0.35rem 0.75rem; min-height:auto;">&times;</button>
+            <div class="modal-content" style="position:relative; max-height:none; animation:none; padding:0; display:flex; flex-direction:column; overflow:hidden;">
+              <div style="background:var(--bg-secondary); color:var(--text-primary); padding:var(--spacing) var(--spacing-xl); border-radius:var(--radius-lg) var(--radius-lg) 0 0; border-bottom:1px solid var(--border); text-align:center; position:relative;">
+                <h2 style="font-size:0.92rem; font-weight:700; margin:0; letter-spacing:0.02em;">Modal Title</h2>
               </div>
-              <div style="margin-bottom:1rem; font-size:0.875rem;">
-                <p>Modal body content goes here. This is the standard glass-morphism modal shell with the gradient top accent line and blur background.</p>
+              <div style="padding:var(--spacing); font-size:0.875rem;">
+                <p style="margin:0;">Modal body content goes here. The glass-morphism shell provides backdrop-filter blur and theme-safe backgrounds.</p>
               </div>
-              <div style="display:flex; justify-content:flex-end; gap:0.5rem; padding-top:0.75rem; border-top:1px solid var(--border);">
+              <div style="display:flex; justify-content:flex-end; gap:0.5rem; padding:var(--spacing); border-top:1px solid var(--border);">
                 <button class="btn secondary" style="border-radius:999px; padding:0.35rem 0.9rem; font-size:0.78rem; font-weight:700; min-height:unset; background:var(--glass-input-bg, rgba(0,0,0,0.04)); border:1px solid var(--glass-input-border, var(--border)); color:var(--text-primary);">Cancel</button>
                 <button class="btn premium" style="border-radius:999px; padding:0.35rem 1rem; font-size:0.78rem; font-weight:700; min-height:unset; box-shadow:0 4px 12px rgba(59,130,246,0.2);">Save</button>
               </div>
             </div>
           </div>
-          <span class="sg-label">.modal-content { backdrop-filter: blur(16px); border-radius: var(--radius-lg) }</span>
+          <span class="sg-label">Glass header: background: var(--bg-secondary); border-bottom: 1px solid var(--border) | Pill action buttons</span>
+        </div>
+
+        <div class="sg-subsection">
+          <h3>Legacy &mdash; Gradient Banner Header</h3>
+          <p class="sg-desc">Old pattern still on several modals. Being phased out &mdash; see <a href="#migration">Migration Checklist</a> item 1.</p>
+          <div class="sg-modal-preview">
+            <div class="modal-content" style="position:relative; max-height:none; animation:none; padding:0; display:flex; flex-direction:column; overflow:hidden;">
+              <div style="background:linear-gradient(135deg, var(--primary), var(--primary-hover)); color:#f8fafc; padding:var(--spacing-xl); border-radius:var(--radius-lg) var(--radius-lg) 0 0; box-shadow:var(--shadow); text-align:center; position:relative;">
+                <h2 style="font-size:1rem; font-weight:700; margin:0; color:#f8fafc;">Modal Title</h2>
+              </div>
+              <div style="padding:var(--spacing); font-size:0.875rem;">
+                <p style="margin:0;">This gradient banner is the old pattern. Migrate to glass header when editing these modals.</p>
+              </div>
+              <div style="display:flex; justify-content:flex-end; gap:0.5rem; padding:var(--spacing); border-top:1px solid var(--border);">
+                <button class="btn secondary" style="border-radius:999px; padding:0.35rem 0.9rem; font-size:0.78rem; font-weight:700; min-height:unset; background:var(--glass-input-bg, rgba(0,0,0,0.04)); border:1px solid var(--glass-input-border, var(--border)); color:var(--text-primary);">Cancel</button>
+                <button class="btn premium" style="border-radius:999px; padding:0.35rem 1rem; font-size:0.78rem; font-weight:700; min-height:unset; box-shadow:0 4px 12px rgba(59,130,246,0.2);">Save</button>
+              </div>
+            </div>
+          </div>
+          <span class="sg-label" style="color:var(--warning);">LEGACY &mdash; background: linear-gradient(135deg, var(--primary), var(--primary-hover))</span>
+        </div>
+
+        <div class="sg-subsection">
+          <h3>Modal Structure Code</h3>
+          <div style="padding:0.75rem; background:var(--bg-secondary); border-radius:var(--radius); font-size:0.75rem; font-family:'SF Mono','Fira Code',monospace; line-height:1.6;">
+            &lt;div class="modal" id="myModal" style="display:none"&gt;<br>
+            &nbsp;&nbsp;&lt;div class="modal-content <em>my-modal-content</em>"&gt;<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&lt;div class="modal-header"&gt;<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;h2&gt;Title&lt;/h2&gt;<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;span class="modal-close"&gt;&amp;times;&lt;/span&gt;<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&lt;/div&gt;<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&lt;div class="modal-body <em>my-modal-body</em>"&gt;<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<em>&lt;!-- content --&gt;</em><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&lt;/div&gt;<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&lt;div class="<em>my-modal</em>-actions"&gt;<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;button class="btn secondary"&gt;Cancel&lt;/button&gt;<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;button class="btn premium"&gt;Save&lt;/button&gt;<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&lt;/div&gt;<br>
+            &nbsp;&nbsp;&lt;/div&gt;<br>
+            &lt;/div&gt;
+          </div>
         </div>
       </section>
 
@@ -982,6 +1024,108 @@
               <span class="sg-label">color: var(--text-secondary)</span>
             </div>
           </div>
+        </div>
+      </section>
+
+      <!-- ════════════════════════════════════════════════════════
+           MIGRATION CHECKLIST
+           ════════════════════════════════════════════════════════ -->
+      <section class="sg-section" id="migration">
+        <h2 style="color:var(--warning);">Migration Checklist</h2>
+        <p class="sg-desc">Patterns being phased out. When editing a modal or component that uses an old pattern, migrate it to the new standard while you&rsquo;re there. Each item shows the old pattern, the new pattern, and which modals still need updating.</p>
+
+        <div class="sg-subsection">
+          <h3>1. Modal Header &mdash; Gradient Banner &rarr; Glass Header</h3>
+          <p class="sg-desc">The blue gradient banner is the old pattern. New modals use a subtle <code>var(--bg-secondary)</code> header with <code>var(--text-primary)</code> text and a bottom border.</p>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin:0.75rem 0;">
+            <div>
+              <div style="background:linear-gradient(135deg, var(--primary), var(--primary-hover)); color:#f8fafc; padding:var(--spacing) var(--spacing-xl); border-radius:var(--radius-lg) var(--radius-lg) 0 0; box-shadow:var(--shadow); text-align:center;">
+                <span style="font-size:0.92rem; font-weight:700;">Old: Gradient Banner</span>
+              </div>
+              <div style="padding:0.75rem; background:var(--bg-card); border:1px solid var(--border); border-top:none; border-radius:0 0 var(--radius-lg) var(--radius-lg); font-size:0.8rem; color:var(--text-secondary);">Modal body content&hellip;</div>
+              <span class="sg-label" style="color:var(--danger);">DEPRECATED &mdash; background: linear-gradient(135deg, var(--primary), var(--primary-hover))</span>
+            </div>
+            <div>
+              <div style="background:var(--bg-secondary); color:var(--text-primary); padding:var(--spacing) var(--spacing-xl); border-radius:var(--radius-lg) var(--radius-lg) 0 0; border-bottom:1px solid var(--border); text-align:center;">
+                <span style="font-size:0.92rem; font-weight:700; letter-spacing:0.02em;">New: Glass Header</span>
+              </div>
+              <div style="padding:0.75rem; background:var(--bg-card); border:1px solid var(--border); border-top:none; border-radius:0 0 var(--radius-lg) var(--radius-lg); font-size:0.8rem; color:var(--text-secondary);">Modal body content&hellip;</div>
+              <span class="sg-label" style="color:var(--success);">CURRENT &mdash; background: var(--bg-secondary); border-bottom: 1px solid var(--border)</span>
+            </div>
+          </div>
+          <div style="margin-top:0.5rem; padding:0.6rem; background:var(--bg-secondary); border-radius:var(--radius); font-size:0.75rem; line-height:1.6;">
+            <strong>Already migrated:</strong> itemModal, aboutModal, ackModal, versionModal, settingsModal, clonePickerModal<br>
+            <strong>Still on gradient:</strong> changeLogModal, detailsModal, viewItemModal, apiHistoryModal, cloudSyncModal, bulkEditModal
+          </div>
+        </div>
+
+        <div class="sg-subsection">
+          <h3>2. Button Classes &mdash; Bootstrap Compound &rarr; Space-Separated</h3>
+          <p class="sg-desc">Bootstrap-style compound classes have no matching CSS rules in StakTrakr. They silently fall back to unstyled <code>.btn</code>.</p>
+          <table style="width:100%; font-size:0.8rem; border-collapse:collapse; margin:0.5rem 0;">
+            <thead><tr style="border-bottom:2px solid var(--border); text-align:left;">
+              <th style="padding:0.4rem; color:var(--danger);">Old (wrong)</th>
+              <th style="padding:0.4rem; color:var(--success);">New (correct)</th>
+            </tr></thead>
+            <tbody>
+              <tr style="border-bottom:1px solid var(--border);"><td style="padding:0.4rem;"><code>.btn.btn-primary</code></td><td style="padding:0.4rem;"><code>.btn</code></td></tr>
+              <tr style="border-bottom:1px solid var(--border);"><td style="padding:0.4rem;"><code>.btn.btn-secondary</code></td><td style="padding:0.4rem;"><code>.btn secondary</code></td></tr>
+              <tr style="border-bottom:1px solid var(--border);"><td style="padding:0.4rem;"><code>.btn-danger</code></td><td style="padding:0.4rem;"><code>.btn danger</code></td></tr>
+              <tr><td style="padding:0.4rem;"><code>.btn-lg</code></td><td style="padding:0.4rem;">Not used &mdash; <code>.btn</code> or <code>.btn-sm</code> only</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="sg-subsection">
+          <h3>3. Modal Action Buttons &mdash; Square &rarr; Pill</h3>
+          <p class="sg-desc">All new modal footers use pill-shaped buttons (<code>border-radius: 999px</code>) scoped to the modal&rsquo;s action container. Page-level buttons keep <code>var(--radius)</code>.</p>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin:0.5rem 0;">
+            <div style="display:flex; justify-content:flex-end; gap:0.5rem; padding:0.5rem; border:1px solid var(--border); border-radius:var(--radius); background:var(--bg-card);">
+              <button class="btn secondary" style="font-size:0.78rem; min-height:unset; padding:0.35rem 0.9rem;" disabled>Cancel</button>
+              <button class="btn" style="font-size:0.78rem; min-height:unset; padding:0.35rem 0.9rem;" disabled>Save</button>
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:0.5rem; padding:0.5rem; border:1px solid var(--border); border-radius:var(--radius); background:var(--bg-card);">
+              <button class="btn secondary" style="border-radius:999px; font-size:0.78rem; font-weight:700; min-height:unset; padding:0.35rem 0.9rem; background:var(--glass-input-bg, rgba(0,0,0,0.04)); border:1px solid var(--glass-input-border, var(--border)); color:var(--text-primary);" disabled>Cancel</button>
+              <button class="btn premium" style="border-radius:999px; font-size:0.78rem; font-weight:700; min-height:unset; padding:0.35rem 0.9rem; box-shadow:0 4px 12px rgba(59,130,246,0.2);" disabled>Save</button>
+            </div>
+          </div>
+          <span class="sg-label">Left: old square buttons | Right: new pill buttons</span>
+        </div>
+
+        <div class="sg-subsection">
+          <h3>4. Modal Content &mdash; Custom Container &rarr; Inherit <code>.modal-content</code></h3>
+          <p class="sg-desc">Custom containers with <code>background: var(--bg-primary)</code> miss glass-morphism and theme overrides. Always add the <code>.modal-content</code> class, then scope sizing with a second class.</p>
+          <table style="width:100%; font-size:0.8rem; border-collapse:collapse; margin:0.5rem 0;">
+            <thead><tr style="border-bottom:2px solid var(--border); text-align:left;">
+              <th style="padding:0.4rem; color:var(--danger);">Old (wrong)</th>
+              <th style="padding:0.4rem; color:var(--success);">New (correct)</th>
+            </tr></thead>
+            <tbody>
+              <tr style="border-bottom:1px solid var(--border);"><td style="padding:0.4rem;"><code>&lt;div class="my-modal-content"&gt;</code></td><td style="padding:0.4rem;"><code>&lt;div class="modal-content my-modal-content"&gt;</code></td></tr>
+              <tr style="border-bottom:1px solid var(--border);"><td style="padding:0.4rem;"><code>background: var(--bg-primary)</code></td><td style="padding:0.4rem;">Inherited from <code>.modal-content</code> (glass-morphism)</td></tr>
+              <tr><td style="padding:0.4rem;"><code>border-radius: var(--radius)</code></td><td style="padding:0.4rem;"><code>var(--radius-lg)</code> from <code>.modal-content</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="sg-subsection">
+          <h3>5. Modal Headings &mdash; <code>&lt;h3&gt;</code> &rarr; <code>&lt;h2&gt;</code></h3>
+          <p class="sg-desc">All modal titles use <code>&lt;h2&gt;</code> for accessibility and consistency. Font size is controlled by CSS (<code>font-size: 0.92rem</code>), not the heading level.</p>
+        </div>
+
+        <div class="sg-subsection">
+          <h3>6. Modal Close Flow &mdash; Raw Display &rarr; <code>closeModalById()</code></h3>
+          <p class="sg-desc">Setting <code>modal.style.display = 'none'</code> directly skips body overflow reset, causing scroll-lock freeze. Always use <code>closeModalById(id)</code> from <code>utils.js</code> which handles overflow, focus, and cleanup.</p>
+          <table style="width:100%; font-size:0.8rem; border-collapse:collapse; margin:0.5rem 0;">
+            <thead><tr style="border-bottom:2px solid var(--border); text-align:left;">
+              <th style="padding:0.4rem; color:var(--danger);">Old (wrong)</th>
+              <th style="padding:0.4rem; color:var(--success);">New (correct)</th>
+            </tr></thead>
+            <tbody>
+              <tr style="border-bottom:1px solid var(--border);"><td style="padding:0.4rem;"><code>modal.style.display = 'none'</code></td><td style="padding:0.4rem;"><code>closeModalById('modalId')</code></td></tr>
+              <tr><td style="padding:0.4rem;"><code>modal.style.display = 'flex'</code></td><td style="padding:0.4rem;"><code>openModalById('modalId')</code></td></tr>
+            </tbody>
+          </table>
         </div>
       </section>
 
