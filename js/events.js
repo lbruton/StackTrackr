@@ -2130,6 +2130,62 @@ const setupSpotPriceListeners = () => {
     true,
   );
 
+  // Long-press handler for mobile inline spot price editing (STAK-285)
+  // Mirrors shift+click behavior: hold 600ms on spot price to open manual input
+  let _spotLongPressTimer = null;
+  let _spotLongPressFired = false;
+
+  document.addEventListener("touchstart", (e) => {
+    const valueEl = e.target.closest(".spot-card-value");
+    if (!valueEl) return;
+    // Clear any existing timer to prevent orphaned timeouts on rapid re-touch
+    if (_spotLongPressTimer) { clearTimeout(_spotLongPressTimer); _spotLongPressTimer = null; }
+    _spotLongPressFired = false;
+    _spotLongPressTimer = setTimeout(() => {
+      _spotLongPressFired = true;
+      _spotLongPressTimer = null;
+      const card = valueEl.closest(".spot-card");
+      if (!card || !card.dataset.metal) return;
+      if (typeof startSpotInlineEdit === "function") {
+        startSpotInlineEdit(valueEl, card.dataset.metal);
+      }
+    }, 600);
+  }, { passive: false });
+
+  // Suppress context menu during long-press (preventDefault inside setTimeout is stale)
+  document.addEventListener("contextmenu", (e) => {
+    if (_spotLongPressFired || _spotLongPressTimer) {
+      e.preventDefault();
+    }
+  });
+
+  document.addEventListener("touchend", (e) => {
+    if (_spotLongPressTimer) {
+      clearTimeout(_spotLongPressTimer);
+      _spotLongPressTimer = null;
+    }
+    // Suppress the click/tap that follows a successful long-press
+    if (_spotLongPressFired) {
+      e.preventDefault();
+      _spotLongPressFired = false;
+    }
+  }, { passive: false });
+
+  document.addEventListener("touchmove", () => {
+    if (_spotLongPressTimer) {
+      clearTimeout(_spotLongPressTimer);
+      _spotLongPressTimer = null;
+    }
+  }, { passive: true });
+
+  // Cancel long-press when browser cancels the gesture (e.g., incoming call, scroll takeover)
+  document.addEventListener("touchcancel", () => {
+    if (_spotLongPressTimer) {
+      clearTimeout(_spotLongPressTimer);
+      _spotLongPressTimer = null;
+    }
+  }, { passive: true });
+
 };
 
 /**
