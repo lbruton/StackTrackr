@@ -29,8 +29,9 @@ const debugLog = (...args) => {
 
 /**
  * Generates a UUID v4 string for stable item identification.
- * Uses crypto.randomUUID() where available, with a Math.random() RFC 4122 v4 fallback
+ * Uses crypto.randomUUID() where available, with a crypto.getRandomValues() RFC 4122 v4 fallback
  * for environments (e.g. file:// protocol) that lack crypto.randomUUID.
+ * Insecure Math.random() fallback has been removed for cryptographic integrity.
  *
  * @returns {string} A UUID v4 string (e.g. "550e8400-e29b-41d4-a716-446655440000")
  */
@@ -46,12 +47,7 @@ const generateUUID = () => {
       return v.toString(16);
     });
   }
-  // RFC 4122 v4 fallback (insecure Math.random)
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === 'x' ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
+  throw new Error("Secure random number generation is not available in this environment.");
 };
 
 /**
