@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.16] - 2026-02-28
+
+### Added — Clone Mode Redesign + Edit Modal UX (STAK-375)
+
+- **Changed**: Clone button now activates clone mode on the edit modal with field-level checkboxes instead of opening a separate modal
+- **Changed**: Edit modal sections are now always visible (non-collapsible) for easier scrolling
+- **Changed**: Purchase Date N/A is now a toggle button matching the spot lookup button style
+- **Removed**: Numista image refresh button (unused, cluttered UI)
+- **Added**: Save & Clone Another button for creating multiple clones in one session
+
+---
+
 ## [3.33.15] - 2026-02-28
 
 ### Added — Beta Domain Toast (STAK-376)

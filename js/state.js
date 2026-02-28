@@ -172,6 +172,10 @@ const elements = {
   itemSerial: null,
   undoChangeBtn: null,
 
+  // Clone mode elements (STAK-375)
+  cloneItemSaveAnotherBtn: null,
+  clonePickerCount: null,
+
   // About & acknowledgment modal elements
   aboutBtn: null,
   aboutModal: null,

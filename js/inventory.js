@@ -2170,11 +2170,13 @@ const editItem = (idx, logIdx = null) => {
   if (elements.itemSerialNumber) elements.itemSerialNumber.value = item.serialNumber || '';
   if (elements.itemNotes) elements.itemNotes.value = item.notes || '';
   elements.itemDate.value = item.date || '';
-  // Set date N/A checkbox based on whether item has a date
-  const editDateNA = document.getElementById('itemDateNA');
-  if (editDateNA) {
-    editDateNA.checked = !item.date;
-    elements.itemDate.disabled = !item.date;
+  // Set date N/A button state based on whether item has a date
+  const editDateNABtn = document.getElementById('itemDateNABtn');
+  if (editDateNABtn) {
+    const noDate = !item.date;
+    editDateNABtn.classList.toggle('active', noDate);
+    editDateNABtn.setAttribute('aria-pressed', noDate);
+    elements.itemDate.disabled = noDate;
   }
   // Reset spot lookup state for edit mode (STACK-49)
   if (elements.itemSpotPrice) elements.itemSpotPrice.value = '';
@@ -2402,10 +2404,7 @@ const editItem = (idx, logIdx = null) => {
       elements.newTagInput.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); addHandler(); } };
     }
 
-    // Open the tags section if item has tags
-    if (itemTagsList.length > 0 && elements.tagsSection) {
-      elements.tagsSection.open = true;
-    }
+    // Tags section is always visible (non-collapsible)
   }
 
   // Open unified modal
