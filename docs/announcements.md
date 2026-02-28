@@ -1,5 +1,6 @@
 ## What's New
 
+- **Spot Card Label Fix (v3.33.11)**: Spot timestamp compares raw storage data instead of rendered HTML, correctly showing "Last API Sync" when cache is disabled
 - **Spot Card Fix (v3.33.09)**: Spot price card now shows "Last API Sync" when cache is disabled, instead of misleading "Last Cache Refresh" label
 - **Vendor Medal Fix (v3.33.08)**: Vendor medals now awarded to all in-stock vendors, not just high-confidence ones. APMEX correctly shows 2nd place on Oklahoma Goldback
 - **Oklahoma Goldback G1 (v3.33.07)**: Oklahoma Goldback G1 added to market prices page with APMEX and Hero Bullion vendor tracking. Goldback vendor branding added

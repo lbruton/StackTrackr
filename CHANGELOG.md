@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.11] - 2026-02-28
+
+### Fixed — Spot Price Card Label Root Cause (STAK-274)
+
+- **Fixed**: Spot timestamp label now compares raw storage data (provider+timestamp) instead of rendered HTML to detect when cache and API are identical, correctly showing "Last API Sync" when cache is disabled
+
+---
+
 ## [3.33.09] - 2026-02-28
 
 ### Fixed — Spot Price Card Cache Label (STAK-274)
