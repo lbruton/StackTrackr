@@ -3550,7 +3550,8 @@ input[type="submit"] {
 #changeLogModal .modal-header,
 #detailsModal .modal-header,
 #storageReportModal .modal-header,
-#itemModal .modal-header {
+#itemModal .modal-header,
+#clonePickerModal .modal-header {
   background: linear-gradient(135deg, var(--primary), var(--primary-hover));
   color: #f8fafc;
   padding: var(--spacing-xl);
@@ -3562,7 +3563,8 @@ input[type="submit"] {
 #changeLogModal .modal-header h2,
 #detailsModal .modal-header h2,
 #storageReportModal .modal-header h2,
-#itemModal .modal-header h2 {
+#itemModal .modal-header h2,
+#clonePickerModal .modal-header h2 {
   margin: 0;
   color: #f8fafc;
   text-align: center;
@@ -12524,11 +12526,16 @@ th {
   max-width: 600px;
   width: 90%;
   max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+}
+
+.clone-picker-body {
+  padding: var(--spacing);
   overflow-y: auto;
-  background: var(--bg-primary);
-  border-radius: var(--radius);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  padding: 1.25rem;
+  flex: 1;
 }
 
 .clone-picker-preview {
@@ -12584,9 +12591,6 @@ th {
 }
 
 .clone-picker-fields {
-  max-height: 450px;
-  overflow-y: auto;
-  margin-bottom: 0.75rem;
   padding-right: 0.25rem;
 }
 
@@ -12658,7 +12662,8 @@ th {
   gap: 0.5rem;
   justify-content: flex-end;
   align-items: center;
-  padding-top: 0.5rem;
+  padding: var(--spacing);
+  border-top: 1px solid var(--border);
   border-top: 1px solid var(--border);
 }
 
@@ -12700,7 +12705,10 @@ th {
 @media (max-width: 480px) {
   .clone-picker-modal-content {
     width: 95%;
-    padding: 0.75rem;
+  }
+
+  .clone-picker-body {
+    padding: var(--spacing-sm);
   }
 
   .clone-picker-grid {

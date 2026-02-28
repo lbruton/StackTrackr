@@ -4724,13 +4724,15 @@
 
     <!-- Clone Picker Modal -->
     <div id="clonePickerModal" class="modal" style="display:none">
-      <div class="clone-picker-modal-content">
+      <div class="modal-content clone-picker-modal-content">
         <div class="modal-header">
-          <h3 id="clonePickerTitle">Clone Item</h3>
+          <h2 id="clonePickerTitle">Clone Item</h2>
           <span id="clonePickerCloseBtn" class="modal-close">&times;</span>
         </div>
-        <div id="clonePickerPreview" class="clone-picker-preview"></div>
-        <div id="clonePickerFields" class="clone-picker-fields"></div>
+        <div class="clone-picker-body">
+          <div id="clonePickerPreview" class="clone-picker-preview"></div>
+          <div id="clonePickerFields" class="clone-picker-fields"></div>
+        </div>
         <div class="clone-picker-actions">
           <span id="clonePickerCount" class="clone-picker-count" style="display:none"></span>
           <button id="clonePickerCancelBtn" class="btn secondary">Cancel</button>

@@ -437,13 +437,16 @@ const createCloneFromPicker = () => {
 function showClonePicker(inventoryIndex) {
   if (typeof inventory === 'undefined' || !inventory[inventoryIndex]) return;
 
-  // Close the item modal first
-  const itemModal = safeGetElement('itemModal');
-  if (itemModal) itemModal.style.display = 'none';
-
-  // Also close the view modal if open
-  const viewModal = safeGetElement('viewModal');
-  if (viewModal) viewModal.style.display = 'none';
+  // Close any open modals first (use closeModalById to properly reset body overflow)
+  if (typeof closeModalById === 'function') {
+    closeModalById('itemModal');
+    closeModalById('viewModal');
+  } else {
+    const itemModal = safeGetElement('itemModal');
+    if (itemModal) itemModal.style.display = 'none';
+    const viewModal = safeGetElement('viewModal');
+    if (viewModal) viewModal.style.display = 'none';
+  }
 
   // Deep-clone the source item (snapshot — edits in picker don't affect original)
   cloneSourceItem = JSON.parse(JSON.stringify(inventory[inventoryIndex]));
@@ -476,10 +479,11 @@ function showClonePicker(inventoryIndex) {
     titleEl.textContent = 'Clone Item';
   }
 
-  // Show modal
+  // Show modal and lock body scroll
   const modal = safeGetElement('clonePickerModal');
   if (modal) {
     modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
   }
 
   // Attach listeners once
@@ -501,6 +505,9 @@ function closeClonePicker() {
   if (modal) {
     modal.style.display = 'none';
   }
+
+  // Restore body scroll
+  document.body.style.overflow = '';
 
   // Re-render table once if any clones were created
   if (cloneDirty) {
