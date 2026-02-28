@@ -290,7 +290,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-12 - STACK-38/STACK-31: Responsive card view + mobile layout
  */
 
-const APP_VERSION = "3.33.05";
+const APP_VERSION = "3.33.06";
 
 /**
  * Numista metadata cache TTL: 30 days in milliseconds.
@@ -1259,6 +1259,27 @@ const FEATURE_FLAGS = {
     urlOverride: true,
     userToggle: true,
     description: "Coin image caching and item view modal",
+    phase: "beta"
+  },
+  MARKET_LIST_VIEW: {
+    enabled: false,
+    urlOverride: true,
+    userToggle: true,
+    description: "New single-row market card layout with search, sort, and inline charts",
+    phase: "beta"
+  },
+  MARKET_DASHBOARD_ITEMS: {
+    enabled: false,
+    urlOverride: true,
+    userToggle: true,
+    description: "Show goldback and dashboard items in the market list",
+    phase: "beta"
+  },
+  MARKET_AUTO_RETAIL: {
+    enabled: false,
+    urlOverride: true,
+    userToggle: true,
+    description: "Auto-update inventory retail prices from linked market data",
     phase: "beta"
   }
 };
