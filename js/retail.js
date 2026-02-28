@@ -25,6 +25,27 @@ const RETAIL_COIN_META = {
   "goldback-oklahoma-g1":    { name: "Oklahoma Goldback (G1)",   weight: 0.001, metal: "goldback" },
 };
 
+/** Goldback denomination weights (troy oz) */
+const GOLDBACK_WEIGHTS = {
+  "g0.5": 0.0005, g1: 0.001, g2: 0.002, g5: 0.005,
+  g10: 0.01, g25: 0.025, g50: 0.05,
+};
+
+/**
+ * Parse a goldback slug into coin metadata.
+ * @param {string} slug - e.g. "goldback-oklahoma-g1", "goldback-new-hampshire-g25"
+ * @returns {{ name: string, weight: number, metal: string } | null}
+ */
+const _parseGoldbackSlug = (slug) => {
+  const m = slug.match(/^goldback-(.+)-(g[\d.]+)$/);
+  if (!m) return null;
+  const weight = GOLDBACK_WEIGHTS[m[2]];
+  if (weight == null) return null;
+  const state = m[1].replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  const denom = m[2].toUpperCase();
+  return { name: `${state} Goldback (${denom})`, weight, metal: "goldback" };
+};
+
 /** Vendor display names */
 const RETAIL_VENDOR_NAMES = {
   apmex:            "APMEX",
@@ -59,6 +80,41 @@ const RETAIL_VENDOR_COLORS = {
   bullionexchanges: "#f472b6",  // bright pink (was #ec4899)
   summitmetals:     "#22d3ee",  // bright cyan (was #06b6d4)
   goldback:         "#d4a017",  // deep gold — goldback branding
+};
+
+// ---------------------------------------------------------------------------
+// Manifest-driven resolver state (populated by syncRetailPrices)
+// ---------------------------------------------------------------------------
+let _manifestSlugs = null;
+let _manifestCoinMeta = null;
+let _manifestVendorMeta = null;
+
+/** Returns active slugs: manifest-driven (filtered to those with data) or hardcoded fallback */
+const getActiveRetailSlugs = () => {
+  if (!_manifestSlugs) return RETAIL_SLUGS;
+  return _manifestSlugs.filter((slug) => {
+    const vendors = retailPrices?.prices?.[slug]?.vendors;
+    return vendors && Object.keys(vendors).length > 0;
+  });
+};
+
+/** Resolve coin metadata: manifest → hardcoded → goldback parser → default */
+const getRetailCoinMeta = (slug) => {
+  if (_manifestCoinMeta && _manifestCoinMeta[slug]) return _manifestCoinMeta[slug];
+  if (RETAIL_COIN_META[slug]) return RETAIL_COIN_META[slug];
+  const gb = _parseGoldbackSlug(slug);
+  if (gb) return gb;
+  return { name: slug, weight: 0, metal: "unknown" };
+};
+
+/** Resolve vendor display info: manifest → hardcoded → defaults */
+const getVendorDisplay = (vendorId) => {
+  if (_manifestVendorMeta && _manifestVendorMeta[vendorId]) return _manifestVendorMeta[vendorId];
+  return {
+    name: RETAIL_VENDOR_NAMES[vendorId] || vendorId,
+    color: RETAIL_VENDOR_COLORS[vendorId] || "#6c757d",
+    url: RETAIL_VENDOR_URLS[vendorId] || null,
+  };
 };
 
 /**
@@ -372,12 +428,23 @@ const syncRetailPrices = async ({ ui = true } = {}) => {
         try { localStorage.setItem(RETAIL_MANIFEST_TS_KEY, manifest.generated_at); } catch (e) { /* ignore */ }
       }
       debugLog(`[retail] Using ${apiBase} (generated: ${ranked[0].ts}, ${ranked.length} endpoint(s) reachable)`, "info");
+      // Extract manifest metadata for resolver functions
+      _manifestSlugs = Array.isArray(manifest.enabled_coins) && manifest.enabled_coins.length
+        ? manifest.enabled_coins
+        : Array.isArray(manifest.coins) && manifest.coins.length
+          ? manifest.coins
+          : Array.isArray(manifest.slugs) && manifest.slugs.length
+            ? manifest.slugs
+            : null;
+      _manifestCoinMeta = manifest.coins_meta || null;
     } else {
       debugLog("[retail] All endpoints unreachable, using fallback slug list", "warn");
       apiBase = RETAIL_API_ENDPOINTS[0];
       manifest = { slugs: RETAIL_SLUGS, latest_window: null };
+      _manifestSlugs = null;
+      _manifestCoinMeta = null;
     }
-    const slugs = Array.isArray(manifest.slugs) && manifest.slugs.length ? manifest.slugs : RETAIL_SLUGS;
+    const slugs = _manifestSlugs || (Array.isArray(manifest.slugs) && manifest.slugs.length ? manifest.slugs : RETAIL_SLUGS);
 
     // Fetch providers.json (product page URLs for each coin+vendor)
     try {
@@ -385,6 +452,10 @@ const syncRetailPrices = async ({ ui = true } = {}) => {
       if (providersResp.ok) {
         retailProviders = await providersResp.json();
         saveRetailProviders();
+        // Extract vendor display metadata if present
+        if (retailProviders && retailProviders._vendor_meta) {
+          _manifestVendorMeta = retailProviders._vendor_meta;
+        }
         debugLog(`[retail] Loaded ${Object.keys(retailProviders || {}).length} coin provider mappings`, "info");
       } else {
         debugLog(`[retail] Providers fetch returned HTTP ${providersResp.status} — using fallback URLs`, "warn");
@@ -585,7 +656,7 @@ const renderRetailCards = () => {
   if (_retailSyncInProgress) {
     disclaimer.style.display = "";
     safeGetElement("retailEmptyState").style.display = "none";
-    RETAIL_SLUGS.forEach(() => grid.appendChild(_buildSkeletonCard()));
+    getActiveRetailSlugs().forEach(() => grid.appendChild(_buildSkeletonCard()));
     return;
   }
 
@@ -595,12 +666,13 @@ const renderRetailCards = () => {
   disclaimer.style.display = hasData ? "" : "none";
   if (!hasData) return;
 
-  RETAIL_SLUGS.forEach((slug) => {
-    const meta = RETAIL_COIN_META[slug];
+  const activeSlugs = getActiveRetailSlugs();
+  activeSlugs.forEach((slug) => {
+    const meta = getRetailCoinMeta(slug);
     const priceData = retailPrices && retailPrices.prices ? retailPrices.prices[slug] || null : null;
     grid.appendChild(_buildRetailCard(slug, meta, priceData));
   });
-  RETAIL_SLUGS.forEach((slug) => _renderRetailSparkline(slug));
+  activeSlugs.forEach((slug) => _renderRetailSparkline(slug));
 };
 
 /** Metal emoji icons keyed by metal name */
@@ -699,6 +771,26 @@ const _buildRetailCard = (slug, meta, priceData) => {
     const vendors = document.createElement("div");
     vendors.className = "retail-vendors";
 
+    // Goldback vendor reference price (grid view)
+    if (typeof getGoldbackVendorPrice === "function") {
+      const gbPrice = getGoldbackVendorPrice(slug);
+      if (gbPrice) {
+        const gbRow = document.createElement("div");
+        gbRow.className = "retail-vendor-row";
+        if (gbPrice.isStale) gbRow.style.opacity = "0.6";
+        const gbName = document.createElement("span");
+        gbName.className = "retail-vendor-name";
+        gbName.style.color = "#d4a017";
+        gbName.textContent = "Goldback";
+        gbRow.appendChild(gbName);
+        const gbVal = document.createElement("span");
+        gbVal.className = "retail-vendor-price";
+        gbVal.textContent = _fmtRetailPrice(gbPrice.price) + (gbPrice.isStale ? " (stale)" : "");
+        gbRow.appendChild(gbVal);
+        vendors.appendChild(gbRow);
+      }
+    }
+
     const vendorMap = priceData.vendors || {};
     const availability = retailAvailability[slug] || {};
     const lastKnownPrices = retailLastKnownPrices[slug] || {};
@@ -717,7 +809,7 @@ const _buildRetailCard = (slug, meta, priceData) => {
         const isAvailable = availability[key] !== false; // default true if not specified
         const price = vendorData ? vendorData.price : null;
         const score = vendorData ? vendorData.confidence : null;
-        const label = RETAIL_VENDOR_NAMES[key] || key;
+        const label = getVendorDisplay(key).name;
         return { key, label, price, score, isAvailable };
       })
       .filter(({ price, isAvailable }) => price != null || !isAvailable) // show if has price OR is OOS
@@ -759,10 +851,11 @@ const _buildRetailCard = (slug, meta, priceData) => {
 
       const nameEl = document.createElement("span");
       nameEl.className = "retail-vendor-name";
-      const vendorColor = RETAIL_VENDOR_COLORS[key] || null;
+      const _vd = getVendorDisplay(key);
+      const vendorColor = _vd.color;
       // Prefer specific product page from providers.json; fall back to vendor homepage
       const vendorUrl = (retailProviders && retailProviders[slug] && retailProviders[slug][key])
-        || RETAIL_VENDOR_URLS[key];
+        || _vd.url;
       if (vendorUrl) {
         const link = document.createElement("a");
         link.href = "#";
@@ -860,10 +953,11 @@ const _buildOOSVendorRow = (vendorId, lastKnownPrice, lastAvailableDate, slug) =
 
   const nameEl = document.createElement("span");
   nameEl.className = "retail-vendor-name text-muted";
-  const vendorLabel = RETAIL_VENDOR_NAMES[vendorId] || vendorId;
+  const _vd = getVendorDisplay(vendorId);
+  const vendorLabel = _vd.name;
   // Add vendor link (same pattern as in-stock rows)
   const vendorUrl = (slug && retailProviders && retailProviders[slug] && retailProviders[slug][vendorId])
-    || RETAIL_VENDOR_URLS[vendorId];
+    || _vd.url;
   if (vendorUrl) {
     const link = document.createElement("a");
     link.href = "#";
@@ -929,10 +1023,11 @@ let _marketSearchTimer = null;
  * @returns {HTMLElement}
  */
 const _buildMarketVendorLink = (vendorId, slug) => {
-  const label = RETAIL_VENDOR_NAMES[vendorId] || vendorId;
-  const vendorColor = RETAIL_VENDOR_COLORS[vendorId] || null;
+  const vd = getVendorDisplay(vendorId);
+  const label = vd.name;
+  const vendorColor = vd.color;
   const vendorUrl = (retailProviders && retailProviders[slug] && retailProviders[slug][vendorId])
-    || RETAIL_VENDOR_URLS[vendorId];
+    || vd.url;
   const el = document.createElement("span");
   el.className = "vendor-name";
   if (vendorColor) el.style.color = vendorColor;
@@ -989,8 +1084,6 @@ const _buildMarketListCard = (slug, meta, priceData, historyData) => {
   badge.textContent = meta.metal.toUpperCase();
   weightRow.appendChild(badge);
   infoCol.appendChild(weightRow);
-
-  // GB Daily price placeholder — goldbackSpot not yet wired to live data source
 
   card.appendChild(infoCol);
 
@@ -1072,6 +1165,30 @@ const _buildMarketListCard = (slug, meta, priceData, historyData) => {
   // === Vendor row — playground classes: vendor-chip, vendor-medal, vendor-name, vendor-price ===
   const vendorRow = document.createElement("div");
   vendorRow.className = "market-card-vendors";
+  // Goldback vendor chip — reference price from goldback.com (no medal ranking)
+  if (typeof getGoldbackVendorPrice === "function") {
+    const gbPrice = getGoldbackVendorPrice(slug);
+    if (gbPrice) {
+      const gbChip = document.createElement("span");
+      gbChip.className = "vendor-chip";
+      if (gbPrice.isStale) gbChip.style.opacity = "0.6";
+      const gbName = document.createElement("span");
+      gbName.className = "vendor-name";
+      gbName.style.color = "#d4a017";
+      gbName.textContent = "Goldback";
+      gbChip.appendChild(gbName);
+      const gbPriceEl = document.createElement("span");
+      gbPriceEl.className = "vendor-price";
+      gbPriceEl.textContent = _fmtRetailPrice(gbPrice.price) + (gbPrice.isStale ? " (stale)" : "");
+      gbChip.appendChild(gbPriceEl);
+      const gbSrc = document.createElement("span");
+      gbSrc.className = "vendor-confidence";
+      gbSrc.textContent = "goldback.com";
+      gbSrc.style.fontSize = "0.65rem";
+      gbChip.appendChild(gbSrc);
+      vendorRow.appendChild(gbChip);
+    }
+  }
   if (priceData) {
     const vendorMap = priceData.vendors || {};
     const avail = retailAvailability[slug] || {};
@@ -1350,9 +1467,10 @@ const _initMarketCardChart = (slug, detailsEl) => {
         // Require 2+ real (non-estimated) data points — a single dot adds noise, not signal
         const realCount = interp.filter((v, i) => !v && filled[i] != null).length;
         if (realCount < 2) return null;
-        const baseColor = RETAIL_VENDOR_COLORS[vendorId] || "#94a3b8";
+        const _cvd = getVendorDisplay(vendorId);
+        const baseColor = _cvd.color;
         return {
-          label: RETAIL_VENDOR_NAMES[vendorId] || vendorId,
+          label: _cvd.name,
           data: filled,
           _interp: interp, // stashed for tooltip + segment callbacks
           borderColor: baseColor,
@@ -1416,27 +1534,26 @@ const _initMarketCardChart = (slug, detailsEl) => {
  * @returns {string[]}
  */
 const _getFilteredSortedSlugs = (query, sortKey) => {
-  let slugs = [...RETAIL_SLUGS];
+  let slugs = [...getActiveRetailSlugs()];
   if (query && query.trim()) {
     const q = query.trim().toLowerCase();
     slugs = slugs.filter((slug) => {
-      const meta = RETAIL_COIN_META[slug];
-      if (!meta) return false;
+      const meta = getRetailCoinMeta(slug);
       if (meta.name.toLowerCase().includes(q)) return true;
       if (meta.metal.toLowerCase().includes(q)) return true;
       const priceData = retailPrices && retailPrices.prices ? retailPrices.prices[slug] : null;
       if (priceData && priceData.vendors) {
         for (const vendorId of Object.keys(priceData.vendors)) {
-          const vendorName = RETAIL_VENDOR_NAMES[vendorId] || vendorId;
-          if (vendorName.toLowerCase().includes(q)) return true;
+          const vd = getVendorDisplay(vendorId);
+          if (vd.name.toLowerCase().includes(q)) return true;
         }
       }
       return false;
     });
   }
   slugs.sort((a, b) => {
-    const metaA = RETAIL_COIN_META[a] || {};
-    const metaB = RETAIL_COIN_META[b] || {};
+    const metaA = getRetailCoinMeta(a);
+    const metaB = getRetailCoinMeta(b);
     const priceA = retailPrices && retailPrices.prices ? retailPrices.prices[a] : null;
     const priceB = retailPrices && retailPrices.prices ? retailPrices.prices[b] : null;
     switch (sortKey) {
@@ -1511,7 +1628,7 @@ const _renderMarketListView = () => {
 
   if (_retailSyncInProgress) {
     emptyState.style.display = "none";
-    RETAIL_SLUGS.forEach(() => grid.appendChild(_buildSkeletonCard()));
+    getActiveRetailSlugs().forEach(() => grid.appendChild(_buildSkeletonCard()));
     return;
   }
 
@@ -1532,7 +1649,7 @@ const _renderMarketListView = () => {
   }
 
   slugs.forEach((slug) => {
-    const meta = RETAIL_COIN_META[slug];
+    const meta = getRetailCoinMeta(slug);
     const priceData = retailPrices.prices[slug] || null;
     const historyData = retailPriceHistory[slug] || null;
     grid.appendChild(_buildMarketListCard(slug, meta, priceData, historyData));
@@ -1841,6 +1958,11 @@ if (typeof window !== "undefined") {
   window._renderMarketListView = _renderMarketListView;
   window._buildMarketListCard = _buildMarketListCard;
   window._getFilteredSortedSlugs = _getFilteredSortedSlugs;
+  window.getActiveRetailSlugs = getActiveRetailSlugs;
+  window.getRetailCoinMeta = getRetailCoinMeta;
+  window.getVendorDisplay = getVendorDisplay;
+  window._parseGoldbackSlug = _parseGoldbackSlug;
+  window.GOLDBACK_WEIGHTS = GOLDBACK_WEIGHTS;
 }
 
 // =============================================================================
