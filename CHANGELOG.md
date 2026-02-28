@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.15] - 2026-02-28
+
+### Added — Beta Domain Toast (STAK-376)
+
+- **Added**: Environment badge (BETA / PREVIEW / LOCAL) next to app logo on non-production domains
+- **Added**: One-time session toast explaining data isolation between origins (e.g. beta vs production)
+- **Added**: Domain detection for `beta.staktrakr.com`, `*.pages.dev`, `localhost`, and `file://` protocol
+
+---
+
 ## [3.33.14] - 2026-02-28
 
 ### Fixed — Goldback G½ Slug Resolution (STAK-373)
