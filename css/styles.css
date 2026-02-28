@@ -538,6 +538,33 @@ section {
   border-color: var(--text-muted);
 }
 
+/* Environment badge (BETA / PREVIEW / LOCAL) — STAK-376 */
+.env-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 2px 7px;
+  border-radius: 10px;
+  vertical-align: middle;
+  margin-left: 0.4rem;
+  text-transform: uppercase;
+  line-height: 1.4;
+}
+.env-badge--beta {
+  background: var(--warning, #f0ad4e);
+  color: #1a1a1a;
+}
+.env-badge--preview {
+  background: var(--info, #5bc0de);
+  color: #1a1a1a;
+}
+.env-badge--local {
+  background: var(--text-muted, #999);
+  color: #fff;
+}
+
 .storage-line a {
   margin-left: var(--spacing-sm);
 }

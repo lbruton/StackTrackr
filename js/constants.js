@@ -290,7 +290,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-12 - STACK-38/STACK-31: Responsive card view + mobile layout
  */
 
-const APP_VERSION = "3.33.14";
+const APP_VERSION = "3.33.15";
 
 /**
  * Numista metadata cache TTL: 30 days in milliseconds.
@@ -466,6 +466,25 @@ const BRANDING_DOMAIN_OVERRIDE =
         return BRANDING_DOMAIN_OPTIONS.domainMap[host] || null;
       })()
     : null;
+
+/** @constant {Object} ENV_LABELS - Environment badge configuration for non-production domains (STAK-376) */
+const ENV_LABELS = {
+  beta: { label: 'BETA', className: 'env-badge--beta' },
+  preview: { label: 'PREVIEW', className: 'env-badge--preview' },
+  local: { label: 'LOCAL', className: 'env-badge--local' },
+};
+
+/** Detect non-production environment from hostname/protocol (STAK-376) */
+function getEnvironmentLabel() {
+  if (typeof window === 'undefined' || !window.location) return null;
+  const host = window.location.hostname.toLowerCase();
+  const proto = window.location.protocol;
+  if (host === 'beta.staktrakr.com') return ENV_LABELS.beta;
+  if (host.endsWith('.pages.dev')) return ENV_LABELS.preview;
+  if (host === 'localhost' || host === '127.0.0.1') return ENV_LABELS.local;
+  if (proto === 'file:') return ENV_LABELS.local;
+  return null;
+}
 
 /** @constant {string} LS_KEY - LocalStorage key for inventory data */
 const LS_KEY = "metalInventory";
