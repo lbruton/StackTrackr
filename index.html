@@ -1679,7 +1679,14 @@
             <!-- Form action buttons -->
             <div class="item-modal-actions">
               <div class="item-modal-actions-left">
-                <!-- View button moves here in clone mode (via JS) -->
+                <button class="btn secondary" id="viewItemFromEditBtn" type="button" style="display:none"
+                        title="View this item in read-only mode">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                       stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                       style="vertical-align: -2px; margin-right: 0.2rem;">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                  </svg>View
+                </button>
               </div>
               <div class="item-modal-actions-right">
                 <span id="clonePickerCount" class="clone-picker-count" style="display:none"></span>
@@ -1692,14 +1699,6 @@
                        style="vertical-align: -2px; margin-right: 0.2rem;">
                     <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
                   </svg>Clone
-                </button>
-                <button class="btn secondary" id="viewItemFromEditBtn" type="button" style="display:none"
-                        title="View this item in read-only mode">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                       stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                       style="vertical-align: -2px; margin-right: 0.2rem;">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-                  </svg>View
                 </button>
                 <button class="btn" id="cloneItemSaveAnotherBtn" type="button" style="display:none">Save &amp; Clone Another</button>
                 <button class="btn premium" id="itemModalSubmit" type="submit">Add to Inventory</button>
