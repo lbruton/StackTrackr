@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.06] - 2026-02-27
+
+### Added — Market Page Redesign Phase 1
+
+- **Added**: Market list view with full-width card layout — CSS Grid responsive at desktop/tablet/mobile breakpoints, metal accent border, image placeholders (STAK-369)
+- **Added**: Inline 7-day trend charts per card with Chart.js — spike detection (two-pass temporal + cross-vendor median), dashed interpolation for gaps, OOS carry-forward pricing (STAK-369)
+- **Added**: Vendor price chips with color-coded brand labels, medal rankings for best prices, OOS strikethrough styling (STAK-369)
+- **Added**: Computed MED/LOW/AVG stats row with live vendor + history fallback (STAK-369)
+- **Added**: Card click-to-expand chart interaction, functional search filtering, sort by name/metal/price/trend (STAK-369)
+- **Added**: Feature-flagged behind `?market_list_view=true` URL parameter (STAK-369)
+
+---
+
 ## [3.33.05] - 2026-02-27
 
 ### Fixed — Daily Maintenance: Search Cache, Dead Code Cleanup

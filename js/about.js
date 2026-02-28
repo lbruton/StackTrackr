@@ -283,10 +283,10 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.33.06 &ndash; Market Page Redesign Phase 1</strong>: Full-width market list cards with inline 7-day trend charts, spike detection, vendor price chips with brand colors and medal rankings, computed MED/LOW/AVG stats, click-to-expand charts. Feature-flagged behind ?market_list_view=true</li>
     <li><strong>v3.33.05 &ndash; Daily Maintenance</strong>: Search cache optimized with formatted date caching. Dead code removed (downloadStorageReport, duplicate MAX_LOCAL_FILE_SIZE export)</li>
     <li><strong>v3.33.04 &ndash; Quick-Fix Batch</strong>: NGC cert lookup extracts numeric grade only. Fractional troy ounce weights display correctly as oz. Cloud Sync button added to reorderable header system</li>
     <li><strong>v3.33.02 &ndash; Cloud Sync Safety Overhaul</strong>: Empty-vault push guard prevents data loss. Cloud-side backup-before-overwrite. Dropbox folder restructuring with migration. DiffEngine restore preview modal. Configurable backup history depth. Multi-tab sync guard</li>
-    <li><strong>v3.33.01 &ndash; Numista Search Overhaul</strong>: Per-field origin tracking with two-tier re-sync picker. Independent tag blacklist with Settings management. Auto-apply toggle for Numista tags. Backup export preserves Numista data and field metadata</li>
   `;
 };
 

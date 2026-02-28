@@ -3631,14 +3631,51 @@
 
             <!-- ===== MARKET PRICES ===== -->
             <div id="settingsPanel_market" class="settings-section-panel" style="display: none">
-              <h3 style="margin-bottom:0.75rem;">Market Prices</h3>
-              <div style="display:flex; align-items:center; justify-content:space-between; gap:0.75rem; margin-bottom:0.5rem;">
-                <div style="display:flex;flex-direction:column;gap:0.15rem;">
-                  <span id="retailLastSync" class="settings-subtext"></span>
-                  <span id="retailSyncStatus" class="settings-subtext"></span>
+
+              <!-- Market List View header (hidden by default, shown by JS when MARKET_LIST_VIEW enabled) -->
+              <div id="marketListHeader" style="display:none">
+                <div class="market-header">
+                  <div class="market-header-row">
+                    <h3>Market Prices</h3>
+                    <div class="market-header-sync-group">
+                      <button id="retailSyncBtnList" class="retail-sync-btn market-sync-btn" type="button">Sync Now</button>
+                      <span id="retailLastSyncList" class="settings-subtext">Last sync: —</span>
+                    </div>
+                  </div>
+                  <div class="market-header-divider"></div>
+                  <div class="market-header-controls-row">
+                    <input type="search" id="marketSearchInput" class="market-search"
+                           placeholder="Search items, metals, vendors..." autocomplete="off"
+                           aria-label="Search market items">
+                    <div class="market-header-controls-right">
+                      <div class="market-sort-wrap">
+                        <span class="market-header-btn market-sort-label">Sort: Name <span class="btn-chevron">&#9662;</span></span>
+                        <select id="marketSortSelect" aria-label="Sort market items">
+                          <option value="name" selected>Name</option>
+                          <option value="metal">Metal</option>
+                          <option value="price-low">Price: Low</option>
+                          <option value="price-high">Price: High</option>
+                          <option value="trend">Trend</option>
+                        </select>
+                      </div>
+                      <button class="market-header-btn" id="marketExpandAllBtn" type="button">Expand All</button>
+                    </div>
+                  </div>
                 </div>
-                <button id="retailSyncBtn" class="retail-card-action" type="button">Sync Now</button>
               </div>
+
+              <!-- Original grid header (shown when MARKET_LIST_VIEW is disabled) -->
+              <div id="marketGridHeader">
+                <h3 style="margin-bottom:0.75rem;">Market Prices</h3>
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:0.75rem; margin-bottom:0.5rem;">
+                  <div style="display:flex;flex-direction:column;gap:0.15rem;">
+                    <span id="retailLastSync" class="settings-subtext"></span>
+                    <span id="retailSyncStatus" class="settings-subtext"></span>
+                  </div>
+                  <button id="retailSyncBtn" class="retail-card-action" type="button">Sync Now</button>
+                </div>
+              </div>
+
               <div id="retailDisclaimer" class="retail-disclaimer-inline" style="display:none; margin-bottom:0.75rem;" role="status">
                 Best-effort pricing · Sourced from public data, may not reflect real-time or credit card pricing · Confidence: 80=aligned · 35=outlier · 15=significant outlier
               </div>
