@@ -12477,6 +12477,7 @@ th {
   }
   .market-card-image-col img { width: 40px; height: 40px; }
   .market-card-no-image { width: 40px; height: 40px; }
+  .market-card-stats-col { grid-column: 1 / -1; justify-content: flex-start; }
   .market-card-vendors { grid-column: 1 / -1; }
   .market-card-trend { display: none; }
   .market-card-chart { grid-column: 1 / -1; }
