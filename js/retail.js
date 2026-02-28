@@ -22,7 +22,7 @@ const RETAIL_COIN_META = {
   "maple-gold":              { name: "Gold Maple Leaf",          weight: 1.0,  metal: "gold"     },
   "krugerrand-gold":         { name: "Gold Krugerrand",          weight: 1.0,  metal: "gold"     },
   "ape":                     { name: "American Platinum Eagle",   weight: 1.0, metal: "platinum" },
-  "goldback-oklahoma-g1":    { name: "Oklahoma Goldback (G1)",   weight: 1/50, metal: "goldback" },
+  "goldback-oklahoma-g1":    { name: "Oklahoma Goldback (G1)",   weight: 0.001, metal: "goldback" },
 };
 
 /** Vendor display names */
@@ -604,7 +604,7 @@ const renderRetailCards = () => {
 };
 
 /** Metal emoji icons keyed by metal name */
-const RETAIL_METAL_EMOJI = { gold: "🟡", silver: "⚪", platinum: "🔷", palladium: "⬜" };
+const RETAIL_METAL_EMOJI = { gold: "🟡", silver: "⚪", platinum: "🔷", palladium: "⬜", goldback: "🟡" };
 /**
  * Computes price trend vs. the previous history entry.
  * @param {string} slug
