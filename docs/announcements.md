@@ -1,5 +1,6 @@
 ## What's New
 
+- **Mobile Spot Entry (v3.33.10)**: Long-press on spot price card opens manual input on mobile devices, mirroring desktop Shift+click. Hint text updated for discoverability
 - **Spot Card Label Fix (v3.33.11)**: Spot timestamp compares raw storage data instead of rendered HTML, correctly showing "Last API Sync" when cache is disabled
 - **Spot Card Fix (v3.33.09)**: Spot price card now shows "Last API Sync" when cache is disabled, instead of misleading "Last Cache Refresh" label
 - **Vendor Medal Fix (v3.33.08)**: Vendor medals now awarded to all in-stock vendors, not just high-confidence ones. APMEX correctly shows 2nd place on Oklahoma Goldback
