@@ -8434,6 +8434,7 @@ th {
   z-index: 2;
 }
 
+#inventoryForm .item-modal-actions-left .btn,
 #inventoryForm .item-modal-actions-right .btn {
   border-radius: 999px;
   padding: 0.35rem 0.9rem;
@@ -8441,6 +8442,7 @@ th {
   font-weight: 700;
 }
 
+#inventoryForm .item-modal-actions-left .btn.secondary,
 #inventoryForm .item-modal-actions-right .btn.secondary {
   background: var(--glass-input-bg, rgba(0, 0, 0, 0.04));
   border: 1px solid var(--glass-input-border, var(--border));
@@ -8448,6 +8450,7 @@ th {
   transition: background 0.15s ease, border-color 0.15s ease;
 }
 
+#inventoryForm .item-modal-actions-left .btn.secondary:hover,
 #inventoryForm .item-modal-actions-right .btn.secondary:hover {
   background: var(--glass-input-focus-bg, rgba(0, 0, 0, 0.07));
   border-color: var(--primary);
