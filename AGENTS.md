@@ -335,6 +335,43 @@ mcp__claude-context__search_code
 
 ---
 
+## Jules Scheduled Scan Exclusions
+
+Jules runs nightly scans via three agents (Bolt, Sentinel, Scribe). The exclusions below prevent repeat false positives. Jules reads `AGENTS.md` on every run — these take effect automatically.
+
+### General Exclusions (All Agents)
+
+- This is a vanilla JS single-page app with no build step — do not suggest framework migrations, build tool additions, or module bundler integration
+- Do not modify `constants.js` version numbers — versioning is managed externally by a release skill that bumps 7 files atomically
+- Do not add new files without updating `sw.js` CORE_ASSETS and `index.html` script order — the 67-script dependency chain is critical
+- Do not flag variables as "not defined" — this is a global-scope architecture with `no-undef` intentionally OFF
+- Do not suggest converting to ES modules — the global scope pattern is intentional and necessary for `file://` protocol support
+
+### Bolt (Performance) Exclusions
+
+- Do not optimize `filterInventoryAdvanced` — the current implementation is readable and performant for expected dataset sizes (< 5,000 items). Single-pass refactors have been reviewed and rejected twice (PRs #577, #595)
+- Do not suggest lazy-loading for scripts in `index.html` — all 67 scripts use `defer` (except `file-protocol-fix.js`) and load order is a hard dependency chain
+- Do not suggest Web Workers for spot price calculations — the computation is sub-millisecond and the thread marshalling overhead would be net negative
+
+### Sentinel (Security) Exclusions
+
+- Do not flag `Math.random()` fallback in `generateUUID` — `crypto.randomUUID()` is the primary path, `crypto.getRandomValues()` is the secondary fallback, and `Math.random()` only fires on environments where both crypto APIs are unavailable (ancient browsers where security is already compromised). This has been reviewed and intentionally kept as a last-resort fallback (PRs #576, #596)
+- Do not flag `localStorage.getItem`/`setItem` for scalar string preferences (timeout keys, boolean flag strings) — `loadData()`/`saveData()` are async and JSON-serialize values, which is incorrect for plain scalar string preferences. Direct `localStorage` access is intentional for these cases
+- Do not flag PBKDF2 iteration count without checking the current value — it was already upgraded to 600,000 iterations per OWASP recommendations
+- Do not suggest CSP headers — this app runs on `file://` protocol where CSP is not applicable
+
+### Scribe (Code Quality) Exclusions
+
+- Do not remove functions that appear unused without checking global scope — functions defined in one file are called from files loaded later in the script order. Use the 67-script dependency chain (section 1 above) to trace callers before flagging dead code
+- Do not flag `sanitizeHtml()` inline suppression comments (`// nosemgrep:`) — these are reviewed security exceptions, not accidental suppression
+- Do not flag long lines in `docs/announcements.md` — the parser splits on newlines, and each entry must be a single line
+
+### Suppression Tracking
+
+Suppression decisions are tracked in `.github/jules-suppressions.json` with IDs (`JULES-SNNN`), reasons, and closed PR references. Run `/jules-suppress prompt` to generate copy-pasteable exclusion text for the Jules dashboard scheduled task prompts.
+
+---
+
 ## Commit & Pull Request Guidelines
 
 Commit message styles:
