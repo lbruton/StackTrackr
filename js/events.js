@@ -1419,8 +1419,11 @@ const setupItemFormListeners = () => {
   const closeItemModal = (e) => {
     if (e && typeof e.preventDefault === 'function') e.preventDefault();
     if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
-    // Exit clone mode if active (STAK-375)
-    if (window._cloneMode && typeof exitCloneMode === 'function') exitCloneMode();
+    // In clone mode, "Back" returns to edit mode instead of closing (STAK-375)
+    if (window._cloneMode && typeof exitCloneMode === 'function') {
+      exitCloneMode();
+      return;
+    }
     // Dismiss any open autocomplete dropdowns (BUG-002/003)
     if (typeof dismissAllAutocompletes === 'function') dismissAllAutocompletes();
     try { if (typeof closeModalById === 'function') closeModalById('itemModal'); } catch(closeErr) {}
