@@ -39,14 +39,9 @@ Object.defineProperty(window, '_cloneSaveAndClose', { get: () => _cloneSaveAndCl
  * Field definitions for clone checkboxes.
  * Maps label `for` attribute → data key → default checked state.
  */
+// Only optional fields get checkboxes. Mandatory fields (metal, type, purity,
+// qty, weight, weightUnit, name) are always carried over — they cannot be blank.
 const CLONE_FIELDS = [
-  { labelFor: 'itemMetal',            key: 'metal',            defaultOn: true },
-  { labelFor: 'itemType',             key: 'type',             defaultOn: true },
-  { labelFor: 'itemPuritySelect',     key: 'purity',           defaultOn: true },
-  { labelFor: 'itemQty',              key: 'qty',              defaultOn: true },
-  { labelFor: 'itemWeight',           key: 'weight',           defaultOn: true },
-  { labelFor: 'itemWeightUnit',       key: 'weightUnit',       defaultOn: true },
-  { labelFor: 'itemName',             key: 'name',             defaultOn: true },
   { labelFor: 'itemYear',             key: 'year',             defaultOn: true },
   { labelFor: 'itemDate',             key: 'date',             defaultOn: true },
   { labelFor: 'itemPrice',            key: 'price',            defaultOn: true },
