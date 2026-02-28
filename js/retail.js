@@ -47,13 +47,13 @@ const RETAIL_VENDOR_URLS = {
 
 /** Per-vendor brand colors — shared with retail-view-modal.js for chart lines and card labels */
 const RETAIL_VENDOR_COLORS = {
-  apmex:            "#3b82f6",  // blue
-  jmbullion:        "#f59e0b",  // amber
-  sdbullion:        "#10b981",  // emerald
-  monumentmetals:   "#a78bfa",  // violet
-  herobullion:      "#f87171",  // red
-  bullionexchanges: "#ec4899",  // pink
-  summitmetals:     "#06b6d4",  // cyan
+  apmex:            "#60a5fa",  // bright blue (was #3b82f6 — boosted for dark bg contrast)
+  jmbullion:        "#fbbf24",  // bright amber (was #f59e0b)
+  sdbullion:        "#34d399",  // bright emerald (was #10b981)
+  monumentmetals:   "#c4b5fd",  // bright violet (was #a78bfa)
+  herobullion:      "#f87171",  // red — already distinct
+  bullionexchanges: "#f472b6",  // bright pink (was #ec4899)
+  summitmetals:     "#22d3ee",  // bright cyan (was #06b6d4)
 };
 
 /**
@@ -552,9 +552,22 @@ const _renderRetailSparkline = (slug) => {
 
 /** Called on market section open and after each sync. */
 const renderRetailCards = () => {
+  // Market list view branch (feature flag)
+  if (typeof isFeatureEnabled === "function" && isFeatureEnabled("MARKET_LIST_VIEW")) {
+    _renderMarketListView();
+    return;
+  }
+
   const grid = safeGetElement("retailCardsGrid");
   const lastSyncEl = safeGetElement("retailLastSync");
   const disclaimer = safeGetElement("retailDisclaimer");
+
+  // Ensure grid header is visible when using grid view
+  const listHeader = safeGetElement("marketListHeader");
+  const gridHeader = safeGetElement("marketGridHeader");
+  if (listHeader) listHeader.style.display = "none";
+  if (gridHeader) gridHeader.style.display = "";
+  grid.classList.remove("market-list-mode");
 
   if (retailPrices && retailPrices.lastSync) {
     const d = new Date(retailPrices.lastSync);
@@ -891,6 +904,717 @@ const _buildOOSVendorRow = (vendorId, lastKnownPrice, lastAvailableDate, slug) =
 };
 
 // ---------------------------------------------------------------------------
+// Market List View (MARKET_LIST_VIEW feature flag)
+// ---------------------------------------------------------------------------
+
+/** Medal text labels and CSS classes for top-3 vendors (matches playground) */
+const _MARKET_MEDALS = ["1st", "2nd", "3rd"];
+const _MARKET_MEDAL_CLASSES = ["vendor-medal--1", "vendor-medal--2", "vendor-medal--3"];
+
+/** Active chart instances for market cards — destroyed on close to prevent Canvas reuse errors */
+const _marketChartInstances = new Map();
+
+/** Search debounce timer */
+let _marketSearchTimer = null;
+
+/**
+ * Builds a compact vendor link element for the market list card.
+ * @param {string} vendorId
+ * @param {string} slug
+ * @returns {HTMLElement}
+ */
+const _buildMarketVendorLink = (vendorId, slug) => {
+  const label = RETAIL_VENDOR_NAMES[vendorId] || vendorId;
+  const vendorColor = RETAIL_VENDOR_COLORS[vendorId] || null;
+  const vendorUrl = (retailProviders && retailProviders[slug] && retailProviders[slug][vendorId])
+    || RETAIL_VENDOR_URLS[vendorId];
+  const el = document.createElement("span");
+  el.className = "vendor-name";
+  if (vendorColor) el.style.color = vendorColor;
+  if (vendorUrl) {
+    el.style.cursor = "pointer";
+    el.addEventListener("click", (e) => {
+      e.preventDefault();
+      const popup = window.open(vendorUrl, `retail_vendor_${vendorId}`, "width=1250,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no");
+      if (!popup) window.open(vendorUrl, "_blank");
+    });
+  }
+  el.textContent = label;
+  return el;
+};
+
+/**
+ * Builds a single full-width row card for the market list view.
+ * Uses View C card parity: metal border, image column, glass orb placeholders.
+ * @param {string} slug
+ * @param {{name:string, weight:number, metal:string}} meta
+ * @param {Object|null} priceData
+ * @param {Array|null} historyData
+ * @returns {HTMLElement}
+ */
+const _buildMarketListCard = (slug, meta, priceData, historyData) => {
+  const card = document.createElement("div");
+  card.className = `market-list-card metal-${meta.metal}`;
+  card.dataset.slug = slug;
+
+  // === Image column — exact playground match: market-card-image-col ===
+  const imageCol = document.createElement("div");
+  imageCol.className = "market-card-image-col";
+  if (meta.metal === "goldback") imageCol.classList.add("bar-shape");
+  const noImg = document.createElement("div");
+  noImg.className = "market-card-no-image";
+  imageCol.appendChild(noImg);
+  card.appendChild(imageCol);
+
+  // === Info column ===
+  const infoCol = document.createElement("div");
+  infoCol.className = "market-card-info";
+  const nameEl = document.createElement("div");
+  nameEl.className = "market-card-name";
+  nameEl.textContent = meta.name;
+  infoCol.appendChild(nameEl);
+  const weightRow = document.createElement("div");
+  const weightSpan = document.createElement("span");
+  weightSpan.className = "market-card-weight";
+  weightSpan.textContent = `${meta.weight} troy oz`;
+  weightRow.appendChild(weightSpan);
+  const badge = document.createElement("span");
+  badge.className = `retail-metal-badge retail-metal-badge--${meta.metal}`;
+  badge.textContent = meta.metal.toUpperCase();
+  weightRow.appendChild(badge);
+  infoCol.appendChild(weightRow);
+
+  // GB Daily price for goldback items (playground shows "GB Daily: $X.XX")
+  if (meta.metal === "goldback" && typeof goldbackSpot !== "undefined" && goldbackSpot) {
+    const gbDaily = document.createElement("div");
+    gbDaily.className = "market-card-gb-daily";
+    gbDaily.textContent = `GB Daily: ${_fmtRetailPrice(goldbackSpot)}`;
+    infoCol.appendChild(gbDaily);
+  }
+
+  card.appendChild(infoCol);
+
+  // === Stats column — playground structure: stats-col > stats > span ===
+  const statsCol = document.createElement("div");
+  statsCol.className = "market-card-stats-col";
+
+  // Compute stats from priceData if available, otherwise fall back to latest history entry
+  let medVal = null, lowVal = null, avgVal = null;
+  // Helper: extract numeric price from vendor object (live uses .price, history uses .avg)
+  const _vendorPrice = (v) => {
+    if (!v) return null;
+    const p = typeof v.price === "number" ? v.price : typeof v.avg === "number" ? v.avg : null;
+    return p != null && isFinite(p) ? p : null;
+  };
+  if (priceData) {
+    medVal = priceData.median_price;
+    lowVal = priceData.lowest_price;
+    // Compute average from in-stock vendor prices
+    if (priceData.vendors) {
+      const vendorPrices = Object.values(priceData.vendors)
+        .filter((v) => v && v.inStock !== false)
+        .map(_vendorPrice)
+        .filter((p) => p != null);
+      if (vendorPrices.length > 0) {
+        avgVal = vendorPrices.reduce((a, b) => a + b, 0) / vendorPrices.length;
+      }
+    }
+  }
+  // Fall back to latest history entry if priceData missing or didn't yield stats
+  if (medVal == null && lowVal == null && historyData && historyData.length > 0) {
+    const latest = historyData[historyData.length - 1];
+    medVal = latest.avg_median || null;
+    lowVal = latest.avg_low || null;
+  }
+  if (avgVal == null && historyData && historyData.length > 0) {
+    const latest = historyData[historyData.length - 1];
+    if (latest.vendors) {
+      const vendorPrices = Object.values(latest.vendors)
+        .filter((v) => v && v.inStock !== false)
+        .map(_vendorPrice)
+        .filter((p) => p != null);
+      if (vendorPrices.length > 0) {
+        avgVal = vendorPrices.reduce((a, b) => a + b, 0) / vendorPrices.length;
+      }
+    }
+  }
+
+  if (medVal != null || lowVal != null || avgVal != null) {
+    const statsInner = document.createElement("div");
+    statsInner.className = "market-card-stats";
+    [["MED", medVal], ["LOW", lowVal], ["AVG", avgVal]].forEach(([label, val]) => {
+      const span = document.createElement("span");
+      const lbl = document.createElement("span");
+      lbl.className = "stat-label";
+      lbl.textContent = label;
+      const valEl = document.createElement("span");
+      valEl.className = "stat-value";
+      valEl.textContent = _fmtRetailPrice(val);
+      span.appendChild(lbl);
+      span.appendChild(document.createTextNode(" "));
+      span.appendChild(valEl);
+      statsInner.appendChild(span);
+    });
+    statsCol.appendChild(statsInner);
+  }
+  card.appendChild(statsCol);
+
+  // === Trend badge — playground: .market-card-trend .up/.down/.flat ===
+  const trend = _computeRetailTrend(slug);
+  const trendDir = trend ? trend.dir : "flat";
+  const trendCol = document.createElement("div");
+  trendCol.className = `market-card-trend ${trendDir}`;
+  if (trend) {
+    const arrow = { up: "\u2191", down: "\u2193", flat: "\u2192" }[trend.dir];
+    const sign = trend.dir === "up" ? "+" : trend.dir === "down" ? "\u2212" : "";
+    trendCol.textContent = `${arrow} ${sign}${trend.pct}%`;
+  } else {
+    trendCol.textContent = "\u2192 0.0%";
+  }
+  card.appendChild(trendCol);
+
+  // === Vendor row — playground classes: vendor-chip, vendor-medal, vendor-name, vendor-price ===
+  const vendorRow = document.createElement("div");
+  vendorRow.className = "market-card-vendors";
+  if (priceData) {
+    const vendorMap = priceData.vendors || {};
+    const avail = retailAvailability[slug] || {};
+    const allVendorKeys = new Set([...Object.keys(vendorMap), ...Object.keys(avail)]);
+    const sortedVendors = Array.from(allVendorKeys)
+      .map((key) => {
+        const vd = vendorMap[key];
+        const isAvailable = avail[key] !== false;
+        const price = vd ? vd.price : null;
+        const score = vd ? vd.confidence : null;
+        return { key, price, score, isAvailable };
+      })
+      .filter(({ price, isAvailable }) => price != null || !isAvailable)
+      .sort((a, b) => {
+        if (!a.isAvailable && b.isAvailable) return 1;
+        if (a.isAvailable && !b.isAvailable) return -1;
+        if (!a.isAvailable && !b.isAvailable) return 0;
+        const aHigh = a.score != null && a.score >= 60;
+        const bHigh = b.score != null && b.score >= 60;
+        if (aHigh && bHigh) return a.price - b.price;
+        if (aHigh) return -1;
+        if (bHigh) return 1;
+        return 0;
+      });
+    const qualVendors = sortedVendors.filter(({ isAvailable, score }) => isAvailable && score != null && score >= 60);
+    const top3Keys = qualVendors.slice(0, 3).map(({ key }) => key);
+    sortedVendors.forEach(({ key, price, score, isAvailable }) => {
+      const chip = document.createElement("span");
+      chip.className = "vendor-chip";
+      const confClass = (!isAvailable ? "" : (score != null && score < 60) ? " low-conf" : "");
+      if (!isAvailable) chip.classList.add("oos");
+      if (confClass) chip.className += confClass;
+
+      if (isAvailable) {
+        const medalIdx = top3Keys.indexOf(key);
+        if (medalIdx !== -1) {
+          const medal = document.createElement("span");
+          medal.className = `vendor-medal ${_MARKET_MEDAL_CLASSES[medalIdx]}`;
+          medal.textContent = _MARKET_MEDALS[medalIdx];
+          chip.appendChild(medal);
+        }
+      }
+      const nameLink = _buildMarketVendorLink(key, slug);
+      nameLink.className = "vendor-name";
+      if (!isAvailable) {
+        nameLink.style.color = "";
+      }
+      chip.appendChild(nameLink);
+      const priceEl = document.createElement("span");
+      priceEl.className = "vendor-price";
+      priceEl.textContent = isAvailable ? _fmtRetailPrice(price) : "OOS";
+      chip.appendChild(priceEl);
+      // Confidence score badge (playground shows "95%", "80%" etc.)
+      if (isAvailable && score != null) {
+        const confEl = document.createElement("span");
+        confEl.className = "vendor-confidence";
+        confEl.textContent = `${Math.round(score)}%`;
+        chip.appendChild(confEl);
+      }
+      vendorRow.appendChild(chip);
+    });
+  }
+  card.appendChild(vendorRow);
+
+  // === Chart details (collapsible, lazy-loaded) ===
+  const details = document.createElement("details");
+  details.className = "market-card-chart";
+  const summary = document.createElement("summary");
+  const tArrow = trend ? ({ up: "\u2191", down: "\u2193", flat: "\u2192" }[trend.dir]) : "\u2192";
+  const tSign = trend ? (trend.dir === "up" ? "+" : trend.dir === "down" ? "\u2212" : "") : "";
+  const tPct = trend ? trend.pct : "0.0";
+  summary.textContent = `7-Day Trend \u00A0${tArrow} ${tSign}${tPct}%`;
+  details.appendChild(summary);
+  const chartContainer = document.createElement("div");
+  chartContainer.className = "market-chart-container";
+  const history = retailPriceHistory[slug];
+  if (!history || history.length < 2) {
+    const msg = document.createElement("p");
+    msg.className = "text-muted market-chart-empty";
+    msg.textContent = "Not enough data for chart";
+    chartContainer.appendChild(msg);
+  } else {
+    const canvas = document.createElement("canvas");
+    canvas.id = `market-chart-${slug}`;
+    chartContainer.appendChild(canvas);
+  }
+  details.appendChild(chartContainer);
+  details.addEventListener("toggle", () => {
+    if (details.open) {
+      _initMarketCardChart(slug, details);
+    } else if (_marketChartInstances.has(slug)) {
+      _marketChartInstances.get(slug).destroy();
+      _marketChartInstances.delete(slug);
+    }
+  });
+  card.appendChild(details);
+
+  // Click anywhere on card body toggles the chart (except vendor chips + summary)
+  card.addEventListener("click", (e) => {
+    // Let vendor chips, links, and the native summary toggle handle themselves
+    if (e.target.closest(".vendor-chip") || e.target.closest("summary") || e.target.closest("a")) return;
+    details.open = !details.open;
+    details.dispatchEvent(new Event("toggle"));
+  });
+
+  return card;
+};
+
+/**
+ * Filters anomalous vendor prices from daily history entries.
+ * Adapted from _flagAnomalies (retail-view-modal.js) for the daily history
+ * format where vendor data is { avg, inStock } objects instead of raw numbers.
+ *
+ * Pass 1 — Temporal spike: if neighbors (t-1, t+1) are stable (±5%) but
+ *   price[t] deviates, null it out.
+ * Pass 2 — Cross-vendor median: if 3+ vendors in a day, any vendor >40%
+ *   from the median is nulled.
+ *
+ * @param {Array} entries - Chronological daily history entries
+ * @param {string[]} vendorIds - Vendor IDs to check
+ * @returns {Object<string, Array<number|null>>} Cleaned price arrays keyed by vendorId
+ */
+const _filterHistorySpikes = (entries, vendorIds) => {
+  const neighborTol = typeof RETAIL_SPIKE_NEIGHBOR_TOLERANCE !== "undefined" ? RETAIL_SPIKE_NEIGHBOR_TOLERANCE : 0.05;
+  const medianThreshold = typeof RETAIL_ANOMALY_THRESHOLD !== "undefined" ? RETAIL_ANOMALY_THRESHOLD : 0.40;
+
+  // Extract raw price matrix and track which points are estimated (OOS / carry-forward)
+  const prices = {};
+  const estimated = {}; // parallel boolean arrays — true = OOS carry-forward or missing data
+  for (const vid of vendorIds) {
+    prices[vid] = [];
+    estimated[vid] = [];
+    let lastKnown = null;
+    // History is chronological (oldest first after .reverse()), so walk forward
+    for (let t = 0; t < entries.length; t++) {
+      const e = entries[t];
+      const vd = e.vendors && e.vendors[vid];
+      const val = vd && typeof vd.avg === "number" && isFinite(vd.avg) ? vd.avg : null;
+      const isOOS = vd && vd.inStock === false;
+      if (val != null && !isOOS) {
+        // Real in-stock data point
+        prices[vid][t] = val;
+        estimated[vid][t] = false;
+        lastKnown = val;
+      } else if (isOOS && lastKnown != null) {
+        // OOS — carry forward last known price, mark estimated
+        prices[vid][t] = lastKnown;
+        estimated[vid][t] = true;
+      } else if (val != null && isOOS) {
+        // OOS but has a price (e.g. last scraped) — use it, mark estimated
+        prices[vid][t] = val;
+        estimated[vid][t] = true;
+        lastKnown = val;
+      } else {
+        // No data at all
+        prices[vid][t] = null;
+        estimated[vid][t] = false;
+      }
+    }
+  }
+
+  // Pass 1: Temporal spike detection (only on non-estimated real data)
+  for (const vid of vendorIds) {
+    const arr = prices[vid];
+    const est = estimated[vid];
+    for (let t = 1; t < arr.length - 1; t++) {
+      if (est[t]) continue; // skip estimated points
+      const curr = arr[t];
+      const prev = arr[t - 1];
+      const next = arr[t + 1];
+      if (curr == null || prev == null || next == null) continue;
+      if (est[t - 1] || est[t + 1]) continue; // need real neighbors
+      if (prev === 0 && next === 0) continue;
+      const neighborAvg = (prev + next) / 2;
+      if (neighborAvg === 0) continue;
+      const neighborDrift = Math.abs(prev - next) / neighborAvg;
+      if (neighborDrift > neighborTol) continue;
+      const deviation = Math.abs(curr - neighborAvg) / neighborAvg;
+      if (deviation > neighborTol) {
+        arr[t] = null; // spike — will be interpolated later
+        est[t] = false;
+      }
+    }
+  }
+
+  // Pass 2: Cross-vendor median consensus (only on non-estimated points)
+  for (let t = 0; t < entries.length; t++) {
+    const valid = vendorIds
+      .map((vid) => ({ vid, price: prices[vid][t], est: estimated[vid][t] }))
+      .filter((x) => x.price != null && !x.est);
+    if (valid.length < 3) continue;
+    const sorted = valid.map((x) => x.price).sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
+    const median = sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
+    if (median === 0) continue;
+    let flagged = 0;
+    const candidates = [];
+    for (const { vid, price } of valid) {
+      if (Math.abs(price - median) / median > medianThreshold) {
+        candidates.push(vid);
+        flagged++;
+      }
+    }
+    if (flagged >= valid.length) continue;
+    for (const vid of candidates) {
+      prices[vid][t] = null;
+      estimated[vid][t] = false;
+    }
+  }
+
+  return { prices, estimated };
+};
+
+/**
+ * Linearly interpolates null gaps in a price array and marks which indices
+ * are estimated (interpolated, OOS carry-forward, etc.). Trailing/leading
+ * nulls are left as-is (no extrapolation beyond known data).
+ *
+ * @param {Array<number|null>} data - Price array with nulls for missing/anomalous data
+ * @param {boolean[]} [preEstimated] - Optional pre-marked estimated flags (e.g. OOS carry-forward)
+ * @returns {{ filled: Array<number|null>, interp: boolean[] }}
+ */
+const _interpolateGaps = (data, preEstimated) => {
+  const filled = [...data];
+  const interp = preEstimated ? [...preEstimated] : new Array(data.length).fill(false);
+  for (let i = 0; i < filled.length; i++) {
+    if (filled[i] != null) continue;
+    // Find previous non-null value
+    let prevIdx = -1;
+    for (let j = i - 1; j >= 0; j--) {
+      if (filled[j] != null) { prevIdx = j; break; }
+    }
+    // Find next non-null value
+    let nextIdx = -1;
+    for (let j = i + 1; j < filled.length; j++) {
+      if (filled[j] != null) { nextIdx = j; break; }
+    }
+    if (prevIdx === -1 || nextIdx === -1) continue; // edge — no extrapolation
+    // Linear interpolation
+    const span = nextIdx - prevIdx;
+    const progress = (i - prevIdx) / span;
+    filled[i] = filled[prevIdx] + (filled[nextIdx] - filled[prevIdx]) * progress;
+    interp[i] = true;
+  }
+  return { filled, interp };
+};
+
+/**
+ * Initializes a Chart.js line chart inside a market card's <details> block.
+ * Uses last 7 history entries, reversed to chronological order (oldest left → newest right).
+ * Applies spike detection to filter anomalous scrape data, then interpolates
+ * gaps and renders them as dashed/dimmed segments.
+ * @param {string} slug
+ * @param {HTMLDetailsElement} detailsEl
+ */
+const _initMarketCardChart = (slug, detailsEl) => {
+  if (typeof Chart === "undefined") return;
+  if (_marketChartInstances.has(slug)) return;
+  const canvas = detailsEl.querySelector(`#market-chart-${slug}`);
+  if (!(canvas instanceof HTMLCanvasElement)) return;
+  const history = retailPriceHistory[slug];
+  if (!history || history.length < 2) return;
+  // Data is already chronological (oldest first) — take last 7 entries for newest week
+  const last7 = history.slice(-7);
+  const knownVendors = Object.keys(RETAIL_VENDOR_NAMES);
+  const activeVendors = knownVendors.filter((v) =>
+    last7.some((e) => e.vendors && e.vendors[v] && e.vendors[v].avg != null)
+  );
+
+  // Filter spikes, then interpolate gaps for smooth lines
+  const spikeResult = activeVendors.length > 0
+    ? _filterHistorySpikes(last7, activeVendors)
+    : null;
+
+  const datasets = activeVendors.length > 0
+    ? activeVendors.map((vendorId) => {
+        const { filled, interp } = _interpolateGaps(spikeResult.prices[vendorId], spikeResult.estimated[vendorId]);
+        // Require 2+ real (non-estimated) data points — a single dot adds noise, not signal
+        const realCount = interp.filter((v, i) => !v && filled[i] != null).length;
+        if (realCount < 2) return null;
+        const baseColor = RETAIL_VENDOR_COLORS[vendorId] || "#94a3b8";
+        return {
+          label: RETAIL_VENDOR_NAMES[vendorId] || vendorId,
+          data: filled,
+          _interp: interp, // stashed for tooltip + segment callbacks
+          borderColor: baseColor,
+          backgroundColor: "transparent",
+          borderWidth: 1.5,
+          pointRadius: (ctx) => interp[ctx.dataIndex] ? 2 : 3,
+          pointBorderColor: (ctx) => interp[ctx.dataIndex] ? baseColor + "60" : baseColor,
+          pointBackgroundColor: (ctx) => interp[ctx.dataIndex] ? "transparent" : baseColor,
+          tension: 0.3,
+          spanGaps: true,
+          segment: {
+            borderDash: (ctx) => (interp[ctx.p0DataIndex] || interp[ctx.p1DataIndex]) ? [4, 3] : [],
+            borderColor: (ctx) => (interp[ctx.p0DataIndex] || interp[ctx.p1DataIndex]) ? baseColor + "50" : baseColor,
+          },
+        };
+      }).filter(Boolean)
+    : [{
+        label: "Avg Median",
+        data: last7.map((e) => Number(e.avg_median)),
+        borderColor: "var(--accent-primary, #4a9eff)",
+        backgroundColor: "transparent",
+        borderWidth: 1.5,
+        pointRadius: 3,
+        tension: 0.3,
+      }];
+  const chart = new Chart(canvas, {
+    type: "line",
+    data: { labels: last7.map((e) => e.date), datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: "index", intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: (items) => items[0]?.label || "",
+            label: (ctx) => {
+              if (ctx.raw === null) return `${ctx.dataset.label}: Out of stock`;
+              const isInterp = ctx.dataset._interp && ctx.dataset._interp[ctx.dataIndex];
+              const prefix = isInterp ? "~" : "";
+              return `${ctx.dataset.label}: ${prefix}$${Number(ctx.raw).toFixed(2)}${isInterp ? " (est.)" : ""}`;
+            },
+          },
+        },
+      },
+      scales: {
+        x: { ticks: { maxTicksToShow: 7, font: { size: 11 } } },
+        y: { ticks: { callback: (v) => `$${Number(v).toFixed(0)}` } },
+      },
+      animation: false,
+    },
+  });
+  _marketChartInstances.set(slug, chart);
+};
+
+/**
+ * Filters and sorts the slug list for market list view.
+ * @param {string} query - Search query (case-insensitive substring)
+ * @param {string} sortKey - name|metal|price-low|price-high|trend
+ * @returns {string[]}
+ */
+const _getFilteredSortedSlugs = (query, sortKey) => {
+  let slugs = [...RETAIL_SLUGS];
+  if (query && query.trim()) {
+    const q = query.trim().toLowerCase();
+    slugs = slugs.filter((slug) => {
+      const meta = RETAIL_COIN_META[slug];
+      if (!meta) return false;
+      if (meta.name.toLowerCase().includes(q)) return true;
+      if (meta.metal.toLowerCase().includes(q)) return true;
+      const priceData = retailPrices && retailPrices.prices ? retailPrices.prices[slug] : null;
+      if (priceData && priceData.vendors) {
+        for (const vendorId of Object.keys(priceData.vendors)) {
+          const vendorName = RETAIL_VENDOR_NAMES[vendorId] || vendorId;
+          if (vendorName.toLowerCase().includes(q)) return true;
+        }
+      }
+      return false;
+    });
+  }
+  slugs.sort((a, b) => {
+    const metaA = RETAIL_COIN_META[a] || {};
+    const metaB = RETAIL_COIN_META[b] || {};
+    const priceA = retailPrices && retailPrices.prices ? retailPrices.prices[a] : null;
+    const priceB = retailPrices && retailPrices.prices ? retailPrices.prices[b] : null;
+    switch (sortKey) {
+      case "metal": {
+        const cmp = (metaA.metal || "").localeCompare(metaB.metal || "");
+        return cmp !== 0 ? cmp : (metaA.name || "").localeCompare(metaB.name || "");
+      }
+      case "price-low": {
+        const pa = priceA ? (priceA.lowest_price ?? Infinity) : Infinity;
+        const pb = priceB ? (priceB.lowest_price ?? Infinity) : Infinity;
+        return pa - pb;
+      }
+      case "price-high": {
+        const pa = priceA ? (priceA.lowest_price ?? -Infinity) : -Infinity;
+        const pb = priceB ? (priceB.lowest_price ?? -Infinity) : -Infinity;
+        return pb - pa;
+      }
+      case "trend": {
+        const ta = _computeRetailTrend(a);
+        const tb = _computeRetailTrend(b);
+        const va = ta ? parseFloat(ta.pct) * (ta.dir === "down" ? -1 : 1) : 0;
+        const vb = tb ? parseFloat(tb.pct) * (tb.dir === "down" ? -1 : 1) : 0;
+        return vb - va;
+      }
+      default:
+        return (metaA.name || "").localeCompare(metaB.name || "");
+    }
+  });
+  return slugs;
+};
+
+/**
+ * Renders the market list view when MARKET_LIST_VIEW is enabled.
+ * Shows list header, iterates filtered+sorted slugs, builds cards.
+ */
+const _renderMarketListView = () => {
+  const grid = safeGetElement("retailCardsGrid");
+  const listHeader = safeGetElement("marketListHeader");
+  const gridHeader = safeGetElement("marketGridHeader");
+  const disclaimer = safeGetElement("retailDisclaimer");
+  const emptyState = safeGetElement("retailEmptyState");
+  const searchInput = safeGetElement("marketSearchInput");
+  const sortSelect = safeGetElement("marketSortSelect");
+  const lastSyncEl = safeGetElement("retailLastSyncList");
+
+  // Show list header, hide grid header
+  listHeader.style.display = "";
+  gridHeader.style.display = "none";
+
+  // Update sync timestamp
+  if (retailPrices && retailPrices.lastSync) {
+    const d = new Date(retailPrices.lastSync);
+    const now = new Date();
+    const diffMin = Math.floor((now - d) / 60000);
+    if (diffMin < 1) lastSyncEl.textContent = "Last sync: just now";
+    else if (diffMin < 60) lastSyncEl.textContent = `Last sync: ${diffMin} min ago`;
+    else lastSyncEl.textContent = `Last sync: ${d.toLocaleDateString()} ${d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+  } else {
+    lastSyncEl.textContent = "Last sync: never";
+  }
+
+  // Switch grid to list mode
+  grid.classList.add("market-list-mode");
+
+  // Destroy all active market charts before clearing DOM
+  _marketChartInstances.forEach((chart) => chart.destroy());
+  _marketChartInstances.clear();
+  grid.innerHTML = "";
+
+  // Hide inline disclaimer in list view — disclaimer text lives in the footer instead
+  disclaimer.style.display = "none";
+
+  if (_retailSyncInProgress) {
+    emptyState.style.display = "none";
+    RETAIL_SLUGS.forEach(() => grid.appendChild(_buildSkeletonCard()));
+    return;
+  }
+
+  const hasData = retailPrices && retailPrices.prices && Object.keys(retailPrices.prices).length > 0;
+  emptyState.style.display = hasData ? "none" : "";
+  if (!hasData) return;
+
+  const query = searchInput ? searchInput.value : "";
+  const sortKey = sortSelect ? sortSelect.value : "name";
+  const slugs = _getFilteredSortedSlugs(query, sortKey);
+
+  if (slugs.length === 0) {
+    const msg = document.createElement("div");
+    msg.className = "market-empty-search";
+    msg.textContent = "No items match your search";
+    grid.appendChild(msg);
+    return;
+  }
+
+  slugs.forEach((slug) => {
+    const meta = RETAIL_COIN_META[slug];
+    const priceData = retailPrices.prices[slug] || null;
+    const historyData = retailPriceHistory[slug] || null;
+    grid.appendChild(_buildMarketListCard(slug, meta, priceData, historyData));
+  });
+
+  // Market footer — playground two-row layout with divider + sponsor badge
+  const footer = document.createElement("div");
+  footer.className = "market-footer";
+  const footerText1 = document.createElement("div");
+  footerText1.className = "market-footer-text";
+  footerText1.textContent = "Confidence scores reflect scraper accuracy \u2014 prices with low confidence may be outdated or incorrectly parsed. Always verify at the vendor\u2019s website before purchasing.";
+  footer.appendChild(footerText1);
+  const footerDiv = document.createElement("div");
+  footerDiv.className = "market-footer-divider";
+  footer.appendChild(footerDiv);
+  const footerRow = document.createElement("div");
+  footerRow.className = "market-footer-row";
+  const footerText2 = document.createElement("div");
+  footerText2.className = "market-footer-text";
+  footerText2.innerHTML = 'Item not found? Request it on <a href="https://reddit.com/r/staktrakr" target="_blank" rel="noopener">r/staktrakr</a> &mdash; supporters and early adopters get priority placement in the queue.';
+  footerRow.appendChild(footerText2);
+  const sponsorBadge = document.createElement("a");
+  sponsorBadge.className = "market-sponsor-badge";
+  sponsorBadge.href = "https://github.com/sponsors/lbruton";
+  sponsorBadge.target = "_blank";
+  sponsorBadge.rel = "noopener";
+  sponsorBadge.textContent = "\u2665 Support";
+  footerRow.appendChild(sponsorBadge);
+  footer.appendChild(footerRow);
+  grid.appendChild(footer);
+};
+
+/** Debounced search handler for market list view. */
+const _onMarketSearch = () => {
+  if (_marketSearchTimer) clearTimeout(_marketSearchTimer);
+  _marketSearchTimer = setTimeout(() => _renderMarketListView(), 150);
+};
+
+/** Sort change handler for market list view. */
+const _onMarketSort = () => {
+  const sortSelect = safeGetElement("marketSortSelect");
+  const sortLabel = document.querySelector(".market-sort-label");
+  if (sortLabel && sortSelect) {
+    const selected = sortSelect.options[sortSelect.selectedIndex];
+    sortLabel.childNodes[0].textContent = `Sort: ${selected ? selected.textContent : "Name"} `;
+  }
+  _renderMarketListView();
+};
+
+/** Wires market list view event listeners (called once during init). */
+const _initMarketListViewListeners = () => {
+  const searchInput = safeGetElement("marketSearchInput");
+  if (searchInput) searchInput.addEventListener("input", _onMarketSearch);
+
+  const sortSelect = safeGetElement("marketSortSelect");
+  if (sortSelect) sortSelect.addEventListener("change", _onMarketSort);
+
+  const syncBtn = safeGetElement("retailSyncBtnList");
+  if (syncBtn) syncBtn.addEventListener("click", () => {
+    if (typeof syncRetailPrices === "function") syncRetailPrices();
+  });
+
+  const expandBtn = safeGetElement("marketExpandAllBtn");
+  if (expandBtn) expandBtn.addEventListener("click", () => {
+    const grid = safeGetElement("retailCardsGrid");
+    const allDetails = grid.querySelectorAll("details.market-card-chart");
+    const allOpen = Array.from(allDetails).every((d) => d.open);
+    allDetails.forEach((d) => {
+      if (allOpen) d.removeAttribute("open");
+      else d.setAttribute("open", "");
+    });
+    expandBtn.textContent = allOpen ? "Expand All" : "Collapse All";
+  });
+};
+
+// ---------------------------------------------------------------------------
 // Render - History Table (Activity Log sub-tab)
 // ---------------------------------------------------------------------------
 
@@ -1020,6 +1744,7 @@ const initRetailPrices = () => {
   loadRetailIntradayData();
   loadRetailProviders();
   loadRetailAvailability();
+  _initMarketListViewListeners();
 };
 // ---------------------------------------------------------------------------
 // Background Auto-Sync
@@ -1118,6 +1843,9 @@ if (typeof window !== "undefined") {
   window.loadRetailAvailability = loadRetailAvailability;
   window.saveRetailAvailability = saveRetailAvailability;
   window._lastSuccessfulApiBase = _lastSuccessfulApiBase;
+  window._renderMarketListView = _renderMarketListView;
+  window._buildMarketListCard = _buildMarketListCard;
+  window._getFilteredSortedSlugs = _getFilteredSortedSlugs;
 }
 
 // =============================================================================
