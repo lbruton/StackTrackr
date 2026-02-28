@@ -1018,14 +1018,13 @@ const _buildMarketListCard = (slug, meta, priceData, historyData) => {
     }
   }
   // Fall back to latest history entry if priceData missing or didn't yield stats
-  // History is newest-first — index 0 is latest
   if (medVal == null && lowVal == null && historyData && historyData.length > 0) {
-    const latest = historyData[0];
+    const latest = historyData[historyData.length - 1];
     medVal = latest.avg_median || null;
     lowVal = latest.avg_low || null;
   }
   if (avgVal == null && historyData && historyData.length > 0) {
-    const latest = historyData[0];
+    const latest = historyData[historyData.length - 1];
     if (latest.vendors) {
       avgVal = _calcVendorAvg(latest.vendors);
     }
@@ -1199,7 +1198,7 @@ const _filterHistorySpikes = (entries, vendorIds) => {
     prices[vid] = [];
     estimated[vid] = [];
     let lastKnown = null;
-    // History was reversed to chronological (oldest first), so walk forward
+    // History is chronological (oldest first), so walk forward
     for (let t = 0; t < entries.length; t++) {
       const e = entries[t];
       const vd = e.vendors && e.vendors[vid];
@@ -1328,8 +1327,8 @@ const _initMarketCardChart = (slug, detailsEl) => {
   if (!(canvas instanceof HTMLCanvasElement)) return;
   const history = retailPriceHistory[slug];
   if (!history || history.length < 2) return;
-  // History is newest-first — take first 7 entries and reverse to chronological order
-  const last7 = history.slice(0, 7).reverse();
+  // History is chronological (oldest first) — take last 7 entries for newest week
+  const last7 = history.slice(-7);
   const knownVendors = Object.keys(RETAIL_VENDOR_NAMES);
   const activeVendors = knownVendors.filter((v) =>
     last7.some((e) => e.vendors && e.vendors[v] && e.vendors[v].avg != null)
