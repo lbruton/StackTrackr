@@ -1,5 +1,6 @@
 ## What's New
 
+- **Oklahoma Goldback G1 (v3.33.07)**: Oklahoma Goldback G1 added to market prices page with APMEX and Hero Bullion vendor tracking. Goldback vendor branding added
 - **Market Page Redesign Phase 1 (v3.33.06)**: New default market view with full-width list cards, inline 7-day trend charts with spike detection, vendor price chips with brand colors and medal rankings, computed MED/LOW/AVG stats, search and sort, click-to-expand charts, sponsor badge. Disable with ?market_list_view=false
 - **Daily Maintenance (v3.33.05)**: Search cache optimized with formatted date caching. Dead code removed (downloadStorageReport, duplicate MAX_LOCAL_FILE_SIZE export)
 - **Quick-Fix Batch (v3.33.04)**: NGC cert lookup extracts numeric grade only. Fractional troy ounce weights display correctly as oz. Cloud Sync button added to reorderable header system
