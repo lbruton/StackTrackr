@@ -1441,46 +1441,6 @@ const updateStorageStats = async () => {
 };
 
 /**
- * Displays the storage report HTML inside a modal iframe
- */
-const openStorageReportPopup = async () => {
-  // Fetch IndexedDB stats before generating report
-  let idbStats = null;
-  if (window.imageCache?.isAvailable()) {
-    try { idbStats = await imageCache.getStorageUsage(); } catch { /* ignore */ }
-  }
-  const htmlContent = generateStorageReportHTML(idbStats);
-  const modal = document.getElementById('storageReportModal');
-  const iframe = document.getElementById('storageReportFrame');
-
-  if (!modal || !iframe) {
-    appAlert('Storage report modal not found.');
-    return;
-  }
-
-  iframe.srcdoc = htmlContent;
-
-  const closeBtn = document.getElementById('storageReportCloseBtn');
-
-  const closeModal = () => {
-    modal.style.display = 'none';
-    document.body.style.overflow = '';
-  };
-
-  if (!modal.dataset.initialized) {
-    modal.addEventListener('click', (e) => {
-      if (e.target === modal) closeModal();
-    });
-    if (closeBtn) {
-      closeBtn.addEventListener('click', closeModal);
-    }
-    modal.dataset.initialized = 'true';
-  }
-
-  modal.style.display = 'flex';
-  document.body.style.overflow = 'hidden';
-};
-/**
  * Globally close a modal by id and clear body overflow safely.
  * @param {string} id
  */
@@ -3040,7 +3000,6 @@ if (typeof window !== 'undefined') {
   window.closeModalById = closeModalById;
   window.openModalById = openModalById;
   window.updateStorageStats = updateStorageStats;
-  window.openStorageReportPopup = openStorageReportPopup;
   window.debounce = debounce;
   window.openEbayBuySearch = openEbayBuySearch;
   window.openEbaySoldSearch = openEbaySoldSearch;
