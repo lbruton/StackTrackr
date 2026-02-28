@@ -306,9 +306,18 @@ const updateSpotTimestamp = (metalName) => {
     return;
   }
 
-  // When cache and API show the same data (e.g. cache disabled / duration=0),
+  // Compare raw storage data — when both keys hold the same provider+timestamp
+  // (e.g. cache disabled / duration=0), the rendered HTML differs only by label text.
+  // Compare the underlying data to detect this case correctly (STAK-274).
+  const cacheData = loadDataSync(LAST_CACHE_REFRESH_KEY, null);
+  const apiData = loadDataSync(LAST_API_SYNC_KEY, null);
+  const sameUnderlying = cacheData && apiData &&
+    cacheData.provider === apiData.provider &&
+    cacheData.timestamp === apiData.timestamp;
+
+  // When cache and API have the same underlying data (e.g. cache disabled / duration=0),
   // or when only API data exists, show "Last API Sync" directly without toggle (STAK-274)
-  if (!cacheHtml || cacheHtml === apiHtml) {
+  if (!cacheHtml || sameUnderlying) {
     el.dataset.mode = "api";
     // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml, javascript.browser.security.insecure-document-method.insecure-document-method
     el.innerHTML = apiHtml || cacheHtml;

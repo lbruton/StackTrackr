@@ -283,6 +283,7 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.33.11 &ndash; Spot Card Label Fix</strong>: Spot timestamp compares raw storage data instead of rendered HTML, correctly showing &ldquo;Last API Sync&rdquo; when cache is disabled</li>
     <li><strong>v3.33.09 &ndash; Spot Card Fix</strong>: Spot price card now shows &ldquo;Last API Sync&rdquo; when cache is disabled, instead of misleading &ldquo;Last Cache Refresh&rdquo; label</li>
     <li><strong>v3.33.08 &ndash; Vendor Medal Fix</strong>: Vendor medals now awarded to all in-stock vendors, not just high-confidence ones. APMEX correctly shows 2nd place on Oklahoma Goldback</li>
     <li><strong>v3.33.07 &ndash; Oklahoma Goldback G1</strong>: Oklahoma Goldback G1 added to market prices page with APMEX and Hero Bullion vendor tracking. Goldback vendor branding added</li>
