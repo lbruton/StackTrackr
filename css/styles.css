@@ -705,8 +705,6 @@ select:focus {
   gap: 0.5rem;
   padding: 0.5rem 0.7rem;
   background: var(--bg-secondary);
-  cursor: pointer;
-  list-style: none;
   font-weight: 600;
   font-size: 0.8rem;
   color: var(--text-primary);
@@ -715,32 +713,6 @@ select:focus {
   transition: background var(--transition);
   min-height: 36px;
   box-sizing: border-box;
-}
-
-/* Remove default marker in all browsers */
-.form-section-header::-webkit-details-marker { display: none; }
-.form-section-header::marker { content: ""; }
-
-/* Chevron indicator via CSS borders */
-.form-section-header::after {
-  content: "";
-  display: inline-block;
-  margin-left: auto;
-  width: 0.45rem;
-  height: 0.45rem;
-  border-right: 2px solid var(--text-secondary);
-  border-bottom: 2px solid var(--text-secondary);
-  transform: rotate(-45deg);
-  transition: transform 0.2s ease;
-  flex-shrink: 0;
-}
-
-.form-section[open] > .form-section-header::after {
-  transform: rotate(45deg);
-}
-
-.form-section-header:hover {
-  background: var(--bg-tertiary, var(--bg-secondary));
 }
 
 .form-section-icon {
@@ -804,9 +776,6 @@ select:focus {
 /* Sepia theme adjustments */
 [data-theme="sepia"] .form-section-header {
   background: var(--bg-secondary);
-}
-[data-theme="sepia"] .form-section-header:hover {
-  background: var(--bg-tertiary, var(--bg-secondary));
 }
 
 /* =============================================================================
@@ -8447,10 +8416,6 @@ th {
   letter-spacing: 0.03em;
 }
 
-#inventoryForm .form-section-header:hover {
-  background: var(--glass-input-bg, rgba(0, 0, 0, 0.02));
-}
-
 #inventoryForm .form-section-icon {
   color: var(--primary);
 }
@@ -8579,50 +8544,67 @@ th {
   justify-content: center;
 }
 
-/* --- Date N/A checkbox --------------------------------------------------- */
-.date-na-label,
-.date-na-inline {
-  display: inline-flex !important;
-  align-items: center;
-  justify-content: center;
-  gap: 0.25rem;
-  min-width: 44px;
-  min-height: 32px;
-  padding: 0.25rem 0.5rem;
-  background: var(--glass-input-bg, rgba(0, 0, 0, 0.03));
-  border: 1.5px solid var(--glass-input-border, var(--border));
-  border-left: none;
-  border-radius: 0 8px 8px 0;
+/* --- Date N/A toggle button (STAK-375) ----------------------------------- */
+.date-na-btn {
   font-size: 0.72rem !important;
   font-weight: 600 !important;
   text-transform: none !important;
   letter-spacing: normal !important;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: color 0.15s ease, background 0.15s ease;
-  margin-top: 0 !important;
+  padding: 0.25rem 0.6rem;
+}
+.date-na-btn.active {
+  color: #fff;
+  background: var(--primary);
+  border-color: var(--primary);
 }
 
-.date-na-label:hover,
-.date-na-inline:hover {
+/* --- Clone mode (STAK-375) ---------------------------------------------- */
+/* Field-level checkboxes — hidden by default, shown in clone mode */
+.clone-field-cb {
+  display: none;
+  width: 14px;
+  height: 14px;
+  margin-right: 0.3rem;
+  vertical-align: middle;
+  accent-color: var(--primary);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.clone-mode .clone-field-cb {
+  display: inline-block;
+}
+
+/* Dimmed fields when clone checkbox unchecked */
+.clone-field-dimmed {
+  opacity: 0.35;
+  pointer-events: none;
+}
+.clone-field-dimmed .clone-field-cb,
+.clone-field-dimmed .clone-section-cb {
+  pointer-events: auto;
+}
+
+/* Section-level clone checkbox on section headers */
+.clone-section-cb {
+  display: none;
+  width: 16px;
+  height: 16px;
+  margin-right: 0.4rem;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+.clone-mode .clone-section-cb {
+  display: inline-block;
+}
+
+/* Clone counter badge */
+.clone-picker-count {
+  font-size: 0.72rem;
+  font-weight: 700;
   color: var(--primary);
-  background: var(--glass-input-focus-bg, rgba(0, 0, 0, 0.05));
-}
-
-.date-na-label input[type="checkbox"],
-.date-na-inline input[type="checkbox"] {
-  width: 12px;
-  height: 12px;
-  min-height: 0;
-  margin: 0;
-  cursor: pointer;
-}
-
-.date-na-label span,
-.date-na-inline span {
-  font-weight: 600 !important;
-  text-transform: none !important;
-  letter-spacing: normal !important;
+  padding: 0.15rem 0.5rem;
+  background: var(--glass-input-bg, rgba(0, 0, 0, 0.04));
+  border-radius: 999px;
 }
 
 /* --- Estimate Retail checkbox styling ----------------------------------- */
