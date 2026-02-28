@@ -8423,11 +8423,12 @@ th {
 /* --- Action bar — pill buttons with icons ------------------------------- */
 #inventoryForm .item-modal-actions {
   position: sticky;
-  bottom: 0;
-  margin-top: 0.85rem;
-  padding: 0.75rem 0.7rem 0.5rem;
+  bottom: calc(-1 * var(--spacing));
+  margin: 0.85rem calc(-1 * var(--spacing)) calc(-1 * var(--spacing));
+  padding: 0.75rem var(--spacing) 0.65rem;
   border-top: 1px solid var(--border);
   background: var(--bg-primary);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
   gap: 0.4rem;
   justify-content: flex-end;
   z-index: 2;
