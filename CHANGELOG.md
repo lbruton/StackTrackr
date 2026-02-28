@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.10] - 2026-02-28
+
+### Added — Mobile Long-Press Spot Price Entry (STAK-285)
+
+- **Added**: Long-press (600ms) on spot price card opens inline manual input on mobile/touch devices, mirroring desktop Shift+click behavior (STAK-285)
+- **Changed**: Hint text updated from "Shift+click" to "Shift+click or long-press" for discoverability
+
+---
+
 ## [3.33.11] - 2026-02-28
 
 ### Fixed — Spot Price Card Label Root Cause (STAK-274)
