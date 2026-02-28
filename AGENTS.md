@@ -2,7 +2,7 @@
 
 Instructions for AI agents working in this repository (Codex, Claude Code web, GitHub Actions, remote agents).
 
-This file contains codebase context only -- no local MCP servers, no local-only skills, no Mac-specific tooling. For local development context, see `CLAUDE.md` (gitignored, per-device).
+This file contains codebase context only -- no local MCP servers, no local-only skills, no Mac-specific tooling. For local development context with MCP servers, skills, and workflow rules, see `CLAUDE.md`.
 
 ## Project Overview
 
@@ -388,6 +388,10 @@ The following MCP servers were live-tested on **2026-02-21**. Availability can v
   for recall, `add_memory` to save insights/sessions/handoffs, `get_memories` to list all.
   Automatic conversational memory — saves preferences, decisions, and context across sessions.
   Do NOT call `mcp__memento__*` tools — Memento is retired.
+  **Entity scoping:** Project-specific memories use `agent_id` (e.g., `staktrakr`, `hextrackr`).
+  Cross-project memories use `user_id: "lbruton"` (default when no `agent_id` is passed).
+  **Search rule:** Always run TWO searches in parallel — one with `agent_id` filter for the
+  current project, one without (cross-project). Merge and deduplicate results.
 - `memento`: **RETIRED 2026-02-22.** Historical archive only — still in `.mcp.json` but do not call.
   All Memento entities were migrated to mem0. Use `mcp__mem0__search_memories` for recall.
 - `sequential-thinking`: Structured iterative reasoning for complex planning/debugging tasks.  
