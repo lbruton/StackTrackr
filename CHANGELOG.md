@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.14] - 2026-02-28
+
+### Fixed — Goldback G½ Slug Resolution (STAK-373)
+
+- **Fixed**: Goldback G½ slugs (`ghalf`) now resolved correctly on market page — regex and weight map accept both `ghalf` and `g0.5` formats (STAK-373)
+
+---
+
 ## [3.33.13] - 2026-02-28
 
 ### Added — Market Page Phase 2: Manifest-Driven Coins & Goldback Vendor (STAK-371)
