@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.09] - 2026-02-28
+
+### Fixed — Spot Price Card Cache Label (STAK-274)
+
+- **Fixed**: Spot price card shows "Last API Sync" directly when cache is disabled (duration=0) or when cache and API timestamps are identical, instead of misleading "Last Cache Refresh" label
+
+---
+
 ## [3.33.08] - 2026-02-28
 
 ### Fixed — Vendor Medal Ranking

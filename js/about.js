@@ -283,11 +283,11 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.33.09 &ndash; Spot Card Fix</strong>: Spot price card now shows &ldquo;Last API Sync&rdquo; when cache is disabled, instead of misleading &ldquo;Last Cache Refresh&rdquo; label</li>
     <li><strong>v3.33.08 &ndash; Vendor Medal Fix</strong>: Vendor medals now awarded to all in-stock vendors, not just high-confidence ones. APMEX correctly shows 2nd place on Oklahoma Goldback</li>
     <li><strong>v3.33.07 &ndash; Oklahoma Goldback G1</strong>: Oklahoma Goldback G1 added to market prices page with APMEX and Hero Bullion vendor tracking. Goldback vendor branding added</li>
     <li><strong>v3.33.06 &ndash; Market Page Redesign Phase 1</strong>: New default market view with full-width list cards, inline 7-day trend charts with spike detection, vendor price chips with brand colors and medal rankings, computed MED/LOW/AVG stats, search and sort, click-to-expand charts, sponsor badge. Disable with ?market_list_view=false</li>
     <li><strong>v3.33.05 &ndash; Daily Maintenance</strong>: Search cache optimized with formatted date caching. Dead code removed (downloadStorageReport, duplicate MAX_LOCAL_FILE_SIZE export)</li>
-    <li><strong>v3.33.04 &ndash; Quick-Fix Batch</strong>: NGC cert lookup extracts numeric grade only. Fractional troy ounce weights display correctly as oz. Cloud Sync button added to reorderable header system</li>
   `;
 };
 

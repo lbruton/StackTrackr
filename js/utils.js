@@ -306,6 +306,26 @@ const updateSpotTimestamp = (metalName) => {
     return;
   }
 
+  // When cache and API show the same data (e.g. cache disabled / duration=0),
+  // or when only API data exists, show "Last API Sync" directly without toggle (STAK-274)
+  if (!cacheHtml || cacheHtml === apiHtml) {
+    el.dataset.mode = "api";
+    // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml, javascript.browser.security.insecure-document-method.insecure-document-method
+    el.innerHTML = apiHtml || cacheHtml;
+    el.onclick = null;
+    return;
+  }
+
+  // When only cache data exists (no API sync yet), show cache without toggle
+  if (!apiHtml) {
+    el.dataset.mode = "cache";
+    // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml, javascript.browser.security.insecure-document-method.insecure-document-method
+    el.innerHTML = cacheHtml;
+    el.onclick = null;
+    return;
+  }
+
+  // Both cache and API have different data — show cache first with click-to-toggle
   el.dataset.mode = "cache";
   el.dataset.cache = cacheHtml;
   el.dataset.api = apiHtml;
