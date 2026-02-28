@@ -12680,7 +12680,6 @@ th {
   align-items: center;
   padding: var(--spacing);
   border-top: 1px solid var(--border);
-  border-top: 1px solid var(--border);
 }
 
 /* Clone picker pill buttons — matches item modal standard */

@@ -129,6 +129,71 @@ const readSelectOptions = (sourceId) => {
 };
 
 // ---------------------------------------------------------------------------
+// Helpers — unit conversion (mirrors duplicateItem / parseWeight / parsePriceToUSD)
+// ---------------------------------------------------------------------------
+
+/**
+ * Convert stored weight (troy oz) to display value for the item's weightUnit.
+ * Mirrors the conversion in duplicateItem (inventory.js).
+ * @param {number} storedWeight - Weight in troy oz (or gb denomination)
+ * @param {string} unit - The item's weightUnit ('oz','g','kg','lb','gb')
+ * @returns {string} Display value for the input field
+ */
+const weightToDisplay = (storedWeight, unit) => {
+  const w = parseFloat(storedWeight) || 0;
+  if (unit === 'gb') return String(w);
+  if (unit === 'g')  return (typeof oztToGrams === 'function') ? oztToGrams(w).toFixed(4) : String(w);
+  if (unit === 'kg') return (typeof oztToKg === 'function')    ? oztToKg(w).toFixed(4)    : String(w);
+  if (unit === 'lb') return (typeof oztToLb === 'function')    ? oztToLb(w).toFixed(4)    : String(w);
+  return w.toFixed(2); // default: oz
+};
+
+/**
+ * Convert user-entered display weight back to troy oz for storage.
+ * @param {string} displayVal - Value from the input field
+ * @param {string} unit - The item's weightUnit
+ * @returns {number} Weight in troy oz
+ */
+const weightFromDisplay = (displayVal, unit) => {
+  const v = parseFloat(displayVal) || 0;
+  if (unit === 'gb') return v;
+  if (unit === 'g')  return (typeof gramsToOzt === 'function') ? gramsToOzt(v) : v;
+  if (unit === 'kg') return (typeof kgToOzt === 'function')    ? kgToOzt(v)    : v;
+  if (unit === 'lb') return (typeof lbToOzt === 'function')    ? lbToOzt(v)    : v;
+  return v; // oz — no conversion
+};
+
+/**
+ * Get the current FX rate (display currency per 1 USD).
+ * @returns {number}
+ */
+const cloneFxRate = () => (typeof getExchangeRate === 'function') ? getExchangeRate() : 1;
+
+/**
+ * Convert stored USD price to display currency.
+ * @param {number} usdPrice
+ * @returns {string} Display value (or '' if zero/missing)
+ */
+const priceToDisplay = (usdPrice) => {
+  const p = parseFloat(usdPrice) || 0;
+  if (p <= 0) return '';
+  const rate = cloneFxRate();
+  return rate !== 1 ? (p * rate).toFixed(2) : String(p);
+};
+
+/**
+ * Convert user-entered display price back to USD for storage.
+ * @param {string} displayVal
+ * @returns {number} Price in USD
+ */
+const priceFromDisplay = (displayVal) => {
+  const entered = parseFloat(displayVal) || 0;
+  if (entered <= 0) return 0;
+  const rate = cloneFxRate();
+  return rate !== 1 ? entered / rate : entered;
+};
+
+// ---------------------------------------------------------------------------
 // Rendering — Preview
 // ---------------------------------------------------------------------------
 
@@ -269,9 +334,23 @@ const renderCloneFieldGroups = (item) => {
 
     for (let i = 0; i < fields.length; i++) {
       const f = fields[i];
-      const rawValue = (item[f.key] !== undefined && item[f.key] !== null)
-        ? String(item[f.key])
-        : '';
+
+      // Convert stored values to display values for weight and price
+      let displayValue;
+      if (f.key === 'weight') {
+        displayValue = weightToDisplay(item.weight, item.weightUnit || 'oz');
+      } else if (f.key === 'price') {
+        displayValue = priceToDisplay(item.price);
+      } else if (f.key === 'metal') {
+        // Use composition (source of truth) falling back to metal
+        displayValue = String(item.composition || item.metal || '');
+      } else {
+        displayValue = (item[f.key] !== undefined && item[f.key] !== null)
+          ? String(item[f.key])
+          : '';
+      }
+
+      const rawValue = displayValue;
       const hasValue = rawValue !== '';
 
       // Determine checked state: checked if has value OR defaultOn is true
@@ -336,7 +415,7 @@ const createCloneFromPicker = () => {
   if (!cloneSourceItem) return;
 
   // Deep clone the source
-  const clone = JSON.parse(JSON.stringify(cloneSourceItem));
+  const clone = structuredClone(cloneSourceItem);
 
   // Iterate fields: apply checked values, clear unchecked
   for (let i = 0; i < CLONE_FIELDS.length; i++) {
@@ -349,11 +428,21 @@ const createCloneFromPicker = () => {
     if (cb && cb.checked) {
       let val = input ? input.value : '';
 
-      // Type conversions for numeric fields
-      if (f.key === 'price' || f.key === 'weight') {
-        val = parseFloat(val) || 0;
+      // Type conversions — convert display values back to storage format
+      if (f.key === 'price') {
+        val = priceFromDisplay(val);
+      } else if (f.key === 'weight') {
+        val = weightFromDisplay(val, clone.weightUnit || cloneSourceItem.weightUnit || 'oz');
       } else if (f.key === 'qty') {
         val = parseInt(val, 10) || 1;
+      } else if (f.key === 'purity') {
+        val = parseFloat(val) || 1.0;
+      } else if (f.key === 'metal') {
+        // Sync composition from the metal select (composition is the source of truth)
+        clone.composition = val;
+        if (typeof parseNumistaMetal === 'function') {
+          val = parseNumistaMetal(val);
+        }
       }
 
       clone[f.key] = val;
@@ -362,6 +451,11 @@ const createCloneFromPicker = () => {
       clone[f.key] = '';
     }
   }
+
+  // Reset computed fields — will be recalculated on next render/valuation
+  clone.meltValue = 0;
+  clone.premiumPerOz = 0;
+  clone.marketValue = 0;
 
   // Assign unique identifiers
   if (typeof getNextSerial === 'function') {
@@ -440,16 +534,16 @@ function showClonePicker(inventoryIndex) {
   // Close any open modals first (use closeModalById to properly reset body overflow)
   if (typeof closeModalById === 'function') {
     closeModalById('itemModal');
-    closeModalById('viewModal');
+    closeModalById('viewItemModal');
   } else {
     const itemModal = safeGetElement('itemModal');
     if (itemModal) itemModal.style.display = 'none';
-    const viewModal = safeGetElement('viewModal');
+    const viewModal = safeGetElement('viewItemModal');
     if (viewModal) viewModal.style.display = 'none';
   }
 
   // Deep-clone the source item (snapshot — edits in picker don't affect original)
-  cloneSourceItem = JSON.parse(JSON.stringify(inventory[inventoryIndex]));
+  cloneSourceItem = structuredClone(inventory[inventoryIndex]);
   cloneSourceIndex = inventoryIndex;
   cloneSessionCount = 0;
   cloneDirty = false;
@@ -479,11 +573,15 @@ function showClonePicker(inventoryIndex) {
     titleEl.textContent = 'Clone Item';
   }
 
-  // Show modal and lock body scroll
-  const modal = safeGetElement('clonePickerModal');
-  if (modal) {
-    modal.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
+  // Show modal using standard modal API (handles body scroll + click-outside)
+  if (typeof openModalById === 'function') {
+    openModalById('clonePickerModal');
+  } else {
+    const modal = safeGetElement('clonePickerModal');
+    if (modal) {
+      modal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
   }
 
   // Attach listeners once
@@ -501,13 +599,14 @@ function showClonePicker(inventoryIndex) {
  * renderTable() call to update the inventory display.
  */
 function closeClonePicker() {
-  const modal = safeGetElement('clonePickerModal');
-  if (modal) {
-    modal.style.display = 'none';
+  // Close via standard modal API (handles body overflow reset)
+  if (typeof closeModalById === 'function') {
+    closeModalById('clonePickerModal');
+  } else {
+    const modal = safeGetElement('clonePickerModal');
+    if (modal) modal.style.display = 'none';
+    document.body.style.overflow = '';
   }
-
-  // Restore body scroll
-  document.body.style.overflow = '';
 
   // Re-render table once if any clones were created
   if (cloneDirty) {
