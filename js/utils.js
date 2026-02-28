@@ -268,7 +268,7 @@ const getLastUpdateTime = (metalName, mode = "cache") => {
 
   if (latestEntry.source === "seed") {
     const dateText = latestEntry.timestamp.slice(0, 10);
-    return `Seed \u00b7 ${dateText}<br>Shift+click price to set`;
+    return `Seed \u00b7 ${dateText}<br>Shift+click or long-press to set`;
   }
 
   if (latestEntry.source === "default") return "";
@@ -301,7 +301,7 @@ const updateSpotTimestamp = (metalName) => {
 
   // If no price data at all, show shift+click hint for discoverability
   if (!cacheHtml && !apiHtml) {
-    el.innerHTML = "Shift+click price to set";
+    el.innerHTML = "Shift+click or long-press to set";
     el.onclick = null;
     return;
   }

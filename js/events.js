@@ -2130,6 +2130,45 @@ const setupSpotPriceListeners = () => {
     true,
   );
 
+  // Long-press handler for mobile inline spot price editing (STAK-285)
+  // Mirrors shift+click behavior: hold 600ms on spot price to open manual input
+  let _spotLongPressTimer = null;
+  let _spotLongPressFired = false;
+
+  document.addEventListener("touchstart", (e) => {
+    const valueEl = e.target.closest(".spot-card-value");
+    if (!valueEl) return;
+    _spotLongPressFired = false;
+    _spotLongPressTimer = setTimeout(() => {
+      _spotLongPressFired = true;
+      const card = valueEl.closest(".spot-card");
+      if (!card || !card.dataset.metal) return;
+      e.preventDefault();
+      if (typeof startSpotInlineEdit === "function") {
+        startSpotInlineEdit(valueEl, card.dataset.metal);
+      }
+    }, 600);
+  }, { passive: false });
+
+  document.addEventListener("touchend", (e) => {
+    if (_spotLongPressTimer) {
+      clearTimeout(_spotLongPressTimer);
+      _spotLongPressTimer = null;
+    }
+    // Suppress the click/tap that follows a successful long-press
+    if (_spotLongPressFired) {
+      e.preventDefault();
+      _spotLongPressFired = false;
+    }
+  }, { passive: false });
+
+  document.addEventListener("touchmove", () => {
+    if (_spotLongPressTimer) {
+      clearTimeout(_spotLongPressTimer);
+      _spotLongPressTimer = null;
+    }
+  }, { passive: true });
+
 };
 
 /**
