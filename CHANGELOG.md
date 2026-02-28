@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.13] - 2026-02-28
+
+### Added — Market Page Phase 2: Manifest-Driven Coins & Goldback Vendor (STAK-371)
+
+- **Added**: Manifest-driven coin discovery — API can add new coins without frontend code changes (STAK-371)
+- **Added**: 3-tier metadata resolution chain: manifest → hardcoded → goldback slug parser → default
+- **Added**: Goldback vendor chip on market cards showing goldback.com reference price with staleness indicator
+- **Added**: `GOLDBACK_WEIGHTS` table and `_parseGoldbackSlug()` for auto-deriving metadata from any goldback slug
+- **Added**: `getActiveRetailSlugs()`, `getRetailCoinMeta()`, `getVendorDisplay()` resolver functions
+- **Changed**: All rendering functions use resolver layer instead of direct constant lookups
+
+---
+
 ## [3.33.12] - 2026-02-28
 
 ### Fixed — Version Drift Correction
