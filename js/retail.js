@@ -92,8 +92,12 @@ let _manifestVendorMeta = null;
 /** Returns active slugs: manifest-driven (filtered to those with data) or hardcoded fallback */
 const getActiveRetailSlugs = () => {
   if (!_manifestSlugs) return RETAIL_SLUGS;
+  if (!retailPrices?.prices) return _manifestSlugs;
   return _manifestSlugs.filter((slug) => {
-    const vendors = retailPrices?.prices?.[slug]?.vendors;
+    const entry = retailPrices.prices[slug];
+    if (!entry) return false;
+    if (entry.median_price != null || entry.lowest_price != null) return true;
+    const vendors = entry.vendors;
     return vendors && Object.keys(vendors).length > 0;
   });
 };
