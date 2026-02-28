@@ -2171,11 +2171,10 @@ const editItem = (idx, logIdx = null) => {
   if (elements.itemNotes) elements.itemNotes.value = item.notes || '';
   elements.itemDate.value = item.date || '';
   // Set date N/A button state based on whether item has a date
-  const editDateNABtn = document.getElementById('itemDateNABtn');
-  if (editDateNABtn) {
+  if (elements.itemDateNABtn) {
     const noDate = !item.date;
-    editDateNABtn.classList.toggle('active', noDate);
-    editDateNABtn.setAttribute('aria-pressed', noDate);
+    elements.itemDateNABtn.classList.toggle('active', noDate);
+    elements.itemDateNABtn.setAttribute('aria-pressed', noDate);
     elements.itemDate.disabled = noDate;
   }
   // Reset spot lookup state for edit mode (STACK-49)

@@ -1286,7 +1286,7 @@
                 <label for="itemDate">Purchase Date <span style="font-weight:normal;opacity:0.6;">(optional)</span></label>
                 <div class="input-with-action">
                   <input id="itemDate" type="date" />
-                  <button type="button" id="itemDateNABtn" class="inline-search-btn date-na-btn" title="Clear date (N/A)">N/A</button>
+                  <button type="button" id="itemDateNABtn" class="inline-search-btn date-na-btn" title="Clear date (N/A)" aria-pressed="false" aria-controls="itemDate">N/A</button>
                 </div>
               </div>
               <div>
@@ -1363,9 +1363,10 @@
                   </div>
                 </div>
               </div>
-              <!-- Hidden wrapper preserved for feature-flag JS compatibility -->
-              <div id="imageUrlGroup" style="display:none"></div>
-              <!-- Pattern toggle groups removed — refresh button unused (STAK-375) -->
+              <!-- Hidden wrappers preserved for JS compatibility -->
+              <div id="imageUrlGroup" style="display:none">
+                <input id="itemIgnorePatternImages" type="checkbox" style="display:none" />
+              </div>
             </div>
 
             <!-- ═══════════════════════════════════════════════════════

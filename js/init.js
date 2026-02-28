@@ -139,6 +139,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     elements.viewItemFromEditBtn = safeGetElement("viewItemFromEditBtn");
     elements.cloneItemSaveAnotherBtn = safeGetElement("cloneItemSaveAnotherBtn");
     elements.clonePickerCount = safeGetElement("clonePickerCount");
+    elements.itemDateNABtn = safeGetElement("itemDateNABtn");
     elements.estimateRetailFromSpot = safeGetElement("estimateRetailFromSpot");
     elements.retailSpotModifier = safeGetElement("retailSpotModifier");
     elements.numistaDataSection = safeGetElement("numistaDataSection");
