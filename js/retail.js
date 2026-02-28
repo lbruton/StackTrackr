@@ -6,6 +6,7 @@ const RETAIL_SLUGS = [
   "ase", "maple-silver", "britannia-silver", "krugerrand-silver",
   "generic-silver-round", "generic-silver-bar-10oz",
   "age", "buffalo", "maple-gold", "krugerrand-gold", "ape",
+  "goldback-oklahoma-g1",
 ];
 
 /** Coin metadata keyed by slug */
@@ -21,6 +22,7 @@ const RETAIL_COIN_META = {
   "maple-gold":              { name: "Gold Maple Leaf",          weight: 1.0,  metal: "gold"     },
   "krugerrand-gold":         { name: "Gold Krugerrand",          weight: 1.0,  metal: "gold"     },
   "ape":                     { name: "American Platinum Eagle",   weight: 1.0, metal: "platinum" },
+  "goldback-oklahoma-g1":    { name: "Oklahoma Goldback (G1)",   weight: 1/50, metal: "goldback" },
 };
 
 /** Vendor display names */
@@ -32,6 +34,7 @@ const RETAIL_VENDOR_NAMES = {
   herobullion:      "Hero",
   bullionexchanges: "BullionX",
   summitmetals:     "Summit",
+  goldback:         "Goldback",
 };
 
 /** Vendor homepage URLs for popup links */
@@ -43,6 +46,7 @@ const RETAIL_VENDOR_URLS = {
   herobullion:      "https://www.herobullion.com",
   bullionexchanges: "https://www.bullionexchanges.com",
   summitmetals:     "https://www.summitmetals.com",
+  goldback:         "https://www.goldback.com",
 };
 
 /** Per-vendor brand colors — shared with retail-view-modal.js for chart lines and card labels */
@@ -54,6 +58,7 @@ const RETAIL_VENDOR_COLORS = {
   herobullion:      "#f87171",  // red — already distinct
   bullionexchanges: "#f472b6",  // bright pink (was #ec4899)
   summitmetals:     "#22d3ee",  // bright cyan (was #06b6d4)
+  goldback:         "#d4a017",  // deep gold — goldback branding
 };
 
 /**
