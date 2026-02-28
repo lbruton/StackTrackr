@@ -117,15 +117,6 @@ function enterCloneMode(inventoryIndex) {
   if (elements.cloneItemBtn) elements.cloneItemBtn.style.display = 'none';
   if (elements.undoChangeBtn) elements.undoChangeBtn.style.display = 'none';
 
-  // Move View button to left container
-  if (elements.viewItemFromEditBtn) {
-    const leftContainer = modal?.querySelector('.item-modal-actions-left');
-    if (leftContainer) {
-      leftContainer.appendChild(elements.viewItemFromEditBtn);
-      elements.viewItemFromEditBtn.style.display = '';
-    }
-  }
-
   // Clone counter (hidden until first save)
   updateCloneCounter();
 }
@@ -152,16 +143,6 @@ function exitCloneMode() {
   if (elements.itemModalSubmit) elements.itemModalSubmit.textContent = 'Update Item';
   if (elements.cloneItemSaveAnotherBtn) elements.cloneItemSaveAnotherBtn.style.display = 'none';
   if (elements.clonePickerCount) elements.clonePickerCount.style.display = 'none';
-
-  // Move View button back to right container
-  if (elements.viewItemFromEditBtn) {
-    const rightContainer = modal?.querySelector('.item-modal-actions-right');
-    if (rightContainer) {
-      const submitBtn = document.getElementById('itemModalSubmit');
-      if (submitBtn) rightContainer.insertBefore(elements.viewItemFromEditBtn, submitBtn);
-      else rightContainer.appendChild(elements.viewItemFromEditBtn);
-    }
-  }
 
   _cloneSourceItem = null;
 
