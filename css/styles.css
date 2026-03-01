@@ -565,6 +565,112 @@ section {
   color: #fff;
 }
 
+/* =============================================================================
+   DISPOSITION STYLES — Realized Gains / Disposition feature (STAK-72)
+   ============================================================================= */
+
+/* --- Disposed row (table view) — faded with strikethrough name ------------ */
+.disposed-row {
+  opacity: 0.55;
+}
+.disposed-row .item-name {
+  text-decoration: line-through;
+}
+
+/* --- Disposed card (card view) — faded ----------------------------------- */
+.disposed-card {
+  opacity: 0.55;
+}
+
+/* --- Disposition badge — inline pill (mirrors .env-badge pattern) -------- */
+.disposition-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-left: 6px;
+  line-height: 1.4;
+  vertical-align: middle;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.disposition-badge--sold {
+  background: hsla(142, 60%, 45%, 0.18);
+  color: hsla(142, 60%, 35%, 1);
+}
+.disposition-badge--traded {
+  background: hsla(210, 70%, 50%, 0.18);
+  color: hsla(210, 70%, 40%, 1);
+}
+.disposition-badge--lost {
+  background: hsla(0, 70%, 50%, 0.18);
+  color: hsla(0, 70%, 40%, 1);
+}
+.disposition-badge--gifted {
+  background: hsla(270, 60%, 55%, 0.18);
+  color: hsla(270, 60%, 42%, 1);
+}
+.disposition-badge--returned {
+  background: hsla(30, 80%, 50%, 0.18);
+  color: hsla(30, 80%, 38%, 1);
+}
+
+/* Dark theme badge overrides — lighter text for contrast */
+[data-theme="dark"] .disposition-badge--sold {
+  color: hsla(142, 60%, 65%, 1);
+}
+[data-theme="dark"] .disposition-badge--traded {
+  color: hsla(210, 70%, 70%, 1);
+}
+[data-theme="dark"] .disposition-badge--lost {
+  color: hsla(0, 70%, 70%, 1);
+}
+[data-theme="dark"] .disposition-badge--gifted {
+  color: hsla(270, 60%, 75%, 1);
+}
+[data-theme="dark"] .disposition-badge--returned {
+  color: hsla(30, 80%, 70%, 1);
+}
+
+/* --- Disposition modal form layout --------------------------------------- */
+#dispositionModal .modal-body {
+  padding: var(--spacing-lg, 1.25rem);
+}
+#dispositionModal label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 0.3rem;
+}
+#dispositionModal select,
+#dispositionModal input,
+#dispositionModal textarea {
+  width: 100%;
+  background: var(--glass-input-bg, rgba(0, 0, 0, 0.03));
+  border: 1.5px solid var(--glass-input-border, var(--border));
+  border-radius: 8px;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+#dispositionModal select:focus,
+#dispositionModal input:focus,
+#dispositionModal textarea:focus {
+  border-color: var(--accent, #3b82f6);
+  outline: none;
+  box-shadow: 0 0 0 2px hsla(217, 91%, 60%, 0.15);
+}
+#dispositionModal .disposition-form-group {
+  margin-bottom: 0.85rem;
+}
+#dispositionModal textarea {
+  resize: vertical;
+  min-height: 3.5rem;
+}
+
 .storage-line a {
   margin-left: var(--spacing-sm);
 }

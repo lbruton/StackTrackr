@@ -777,6 +777,12 @@ const getChipColors = (field, value, index) => {
 const filterInventoryAdvanced = () => {
   let result = inventory;
 
+  // Filter out disposed items unless toggle is active (STAK-72)
+  const showDisposed = document.getElementById('showDisposedToggle')?.checked || false;
+  if (!showDisposed) {
+    result = result.filter(item => !item.disposition);
+  }
+
   // Apply advanced filters
   Object.entries(activeFilters).forEach(([field, criteria]) => {
     if (criteria && typeof criteria === 'object' && Array.isArray(criteria.values)) {

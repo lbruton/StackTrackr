@@ -405,6 +405,62 @@ function _buildValuationSection(item, metrics) {
   return valSection;
 }
 
+/**
+ * Build the disposition section for disposed items (STAK-72).
+ * Returns null for active (non-disposed) items — no visual change.
+ * @param {Object} item - Inventory item
+ * @returns {HTMLElement|null}
+ */
+function _buildDispositionSection(item) {
+  if (!item.disposition) return null;
+
+  const d = item.disposition;
+  const section = _section('Disposition');
+  const grid = _el('div', 'view-detail-grid three-col');
+
+  // Type
+  const typeLabel = (typeof DISPOSITION_TYPES !== 'undefined' && DISPOSITION_TYPES[d.type])
+    ? DISPOSITION_TYPES[d.type].label
+    : d.type;
+  _addDetail(grid, 'Type', typeLabel);
+
+  // Date
+  const dateStr = d.date ? (typeof formatDisplayDate === 'function' ? formatDisplayDate(d.date) : d.date) : '—';
+  _addDetail(grid, 'Date', dateStr);
+
+  // Amount (show "N/A" for lost/gifted where amount is 0 and not required)
+  const requiresAmount = (typeof DISPOSITION_TYPES !== 'undefined' && DISPOSITION_TYPES[d.type])
+    ? DISPOSITION_TYPES[d.type].requiresAmount
+    : true;
+  _addDetail(grid, 'Amount', requiresAmount ? formatCurrency(d.amount || 0) : 'N/A');
+
+  section.appendChild(grid);
+
+  // Optional fields
+  if (d.recipient) {
+    const grid2 = _el('div', 'view-detail-grid two-col');
+    _addDetail(grid2, 'Recipient', sanitizeHtml(d.recipient));
+    section.appendChild(grid2);
+  }
+
+  if (d.notes) {
+    const grid3 = _el('div', 'view-detail-grid two-col');
+    _addDetail(grid3, 'Notes', sanitizeHtml(d.notes));
+    section.appendChild(grid3);
+  }
+
+  // Realized G/L (color-coded like existing gain/loss)
+  const glGrid = _el('div', 'view-detail-grid two-col');
+  const glItem = _detailItem('Realized Gain/Loss',
+    (d.realizedGainLoss >= 0 ? '+' : '') + formatCurrency(d.realizedGainLoss || 0));
+  const valEl = glItem.querySelector('.view-detail-value');
+  if (valEl) valEl.classList.add(d.realizedGainLoss >= 0 ? 'gain' : 'loss');
+  glGrid.appendChild(glItem);
+  section.appendChild(glGrid);
+
+  return section;
+}
+
 function _getPriceHistoryContext(item, metrics) {
   const metalName = item.metal || 'Silver';
   const meltFactor = metrics.weightOz * metrics.qty * metrics.purity;
@@ -660,9 +716,19 @@ function buildViewContent(item, index) {
     numista:      () => _buildNumistaPlaceholderSection(),
     tags:         () => _buildTagsSection(item),
     notes:        () => _buildNotesSection(item),
+    disposition:  () => _buildDispositionSection(item),
   };
 
   _appendSectionsInConfiguredOrder(frag, sectionBuilders);
+
+  // Always append disposition section if item is disposed (STAK-72).
+  // This ensures the section appears even if 'disposition' is not yet
+  // in the user's saved sectionConfig order.
+  if (typeof isDisposed === 'function' && isDisposed(item)) {
+    const dispositionEl = _buildDispositionSection(item);
+    if (dispositionEl) frag.appendChild(dispositionEl);
+  }
+
   _renderHeaderActions(item, index);
   return frag;
 }
