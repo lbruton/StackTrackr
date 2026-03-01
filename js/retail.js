@@ -441,6 +441,10 @@ const syncRetailPrices = async ({ ui = true } = {}) => {
             ? manifest.slugs
             : null;
       _manifestCoinMeta = manifest.coins_meta || null;
+      // Persist slug list so it survives page reload
+      if (_manifestSlugs) {
+        try { localStorage.setItem(RETAIL_MANIFEST_SLUGS_KEY, JSON.stringify(_manifestSlugs)); } catch { /* ignore */ }
+      }
     } else {
       debugLog("[retail] All endpoints unreachable, using fallback slug list", "warn");
       apiBase = RETAIL_API_ENDPOINTS[0];
@@ -1855,6 +1859,18 @@ const renderRetailHistoryTable = () => {
 // ---------------------------------------------------------------------------
 
 const initRetailPrices = () => {
+  // Restore manifest slug list from localStorage (so we don't fall back to 12-item RETAIL_SLUGS)
+  try {
+    const cached = localStorage.getItem(RETAIL_MANIFEST_SLUGS_KEY);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      _manifestSlugs = Array.isArray(parsed) ? parsed : null;
+      if (!_manifestSlugs) localStorage.removeItem(RETAIL_MANIFEST_SLUGS_KEY);
+    }
+  } catch {
+    _manifestSlugs = null;
+    try { localStorage.removeItem(RETAIL_MANIFEST_SLUGS_KEY); } catch { /* ignore */ }
+  }
   loadRetailPrices();
   loadRetailPriceHistory();
   loadRetailIntradayData();
@@ -1898,8 +1914,9 @@ const startRetailBackgroundSync = () => {
   const lastSync = retailPrices && retailPrices.lastSync ? new Date(retailPrices.lastSync).getTime() : 0;
   const isStale = Date.now() - lastSync > RETAIL_STALE_MS;
   const missingProviders = !retailProviders || Object.keys(retailProviders).length === 0;
-  if (isStale || missingProviders) {
-    debugLog(`[retail] Background sync triggered (stale=${isStale}, missingProviders=${missingProviders})`, "info");
+  const missingSlugs = !Array.isArray(_manifestSlugs) || _manifestSlugs.length === 0;
+  if (isStale || missingProviders || missingSlugs) {
+    debugLog(`[retail] Background sync triggered (stale=${isStale}, missingProviders=${missingProviders}, missingSlugs=${missingSlugs})`, "info");
     _runSilentSync();
   }
 

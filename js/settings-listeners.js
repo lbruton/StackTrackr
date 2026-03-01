@@ -1086,9 +1086,14 @@ const _cloudBackupWithCachedPw = (provider, password, btn) =>
  */
 const _cloudRestoreWithCachedPw = async (provider, password, fileBytes) => {
   try {
-    await vaultDecryptAndRestore(fileBytes, password);
-    if (typeof showCloudToast === 'function') showCloudToast('Restore complete. Reloading\u2026');
-    setTimeout(function () { location.reload(); }, 1200);
+    if (typeof vaultRestoreWithPreview === 'function') {
+      await vaultRestoreWithPreview(fileBytes, password);
+      // DiffModal now showing (or fallback applied if unavailable)
+    } else {
+      await vaultDecryptAndRestore(fileBytes, password);
+      if (typeof showCloudToast === 'function') showCloudToast('Restore complete. Reloading\u2026');
+      setTimeout(function () { location.reload(); }, 1200);
+    }
   } catch (err) {
     appAlert('Decryption failed. Opening password prompt.');
     openVaultModal('cloud-import', {

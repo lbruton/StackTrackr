@@ -4491,6 +4491,29 @@
       </div>
     </div>
 
+    <!-- Diff Review Modal — reusable change-review UI (STAK-184) -->
+    <div class="modal" id="diffReviewModal" style="display: none">
+      <div class="modal-content" style="max-width: 640px">
+        <div class="modal-header">
+          <h2 id="diffReviewTitle">Review Changes</h2>
+          <button aria-label="Close modal" class="modal-close" id="diffReviewDismissX">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="cloud-sync-update-meta" id="diffReviewSource"></div>
+          <div id="diffReviewSummary" class="settings-subtext" style="margin:0.75rem 0;font-weight:600;"></div>
+          <div id="diffReviewConflicts" style="display:none;margin-bottom:1rem;"></div>
+          <div id="diffReviewList" style="max-height:320px;overflow-y:auto;border:1px solid var(--border-color,#ddd);border-radius:6px;padding:0.5rem;margin-bottom:1rem;font-size:0.9rem;"></div>
+          <div id="diffReviewSettings" style="margin-bottom:1rem;"></div>
+          <div class="encryption-actions" style="gap:0.5rem;flex-wrap:wrap">
+            <button class="btn btn-sm" id="diffReviewSelectAll">Select All</button>
+            <button class="btn btn-sm" id="diffReviewDeselectAll">Deselect All</button>
+            <button class="btn success" id="diffReviewApplyBtn">Apply Changes</button>
+            <button class="btn" id="diffReviewCancelBtn">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="modal" id="apiQuotaModal" style="display: none">
       <div class="modal-content">
         <div class="modal-header">
@@ -5095,6 +5118,7 @@
   <script defer src="./js/versionCheck.js"></script>
   <script defer src="./js/changeLog.js"></script>
   <script defer src="./js/diff-engine.js"></script>
+  <script defer src="./js/diff-modal.js"></script>
     <script defer src="./js/charts.js"></script>
     <script defer src="./js/theme.js"></script>
     <script defer src="./js/search.js"></script>
