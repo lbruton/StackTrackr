@@ -1630,7 +1630,7 @@ function showSyncConflictModal(opts) {
  * @param {object} remotePayload - Decrypted remote vault payload
  * @param {object} remoteMeta - Remote sync metadata
  */
-function showRestorePreviewModal(diffResult, settingsDiff, remotePayload, remoteMeta) {
+function showRestorePreviewModal(diffResult, settingsDiff, remotePayload, remoteMeta, conflicts) {
   // Delegate to DiffModal (STAK-184) — falls back to false if unavailable
   if (typeof DiffModal === 'undefined' || !DiffModal.show) {
     debugLog('[CloudSync] DiffModal not available — falling back');
@@ -1645,6 +1645,7 @@ function showRestorePreviewModal(diffResult, settingsDiff, remotePayload, remote
     source: { type: 'sync', label: _syncProvider || 'Cloud' },
     diff: diffResult,
     settingsDiff: settingsDiff || null,
+    conflicts: conflicts || null,
     meta: {
       deviceId: remoteMeta.deviceId,
       timestamp: remoteMeta.timestamp,
@@ -1824,10 +1825,62 @@ async function pullWithPreview(remoteMeta) {
             rev: remoteMeta ? remoteMeta.rev : null,
           };
 
+          // Detect conflicts: manifest changes vs local changes since last pull
+          var manifestConflicts = null;
+          try {
+            if (typeof DiffEngine !== 'undefined' && DiffEngine.detectConflicts && typeof getManifestEntries === 'function') {
+              var mLastPull = syncGetLastPull();
+              var mLastPullTs = mLastPull ? mLastPull.timestamp : null;
+              var mLocalEntries = getManifestEntries(mLastPullTs) || [];
+
+              // Local changes from changeLog
+              var mLocalChanges = [];
+              for (var ml = 0; ml < mLocalEntries.length; ml++) {
+                var mle = mLocalEntries[ml];
+                if (mle.itemKey && mle.field) {
+                  mLocalChanges.push({
+                    itemKey: mle.itemKey,
+                    field: mle.field,
+                    localVal: mle.oldValue,
+                    remoteVal: mle.newValue
+                  });
+                }
+              }
+
+              // Remote changes from manifest
+              var mRemoteChanges = [];
+              var mChanges = manifest.changes || [];
+              for (var mr = 0; mr < mChanges.length; mr++) {
+                var mc = mChanges[mr];
+                if (mc.type === 'edit' && mc.fields) {
+                  for (var mf = 0; mf < mc.fields.length; mf++) {
+                    mRemoteChanges.push({
+                      itemKey: mc.itemKey,
+                      field: mc.fields[mf].field,
+                      localVal: mc.fields[mf].oldValue,
+                      remoteVal: mc.fields[mf].newValue
+                    });
+                  }
+                }
+              }
+
+              if (mLocalChanges.length > 0 && mRemoteChanges.length > 0) {
+                manifestConflicts = DiffEngine.detectConflicts(mLocalChanges, mRemoteChanges);
+                if (manifestConflicts && manifestConflicts.conflicts && manifestConflicts.conflicts.length === 0) {
+                  manifestConflicts = null;
+                }
+              }
+            }
+          } catch (mcErr) {
+            debugLog('[CloudSync] Manifest conflict detection failed (non-blocking):', mcErr.message);
+            manifestConflicts = null;
+          }
+
           // Show DiffModal with manifest preview — vault download deferred to onApply
           DiffModal.show({
             source: { type: 'sync', label: _syncProvider || 'Cloud' },
             diff: manifestDiff,
+            conflicts: manifestConflicts || null,
             meta: {
               deviceId: manifest.deviceId || (remoteMeta ? remoteMeta.deviceId : null),
               timestamp: remoteMeta ? remoteMeta.timestamp : null,
@@ -1895,7 +1948,59 @@ async function pullWithPreview(remoteMeta) {
         rev: remoteMeta ? remoteMeta.rev : null,
       };
 
-      var shown = showRestorePreviewModal(diffResult, settingsDiff, remotePayload, remoteMeta);
+      // Detect bidirectional conflicts (vault-first path)
+      var conflicts = null;
+      try {
+        if (typeof DiffEngine !== 'undefined' && DiffEngine.detectConflicts && typeof getManifestEntries === 'function') {
+          var lastPull = syncGetLastPull();
+          var lastPullTimestamp = lastPull ? lastPull.timestamp : null;
+          var localEntries = getManifestEntries(lastPullTimestamp) || [];
+
+          // Transform local changeLog entries into detectConflicts format
+          var localChanges = [];
+          for (var lc = 0; lc < localEntries.length; lc++) {
+            var le = localEntries[lc];
+            if (le.itemKey && le.field) {
+              localChanges.push({
+                itemKey: le.itemKey,
+                field: le.field,
+                localVal: le.oldValue,
+                remoteVal: le.newValue
+              });
+            }
+          }
+
+          // Transform modified items from diffResult into remoteChanges format
+          var remoteChanges = [];
+          var modifiedItems = diffResult.modified || [];
+          for (var rc = 0; rc < modifiedItems.length; rc++) {
+            var mod = modifiedItems[rc];
+            var itemKey = (typeof DiffEngine !== 'undefined' && DiffEngine.computeItemKey)
+              ? DiffEngine.computeItemKey(mod.item) : (mod.item.serial || mod.item.name || '');
+            for (var fc = 0; fc < mod.changes.length; fc++) {
+              var ch = mod.changes[fc];
+              remoteChanges.push({
+                itemKey: itemKey,
+                field: ch.field,
+                localVal: ch.localVal,
+                remoteVal: ch.remoteVal
+              });
+            }
+          }
+
+          if (localChanges.length > 0 && remoteChanges.length > 0) {
+            conflicts = DiffEngine.detectConflicts(localChanges, remoteChanges);
+            if (conflicts && conflicts.conflicts && conflicts.conflicts.length === 0) {
+              conflicts = null;
+            }
+          }
+        }
+      } catch (conflictErr) {
+        debugLog('[CloudSync] Conflict detection failed (non-blocking):', conflictErr.message);
+        conflicts = null;
+      }
+
+      var shown = showRestorePreviewModal(diffResult, settingsDiff, remotePayload, remoteMeta, conflicts);
       if (!shown) {
         // Modal not in DOM — fall back to direct restore
         debugLog('[CloudSync] Preview modal unavailable — falling back to direct restore');
