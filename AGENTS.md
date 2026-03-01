@@ -335,6 +335,20 @@ mcp__claude-context__search_code
 
 ---
 
+## Wiki Nightwatch (Jules Scheduled Task)
+
+Jules runs a nightly wiki accuracy patrol as a custom scheduled task. It picks ONE frontend wiki page per run, cross-checks every factual claim against the actual codebase, and opens a draft PR with corrections when it finds an inaccuracy.
+
+**Rotation state:** `wiki/.nightwatch-log.json` tracks which page is next and keeps a capped history of results. Frontend pages have `owner: staktrakr` in YAML frontmatter. Skip `_sidebar.md`, `README.md`, `CHANGELOG.md`, and `owner: staktrakr-api` pages.
+
+**Verification targets:** Each wiki page lists its `sourceFiles` in YAML frontmatter. Read every source file and cross-check counts, function names/signatures, window globals, storage keys, CORE_ASSETS entries, related page links, version numbers, and code patterns.
+
+**On inaccuracy:** Create a `nightwatch/fix-*` branch, make the minimum correction, commit both the wiki fix and the log update, and open a draft PR to `dev` with structured justification (what the wiki claimed, what the code shows, the correction, file:line evidence).
+
+**On verified OK:** Commit the log update directly to `dev` with 3 specific confirmed claims.
+
+---
+
 ## Jules Scheduled Scan Exclusions
 
 Jules runs nightly scans via three agents (Bolt, Sentinel, Scribe). The exclusions below prevent repeat false positives. Jules reads `AGENTS.md` on every run — these take effect automatically.
