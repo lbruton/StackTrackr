@@ -677,6 +677,57 @@ function logCloudSyncActivity(action, result, detail, duration) {
 // ---------------------------------------------------------------------------
 
 /**
+ * Prune manifest entries to only include those from the last N sync cycles.
+ * Prevents the manifest from growing unbounded.
+ * @param {Array} entries - Full array of changeLog entries
+ * @param {number} maxSyncs - Number of sync cycles to retain (default: 10)
+ * @returns {Array} Pruned entries (subset of input)
+ */
+function pruneManifestEntries(entries, maxSyncs) {
+  if (!entries || entries.length === 0) return entries;
+  if (!maxSyncs || maxSyncs <= 0) maxSyncs = 10;
+
+  // Scan changeLog for sync-marker entries to find the cutoff timestamp
+  // getManifestEntries already filters by timestamp, but we need to find
+  // the Nth-most-recent sync-marker to establish the pruning boundary
+  var changeLogRaw = typeof loadData === 'function' ? loadData('changeLog') : null;
+  var changeLog = [];
+  if (changeLogRaw) {
+    try {
+      changeLog = typeof changeLogRaw === 'string' ? JSON.parse(changeLogRaw) : changeLogRaw;
+    } catch (_) {
+      changeLog = [];
+    }
+  }
+
+  // Find all sync-marker entries, sorted by timestamp descending
+  var syncMarkers = [];
+  for (var i = 0; i < changeLog.length; i++) {
+    if (changeLog[i].type === 'sync-marker' && changeLog[i].timestamp) {
+      syncMarkers.push(changeLog[i]);
+    }
+  }
+  syncMarkers.sort(function(a, b) { return b.timestamp - a.timestamp; });
+
+  // If fewer than maxSyncs markers exist, keep all entries (no pruning needed)
+  if (syncMarkers.length < maxSyncs) return entries;
+
+  // The Nth sync-marker timestamp is the cutoff
+  var cutoffTimestamp = syncMarkers[maxSyncs - 1].timestamp;
+
+  // Filter entries to only include those at or after the cutoff
+  var pruned = [];
+  for (var j = 0; j < entries.length; j++) {
+    if (entries[j].timestamp >= cutoffTimestamp) {
+      pruned.push(entries[j]);
+    }
+  }
+
+  debugLog('[CloudSync] Manifest pruned:', entries.length, '→', pruned.length, 'entries (maxSyncs:', maxSyncs + ')');
+  return pruned;
+}
+
+/**
  * Build a sync manifest from the changeLog and upload it encrypted to Dropbox.
  * The manifest captures field-level changes since the last push so that
  * diff-merge can resolve conflicts without downloading the full vault.
@@ -701,6 +752,17 @@ async function buildAndUploadManifest(token, password, syncId) {
   } else {
     debugLog('[CloudSync] getManifestEntries not available — manifest will have empty changes');
   }
+
+  // 2b. Prune entries to prevent manifest from growing unbounded
+  var maxSyncs = 10;
+  if (typeof loadData === 'function') {
+    var threshold = loadData('manifestPruningThreshold');
+    if (threshold != null) {
+      var parsed = parseInt(threshold, 10);
+      if (!isNaN(parsed) && parsed > 0) maxSyncs = parsed;
+    }
+  }
+  entries = pruneManifestEntries(entries, maxSyncs);
 
   // 3. Transform entries: group by itemKey, collect field-level changes
   var changesByKey = {};
@@ -1621,8 +1683,95 @@ function showRestorePreviewModal(diffResult, settingsDiff, remotePayload, remote
 }
 
 /**
+ * Build a diff-like result from a decrypted manifest payload.
+ * Converts manifest.changes into the {added, modified, deleted, unchanged}
+ * format that DiffModal expects.
+ * @param {object} manifest - Decrypted manifest object from decryptManifest()
+ * @returns {object} DiffModal-compatible diff result
+ */
+function _buildDiffFromManifest(manifest) {
+  var added = [];
+  var modified = [];
+  var deleted = [];
+  var changes = manifest.changes || [];
+
+  for (var i = 0; i < changes.length; i++) {
+    var change = changes[i];
+    if (change.type === 'add') {
+      added.push({ name: change.itemName || change.itemKey, itemKey: change.itemKey });
+    } else if (change.type === 'edit') {
+      var modChanges = [];
+      var fields = change.fields || [];
+      for (var f = 0; f < fields.length; f++) {
+        modChanges.push({
+          field: fields[f].field,
+          localVal: fields[f].oldValue,
+          remoteVal: fields[f].newValue,
+        });
+      }
+      modified.push({ item: { name: change.itemName || change.itemKey }, changes: modChanges });
+    } else if (change.type === 'delete') {
+      deleted.push({ name: change.itemName || change.itemKey, itemKey: change.itemKey });
+    }
+  }
+
+  // We can't know the exact unchanged count from the manifest alone, so use
+  // an empty array — DiffModal handles empty unchanged gracefully.
+  var unchanged = [];
+
+  return { added: added, modified: modified, deleted: deleted, unchanged: unchanged };
+}
+
+/**
+ * Deferred vault restore — downloads the full vault, decrypts, and restores.
+ * Called from the manifest-first pull path's onApply callback, so the heavy
+ * vault download only happens when the user confirms the diff preview.
+ * @param {string} token - Dropbox OAuth bearer token
+ * @param {string} password - Vault encryption password
+ * @param {object} remoteMeta - Remote sync metadata
+ * @returns {Promise<void>}
+ */
+async function _deferredVaultRestore(token, password, remoteMeta) {
+  try {
+    updateSyncStatusIndicator('syncing');
+    var apiArg = JSON.stringify({ path: SYNC_FILE_PATH });
+    var resp = await fetch('https://content.dropboxapi.com/2/files/download', {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer ' + token,
+        'Dropbox-API-Arg': apiArg,
+      },
+    });
+    if (!resp.ok) throw new Error('Vault download failed: ' + resp.status);
+    var bytes = new Uint8Array(await resp.arrayBuffer());
+
+    syncSaveOverrideBackup();
+    await vaultDecryptAndRestore(bytes, password);
+    debugLog('[CloudSync] Deferred vault restore complete');
+
+    if (_previewPullMeta) {
+      syncSetLastPull(_previewPullMeta);
+      _previewPullMeta = null;
+    }
+    if (typeof showCloudToast === 'function') {
+      showCloudToast('Sync update applied');
+    }
+    updateSyncStatusIndicator('idle', 'just now');
+    refreshSyncUI();
+    if (_syncChannel) {
+      try { _syncChannel.postMessage({ type: 'sync-pull-complete', tabId: getSyncDeviceId(), ts: Date.now() }); } catch (e) { /* ignore */ }
+    }
+  } catch (err) {
+    debugLog('[CloudSync] Deferred vault restore failed:', err.message);
+    updateSyncStatusIndicator('error', 'Restore failed');
+    if (typeof showCloudToast === 'function') showCloudToast('Restore failed: ' + err.message);
+  }
+}
+
+/**
  * Download remote vault, decrypt without restoring, compute diff, and show preview.
- * Falls back to direct restore if decryption/preview fails.
+ * Attempts manifest-first path (lightweight diff preview without full vault download).
+ * Falls back to vault-first path if manifest is unavailable or fails.
  * @param {object} remoteMeta - Remote sync metadata
  */
 async function pullWithPreview(remoteMeta) {
@@ -1645,6 +1794,63 @@ async function pullWithPreview(remoteMeta) {
   updateSyncStatusIndicator('syncing');
 
   try {
+    // ── Manifest-first pull attempt ──
+    // Try downloading the lightweight .stmanifest first so we can show a
+    // diff preview without fetching the full vault. If the manifest is
+    // unavailable (404, decrypt failure, DiffModal missing) we fall through
+    // to the vault-first path below.
+    try {
+      if (typeof decryptManifest === 'function' && typeof DiffModal !== 'undefined' && DiffModal.show) {
+        var manifestApiArg = JSON.stringify({ path: SYNC_MANIFEST_PATH });
+        var manifestResp = await fetch('https://content.dropboxapi.com/2/files/download', {
+          method: 'POST',
+          headers: {
+            Authorization: 'Bearer ' + token,
+            'Dropbox-API-Arg': manifestApiArg,
+          },
+        });
+
+        if (manifestResp.ok) {
+          var manifestBytes = new Uint8Array(await manifestResp.arrayBuffer());
+          var manifest = await decryptManifest(manifestBytes, password);
+
+          // Build diff-like result from manifest data
+          var manifestDiff = _buildDiffFromManifest(manifest);
+
+          // Stash pull metadata
+          _previewPullMeta = {
+            syncId: remoteMeta ? remoteMeta.syncId : null,
+            timestamp: remoteMeta ? remoteMeta.timestamp : Date.now(),
+            rev: remoteMeta ? remoteMeta.rev : null,
+          };
+
+          // Show DiffModal with manifest preview — vault download deferred to onApply
+          DiffModal.show({
+            source: { type: 'sync', label: _syncProvider || 'Cloud' },
+            diff: manifestDiff,
+            meta: {
+              deviceId: manifest.deviceId || (remoteMeta ? remoteMeta.deviceId : null),
+              timestamp: remoteMeta ? remoteMeta.timestamp : null,
+              itemCount: remoteMeta ? remoteMeta.itemCount : null,
+              appVersion: remoteMeta ? remoteMeta.appVersion : null,
+            },
+            onApply: function () {
+              // Deferred: download full vault, decrypt, restore
+              _deferredVaultRestore(token, password, remoteMeta);
+            },
+            onCancel: function () {
+              debugLog('[CloudSync] Manifest preview cancelled — no vault download');
+            }
+          });
+          updateSyncStatusIndicator('idle', 'just now');
+          return; // manifest path succeeded — skip vault-first path
+        }
+      }
+    } catch (manifestErr) {
+      debugLog('[CloudSync] Manifest-first pull failed, falling back to vault-first:', manifestErr.message);
+    }
+
+    // ── Vault-first fallback (existing path) ──
     var apiArg = JSON.stringify({ path: SYNC_FILE_PATH });
     var resp = await fetch('https://content.dropboxapi.com/2/files/download', {
       method: 'POST',
