@@ -290,7 +290,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-12 - STACK-38/STACK-31: Responsive card view + mobile layout
  */
 
-const APP_VERSION = "3.33.16";
+const APP_VERSION = "3.33.17";
 
 /**
  * Numista metadata cache TTL: 30 days in milliseconds.
@@ -486,6 +486,24 @@ function getEnvironmentLabel() {
   return null;
 }
 
+/** @constant {Object} DISPOSITION_TYPES - Disposition types for realized gains tracking (STAK-72) */
+const DISPOSITION_TYPES = Object.freeze({
+  sold: { label: "Sold", requiresAmount: true },
+  traded: { label: "Traded", requiresAmount: true },
+  lost: { label: "Lost", requiresAmount: false },
+  gifted: { label: "Gifted", requiresAmount: false },
+  returned: { label: "Returned", requiresAmount: true },
+});
+
+/**
+ * Check whether an inventory item has been disposed
+ * @param {Object} item - Inventory item object
+ * @returns {boolean} True if the item has a disposition record
+ */
+function isDisposed(item) {
+  return !!item?.disposition;
+}
+
 /** @constant {string} LS_KEY - LocalStorage key for inventory data */
 const LS_KEY = "metalInventory";
 
@@ -676,6 +694,9 @@ const DEFAULT_SORT_COL_KEY = "defaultSortColumn";
 /** @constant {string} DEFAULT_SORT_DIR_KEY - LocalStorage key for default inventory sort direction */
 const DEFAULT_SORT_DIR_KEY = "defaultSortDir";
 
+/** @constant {string} SHOW_REALIZED_KEY - LocalStorage key for showing realized G/L in summary cards (STAK-72) */
+const SHOW_REALIZED_KEY = "showRealizedGainLoss";
+
 /** @constant {string} METAL_ORDER_KEY - LocalStorage key for metal order/visibility config */
 const METAL_ORDER_KEY = "metalOrderConfig";
 
@@ -858,6 +879,7 @@ const ALLOWED_STORAGE_KEYS = [
   DESKTOP_CARD_VIEW_KEY,                 // boolean string: "true"/"false" — desktop card view (STAK-118)
   DEFAULT_SORT_COL_KEY,                  // number string: default sort column index
   DEFAULT_SORT_DIR_KEY,                  // string: "asc"|"desc" — default sort direction
+  SHOW_REALIZED_KEY,                     // boolean string: "true"/"false" — show realized G/L in summary cards (STAK-72)
   METAL_ORDER_KEY,                       // JSON array: metal order/visibility config
   ITEM_TAGS_KEY,                           // JSON object: per-item tags keyed by UUID (STAK-126)
   "enabledSeedRules",                        // JSON array: enabled built-in Numista lookup rule IDs
@@ -1767,6 +1789,9 @@ if (typeof window !== "undefined") {
   window.RETAIL_MANIFEST_TS_KEY = RETAIL_MANIFEST_TS_KEY;
   window.RETAIL_ANOMALY_THRESHOLD = RETAIL_ANOMALY_THRESHOLD;
   window.RETAIL_SPIKE_NEIGHBOR_TOLERANCE = RETAIL_SPIKE_NEIGHBOR_TOLERANCE;
+  // Disposition types for realized gains (STAK-72)
+  window.DISPOSITION_TYPES = DISPOSITION_TYPES;
+  window.isDisposed = isDisposed;
 }
 
 // Expose APP_VERSION globally for non-module usage
