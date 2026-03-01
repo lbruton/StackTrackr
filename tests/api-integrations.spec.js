@@ -280,7 +280,7 @@ test('STAK-215: syncStatus shows success message on happy path (saves succeed)',
 test.describe('verifyPcgsCert', () => {
   test('returns error when preflight check fails (not configured)', async ({ page }) => {
     // Navigate using a valid non-file URL so we bypass the file:// check.
-    // However, our local test server http-server provides http://127.0.0.1:8080.
+    // The actual host/port is configured via TEST_URL in playwright.config.js.
     await page.goto('/');
     await page.waitForFunction(() => typeof window.verifyPcgsCert === 'function');
     const result = await page.evaluate(async () => {
@@ -308,7 +308,7 @@ test.describe('verifyPcgsCert', () => {
 
   test('successfully verifies a PCGS cert number', async ({ page }) => {
     await page.route('https://api.pcgs.com/publicapi/coindetail/GetCoinFactsByCertNo/1234567', route => {
-      route.fulfill({
+      return route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
@@ -353,7 +353,7 @@ test.describe('verifyPcgsCert', () => {
 
   test('returns 404 error when cert number is not found', async ({ page }) => {
     await page.route('https://api.pcgs.com/publicapi/coindetail/GetCoinFactsByCertNo/0000000', route => {
-      route.fulfill({
+      return route.fulfill({
         status: 404,
         contentType: 'application/json',
         body: JSON.stringify({ Message: 'No record found' })
@@ -379,7 +379,7 @@ test.describe('verifyPcgsCert', () => {
 
   test('returns 401 error when token is invalid', async ({ page }) => {
     await page.route('https://api.pcgs.com/publicapi/coindetail/GetCoinFactsByCertNo/1234567', route => {
-      route.fulfill({
+      return route.fulfill({
         status: 401,
         contentType: 'application/json',
         body: JSON.stringify({ Message: 'Authorization has been denied for this request.' })
