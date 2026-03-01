@@ -133,6 +133,9 @@ const TEST_JSON = {
  */
 async function seedAndReload(page) {
   await page.evaluate((items) => {
+    // Clear all localStorage first to prevent quota issues from accumulated
+    // data (e.g. retailIntradayData) across tests in quota-limited containers
+    localStorage.clear();
     localStorage.setItem('metalInventory', JSON.stringify(items));
     // Set serial counter high enough to avoid collisions
     localStorage.setItem('inventorySerial', '1000');
@@ -338,20 +341,27 @@ test.describe('Diff/Merge Import Flows', () => {
     // At least one of the changed settings should appear
     expect(settingsText).toMatch(/appTheme|displayCurrency|setting/i);
 
-    // Apply
+    // Apply and verify modal closes
     const applyBtn = page.locator('#diffReviewApplyBtn');
     await applyBtn.click();
     await expect(modal).not.toBeVisible({ timeout: 5000 });
 
-    // Verify the new item was added to inventory
-    await page.waitForTimeout(1000);
+    // Wait for "Import complete" toast (showImportDiffReview fires it after save)
+    const toast = page.locator('.cloud-toast');
+    await expect(toast).toBeVisible({ timeout: 10000 });
+    const toastText = await toast.textContent();
+    expect(toastText).toMatch(/import complete/i);
+
+    // Verify the new item was added — check by name (serial is sanitized by the app)
     const result = await page.evaluate(() => {
       const inv = JSON.parse(localStorage.getItem('metalInventory') || '[]');
-      const hasNewItem = inv.some(i => i.serial === 'SN-JSON-001' || i.name === 'New JSON Item');
-      return { count: inv.length, hasNewItem };
+      return {
+        count: inv.length,
+        hasNewItem: inv.some(i => i.name === 'New JSON Item'),
+      };
     });
     expect(result.hasNewItem).toBe(true);
-    expect(result.count).toBeGreaterThanOrEqual(5);
+    expect(result.count).toBe(6);
   });
 
   // -----------------------------------------------------------------------
