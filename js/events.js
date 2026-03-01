@@ -3257,6 +3257,16 @@ if (deleteFromEditBtn) {
   });
 }
 
+// Activity Log link inside remove-item modal
+const removeItemOpenLog = document.getElementById('removeItemOpenLog');
+if (removeItemOpenLog) {
+  removeItemOpenLog.addEventListener('click', (e) => {
+    e.preventDefault();
+    closeModalById('removeItemModal');
+    if (typeof openModalById === 'function') openModalById('changeLogModal');
+  });
+}
+
 // =============================================================================
 
 // Early cleanup of stray localStorage entries before application initialization

@@ -670,6 +670,86 @@ section {
   min-height: 3.5rem;
 }
 
+/* --- Pill-style buttons for all modal footers ---------------------------- */
+.modal-footer .btn {
+  border-radius: 999px;
+  padding: 0.4rem 1rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+.modal-footer .btn.secondary {
+  background: var(--glass-input-bg, rgba(0, 0, 0, 0.04));
+  border: 1px solid var(--glass-input-border, var(--border));
+  color: var(--text-primary);
+}
+.modal-footer .btn.secondary:hover {
+  background: var(--glass-input-focus-bg, rgba(0, 0, 0, 0.07));
+  border-color: var(--primary);
+}
+
+/* --- Toggle switch (iOS-style) ------------------------------------------- */
+.toggle-switch {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  flex-shrink: 0;
+}
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.toggle-switch .toggle-track {
+  position: absolute;
+  inset: 0;
+  background: var(--glass-input-bg, rgba(255,255,255,0.08));
+  border: 1.5px solid var(--glass-input-border, var(--border));
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+.toggle-switch .toggle-track::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: var(--text-secondary);
+  border-radius: 50%;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+.toggle-switch input:checked + .toggle-track {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+.toggle-switch input:checked + .toggle-track::after {
+  transform: translateX(18px);
+  background: #fff;
+}
+
+/* Dispose toggle card within remove-item modal */
+.dispose-toggle-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  background: var(--glass-input-bg, rgba(0, 0, 0, 0.03));
+  border: 1.5px solid var(--glass-input-border, var(--border));
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+  margin-bottom: 0.75rem;
+}
+.dispose-toggle-card:hover {
+  border-color: var(--primary);
+}
+.dispose-toggle-card span {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
 .storage-line a {
   margin-left: var(--spacing-sm);
 }

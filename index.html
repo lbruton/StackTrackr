@@ -5018,11 +5018,14 @@
           <input type="hidden" id="removeItemIdx">
           <p id="removeItemName" style="margin:0 0 0.75rem; font-weight:600"></p>
           <p style="margin:0 0 1rem; color:var(--text-secondary); font-size:0.9rem">
-            This can be undone from the Activity Log.
+            This can be undone from the <a href="#" id="removeItemOpenLog" style="color:var(--primary); text-decoration:underline; cursor:pointer">Activity Log</a>.
           </p>
 
-          <label class="toggle-row" style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; margin-bottom:0.75rem">
-            <input type="checkbox" id="removeItemDisposeCheck">
+          <label class="dispose-toggle-card" for="removeItemDisposeCheck">
+            <span class="toggle-switch">
+              <input type="checkbox" id="removeItemDisposeCheck">
+              <span class="toggle-track"></span>
+            </span>
             <span>Track this item as disposed</span>
           </label>
 
