@@ -1,0 +1,22 @@
+{
+  "nextIndex": 5,
+  "rotation": [
+    "wiki/api-consumption.md",
+    "wiki/backup-restore.md",
+    "wiki/data-model.md",
+    "wiki/dom-patterns.md",
+    "wiki/frontend-overview.md",
+    "wiki/release-workflow.md",
+    "wiki/retail-modal.md",
+    "wiki/service-worker.md",
+    "wiki/storage-patterns.md",
+    "wiki/sync-cloud.md"
+  ],
+  "history": [
+    {
+      "timestamp": "2026-03-01T21:34:04.163Z",
+      "page": "wiki/frontend-overview.md",
+      "result": "INACCURACY FOUND"
+    }
+  ]
+}
