@@ -290,7 +290,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-12 - STACK-38/STACK-31: Responsive card view + mobile layout
  */
 
-const APP_VERSION = "3.33.17";
+const APP_VERSION = "3.33.18";
 
 /**
  * Numista metadata cache TTL: 30 days in milliseconds.
@@ -776,6 +776,12 @@ const SYNC_META_PATH = '/StakTrakr/sync/staktrakr-sync.json';
 /** Dropbox path for the encrypted user-image vault (v2 — /sync/ subfolder) */
 const SYNC_IMAGES_PATH = '/StakTrakr/sync/staktrakr-images.stvault';
 
+/** Dropbox path for the encrypted change manifest (v2 — /sync/ subfolder) */
+const SYNC_MANIFEST_PATH = '/StakTrakr/sync/staktrakr-sync.stmanifest';
+
+/** Legacy Dropbox path for the encrypted change manifest (flat root) */
+const SYNC_MANIFEST_PATH_LEGACY = '/StakTrakr/staktrakr-sync.stmanifest';
+
 /** Dropbox folder for cloud-side backups */
 const SYNC_BACKUP_FOLDER = '/StakTrakr/backups';
 
@@ -913,6 +919,7 @@ const ALLOWED_STORAGE_KEYS = [
   "numista_tags_auto",                                 // boolean string: "true"/"false" — auto-tag from Numista data
   "cloud_sync_migrated",                               // string: "v2" — cloud folder migration flag (flat → /sync/ + /backups/)
   "cloud_backup_history_depth",                        // string: "3"|"5"|"10"|"20" — max cloud backups to retain
+  "manifestPruningThreshold",                          // number string: max sync cycles to retain in manifest before pruning older entries (STAK-184)
 ];
 
 // =============================================================================
@@ -1722,6 +1729,8 @@ if (typeof window !== "undefined") {
   window.SYNC_FILE_PATH_LEGACY = SYNC_FILE_PATH_LEGACY;
   window.SYNC_META_PATH_LEGACY = SYNC_META_PATH_LEGACY;
   window.SYNC_IMAGES_PATH_LEGACY = SYNC_IMAGES_PATH_LEGACY;
+  window.SYNC_MANIFEST_PATH = SYNC_MANIFEST_PATH;
+  window.SYNC_MANIFEST_PATH_LEGACY = SYNC_MANIFEST_PATH_LEGACY;
   window.SYNC_BACKUP_FOLDER = SYNC_BACKUP_FOLDER;
   window.CLOUD_BACKUP_HISTORY_KEY = CLOUD_BACKUP_HISTORY_KEY;
   window.CLOUD_BACKUP_HISTORY_DEFAULT = CLOUD_BACKUP_HISTORY_DEFAULT;

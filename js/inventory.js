@@ -2735,8 +2735,148 @@ const endImportProgress = () => {
 };
 
 /**
+ * Post-import cleanup — registers names, syncs catalog, saves, and re-renders.
+ * @param {Array} newItems - Items that were added during import
+ * @param {Map|null} pendingTagsByUuid - Optional map of uuid -> tag[] for deferred tag application
+ */
+const _postImportCleanup = (newItems, pendingTagsByUuid) => {
+  // Apply deferred tags if needed
+  if (pendingTagsByUuid && typeof addItemTag === 'function') {
+    for (const item of newItems) {
+      const tags = pendingTagsByUuid.get(item.uuid);
+      if (tags && tags.length) {
+        tags.forEach(tag => addItemTag(item.uuid, tag, false));
+      }
+    }
+    if (typeof saveItemTags === 'function') saveItemTags();
+  }
+
+  // Register names
+  for (const item of newItems) {
+    if (typeof registerName === 'function') registerName(item.name);
+  }
+
+  // Catalog sync, save, render
+  if (typeof catalogManager !== 'undefined' && catalogManager.syncInventory) {
+    inventory = catalogManager.syncInventory(inventory);
+  }
+  saveInventory();
+  renderTable();
+  if (typeof renderActiveFilters === 'function') renderActiveFilters();
+  if (typeof updateStorageStats === 'function') updateStorageStats();
+};
+
+/**
+ * Shared import review helper — DiffEngine + DiffModal pattern.
+ * Used by importCsv, importJson, and importNumistaCsv to deduplicate
+ * the diff-review workflow.
+ *
+ * @param {Array} parsedItems - Parsed items to import
+ * @param {object} sourceInfo - { type: 'csv'|'json', label: string }
+ * @param {object} [options] - Optional: { settingsDiff, pendingTagsByUuid }
+ * @param {function} onComplete - Called after apply with summary { added, modified, deleted }
+ */
+const showImportDiffReview = (parsedItems, sourceInfo, options, onComplete) => {
+  options = options || {};
+
+  // Guard: if DiffEngine or DiffModal unavailable, fall back to concat-all
+  if (typeof DiffEngine === 'undefined' || typeof DiffModal === 'undefined') {
+    debugLog('showImportDiffReview fallback', 'DiffEngine/DiffModal unavailable');
+    inventory = inventory.concat(parsedItems);
+    _postImportCleanup(parsedItems, options.pendingTagsByUuid);
+    if (onComplete) onComplete({ added: parsedItems.length, modified: 0, deleted: 0 });
+    return;
+  }
+
+  // STAK-380: Backward-compat for CSVs without UUID column.
+  // Local items have UUIDs (assigned by loadInventory), but old exports don't.
+  // Enrich imported items: copy local UUID when serials match, so DiffEngine
+  // can match them by the same key tier.
+  const localUuidBySerial = new Map();
+  for (const item of inventory) {
+    if (item.serial && item.uuid) localUuidBySerial.set(String(item.serial), item.uuid);
+  }
+  for (const item of parsedItems) {
+    if (!item.uuid && item.serial) {
+      const localUuid = localUuidBySerial.get(String(item.serial));
+      if (localUuid) item.uuid = localUuid;
+    }
+  }
+
+  const diffResult = DiffEngine.compareItems(inventory, parsedItems);
+
+  // Build settings diff if provided via options (JSON imports only)
+  const settingsDiff = options.settingsDiff || null;
+
+  // No changes? Inform user
+  const totalChanges = diffResult.added.length + diffResult.modified.length + diffResult.deleted.length;
+  if (totalChanges === 0 && !settingsDiff) {
+    if (typeof showToast === 'function') showToast('No changes detected \u2014 inventory is up to date');
+    return;
+  }
+
+  DiffModal.show({
+    source: sourceInfo,
+    diff: diffResult,
+    settingsDiff: settingsDiff,
+    onApply: function(selectedChanges) {
+      if (!selectedChanges || selectedChanges.length === 0) return;
+
+      inventory = DiffEngine.applySelectedChanges(inventory, selectedChanges);
+
+      // Apply tags for added items if pendingTagsByUuid provided
+      if (options.pendingTagsByUuid && typeof addItemTag === 'function') {
+        const addedItems = selectedChanges.filter(function(c) { return c.type === 'add'; });
+        for (const change of addedItems) {
+          if (change.item) {
+            const tags = options.pendingTagsByUuid.get(change.item.uuid);
+            if (tags && tags.length) {
+              tags.forEach(function(tag) { addItemTag(change.item.uuid, tag, false); });
+            }
+          }
+        }
+        if (typeof saveItemTags === 'function') saveItemTags();
+      }
+
+      // Apply settings changes if present
+      if (settingsDiff && settingsDiff.changed && settingsDiff.changed.length > 0) {
+        for (const sc of settingsDiff.changed) {
+          saveDataSync(sc.key, sc.remoteVal);
+        }
+      }
+
+      _postImportCleanup(
+        selectedChanges.filter(function(c) { return c.type === 'add'; }).map(function(c) { return c.item; }).filter(Boolean),
+        null  // tags already handled above
+      );
+
+      // Toast summary
+      const addCount = selectedChanges.filter(function(c) { return c.type === 'add'; }).length;
+      const modCount = selectedChanges.filter(function(c) { return c.type === 'modify'; }).length;
+      const delCount = selectedChanges.filter(function(c) { return c.type === 'delete'; }).length;
+      const parts = [];
+      if (addCount > 0) parts.push(addCount + ' added');
+      if (modCount > 0) parts.push(modCount + ' updated');
+      if (delCount > 0) parts.push(delCount + ' removed');
+      if (typeof showToast === 'function') {
+        showToast('Import complete: ' + (parts.length > 0 ? parts.join(', ') : 'no changes applied'));
+      }
+
+      if (onComplete) onComplete({ added: addCount, modified: modCount, deleted: delCount });
+
+      if (localStorage.getItem('staktrakr.debug') && typeof window.showDebugModal === 'function') {
+        showDebugModal();
+      }
+    },
+    onCancel: function() {
+      debugLog('Import cancelled by user');
+    }
+  });
+};
+
+/**
  * Imports inventory data from CSV file with comprehensive validation and error handling
- * 
+ *
  * @param {File} file - CSV file selected by user through file input
  * @param {boolean} [override=false] - Replace existing inventory instead of merging
  */
@@ -2821,7 +2961,7 @@ const importCsv = (file, override = false) => {
           const purity = parseFloat(purityRaw) || 1.0;
           const serialNumber = row['Serial Number'] || row['serialNumber'] || '';
           const serial = row['Serial'] || row['serial'] || getNextSerial();
-          const uuid = row['UUID'] || row['uuid'] || generateUUID();
+          const uuid = row['UUID'] || row['uuid'] || '';
           const csvTags = (row['Tags'] || row['tags'] || '').trim();
           const obverseImageUrl = row['Obverse Image URL'] || row['obverseImageUrl'] || '';
           const reverseImageUrl = row['Reverse Image URL'] || row['reverseImageUrl'] || '';
@@ -2892,62 +3032,40 @@ const importCsv = (file, override = false) => {
           return;
         }
 
-        const existingSerials = new Set(override ? [] : inventory.map(item => item.serial));
-        const existingKeys = new Set(
-          (override ? [] : inventory)
-            .filter(item => item.numistaId)
-            .map(item => `${item.numistaId}|${item.name}|${item.date}`)
-        );
-        const deduped = [];
-        let duplicateCount = 0;
+        // --- Override path: skip DiffEngine, import all items directly ---
+        if (override) {
+          inventory = imported;
 
-        for (const item of imported) {
-          const key = item.numistaId ? `${item.numistaId}|${item.name}|${item.date}` : null;
-          if (existingSerials.has(item.serial) || (key && existingKeys.has(key))) {
-            duplicateCount++;
-            continue;
+          // Synchronize all items with catalog manager
+          if (typeof catalogManager !== 'undefined' && catalogManager.syncInventory) {
+            inventory = catalogManager.syncInventory(inventory);
           }
-          existingSerials.add(item.serial);
-          if (key) existingKeys.add(key);
-          deduped.push(item);
-        }
 
-        if (duplicateCount > 0) {
-          console.info(`${duplicateCount} duplicate items skipped during import.`);
-        }
+          for (const item of imported) {
+            if (typeof registerName === 'function') {
+              registerName(item.name);
+            }
+          }
 
-        if (deduped.length === 0) {
-          if (typeof showAppAlert === 'function') showAppAlert('No items to import.', 'CSV Import');
+          saveInventory();
+          renderTable();
+          if (typeof renderActiveFilters === 'function') {
+            renderActiveFilters();
+          }
+          if (typeof updateStorageStats === 'function') {
+            updateStorageStats();
+          }
+          debugLog('importCsv override complete', imported.length, 'items replaced');
+          if (localStorage.getItem('staktrakr.debug') && typeof window.showDebugModal === 'function') {
+            showDebugModal();
+          }
           return;
         }
 
-        for (const item of deduped) {
-          if (typeof registerName === "function") {
-            registerName(item.name);
-          }
-        }
-
-        if (override) {
-          inventory = deduped;
-        } else {
-          inventory = inventory.concat(deduped);
-        }
-
-        // Synchronize all items with catalog manager
-        inventory = catalogManager.syncInventory(inventory);
-
-        saveInventory();
-        renderTable();
-        if (typeof renderActiveFilters === 'function') {
-          renderActiveFilters();
-        }
-        if (typeof updateStorageStats === 'function') {
-          updateStorageStats();
-        }
-        debugLog('importCsv complete', deduped.length, 'items added');
-        if (localStorage.getItem('staktrakr.debug') && typeof window.showDebugModal === 'function') {
-          showDebugModal();
-        }
+        // --- Merge path: use shared DiffEngine + DiffModal helper ---
+        showImportDiffReview(imported, { type: 'csv', label: file.name }, {}, function(summary) {
+          debugLog('importCsv DiffEngine complete', summary.added, 'added', summary.modified, 'modified', summary.deleted, 'deleted');
+        });
       },
       error: function(error) {
         endImportProgress();
@@ -3154,58 +3272,29 @@ const importNumistaCsv = (file, override = false) => {
           return;
         }
 
-        const existingSerials = new Set(override ? [] : inventory.map(item => item.serial));
-        const existingKeys = new Set(
-          (override ? [] : inventory)
-            .filter(item => item.numistaId)
-            .map(item => `${item.numistaId}|${item.name}|${item.date}`)
-        );
-        const deduped = [];
-        let duplicateCount = 0;
+        // --- Override path: skip DiffEngine, import all items directly ---
+        if (override) {
+          inventory = imported;
 
-        for (const item of imported) {
-          const key = item.numistaId ? `${item.numistaId}|${item.name}|${item.date}` : null;
-          if (existingSerials.has(item.serial) || (key && existingKeys.has(key))) {
-            duplicateCount++;
-            continue;
+          for (const item of imported) {
+            if (typeof registerName === 'function') registerName(item.name);
           }
-          existingSerials.add(item.serial);
-          if (key) existingKeys.add(key);
-          deduped.push(item);
-        }
 
-        if (duplicateCount > 0) {
-          console.info(`${duplicateCount} duplicate items skipped during import.`);
-        }
-
-        if (deduped.length === 0) {
-          if (typeof showAppAlert === 'function') showAppAlert('No items to import.', 'Numista Import');
+          if (typeof catalogManager !== 'undefined' && catalogManager.syncInventory) {
+            inventory = catalogManager.syncInventory(inventory);
+          }
+          saveInventory();
+          renderTable();
+          if (typeof renderActiveFilters === 'function') renderActiveFilters();
+          if (typeof updateStorageStats === 'function') updateStorageStats();
+          debugLog('importNumistaCsv override complete', imported.length, 'items replaced');
           return;
         }
 
-        for (const item of deduped) {
-          if (typeof registerName === "function") {
-            registerName(item.name);
-          }
-        }
-
-        if (override) {
-          inventory = deduped;
-        } else {
-          inventory = inventory.concat(deduped);
-        }
-
-        // Synchronize all items with catalog manager
-        inventory = catalogManager.syncInventory(inventory);
-
-        saveInventory();
-        renderTable();
-        if (typeof renderActiveFilters === 'function') {
-          renderActiveFilters();
-        }
-        if (typeof updateStorageStats === 'function') {
-          updateStorageStats();
-        }
+        // --- Merge path: use shared DiffEngine + DiffModal helper ---
+        showImportDiffReview(imported, { type: 'csv', label: file.name }, {}, function(summary) {
+          debugLog('importNumistaCsv DiffEngine complete', summary.added, 'added', summary.modified, 'modified', summary.deleted, 'deleted');
+        });
       } catch (error) {
         endImportProgress();
         handleError(error, 'Numista CSV import');
@@ -3400,12 +3489,19 @@ const importJson = (file, override = false) => {
 
   reader.onload = function(e) {
     try {
-      const data = JSON.parse(e.target.result);
+      const rawParsed = JSON.parse(e.target.result);
 
-      // Validate data structure
-      if (!Array.isArray(data)) {
+      // Support both plain array and { items: [], settings: {} } object formats
+      let data;
+      let parsedSettings = null;
+      if (Array.isArray(rawParsed)) {
+        data = rawParsed;
+      } else if (rawParsed && typeof rawParsed === 'object' && Array.isArray(rawParsed.items)) {
+        data = rawParsed.items;
+        parsedSettings = rawParsed.settings || null;
+      } else {
         if (typeof showAppAlert === 'function') {
-          showAppAlert('Invalid JSON format. Expected an array of inventory items.', 'JSON Import');
+          showAppAlert('Invalid JSON format. Expected an array of inventory items or { items: [], settings: {} }.', 'JSON Import');
         }
         return;
       }
@@ -3574,72 +3670,68 @@ const importJson = (file, override = false) => {
         return;
       }
 
-      const existingSerials = new Set(override ? [] : inventory.map(item => item.serial));
-      const existingKeys = new Set(
-        (override ? [] : inventory)
-          .filter(item => item.numistaId)
-          .map(item => `${item.numistaId}|${item.name}|${item.date}`)
-      );
-      const deduped = [];
-      let duplicateCount = 0;
-
-      for (const item of imported) {
-        const key = item.numistaId ? `${item.numistaId}|${item.name}|${item.date}` : null;
-        if (existingSerials.has(item.serial) || (key && existingKeys.has(key))) {
-          duplicateCount++;
-          continue;
+      // ── Override path: skip DiffEngine, import all directly ──
+      if (override) {
+        if (typeof addItemTag === 'function') {
+          for (const item of imported) {
+            const pendingTags = pendingTagsByUuid.get(item.uuid);
+            if (pendingTags && pendingTags.length) {
+              pendingTags.forEach(tag => addItemTag(item.uuid, tag, false));
+            }
+          }
+          if (typeof saveItemTags === 'function') saveItemTags();
         }
-        existingSerials.add(item.serial);
-        if (key) existingKeys.add(key);
-        deduped.push(item);
-      }
 
-      if (duplicateCount > 0) {
-        console.info(`${duplicateCount} duplicate items skipped during import.`);
-      }
+        for (const item of imported) {
+          if (typeof registerName === 'function') registerName(item.name);
+        }
 
-      if (deduped.length === 0) {
-        if (typeof showAppAlert === 'function') showAppAlert('No items to import.', 'JSON Import');
+        inventory = imported;
+        if (typeof catalogManager !== 'undefined' && catalogManager.syncInventory) {
+          inventory = catalogManager.syncInventory(inventory);
+        }
+        saveInventory();
+        renderTable();
+        if (typeof renderActiveFilters === 'function') renderActiveFilters();
+        if (typeof updateStorageStats === 'function') updateStorageStats();
+        debugLog('importJson override complete', imported.length, 'items replaced');
+        if (localStorage.getItem('staktrakr.debug') && typeof window.showDebugModal === 'function') {
+          showDebugModal();
+        }
         return;
       }
 
-      if (typeof addItemTag === 'function') {
-        for (const item of deduped) {
-          const pendingTags = pendingTagsByUuid.get(item.uuid);
-          if (pendingTags && pendingTags.length) {
-            pendingTags.forEach(tag => addItemTag(item.uuid, tag, false));
-          }
+      // ── DiffEngine + DiffModal path (via shared helper) ──
+      // Build settings diff if the parsed JSON contains a settings object
+      let settingsDiff = null;
+      if (parsedSettings && typeof parsedSettings === 'object' &&
+          typeof DiffEngine !== 'undefined' && typeof DiffEngine.compareSettings === 'function') {
+        const settingsKeys = (typeof SYNC_SCOPE_KEYS !== 'undefined' && Array.isArray(SYNC_SCOPE_KEYS))
+          ? SYNC_SCOPE_KEYS.filter(k => k !== 'metalInventory' && k !== 'itemTags')
+          : ['displayCurrency', 'appTheme', 'inlineChipConfig', 'filterChipCategoryConfig', 'viewModalSectionConfig', 'chipMinCount'];
+        const localSettings = {};
+        for (const key of settingsKeys) {
+          const val = loadDataSync(key, null);
+          if (val !== null) localSettings[key] = val;
         }
-        if (typeof saveItemTags === 'function') saveItemTags();
-      }
-
-      for (const item of deduped) {
-        if (typeof registerName === "function") {
-          registerName(item.name);
+        const filteredRemote = {};
+        for (const key of settingsKeys) {
+          if (key in parsedSettings) filteredRemote[key] = parsedSettings[key];
+        }
+        if (Object.keys(filteredRemote).length > 0) {
+          settingsDiff = DiffEngine.compareSettings(localSettings, filteredRemote);
+          // Omit if no changes
+          if (settingsDiff.changed.length === 0) settingsDiff = null;
         }
       }
 
-      if (override) {
-        inventory = deduped;
-      } else {
-        inventory = inventory.concat(deduped);
-      }
-
-      // Synchronize all items with catalog manager
-      inventory = catalogManager.syncInventory(inventory);
-
-      saveInventory();
-      renderTable();
-      if (typeof renderActiveFilters === 'function') {
-        renderActiveFilters();
-      }
-      if (typeof updateStorageStats === "function") {
-        updateStorageStats();
-      }
-      debugLog('importJson complete', deduped.length, 'items added');
-      if (localStorage.getItem('staktrakr.debug') && typeof window.showDebugModal === 'function') {
-        showDebugModal();
-      }
+      // Use shared helper for diff review — handles DiffEngine fallback internally
+      showImportDiffReview(imported, { type: 'json', label: file.name }, {
+        settingsDiff: settingsDiff,
+        pendingTagsByUuid: pendingTagsByUuid,
+      }, function(summary) {
+        debugLog('importJson DiffEngine complete', summary.added, 'added', summary.modified, 'modified', summary.deleted, 'deleted');
+      });
     } catch (error) {
       endImportProgress();
       if (typeof showAppAlert === 'function') {
