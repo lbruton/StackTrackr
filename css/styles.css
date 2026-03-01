@@ -573,7 +573,7 @@ section {
 .disposed-row {
   opacity: 0.55;
 }
-.disposed-row .item-name {
+.disposed-row .filter-text {
   text-decoration: line-through;
 }
 

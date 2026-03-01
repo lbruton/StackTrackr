@@ -1847,7 +1847,8 @@ const updateSummary = () => {
       totalRetailValue: 0,
       totalGainLoss: 0,
       disposedItems: 0,
-      realizedGainLoss: 0
+      realizedGainLoss: 0,
+      totalDisposedCost: 0
     };
     metalNameMap[metalConfig.name] = metalConfig.key;
   });
@@ -1864,6 +1865,7 @@ const updateSummary = () => {
         const qty = Number(item.qty) || 0;
         totals.disposedItems += qty;
         totals.realizedGainLoss += (item.disposition?.realizedGainLoss || 0);
+        totals.totalDisposedCost += (parseFloat(item.price) || 0) * (Number(item.qty) || 0);
         continue;
       }
 
@@ -1918,7 +1920,7 @@ const updateSummary = () => {
       // Dynamic label: "Gain:" green, "Loss:" red, "Gain/Loss:" neutral (STACK-50)
       const glLabel = els.lossProfit.parentElement && els.lossProfit.parentElement.querySelector('.total-label');
       if (glLabel) {
-        glLabel.textContent = gl > 0 ? 'Gain:' : gl < 0 ? 'Loss:' : 'Gain:';
+        glLabel.textContent = gl > 0 ? 'Gain:' : gl < 0 ? 'Loss:' : 'Gain/Loss:';
         glLabel.style.color = gl > 0 ? 'var(--success)' : gl < 0 ? 'var(--danger)' : '';
         glLabel.style.fontWeight = gl !== 0 ? '600' : '';
       }
@@ -1932,7 +1934,7 @@ const updateSummary = () => {
     const realizedGlEl = document.getElementById(`realizedGainLoss${metalConfig.name}`);
     if (realizedGlEl) {
       const rgl = totals.realizedGainLoss || 0;
-      const rglPct = totals.totalPurchased > 0 ? (rgl / totals.totalPurchased) * 100 : 0;
+      const rglPct = totals.totalDisposedCost > 0 ? (rgl / totals.totalDisposedCost) * 100 : 0;
       // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml
       realizedGlEl.innerHTML = rgl === 0 ? '$0.00' : formatLossProfit(rgl, rglPct);
     }
@@ -1947,7 +1949,8 @@ const updateSummary = () => {
     totalRetailValue: 0,
     totalGainLoss: 0,
     disposedItems: 0,
-    realizedGainLoss: 0
+    realizedGainLoss: 0,
+    totalDisposedCost: 0
   };
 
   Object.values(metalTotals).forEach(totals => {
@@ -1959,6 +1962,7 @@ const updateSummary = () => {
     allTotals.totalGainLoss += totals.totalGainLoss;
     allTotals.disposedItems += totals.disposedItems;
     allTotals.realizedGainLoss += totals.realizedGainLoss;
+    allTotals.totalDisposedCost += totals.totalDisposedCost;
   });
 
   // Update "All" totals display if elements exist
@@ -1975,7 +1979,7 @@ const updateSummary = () => {
       elements.totals.all.lossProfit.innerHTML = formatLossProfit(allGl, allGainLossPct);
       const allGlLabel = elements.totals.all.lossProfit.parentElement && elements.totals.all.lossProfit.parentElement.querySelector('.total-label');
       if (allGlLabel) {
-        allGlLabel.textContent = allGl > 0 ? 'Gain:' : allGl < 0 ? 'Loss:' : 'Gain:';
+        allGlLabel.textContent = allGl > 0 ? 'Gain:' : allGl < 0 ? 'Loss:' : 'Gain/Loss:';
         allGlLabel.style.color = allGl > 0 ? 'var(--success)' : allGl < 0 ? 'var(--danger)' : '';
         allGlLabel.style.fontWeight = allGl !== 0 ? '600' : '';
       }
@@ -1990,13 +1994,13 @@ const updateSummary = () => {
   const allRealizedGl = document.getElementById('realizedGainLossAll');
   if (allRealizedGl) {
     const rgl = allTotals.realizedGainLoss || 0;
-    const rglPct = allTotals.totalPurchased > 0 ? (rgl / allTotals.totalPurchased) * 100 : 0;
+    const rglPct = allTotals.totalDisposedCost > 0 ? (rgl / allTotals.totalDisposedCost) * 100 : 0;
     // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml
     allRealizedGl.innerHTML = rgl === 0 ? '$0.00' : formatLossProfit(rgl, rglPct);
   }
 
   // Respect show/hide realized setting (STAK-72)
-  const showRealized = loadData(SHOW_REALIZED_KEY) !== 'false';
+  const showRealized = loadDataSync(SHOW_REALIZED_KEY, 'true') !== 'false';
   applyRealizedVisibility(showRealized);
 };
 
@@ -2089,12 +2093,12 @@ const confirmRemoveItem = () => {
       return;
     }
 
-    const purchaseTotal = (item.price || 0) * (item.qty || 1);
+    const purchaseTotal = (parseFloat(item.price) || 0) * (Number(item.qty) || 1);
     const realizedGainLoss = amount - purchaseTotal;
 
     const disposition = {
       type, date, amount,
-      currency: 'USD',
+      currency: (typeof displayCurrency !== 'undefined' ? displayCurrency : 'USD'),
       recipient, notes,
       realizedGainLoss,
       disposedAt: new Date().toISOString()
