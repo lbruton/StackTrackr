@@ -19,6 +19,7 @@
 !.claude/skills/wiki-audit/
 !.claude/skills/wiki-sweep/
 !.claude/skills/wiki-search/
+!.claude/skills/wiki-nightwatch/
 !.claude/skills/ship/
 !.claude/skills/brainstorming/
 !.claude/skills/retail-poller/
@@ -99,3 +100,6 @@ devops/hub/
 # Git worktrees for isolated agent work — content dirs are transient, not project history
 .claude/worktrees/
 .spec-workflow/
+
+# Wiki nightwatch — local rotation state, not project history
+wiki/.nightwatch-log.json
