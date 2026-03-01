@@ -2788,6 +2788,21 @@ const showImportDiffReview = (parsedItems, sourceInfo, options, onComplete) => {
     return;
   }
 
+  // STAK-380: Backward-compat for CSVs without UUID column.
+  // Local items have UUIDs (assigned by loadInventory), but old exports don't.
+  // Enrich imported items: copy local UUID when serials match, so DiffEngine
+  // can match them by the same key tier.
+  const localUuidBySerial = new Map();
+  for (const item of inventory) {
+    if (item.serial && item.uuid) localUuidBySerial.set(String(item.serial), item.uuid);
+  }
+  for (const item of parsedItems) {
+    if (!item.uuid && item.serial) {
+      const localUuid = localUuidBySerial.get(String(item.serial));
+      if (localUuid) item.uuid = localUuid;
+    }
+  }
+
   const diffResult = DiffEngine.compareItems(inventory, parsedItems);
 
   // Build settings diff if provided via options (JSON imports only)
@@ -2946,7 +2961,7 @@ const importCsv = (file, override = false) => {
           const purity = parseFloat(purityRaw) || 1.0;
           const serialNumber = row['Serial Number'] || row['serialNumber'] || '';
           const serial = row['Serial'] || row['serial'] || getNextSerial();
-          const uuid = row['UUID'] || row['uuid'] || generateUUID();
+          const uuid = row['UUID'] || row['uuid'] || '';
           const csvTags = (row['Tags'] || row['tags'] || '').trim();
           const obverseImageUrl = row['Obverse Image URL'] || row['obverseImageUrl'] || '';
           const reverseImageUrl = row['Reverse Image URL'] || row['reverseImageUrl'] || '';

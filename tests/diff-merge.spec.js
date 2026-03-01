@@ -81,7 +81,19 @@ const SEED_INVENTORY = [
 // CSV fixture: 3 matching (SN-001 modified, SN-002/SN-003 unchanged) + 2 new
 // ---------------------------------------------------------------------------
 
-const TEST_CSV = `name,metal,weight,qty,purchasePrice,date,serial
+const TEST_CSV = `name,metal,weight,qty,purchasePrice,date,serial,UUID
+"2023 American Eagle",Silver,1,5,31.50,2023-01-15,SN-001,test-001
+"Credit Suisse 1oz",Gold,1,1,1950.00,2023-03-10,SN-002,test-002
+"Generic Silver Round",Silver,1,10,24.50,2023-05-20,SN-003,test-003
+"2025 Silver Eagle",Silver,1,5,33.00,2025-01-10,SN-NEW-001,new-001
+"2024 Gold Maple",Gold,1,1,2100.00,2024-06-15,SN-NEW-002,new-002`;
+
+// ---------------------------------------------------------------------------
+// CSV fixture: backward-compat — NO UUID column (old exports / third-party)
+// Serial matching bridge should kick in so items match by serial → local UUID
+// ---------------------------------------------------------------------------
+
+const LEGACY_CSV_NO_UUID = `name,metal,weight,qty,purchasePrice,date,serial
 "2023 American Eagle",Silver,1,5,31.50,2023-01-15,SN-001
 "Credit Suisse 1oz",Gold,1,1,1950.00,2023-03-10,SN-002
 "Generic Silver Round",Silver,1,10,24.50,2023-05-20,SN-003
@@ -92,12 +104,12 @@ const TEST_CSV = `name,metal,weight,qty,purchasePrice,date,serial
 // CSV fixture that exactly matches seed inventory (zero diff)
 // ---------------------------------------------------------------------------
 
-const EXACT_MATCH_CSV = `name,metal,weight,qty,purchasePrice,date,serial
-"2023 American Eagle",Silver,1,3,29.99,2023-01-15,SN-001
-"Credit Suisse 1oz",Gold,1,1,1950.00,2023-03-10,SN-002
-"Generic Silver Round",Silver,1,10,24.50,2023-05-20,SN-003
-"1oz Palladium Bar",Palladium,1,1,1450.00,2023-07-01,SN-004
-"10oz Sunshine Bar",Silver,10,2,245.00,2023-09-15,SN-005`;
+const EXACT_MATCH_CSV = `name,metal,weight,qty,purchasePrice,date,serial,UUID
+"2023 American Eagle",Silver,1,3,29.99,2023-01-15,SN-001,test-001
+"Credit Suisse 1oz",Gold,1,1,1950.00,2023-03-10,SN-002,test-002
+"Generic Silver Round",Silver,1,10,24.50,2023-05-20,SN-003,test-003
+"1oz Palladium Bar",Palladium,1,1,1450.00,2023-07-01,SN-004,test-004
+"10oz Sunshine Bar",Silver,10,2,245.00,2023-09-15,SN-005,test-005`;
 
 // ---------------------------------------------------------------------------
 // JSON fixture: seed + 1 new item + settings
@@ -495,5 +507,42 @@ test.describe('Diff/Merge Import Flows', () => {
 
     const finalCount = await getInventoryCount(page);
     expect(finalCount).toBe(5);
+  });
+
+  // -----------------------------------------------------------------------
+  // Test 7: Backward-compat — CSV without UUID column still matches by serial
+  // -----------------------------------------------------------------------
+
+  test('Legacy CSV without UUID column matches items by serial bridge', async ({ page }) => {
+    await seedAndReload(page);
+
+    const initialCount = await getInventoryCount(page);
+    expect(initialCount).toBe(5);
+
+    // Use legacy CSV that has NO UUID column — serial bridge should copy local UUIDs
+    const csvPath = writeTempFile('legacy.csv', LEGACY_CSV_NO_UUID);
+
+    await openImportSection(page);
+
+    const fileChooserPromise = page.waitForEvent('filechooser');
+    await page.locator('#importCsvMerge').click();
+    const fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles(csvPath);
+
+    // DiffModal should appear (not "no changes" toast) because SN-001 has modified fields
+    const modal = page.locator('#diffReviewModal');
+    await expect(modal).toBeVisible({ timeout: 10000 });
+
+    const summary = page.locator('#diffReviewSummary');
+    await expect(summary).toBeVisible();
+
+    // Key assertion: items with matching serials should NOT appear as "added"
+    // SN-001/SN-002/SN-003 should match local items via serial→UUID bridge
+    // SN-NEW-001/SN-NEW-002 are genuinely new (no serial match in seed)
+    await expect(summary.locator('text=/\\+2 added/')).toBeVisible();
+
+    // Cancel out
+    await page.locator('#diffReviewCancelBtn').click();
+    await expect(modal).not.toBeVisible({ timeout: 5000 });
   });
 });
