@@ -1756,14 +1756,14 @@ function showResyncPicker(item, normalizedData, onConfirm, onCancel) {
 
   const cancelBtn = document.createElement('button');
   cancelBtn.type = 'button';
-  cancelBtn.className = 'btn btn-secondary';
+  cancelBtn.className = 'btn secondary';
   cancelBtn.textContent = 'Cancel';
   cancelBtn.addEventListener('click', _dismiss);
   footer.appendChild(cancelBtn);
 
   const applyBtn = document.createElement('button');
   applyBtn.type = 'button';
-  applyBtn.className = 'btn btn-primary';
+  applyBtn.className = 'btn premium';
   applyBtn.id = 'resyncApplyBtn';
   footer.appendChild(applyBtn);
 

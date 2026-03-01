@@ -3201,23 +3201,59 @@ function handleAdvancedSavePassword() {
 window.handleAdvancedSavePassword = handleAdvancedSavePassword;
 
 // =============================================================================
-// Disposition modal event listeners (STAK-72)
+// Remove Item modal event listeners (STAK-72)
 // =============================================================================
 
-const dispositionSubmitBtn = document.getElementById('dispositionSubmitBtn');
-if (dispositionSubmitBtn) {
-  dispositionSubmitBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    if (typeof confirmDisposition === 'function') confirmDisposition();
+// Checkbox toggles disposition fields + footer buttons
+const removeItemDisposeCheck = document.getElementById('removeItemDisposeCheck');
+if (removeItemDisposeCheck) {
+  removeItemDisposeCheck.addEventListener('change', () => {
+    const checked = removeItemDisposeCheck.checked;
+    const fields = document.getElementById('removeItemDisposeFields');
+    const deleteBtn = document.getElementById('removeItemDeleteBtn');
+    const disposeBtn = document.getElementById('removeItemDisposeBtn');
+    if (fields) fields.style.display = checked ? '' : 'none';
+    if (deleteBtn) deleteBtn.style.display = checked ? 'none' : '';
+    if (disposeBtn) disposeBtn.style.display = checked ? '' : 'none';
   });
 }
 
+// Delete button (plain delete, no disposition)
+const removeItemDeleteBtn = document.getElementById('removeItemDeleteBtn');
+if (removeItemDeleteBtn) {
+  removeItemDeleteBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (typeof confirmRemoveItem === 'function') confirmRemoveItem();
+  });
+}
+
+// Dispose button (disposition flow)
+const removeItemDisposeBtn = document.getElementById('removeItemDisposeBtn');
+if (removeItemDisposeBtn) {
+  removeItemDisposeBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (typeof confirmRemoveItem === 'function') confirmRemoveItem();
+  });
+}
+
+// Disposition type changes show/hide amount field
 const dispositionTypeSelect = document.getElementById('dispositionType');
 if (dispositionTypeSelect) {
   dispositionTypeSelect.addEventListener('change', () => {
     const typeInfo = DISPOSITION_TYPES[dispositionTypeSelect.value];
     const amountGroup = document.getElementById('dispositionAmountGroup');
     if (amountGroup) amountGroup.style.display = typeInfo?.requiresAmount ? '' : 'none';
+  });
+}
+
+// Delete/dispose from edit modal — close edit modal, open remove item modal
+const deleteFromEditBtn = document.getElementById('deleteFromEditBtn');
+if (deleteFromEditBtn) {
+  deleteFromEditBtn.addEventListener('click', () => {
+    const idx = typeof editingIndex !== 'undefined' ? editingIndex : null;
+    if (idx === null || idx === undefined) return;
+    closeModalById('itemModal');
+    if (typeof openRemoveItemModal === 'function') openRemoveItemModal(idx, false);
   });
 }
 
