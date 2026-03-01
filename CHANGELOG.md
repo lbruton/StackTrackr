@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.18] - 2026-03-01
+
+### Added — Diff/Merge Architecture Foundation (STAK-184)
+
+- **Added**: `SYNC_MANIFEST_PATH` and `SYNC_MANIFEST_PATH_LEGACY` constants for encrypted change manifest storage
+- **Added**: `manifestPruningThreshold` storage key for configurable manifest entry retention
+- **Added**: `diffReviewModal` HTML scaffold — reusable change-review modal for sync, CSV import, and JSON import
+- **Added**: `diff-modal.js` script load order and service worker cache registration
+
+---
+
 ## [3.33.17] - 2026-02-28
 
 ### Added — Realized Gains/Losses — Item Disposition (STAK-72)
