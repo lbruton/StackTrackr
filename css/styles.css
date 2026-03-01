@@ -5454,8 +5454,8 @@ td input:checked + .slider:before {
 
 .view-modal-footer .view-footer-btn {
   border-radius: 999px;
-  padding: 0.35rem 0.9rem;
-  font-size: 0.78rem;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.72rem;
   font-weight: 700;
   cursor: pointer;
   border: none;
@@ -8664,8 +8664,8 @@ th {
 #inventoryForm .item-modal-actions-left .btn,
 #inventoryForm .item-modal-actions-right .btn {
   border-radius: 999px;
-  padding: 0.35rem 0.9rem;
-  font-size: 0.78rem;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.72rem;
   font-weight: 700;
 }
 
@@ -8693,7 +8693,7 @@ th {
 /* Submit button — premium gold/accent treatment */
 #inventoryForm #itemModalSubmit.premium {
   border-radius: 999px;
-  padding: 0.35rem 1rem;
+  padding: 0.3rem 0.85rem;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
 }
 
