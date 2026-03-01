@@ -4928,33 +4928,34 @@ td input:checked + .slider:before {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  padding-right: 2rem;
 }
 
-/* Badges row — catalog ID + count left, eBay right */
-.view-header-badges {
+/* Title row — title left, eBay right */
+.view-header-title-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 6px;
-  min-height: 1.5rem;
+  gap: var(--spacing-sm);
 }
 
-.view-badges-left {
+/* Badges row — catalog ID + count chip */
+.view-header-badges {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
   align-items: center;
+  min-height: 1.4rem;
 }
 
-.view-badges-right {
+/* --- Header action buttons (eBay) --- */
+.view-header-actions {
   display: flex;
   gap: 6px;
   flex-shrink: 0;
   align-items: center;
 }
 
-.view-badges-right button {
+.view-header-actions button {
   padding: 5px 12px;
   border-radius: var(--radius);
   font-size: 0.75rem;
@@ -4962,12 +4963,21 @@ td input:checked + .slider:before {
   cursor: pointer;
   transition: var(--transition);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  background: transparent;
+  background: rgba(255, 255, 255, 0.1);
   color: inherit;
   white-space: nowrap;
 }
 
-.view-badges-right button:hover {
+.view-header-actions button:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.view-header-actions .view-ebay-btn {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.view-header-actions .view-ebay-btn:hover {
   background: rgba(255, 255, 255, 0.15);
 }
 
@@ -5545,7 +5555,7 @@ td input:checked + .slider:before {
     line-height: 1.3;
   }
 
-  .view-badges-right button {
+  .view-header-actions button {
     padding: 4px 8px;
     font-size: 0.7rem;
   }
