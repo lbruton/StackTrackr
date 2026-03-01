@@ -687,6 +687,25 @@ function _renderFooterActions(item, index) {
   const footer = document.getElementById('viewModalFooter');
   if (!footer) return;
   footer.textContent = '';
+
+  // Left group — destructive
+  const left = document.createElement('div');
+  left.className = 'view-footer-left';
+
+  const removeBtn = document.createElement('button');
+  removeBtn.className = 'view-footer-btn danger';
+  removeBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:0.2rem;"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>Remove';
+  removeBtn.addEventListener('click', () => {
+    closeViewModal();
+    if (typeof deleteItem === 'function') deleteItem(index);
+    else if (typeof openRemoveItemModal === 'function') openRemoveItemModal(index);
+  });
+  left.appendChild(removeBtn);
+
+  // Right group — constructive
+  const right = document.createElement('div');
+  right.className = 'view-footer-right';
+
   const editBtn = document.createElement('button');
   editBtn.className = 'view-footer-btn primary';
   editBtn.textContent = 'Edit';
@@ -694,12 +713,32 @@ function _renderFooterActions(item, index) {
     closeViewModal();
     if (typeof editItem === 'function') editItem(index);
   });
+
+  const cloneBtn = document.createElement('button');
+  cloneBtn.className = 'view-footer-btn secondary';
+  cloneBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:0.2rem;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Clone';
+  cloneBtn.addEventListener('click', () => {
+    closeViewModal();
+    if (typeof cloneItem === 'function') cloneItem(index);
+  });
+
   const closeBtn = document.createElement('button');
   closeBtn.className = 'view-footer-btn secondary';
   closeBtn.textContent = 'Close';
   closeBtn.addEventListener('click', closeViewModal);
-  footer.appendChild(closeBtn);
-  footer.appendChild(editBtn);
+
+  right.appendChild(cloneBtn);
+  right.appendChild(closeBtn);
+  right.appendChild(editBtn);
+
+  footer.appendChild(left);
+  footer.appendChild(right);
+
+  // Wire up header close X button
+  const closeX = document.getElementById('viewModalCloseX');
+  if (closeX) {
+    closeX.onclick = closeViewModal;
+  }
 }
 
 /**
