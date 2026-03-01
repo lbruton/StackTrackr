@@ -1616,6 +1616,114 @@ function showSyncConflictModal(opts) {
 // ---------------------------------------------------------------------------
 
 /**
+ * Consolidated post-apply sequence for sync and vault restore paths.
+ * Handles backup, inventory assignment, settings application, save/render,
+ * pull metadata recording, toast summary, status indicator, UI refresh,
+ * and cross-tab broadcast.
+ *
+ * Extracted to eliminate duplication between showRestorePreviewModal onApply,
+ * _deferredVaultRestore, and the manifest-first pull path (STAK-DiffMerge).
+ *
+ * @param {object[]} newInventory - Result of DiffEngine.applySelectedChanges() (array)
+ * @param {object[]} selectedChanges - Changes array from DiffModal (for toast summary counts)
+ * @param {object[]|null} settingsChanges - Array of {key, remoteVal} for checked settings, or null
+ * @param {object|null} remoteMeta - For syncSetLastPull() recording, or null
+ * @param {object} [options] - Configuration options
+ * @param {string} [options.source='sync'] - 'sync' or 'vault' — controls toast prefix
+ * @param {boolean} [options.showToast=true] - Whether to show the summary toast
+ * @param {boolean} [options.broadcastPull=true] - Whether to broadcast pull-complete to other tabs
+ */
+function _applyAndFinalize(newInventory, selectedChanges, settingsChanges, remoteMeta, options) {
+  // Normalize options with defaults
+  var opts = options || {};
+  var source = opts.source || 'sync';
+  var shouldToast = opts.showToast !== false;
+  var shouldBroadcast = opts.broadcastPull !== false;
+
+  // 1. Pre-apply backup
+  if (typeof syncSaveOverrideBackup === 'function') {
+    syncSaveOverrideBackup();
+  }
+
+  // 2. Assign new inventory
+  if (typeof newInventory !== 'undefined' && newInventory !== null) {
+    inventory = newInventory;
+  }
+
+  // 3. Apply settings changes
+  if (settingsChanges && Array.isArray(settingsChanges)) {
+    for (var i = 0; i < settingsChanges.length; i++) {
+      var sc = settingsChanges[i];
+      if (sc && sc.key && typeof saveDataSync === 'function') {
+        saveDataSync(sc.key, sc.remoteVal);
+      }
+    }
+  }
+
+  // 4. Save & render
+  if (typeof saveInventory === 'function') saveInventory();
+  if (typeof renderTable === 'function') renderTable();
+  if (typeof renderActiveFilters === 'function') renderActiveFilters();
+  if (typeof updateStorageStats === 'function') updateStorageStats();
+
+  // 5. Record pull metadata
+  if (typeof _previewPullMeta !== 'undefined' && _previewPullMeta) {
+    if (typeof syncSetLastPull === 'function') {
+      syncSetLastPull(_previewPullMeta);
+    }
+    _previewPullMeta = null;
+  }
+
+  // 6. Toast summary
+  if (shouldToast && typeof showCloudToast === 'function') {
+    var addCount = 0;
+    var modCount = 0;
+    var delCount = 0;
+
+    if (selectedChanges && Array.isArray(selectedChanges)) {
+      for (var t = 0; t < selectedChanges.length; t++) {
+        var changeType = selectedChanges[t] ? selectedChanges[t].type : '';
+        if (changeType === 'add') addCount++;
+        else if (changeType === 'modify') modCount++;
+        else if (changeType === 'delete') delCount++;
+      }
+    }
+
+    var parts = [];
+    if (addCount > 0) parts.push(addCount + ' added');
+    if (modCount > 0) parts.push(modCount + ' modified');
+    if (delCount > 0) parts.push(delCount + ' removed');
+
+    var prefix = source === 'vault' ? 'Backup applied: ' : 'Sync applied: ';
+    var summary = parts.length > 0 ? parts.join(', ') : 'no changes';
+    showCloudToast(prefix + summary);
+  }
+
+  // 7. Update status indicator
+  if (typeof updateSyncStatusIndicator === 'function') {
+    updateSyncStatusIndicator('idle', 'just now');
+  }
+
+  // 8. Refresh sync UI
+  if (typeof refreshSyncUI === 'function') {
+    refreshSyncUI();
+  }
+
+  // 9. Broadcast pull-complete to other tabs
+  if (shouldBroadcast && _syncChannel) {
+    try {
+      _syncChannel.postMessage({
+        type: 'sync-pull-complete',
+        tabId: getSyncDeviceId(),
+        ts: Date.now()
+      });
+    } catch (e) { /* ignore broadcast errors */ }
+  }
+
+  debugLog('[CloudSync] _applyAndFinalize complete (source=' + source + ')');
+}
+
+/**
  * Show a modal previewing what will change when applying a remote vault.
  * @param {object} diffResult - From DiffEngine.compareItems()
  * @param {object} settingsDiff - From DiffEngine.compareSettings()
@@ -1644,25 +1752,36 @@ function showRestorePreviewModal(diffResult, settingsDiff, remotePayload, remote
       itemCount: remoteMeta.itemCount,
       appVersion: remoteMeta.appVersion
     },
-    onApply: function () {
+    onApply: function (selectedChanges) {
       try {
-        syncSaveOverrideBackup();
-        restoreVaultData(remotePayload);
-        debugLog('[CloudSync] Restore preview: applied changes');
-        // Record pull only on actual apply
-        if (typeof _previewPullMeta !== 'undefined' && _previewPullMeta) {
-          syncSetLastPull(_previewPullMeta);
-          _previewPullMeta = null;
+        // Guard: fall back to full overwrite if DiffEngine unavailable
+        if (typeof DiffEngine === 'undefined' || !DiffEngine.applySelectedChanges) {
+          debugLog('[CloudSync] DiffEngine not available — falling back to full overwrite');
+          syncSaveOverrideBackup();
+          restoreVaultData(remotePayload);
+          updateSyncStatusIndicator('idle', 'just now');
+          if (typeof refreshSyncUI === 'function') refreshSyncUI();
+          return;
         }
-        if (typeof showCloudToast === 'function') {
-          showCloudToast('Sync update applied: ' + addedCount + ' added, ' + removedCount + ' removed, ' + modifiedCount + ' modified.');
+
+        // Apply only the user-selected changes via DiffEngine
+        var newInv = DiffEngine.applySelectedChanges(inventory, selectedChanges);
+
+        // Build settings changes from settingsDiff
+        var settingsChanges = null;
+        if (settingsDiff && settingsDiff.changed && settingsDiff.changed.length > 0) {
+          settingsChanges = [];
+          for (var i = 0; i < settingsDiff.changed.length; i++) {
+            settingsChanges.push({
+              key: settingsDiff.changed[i].key,
+              remoteVal: settingsDiff.changed[i].remoteVal
+            });
+          }
         }
-        updateSyncStatusIndicator('idle', 'just now');
-        refreshSyncUI();
-        // Notify other tabs (Layer 7)
-        if (_syncChannel) {
-          try { _syncChannel.postMessage({ type: 'sync-pull-complete', tabId: getSyncDeviceId(), ts: Date.now() }); } catch (e) { /* ignore */ }
-        }
+
+        // Delegate everything to _applyAndFinalize (backup, save, render, toast, status, broadcast)
+        _applyAndFinalize(newInv, selectedChanges, settingsChanges, remoteMeta, { source: 'sync' });
+        debugLog('[CloudSync] Restore preview: applied selected changes via DiffEngine');
       } catch (applyErr) {
         debugLog('[CloudSync] Restore preview: apply failed:', applyErr);
         updateSyncStatusIndicator('error', 'Restore failed');
@@ -1716,15 +1835,21 @@ function _buildDiffFromManifest(manifest) {
 }
 
 /**
- * Deferred vault restore — downloads the full vault, decrypts, and restores.
+ * Deferred vault restore — downloads the full vault, decrypts, and applies.
  * Called from the manifest-first pull path's onApply callback, so the heavy
  * vault download only happens when the user confirms the diff preview.
+ *
+ * When selectedChanges is provided and DiffEngine is available, performs a
+ * selective merge (only the user-approved changes). Otherwise falls back to
+ * the legacy full-overwrite path.
+ *
  * @param {string} token - Dropbox OAuth bearer token
  * @param {string} password - Vault encryption password
  * @param {object} remoteMeta - Remote sync metadata
+ * @param {Array} [selectedChanges] - User-approved changes from DiffModal
  * @returns {Promise<void>}
  */
-async function _deferredVaultRestore(token, password, remoteMeta) {
+async function _deferredVaultRestore(token, password, remoteMeta, selectedChanges) {
   try {
     updateSyncStatusIndicator('syncing');
     var apiArg = JSON.stringify({ path: SYNC_FILE_PATH });
@@ -1738,9 +1863,53 @@ async function _deferredVaultRestore(token, password, remoteMeta) {
     if (!resp.ok) throw new Error('Vault download failed: ' + resp.status);
     var bytes = new Uint8Array(await resp.arrayBuffer());
 
+    // ── Selective apply path ──
+    if (selectedChanges && typeof DiffEngine !== 'undefined' && typeof DiffEngine.applySelectedChanges === 'function') {
+      var payload = typeof vaultDecryptToData === 'function'
+        ? await vaultDecryptToData(bytes, password)
+        : null;
+
+      if (payload && payload.data) {
+        // Extract remote items from the vault payload
+        var remoteItems = [];
+        try {
+          remoteItems = JSON.parse(payload.data.metalInventory || '[]');
+        } catch (parseErr) {
+          debugLog('[CloudSync] Could not parse metalInventory from vault:', parseErr.message);
+        }
+
+        // For 'add' changes that have an itemKey but no item object (manifest
+        // preview only provides keys), find the matching item in the decrypted
+        // vault and attach it so applySelectedChanges can insert it.
+        for (var i = 0; i < selectedChanges.length; i++) {
+          var change = selectedChanges[i];
+          if (change.type === 'add' && change.itemKey && !change.item) {
+            for (var j = 0; j < remoteItems.length; j++) {
+              var candidateKey = typeof DiffEngine.computeItemKey === 'function'
+                ? DiffEngine.computeItemKey(remoteItems[j])
+                : '';
+              if (candidateKey === change.itemKey) {
+                change.item = remoteItems[j];
+                break;
+              }
+            }
+          }
+        }
+
+        var localItems = typeof inventory !== 'undefined' ? inventory : [];
+        var newInv = DiffEngine.applySelectedChanges(localItems, selectedChanges);
+        _applyAndFinalize(newInv, selectedChanges, null, remoteMeta, { source: 'sync' });
+        debugLog('[CloudSync] Deferred vault restore complete (selective apply)');
+        return;
+      }
+      // payload missing or corrupt — fall through to full overwrite
+      debugLog('[CloudSync] Selective apply failed (bad payload) — falling back to full overwrite');
+    }
+
+    // ── Full-overwrite fallback ──
     syncSaveOverrideBackup();
     await vaultDecryptAndRestore(bytes, password);
-    debugLog('[CloudSync] Deferred vault restore complete');
+    debugLog('[CloudSync] Deferred vault restore complete (full overwrite)');
 
     if (_previewPullMeta) {
       syncSetLastPull(_previewPullMeta);
@@ -1879,9 +2048,9 @@ async function pullWithPreview(remoteMeta) {
               itemCount: remoteMeta ? remoteMeta.itemCount : null,
               appVersion: remoteMeta ? remoteMeta.appVersion : null,
             },
-            onApply: function () {
-              // Deferred: download full vault, decrypt, restore
-              _deferredVaultRestore(token, password, remoteMeta);
+            onApply: function (selectedChanges) {
+              // Deferred: download full vault, decrypt, selective apply
+              _deferredVaultRestore(token, password, remoteMeta, selectedChanges);
             },
             onCancel: function () {
               debugLog('[CloudSync] Manifest preview cancelled — no vault download');
