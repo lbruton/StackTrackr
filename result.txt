@@ -1,8 +1,0 @@
-INACCURACY FOUND:
-Page: wiki/frontend-overview.md
-Section: Key globals exposed on window
-Wiki claims: "| `saveData(key, value)` | `js/utils.js` | Write to localStorage (validated key) |
-| `loadData(key)` | `js/utils.js` | Read from localStorage |"
-Code shows: "  window.saveDataSync = saveDataSync;
-  window.loadDataSync = loadDataSync;"
-File: js/utils.js
