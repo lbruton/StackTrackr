@@ -601,10 +601,10 @@ const renderCardA = (item, idx, computed) => {
   const gl = gainLoss ?? 0;
   const pct = purchaseTotal > 0 ? ((gl / purchaseTotal) * 100) : 0;
 
-  return `<article class="card-a ${_cardMetalClass(item.metal)}" data-idx="${idx}">` +
+  return `<article class="card-a ${_cardMetalClass(item.metal)}${isDisposed(item) ? ' disposed-card' : ''}" data-idx="${idx}">` +
     `<div class="card-a-chart-wrap"><canvas class="card-a-canvas" data-metal="${_cvEscapeAttr((item.metal || '').toLowerCase())}" data-weight="${parseFloat(item.weight) || 1}" data-qty="${Number(item.qty) || 1}" data-purity="${parseFloat(item.purity) || 1}" data-price="${parseFloat(item.price) || 0}" data-market="${parseFloat(item.marketValue) || 0}" data-date="${_cvEscapeAttr(item.date || '')}"></canvas></div>` +
     `<div class="card-body">` +
-      `<div class="cv-item-name">${sanitizeHtml(item.name || '')}</div>` +
+      `<div class="cv-item-name">${sanitizeHtml(item.name || '')}${isDisposed(item) ? ` <span class="disposition-badge disposition-badge--${item.disposition.type}">${DISPOSITION_TYPES[item.disposition.type]?.label || item.disposition.type}</span>` : ''}</div>` +
       `<div class="cv-chips-img-row"><div class="cv-chips-row">${_cardChipsHTML(item)}</div><div class="cv-images-row cv-images-sm">${_cardImageHTML(item, '', 'obverse')}${_cardImageHTML(item, '', 'reverse')}</div></div>` +
       `<div class="cv-value-row">` +
         `<span class="cv-value-journey">${_cardFmt(purchaseTotal)}<span class="cv-arrow">&rarr;</span>${_cardFmt(retailTotal)}</span>` +
@@ -622,11 +622,11 @@ const renderCardB = (item, idx, computed) => {
   const gl = gainLoss ?? 0;
   const pct = purchaseTotal > 0 ? ((gl / purchaseTotal) * 100) : 0;
 
-  return `<article class="card-b ${_cardMetalClass(item.metal)}" data-idx="${idx}">` +
+  return `<article class="card-b ${_cardMetalClass(item.metal)}${isDisposed(item) ? ' disposed-card' : ''}" data-idx="${idx}">` +
     `<div class="sparkline-bg">${generateSparklineSVG(item, 400, 180)}</div>` +
     `<div class="card-content">` +
       `<div class="cv-images-row cv-images-center">${_cardImageHTML(item, '', 'obverse')}${_cardImageHTML(item, '', 'reverse')}</div>` +
-      `<div class="cv-item-name">${sanitizeHtml(item.name || '')}</div>` +
+      `<div class="cv-item-name">${sanitizeHtml(item.name || '')}${isDisposed(item) ? ` <span class="disposition-badge disposition-badge--${item.disposition.type}">${DISPOSITION_TYPES[item.disposition.type]?.label || item.disposition.type}</span>` : ''}</div>` +
       `<div class="cv-chips-row cv-chips-center">${_cardChipsHTML(item)}</div>` +
       `<div class="cv-value-hero ${_gainClass(gl)}">${_gainSign(gl)}${_cardFmt(gl)}</div>` +
       `<div class="cv-value-detail">${_cardFmt(purchaseTotal)} cost &rarr; ${_cardFmt(retailTotal)} retail &middot; ${_gainSign(gl)}${Math.abs(pct).toFixed(1)}%</div>` +
@@ -641,14 +641,14 @@ const renderCardC = (item, idx, computed) => {
   const { purchaseTotal, retailTotal, gainLoss } = computed;
   const gl = gainLoss ?? 0;
 
-  return `<article class="card-c ${_cardMetalClass(item.metal)}" data-idx="${idx}">` +
+  return `<article class="card-c ${_cardMetalClass(item.metal)}${isDisposed(item) ? ' disposed-card' : ''}" data-idx="${idx}">` +
     `<div class="cv-image-col">` +
       `${_cardImageHTML(item, '', 'obverse')}` +
       `${_cardImageHTML(item, '', 'reverse')}` +
       `<div class="cv-sparkline-strip"><svg viewBox="0 0 4 120" preserveAspectRatio="none"><rect width="4" height="120" rx="2" fill="var(--metal-color)" opacity="0.3"/></svg></div>` +
     `</div>` +
     `<div class="cv-data-col">` +
-      `<div class="cv-item-name">${sanitizeHtml(item.name || '')}</div>` +
+      `<div class="cv-item-name">${sanitizeHtml(item.name || '')}${isDisposed(item) ? ` <span class="disposition-badge disposition-badge--${item.disposition.type}">${DISPOSITION_TYPES[item.disposition.type]?.label || item.disposition.type}</span>` : ''}</div>` +
       `<div class="cv-chips-row">${_cardChipsHTML(item, true)}</div>` +
       `<div class="cv-value-row">` +
         `<span class="cv-value-journey">${_cardFmt(purchaseTotal)}<span class="cv-arrow">&rarr;</span>${_cardFmt(retailTotal)}</span>` +

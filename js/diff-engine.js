@@ -74,11 +74,11 @@ const DiffEngine = {
   // -------------------------------------------------------------------------
 
   /**
-   * Derives a stable string key for an item, matching the dedup logic in
-   * inventory.js importCsv():
-   *   – Primary:  item.serial  (numeric internal serial assigned at load time)
-   *   – Fallback: `${numistaId}|${name}|${date}` when numistaId is present
-   *   – Last resort: `name|date` for items without either identifier
+   * Derives a stable string key for an item.
+   *   – Primary:  item.uuid   (stable across export/import — STAK-380)
+   *   – Secondary: item.serial (numeric, legacy items without uuid)
+   *   – Tertiary: `${numistaId}|${name}|${date}` when numistaId is present
+   *   – Last resort: `name|date` for items without any identifier
    *
    * STAK-187 changeLog.js extension MUST use this same function so that keys
    * remain consistent across modules.
@@ -89,12 +89,15 @@ const DiffEngine = {
   computeItemKey(item) {
     if (item == null) return '';
 
-    // Primary: numeric serial assigned by loadInventory()
+    // Primary: UUID (stable across export/import)
+    if (item.uuid) return String(item.uuid);
+
+    // Secondary: numeric serial assigned by loadInventory()
     if (item.serial != null && item.serial !== '') {
       return String(item.serial);
     }
 
-    // Secondary: numistaId composite key (mirrors inventory.js dedup)
+    // Tertiary: numistaId composite key
     if (item.numistaId) {
       return `${item.numistaId}|${item.name || ''}|${item.date || ''}`;
     }

@@ -5,6 +5,12 @@ import { expect } from '@playwright/test';
  * @param {import('@playwright/test').Page} page
  */
 export const dismissAckModal = async (page) => {
+  // Dismiss appDialogModal first if visible (higher z-index blocks ackModal clicks)
+  const appDialog = page.locator('#appDialogModal');
+  if (await appDialog.isVisible({ timeout: 1000 }).catch(() => false)) {
+    await page.locator('#appDialogOk, #appDialogModal button').first().click();
+    await expect(appDialog).not.toBeVisible({ timeout: 3000 }).catch(() => {});
+  }
   const ackModal = page.locator('#ackModal');
   if (await ackModal.isVisible()) {
     await page.locator('#ackAcceptBtn, #ackModal button, #ackModal .btn').first().click();
@@ -20,11 +26,23 @@ export const dismissAckModal = async (page) => {
 export const dismissAllStartupModals = async (page) => {
   // Wait for app to finish loading before checking modals
   await page.waitForLoadState('domcontentloaded');
+  // Dismiss appDialogModal first — it has z-index 10060 (higher than .modal's 9999)
+  // and blocks clicks on ackModal when visible (e.g. Storage Error on quota-limited containers)
+  const appDialog = page.locator('#appDialogModal');
+  if (await appDialog.isVisible({ timeout: 2000 }).catch(() => false)) {
+    await page.locator('#appDialogOk, #appDialogModal button').first().click();
+    await expect(appDialog).not.toBeVisible({ timeout: 3000 }).catch(() => {});
+  }
   // Dismiss ack modal
   const ackModal = page.locator('#ackModal');
   if (await ackModal.isVisible({ timeout: 5000 }).catch(() => false)) {
     await page.locator('#ackAcceptBtn, #ackModal button, #ackModal .btn').first().click();
     await expect(ackModal).not.toBeVisible();
+  }
+  // Dismiss any appDialogModal that appeared AFTER ack modal dismissal (e.g. init errors)
+  if (await appDialog.isVisible({ timeout: 1000 }).catch(() => false)) {
+    await page.locator('#appDialogOk, #appDialogModal button').first().click();
+    await expect(appDialog).not.toBeVisible({ timeout: 3000 }).catch(() => {});
   }
   // Dismiss version "What's New" modal — may appear with a short delay after load
   const versionModal = page.locator('#versionModal');

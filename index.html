@@ -373,6 +373,7 @@
             </g>
           </svg>
         </h1>
+        <span class="env-badge" id="envBadge" style="display:none"></span>
       </div>
       <div class="app-header-actions" id="headerBtnContainer">
         <!-- Spot sync button (STAK-314) — order: 1 -->
@@ -678,8 +679,12 @@
                 <span class="total-value" id="retailValueSilver">$0.00</span>
               </div>
               <div class="total-item total-item-bottom-line">
-                <span class="total-label">Gain/Loss:</span>
+                <span class="total-label">Gain:</span>
                 <span class="total-value" id="lossProfitSilver">$0.00</span>
+              </div>
+              <div class="total-item">
+                <span class="total-label">Realized:</span>
+                <span class="total-value" id="realizedGainLossSilver">$0.00</span>
               </div>
             </div>
           </div>
@@ -714,8 +719,12 @@
                 <span class="total-value" id="retailValueGold">$0.00</span>
               </div>
               <div class="total-item total-item-bottom-line">
-                <span class="total-label">Gain/Loss:</span>
+                <span class="total-label">Gain:</span>
                 <span class="total-value" id="lossProfitGold">$0.00</span>
+              </div>
+              <div class="total-item">
+                <span class="total-label">Realized:</span>
+                <span class="total-value" id="realizedGainLossGold">$0.00</span>
               </div>
             </div>
           </div>
@@ -750,8 +759,12 @@
                 <span class="total-value" id="retailValuePlatinum">$0.00</span>
               </div>
               <div class="total-item total-item-bottom-line">
-                <span class="total-label">Gain/Loss:</span>
+                <span class="total-label">Gain:</span>
                 <span class="total-value" id="lossProfitPlatinum">$0.00</span>
+              </div>
+              <div class="total-item">
+                <span class="total-label">Realized:</span>
+                <span class="total-value" id="realizedGainLossPlatinum">$0.00</span>
               </div>
             </div>
           </div>
@@ -786,8 +799,12 @@
                 <span class="total-value" id="retailValuePalladium">$0.00</span>
               </div>
               <div class="total-item total-item-bottom-line">
-                <span class="total-label">Gain/Loss:</span>
+                <span class="total-label">Gain:</span>
                 <span class="total-value" id="lossProfitPalladium">$0.00</span>
+              </div>
+              <div class="total-item">
+                <span class="total-label">Realized:</span>
+                <span class="total-value" id="realizedGainLossPalladium">$0.00</span>
               </div>
             </div>
           </div>
@@ -822,8 +839,12 @@
                 <span class="total-value" id="retailValueAll">$0.00</span>
               </div>
               <div class="total-item total-item-bottom-line">
-                <span class="total-label">Gain/Loss:</span>
+                <span class="total-label">Gain:</span>
                 <span class="total-value" id="lossProfitAll">$0.00</span>
+              </div>
+              <div class="total-item">
+                <span class="total-label">Realized:</span>
+                <span class="total-value" id="realizedGainLossAll">$0.00</span>
               </div>
             </div>
           </div>
@@ -940,6 +961,10 @@
               </div>
               <div class="control-group" id="saveSearchPatternGroup" style="display:none">
                 <button type="button" class="chip-sort-btn save-filter-btn" id="saveSearchPatternBtn" title="Save current search as a custom filter chip">Save Filter</button>
+              </div>
+              <div class="control-group">
+                <label for="showDisposedToggle" class="control-label">Disposed:</label>
+                <input type="checkbox" id="showDisposedToggle" title="Show disposed items in the inventory view">
               </div>
             </div>
             <div class="filter-row">
@@ -1285,10 +1310,7 @@
                 <label for="itemDate">Purchase Date <span style="font-weight:normal;opacity:0.6;">(optional)</span></label>
                 <div class="input-with-action">
                   <input id="itemDate" type="date" />
-                  <label class="date-na-inline" for="itemDateNA" title="Mark purchase date as N/A">
-                    <input type="checkbox" id="itemDateNA" />
-                    <span>N/A</span>
-                  </label>
+                  <button type="button" id="itemDateNABtn" class="inline-search-btn date-na-btn" title="Clear date (N/A)" aria-pressed="false" aria-controls="itemDate">N/A</button>
                 </div>
               </div>
               <div>
@@ -1365,43 +1387,17 @@
                   </div>
                 </div>
               </div>
-              <!-- Hidden wrapper preserved for feature-flag JS compatibility -->
-              <div id="imageUrlGroup" style="display:none"></div>
-              <!-- ignorePatternImagesGroup hidden — per-side cascade makes this redundant (STAK-339); planned for future per-slot control -->
-              <div id="ignorePatternImagesGroup" class="image-pattern-toggle-group" style="display:none">
-                <div class="pattern-toggle-row">
-                  <label class="settings-checkbox-label pattern-toggle-label">
-                    <input type="checkbox" id="itemIgnorePatternImages" />
-                    Ignore image pattern rules for this item
-                  </label>
-                </div>
-              </div>
-              <div id="imagePatternToggleGroup" class="image-pattern-toggle-group" style="display:none">
-                <div class="pattern-toggle-row">
-                  <label class="settings-checkbox-label pattern-toggle-label">
-                    <input type="checkbox" id="imagePatternToggle" />
-                    Apply to all matching items
-                  </label>
-                  <button id="refreshImageUrlsBtn" type="button" class="btn secondary btn-sm pattern-refresh-btn" style="display:none" title="Fetch image URLs from Numista API (bypasses cache)">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                         stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                      <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
-                      <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-                    </svg>
-                  </button>
-                </div>
-                <div id="imagePatternKeywordsGroup" style="display:none">
-                  <input type="text" id="imagePatternKeywords" class="form-control" placeholder="e.g. American Silver Eagle, 2024" />
-                  <small class="pattern-rule-tip">Pre-filled with the item name. Add year or keywords separated by commas to narrow matches.</small>
-                </div>
+              <!-- Hidden wrappers preserved for JS compatibility -->
+              <div id="imageUrlGroup" style="display:none">
+                <input id="itemIgnorePatternImages" type="checkbox" style="display:none" />
               </div>
             </div>
 
             <!-- ═══════════════════════════════════════════════════════
                  COLLAPSIBLE — Grading & Certification
                  ═══════════════════════════════════════════════════════ -->
-            <details class="form-section">
-              <summary class="form-section-header">
+            <div class="form-section">
+              <div class="form-section-header">
                 <span class="form-section-icon">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1409,7 +1405,7 @@
                   </svg>
                 </span>
                 Grading &amp; Certification
-              </summary>
+              </div>
               <div class="form-section-body">
                 <div class="grid grid-grade">
                   <div>
@@ -1506,13 +1502,13 @@
                   </div>
                 </div>
               </div>
-            </details>
+            </div>
 
             <!-- ═══════════════════════════════════════════════════════
-                 COLLAPSIBLE — Pricing & Details
+                 Pricing & Details
                  ═══════════════════════════════════════════════════════ -->
-            <details class="form-section">
-              <summary class="form-section-header">
+            <div class="form-section">
+              <div class="form-section-header">
                 <span class="form-section-icon">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1520,7 +1516,7 @@
                   </svg>
                 </span>
                 Pricing &amp; Details
-              </summary>
+              </div>
               <div class="form-section-body">
                 <div class="grid grid-2">
                   <div id="marketValueField">
@@ -1549,21 +1545,21 @@
                   </div>
                 </div>
               </div>
-            </details>
+            </div>
 
             <!-- ═══════════════════════════════════════════════════════
-                 COLLAPSIBLE — Numista Data
+                 Catalog Data
                  ═══════════════════════════════════════════════════════ -->
-            <details class="form-section" id="numistaDataSection">
-              <summary class="form-section-header">
+            <div class="form-section" id="numistaDataSection">
+              <div class="form-section-header">
                 <span class="form-section-icon">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
                   </svg>
                 </span>
-                Numista Data
-              </summary>
+                Catalog Data
+              </div>
               <div class="form-section-body numista-data-fields">
                 <div class="grid grid-2">
                   <div>
@@ -1642,13 +1638,13 @@
                   <input id="numistaEdgeDesc" type="text" placeholder="Edge design description..." />
                 </div>
               </div>
-            </details>
+            </div>
 
             <!-- ═══════════════════════════════════════════════════════
-                 COLLAPSIBLE — Notes
+                 Notes
                  ═══════════════════════════════════════════════════════ -->
-            <details class="form-section">
-              <summary class="form-section-header">
+            <div class="form-section">
+              <div class="form-section-header">
                 <span class="form-section-icon">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1656,20 +1652,20 @@
                   </svg>
                 </span>
                 Notes
-              </summary>
+              </div>
               <div class="form-section-body">
                 <div>
                   <label for="itemNotes">Notes</label>
                   <input id="itemNotes" type="text" placeholder="Additional notes or comments..." />
                 </div>
               </div>
-            </details>
+            </div>
 
             <!-- ═══════════════════════════════════════════════════════
-                 COLLAPSIBLE — Tags
+                 Tags
                  ═══════════════════════════════════════════════════════ -->
-            <details class="form-section" id="tagsSection">
-              <summary class="form-section-header">
+            <div class="form-section" id="tagsSection">
+              <div class="form-section-header">
                 <span class="form-section-icon">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1677,7 +1673,7 @@
                   </svg>
                 </span>
                 Tags
-              </summary>
+              </div>
               <div class="form-section-body">
                 <div id="itemModalTagsContainer" class="tags-edit-container">
                   <div id="itemModalNumistaTags" class="tags-row">
@@ -1703,21 +1699,23 @@
                   </div>
                 </div>
               </div>
-            </details>
+            </div>
 
             <!-- Form action buttons -->
             <div class="item-modal-actions">
-              <div class="item-modal-actions-right">
-                <button class="btn" id="undoChangeBtn" type="button" style="display:none">Undo</button>
-                <button class="btn" id="cancelItem" type="button">Cancel</button>
-                <button class="btn secondary" id="cloneItemBtn" type="button" style="display:none"
-                        title="Clone this item as a new entry">
+              <div class="item-modal-actions-left">
+                <button class="btn danger" id="deleteFromEditBtn" type="button" style="display:none"
+                        title="Delete or dispose this item">
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                        style="vertical-align: -2px; margin-right: 0.2rem;">
-                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-                  </svg>Clone
+                    <path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+                  </svg>Remove
                 </button>
+              </div>
+              <div class="item-modal-actions-right">
+                <span id="clonePickerCount" class="clone-picker-count" style="display:none"></span>
+                <button class="btn" id="undoChangeBtn" type="button" style="display:none">Undo</button>
                 <button class="btn secondary" id="viewItemFromEditBtn" type="button" style="display:none"
                         title="View this item in read-only mode">
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
@@ -1726,6 +1724,16 @@
                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
                   </svg>View
                 </button>
+                <button class="btn secondary" id="cloneItemBtn" type="button" style="display:none"
+                        title="Clone this item as a new entry">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                       stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                       style="vertical-align: -2px; margin-right: 0.2rem;">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                  </svg>Clone
+                </button>
+                <button class="btn" id="cloneItemSaveAnotherBtn" type="button" style="display:none">Save &amp; Clone Another</button>
+                <button class="btn" id="cancelItem" type="button">Cancel</button>
                 <button class="btn premium" id="itemModalSubmit" type="submit">Add to Inventory</button>
               </div>
             </div>
@@ -2003,7 +2011,7 @@
             </div>
           </div>
           <div class="alert-actions">
-            <button class="btn btn-primary about-accept-btn" id="ackAcceptBtn">
+            <button class="btn premium about-accept-btn" id="ackAcceptBtn">
               ✅ I Understand - Continue to Application
             </button>
           </div>
@@ -2126,7 +2134,7 @@
           </div>
 
           <div class="alert-actions">
-            <button class="btn btn-primary" id="versionAcceptBtn">Accept and continue</button>
+            <button class="btn premium" id="versionAcceptBtn">Accept and continue</button>
           </div>
         </div>
       </div>
@@ -2329,8 +2337,28 @@
                     <div class="chip-grouping-empty">Loading...</div>
                   </div>
                 </div>
+              </div>
+
+              <!-- ── Summary Totals ── -->
+              <div class="settings-fieldset">
+                <div class="settings-fieldset-title">Summary Totals</div>
                 <div class="settings-group">
-                  <div class="settings-group-label">Item detail modal</div>
+                  <div class="settings-group-label">Show realized gains/losses</div>
+                  <p class="settings-subtext">Display the "Realized" line on summary cards for disposed items.</p>
+                  <label class="dispose-toggle-card" for="settingsShowRealized" style="width:fit-content">
+                    <span class="toggle-switch">
+                      <input type="checkbox" id="settingsShowRealized">
+                      <span class="toggle-track"></span>
+                    </span>
+                    <span>Realized row</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- ── Item Detail Modal ── -->
+              <div class="settings-fieldset">
+                <div class="settings-fieldset-title">Item Detail Modal</div>
+                <div class="settings-group">
                   <p class="settings-subtext">Reorder and toggle sections in the item view modal.</p>
                   <div class="chip-grouping-table-container" id="viewModalSectionConfigContainer">
                     <div class="chip-grouping-empty">Loading...</div>
@@ -2615,6 +2643,9 @@
                       <button type="button" class="btn secondary" id="clearNumistaCacheBtn" style="font-size:0.8rem;">Clear API Cache</button>
                     </div>
                   </div>
+
+                  <!-- Numista Tag Settings (auto-apply toggle + blacklist) -->
+                  <div id="numistaTagSettingsGroup"></div>
                 </div>
               </div>
 
@@ -3389,6 +3420,17 @@
                       </div>
                     </div>
 
+                    <!-- Backup history depth -->
+                    <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.6rem;border-top:1px solid var(--border);padding-top:0.6rem">
+                      <span class="cloud-status-label" style="flex:1"><strong>Backup history</strong></span>
+                      <select id="cloudBackupHistoryDepth" style="width:auto;min-width:60px;font-size:0.82rem;padding:0.25rem 0.4rem">
+                        <option value="3">3</option>
+                        <option value="5" selected>5</option>
+                        <option value="10">10</option>
+                        <option value="20">20</option>
+                      </select>
+                    </div>
+
                     <!-- Sync Now + Advanced -->
                     <div style="display:flex;gap:0.5rem;margin-top:0.6rem;align-items:center">
                       <button class="btn" id="cloudSyncNowBtn" disabled onclick="if(typeof pushSyncVault==='function')pushSyncVault();" style="font-size:0.8rem;padding:0.35rem 0.75rem;min-height:0;flex:1">
@@ -3582,7 +3624,7 @@
               <div class="settings-group">
                 <label>Refresh from API</label>
                 <p class="settings-subtext">Fetch today's official Goldback exchange rate from the StakTrakr API and populate all denomination prices automatically.</p>
-                <button class="btn btn-primary" id="goldbackEstimateRefreshBtn" type="button" style="display:none;">Refresh from API</button>
+                <button class="btn premium" id="goldbackEstimateRefreshBtn" type="button" style="display:none;">Refresh from API</button>
               </div>
 
               <div class="settings-group">
@@ -3591,7 +3633,7 @@
                 <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.75rem;">
                   <span id="gbQuickFillSymbol" style="color:var(--text-secondary);">$</span>
                   <input type="number" id="goldbackQuickFillInput" min="0" step="0.01" placeholder="1 GB rate" style="width:100px;" />
-                  <button class="btn btn-primary" id="goldbackQuickFillBtn" type="button">Set All</button>
+                  <button class="btn premium" id="goldbackQuickFillBtn" type="button">Set All</button>
                 </div>
               </div>
 
@@ -3610,21 +3652,58 @@
                     <!-- Rows rendered dynamically by syncGoldbackSettingsUI() -->
                   </tbody>
                 </table>
-                <button class="btn btn-primary" id="goldbackSavePricesBtn" type="button" style="margin-top: 0.5rem;">Save Prices</button>
+                <button class="btn premium" id="goldbackSavePricesBtn" type="button" style="margin-top: 0.5rem;">Save Prices</button>
                 <button class="btn" id="goldbackHistoryBtn" type="button" style="margin-top: 0.5rem;">Goldback History</button>
               </div>
             </div>
 
             <!-- ===== MARKET PRICES ===== -->
             <div id="settingsPanel_market" class="settings-section-panel" style="display: none">
-              <h3 style="margin-bottom:0.75rem;">Market Prices</h3>
-              <div style="display:flex; align-items:center; justify-content:space-between; gap:0.75rem; margin-bottom:0.5rem;">
-                <div style="display:flex;flex-direction:column;gap:0.15rem;">
-                  <span id="retailLastSync" class="settings-subtext"></span>
-                  <span id="retailSyncStatus" class="settings-subtext"></span>
+
+              <!-- Market List View header (hidden by default, shown by JS when MARKET_LIST_VIEW enabled) -->
+              <div id="marketListHeader" style="display:none">
+                <div class="market-header">
+                  <div class="market-header-row">
+                    <h3>Market Prices</h3>
+                    <div class="market-header-sync-group">
+                      <button id="retailSyncBtnList" class="retail-sync-btn market-sync-btn" type="button">Sync Now</button>
+                      <span id="retailLastSyncList" class="settings-subtext">Last sync: —</span>
+                    </div>
+                  </div>
+                  <div class="market-header-divider"></div>
+                  <div class="market-header-controls-row">
+                    <input type="search" id="marketSearchInput" class="market-search"
+                           placeholder="Search items, metals, vendors..." autocomplete="off"
+                           aria-label="Search market items">
+                    <div class="market-header-controls-right">
+                      <div class="market-sort-wrap">
+                        <span class="market-header-btn market-sort-label">Sort: Name <span class="btn-chevron">&#9662;</span></span>
+                        <select id="marketSortSelect" aria-label="Sort market items">
+                          <option value="name" selected>Name</option>
+                          <option value="metal">Metal</option>
+                          <option value="price-low">Price: Low</option>
+                          <option value="price-high">Price: High</option>
+                          <option value="trend">Trend</option>
+                        </select>
+                      </div>
+                      <button class="market-header-btn" id="marketExpandAllBtn" type="button">Expand All</button>
+                    </div>
+                  </div>
                 </div>
-                <button id="retailSyncBtn" class="retail-card-action" type="button">Sync Now</button>
               </div>
+
+              <!-- Original grid header (shown when MARKET_LIST_VIEW is disabled) -->
+              <div id="marketGridHeader">
+                <h3 style="margin-bottom:0.75rem;">Market Prices</h3>
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:0.75rem; margin-bottom:0.5rem;">
+                  <div style="display:flex;flex-direction:column;gap:0.15rem;">
+                    <span id="retailLastSync" class="settings-subtext"></span>
+                    <span id="retailSyncStatus" class="settings-subtext"></span>
+                  </div>
+                  <button id="retailSyncBtn" class="retail-card-action" type="button">Sync Now</button>
+                </div>
+              </div>
+
               <div id="retailDisclaimer" class="retail-disclaimer-inline" style="display:none; margin-bottom:0.75rem;" role="status">
                 Best-effort pricing · Sourced from public data, may not reflect real-time or credit card pricing · Confidence: 80=aligned · 35=outlier · 15=significant outlier
               </div>
@@ -3661,7 +3740,7 @@
               <div class="settings-log-panel" id="logPanel_changelog">
                 <p class="settings-subtext">Recent inventory changes. Click a row to edit the item, or undo/redo individual changes.</p>
                 <div class="settings-changelog-actions">
-                  <button class="btn btn-secondary" id="settingsChangeLogClearBtn" type="button">Clear Log</button>
+                  <button class="btn secondary" id="settingsChangeLogClearBtn" type="button">Clear Log</button>
                 </div>
                 <div class="settings-changelog-wrap">
                   <table id="settingsChangeLogTable">
@@ -3684,7 +3763,7 @@
               <div class="settings-log-panel" id="logPanel_metals" style="display: none">
                 <p class="settings-subtext">Spot price updates recorded from API syncs and manual edits.</p>
                 <div class="settings-changelog-actions">
-                  <button class="btn btn-secondary" id="settingsSpotHistoryClearBtn" type="button">Clear Spot History</button>
+                  <button class="btn secondary" id="settingsSpotHistoryClearBtn" type="button">Clear Spot History</button>
                 </div>
                 <div class="settings-changelog-wrap">
                   <table id="settingsSpotHistoryTable">
@@ -3715,7 +3794,7 @@
                   </select>
                   <input class="settings-filter-input" id="settingsLbmaStartDate" type="date">
                   <input class="settings-filter-input" id="settingsLbmaEndDate" type="date">
-                  <button class="btn btn-secondary" id="settingsLbmaResetBtn" type="button">Reset</button>
+                  <button class="btn secondary" id="settingsLbmaResetBtn" type="button">Reset</button>
                   <span class="settings-subtext" id="settingsLbmaResultCount" style="margin-left:auto;"></span>
                 </div>
                 <div class="settings-changelog-wrap">
@@ -3737,7 +3816,7 @@
               <div class="settings-log-panel" id="logPanel_catalogs" style="display: none">
                 <p class="settings-subtext">Catalog API call history. Failed lookups are highlighted in red.</p>
                 <div class="settings-changelog-actions">
-                  <button class="btn btn-secondary" id="settingsCatalogHistoryClearBtn" type="button">Clear Catalog History</button>
+                  <button class="btn secondary" id="settingsCatalogHistoryClearBtn" type="button">Clear Catalog History</button>
                 </div>
                 <div class="settings-changelog-wrap">
                   <table id="settingsCatalogHistoryTable">
@@ -3762,7 +3841,7 @@
                 <p class="settings-subtext">Per-item price snapshots recorded on add, edit, and spot price sync.</p>
                 <div class="settings-pricehistory-controls">
                   <input class="settings-filter-input" id="priceHistoryFilterInput" placeholder="Filter by item name..." type="text">
-                  <button class="btn btn-secondary" id="settingsPriceHistoryClearBtn" type="button">Clear Price History</button>
+                  <button class="btn secondary" id="settingsPriceHistoryClearBtn" type="button">Clear Price History</button>
                 </div>
                 <div class="settings-changelog-wrap">
                   <table id="settingsPriceHistoryTable">
@@ -3785,7 +3864,7 @@
               <div class="settings-log-panel" id="logPanel_cloud" style="display: none">
                 <p class="settings-subtext">Cloud sync activity — backups, restores, connections, and token refreshes.</p>
                 <div class="settings-changelog-actions">
-                  <button class="btn btn-secondary" id="settingsCloudActivityClearBtn" type="button">Clear Cloud Log</button>
+                  <button class="btn secondary" id="settingsCloudActivityClearBtn" type="button">Clear Cloud Log</button>
                 </div>
                 <div class="settings-changelog-wrap">
                   <table id="settingsCloudActivityTable">
@@ -4386,6 +4465,55 @@
       </div>
     </div>
 
+    <!-- STAK-186: Restore Preview Modal (Layer 5 — DiffEngine preview before sync restore) -->
+    <div class="modal" id="restorePreviewModal" style="display: none">
+      <div class="modal-content" style="max-width: 600px">
+        <div class="modal-header">
+          <h2>Restore Preview</h2>
+          <button aria-label="Close modal" class="modal-close" id="restorePreviewDismissX">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="cloud-sync-update-meta" id="restorePreviewMeta">
+            <div class="cloud-sync-update-row"><span>Remote items</span><strong id="restorePreviewRemoteCount">&mdash;</strong></div>
+            <div class="cloud-sync-update-row"><span>Local items</span><strong id="restorePreviewLocalCount">&mdash;</strong></div>
+            <div class="cloud-sync-update-row"><span>Device</span><strong id="restorePreviewDevice">&mdash;</strong></div>
+            <div class="cloud-sync-update-row"><span>Version</span><strong id="restorePreviewVersion">&mdash;</strong></div>
+          </div>
+          <div id="restorePreviewSummary" class="settings-subtext" style="margin:0.75rem 0;font-weight:600;"></div>
+          <div id="restorePreviewDiffList" style="max-height:320px;overflow-y:auto;border:1px solid var(--border-color,#ddd);border-radius:6px;padding:0.5rem;margin-bottom:1rem;font-size:0.9rem;"></div>
+          <div id="restorePreviewSettingsDiff" style="margin-bottom:1rem;"></div>
+          <div id="restorePreviewError" class="encryption-warning" style="display:none;margin-bottom:1rem;"></div>
+          <div class="encryption-actions" style="gap:0.5rem;flex-wrap:wrap">
+            <button class="btn success" id="restorePreviewApplyBtn">Apply Changes</button>
+            <button class="btn" id="restorePreviewCancelBtn">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Diff Review Modal — reusable change-review UI (STAK-184) -->
+    <div class="modal" id="diffReviewModal" style="display: none">
+      <div class="modal-content" style="max-width: 640px">
+        <div class="modal-header">
+          <h2 id="diffReviewTitle">Review Changes</h2>
+          <button aria-label="Close modal" class="modal-close" id="diffReviewDismissX">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="cloud-sync-update-meta" id="diffReviewSource"></div>
+          <div id="diffReviewSummary" class="settings-subtext" style="margin:0.75rem 0;font-weight:600;"></div>
+          <div id="diffReviewConflicts" style="display:none;margin-bottom:1rem;"></div>
+          <div id="diffReviewList" style="max-height:320px;overflow-y:auto;border:1px solid var(--border-color,#ddd);border-radius:6px;padding:0.5rem;margin-bottom:1rem;font-size:0.9rem;"></div>
+          <div id="diffReviewSettings" style="margin-bottom:1rem;"></div>
+          <div class="encryption-actions" style="gap:0.5rem;flex-wrap:wrap">
+            <button class="btn btn-sm" id="diffReviewSelectAll">Select All</button>
+            <button class="btn btn-sm" id="diffReviewDeselectAll">Deselect All</button>
+            <button class="btn success" id="diffReviewApplyBtn">Apply Changes</button>
+            <button class="btn" id="diffReviewCancelBtn">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="modal" id="apiQuotaModal" style="display: none">
       <div class="modal-content">
         <div class="modal-header">
@@ -4457,7 +4585,7 @@
         <div class="modal-footer api-history-footer">
           <button type="button" class="btn" id="exportSpotHistoryBtn">Export History</button>
           <button type="button" class="btn" id="importSpotHistoryBtn">Import History</button>
-          <button type="button" class="btn btn-secondary" id="restoreHistoricalDataBtn">Restore Historical Data</button>
+          <button type="button" class="btn secondary" id="restoreHistoricalDataBtn">Restore Historical Data</button>
           <input type="file" id="importSpotHistoryFile" accept=".csv,.json" style="display:none">
         </div>
       </div>
@@ -4696,16 +4824,18 @@
     <div class="modal" id="viewItemModal" style="display: none">
       <div class="modal-content">
         <div class="modal-header">
-          <div class="view-header-left">
+          <button class="view-modal-close" id="viewModalCloseX" aria-label="Close modal">&times;</button>
+          <div class="view-header-title-row">
             <h2 id="viewModalTitle"></h2>
-            <div class="view-header-badges">
-              <span class="view-modal-catalog-id" id="viewModalCatalogId"></span>
-              <span class="view-modal-count-chip" id="viewModalCountChip"></span>
-            </div>
+            <div class="view-header-actions" id="viewHeaderActions"></div>
           </div>
-          <div class="view-header-actions" id="viewHeaderActions"></div>
+          <div class="view-header-badges">
+            <span class="view-modal-catalog-id" id="viewModalCatalogId"></span>
+            <span class="view-modal-count-chip" id="viewModalCountChip"></span>
+          </div>
         </div>
         <div class="modal-body" id="viewModalBody"></div>
+        <div class="view-modal-footer" id="viewModalFooter"></div>
       </div>
     </div>
 
@@ -4887,6 +5017,75 @@
     </div>
 
     <!-- =============================================================================
+       REMOVE ITEM MODAL
+
+       Combined delete + dispose flow. Checkbox toggles between simple delete
+       (unchecked) and disposition tracking (checked). Replaces the separate
+       #dispositionModal and showAppConfirm() delete confirmation (STAK-72).
+       ============================================================================= -->
+    <div class="modal" id="removeItemModal" style="display: none">
+      <div class="modal-content" style="max-width: 440px">
+        <div class="modal-header">
+          <h2>Remove Item</h2>
+          <button aria-label="Close modal" class="modal-close" onclick="closeModalById('removeItemModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="removeItemIdx">
+          <p id="removeItemName" style="margin:0 0 0.75rem; font-weight:600"></p>
+          <p style="margin:0 0 1rem; color:var(--text-secondary); font-size:0.9rem">
+            This can be undone from the <a href="#" id="removeItemOpenLog" style="color:var(--primary); text-decoration:underline; cursor:pointer">Activity Log</a>.
+          </p>
+
+          <label class="dispose-toggle-card" for="removeItemDisposeCheck">
+            <span class="toggle-switch">
+              <input type="checkbox" id="removeItemDisposeCheck">
+              <span class="toggle-track"></span>
+            </span>
+            <span>Track this item as disposed</span>
+          </label>
+
+          <div id="removeItemDisposeFields" style="display:none">
+            <div class="form-group">
+              <label for="dispositionType">Type</label>
+              <select id="dispositionType">
+                <option value="sold">Sold</option>
+                <option value="traded">Traded</option>
+                <option value="lost">Lost</option>
+                <option value="gifted">Gifted</option>
+                <option value="returned">Returned</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="dispositionDate">Date</label>
+              <input type="date" id="dispositionDate">
+            </div>
+
+            <div class="form-group" id="dispositionAmountGroup">
+              <label for="dispositionAmount">Amount</label>
+              <input type="number" id="dispositionAmount" min="0" step="0.01" placeholder="0.00">
+            </div>
+
+            <div class="form-group">
+              <label for="dispositionRecipient">Recipient</label>
+              <input type="text" id="dispositionRecipient" placeholder="Optional">
+            </div>
+
+            <div class="form-group">
+              <label for="dispositionNotes">Notes</label>
+              <textarea id="dispositionNotes" rows="3" placeholder="Optional notes..."></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer" style="justify-content:space-between">
+          <button class="btn secondary" type="button" onclick="closeModalById('removeItemModal')">Cancel</button>
+          <button class="btn danger" type="button" id="removeItemDeleteBtn">Delete</button>
+          <button class="btn premium" type="button" id="removeItemDisposeBtn" style="display:none">Confirm Disposition</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- =============================================================================
        JAVASCRIPT MODULE LOADING
 
        Modular architecture with proper dependency order:
@@ -4904,6 +5103,7 @@
 
   <script defer src="js/debug-log.js"></script>
   <script defer src="./js/constants.js"></script>
+  <script defer src="./js/field-meta.js"></script>
   <script defer src="./js/state.js"></script>
   <script defer src="./js/utils.js"></script>
   <script defer src="./js/dialogs.js"></script>
@@ -4918,6 +5118,7 @@
   <script defer src="./js/versionCheck.js"></script>
   <script defer src="./js/changeLog.js"></script>
   <script defer src="./js/diff-engine.js"></script>
+  <script defer src="./js/diff-modal.js"></script>
     <script defer src="./js/charts.js"></script>
     <script defer src="./js/theme.js"></script>
     <script defer src="./js/search.js"></script>
@@ -4955,6 +5156,7 @@
     <script defer src="./js/settings.js"></script>
     <script defer src="./js/settings-listeners.js"></script>
     <script defer src="./js/bulkEdit.js"></script>
+    <script defer src="./js/clone-picker.js"></script>
     <script defer src="./js/events.js"></script>
     
     <!-- Test Scripts (Development) -->
