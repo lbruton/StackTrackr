@@ -693,6 +693,7 @@ section {
 /* --- Toggle switch (iOS-style) ------------------------------------------- */
 .toggle-switch {
   position: relative;
+  display: inline-block;
   width: 40px;
   min-width: 40px;
   height: 22px;
@@ -702,12 +703,13 @@ section {
   opacity: 0;
   width: 0;
   height: 0;
+  position: absolute;
 }
 .toggle-switch .toggle-track {
   position: absolute;
   inset: 0;
-  background: var(--glass-input-bg, rgba(255,255,255,0.08));
-  border: 1.5px solid var(--glass-input-border, var(--border));
+  background: var(--bg-tertiary, rgba(0,0,0,0.1));
+  border: 1.5px solid var(--border);
   border-radius: 999px;
   cursor: pointer;
   transition: background 0.2s ease, border-color 0.2s ease;
@@ -732,14 +734,14 @@ section {
   background: #fff;
 }
 
-/* Dispose toggle card within remove-item modal */
+/* Toggle card — reusable row with toggle + label text */
 .dispose-toggle-card {
   display: flex;
   align-items: center;
   gap: 0.75rem;
   padding: 0.6rem 0.75rem;
-  background: var(--glass-input-bg, rgba(0, 0, 0, 0.03));
-  border: 1.5px solid var(--glass-input-border, var(--border));
+  background: var(--bg-tertiary, rgba(0,0,0,0.04));
+  border: 1.5px solid var(--border);
   border-radius: 10px;
   cursor: pointer;
   transition: border-color 0.2s ease;
