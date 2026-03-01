@@ -290,7 +290,7 @@
         // Detail line
         var detail = [];
         if (item.metal) detail.push(_esc(item.metal));
-        if (item.weight != null) detail.push(item.weight + 'oz');
+        if (item.weight != null) detail.push(item.weight + (item.weightUnit || 'oz'));
         if (item.qty != null) detail.push('\u00d7 ' + item.qty);
         if (detail.length > 0) {
           html += '<div style="font-size:0.73rem;opacity:0.5;margin-top:0.1rem">' + detail.join(' \u00b7 ') + '</div>';
@@ -523,7 +523,7 @@
       if (typeof openModalById === 'function') {
         openModalById(MODAL_ID);
       } else {
-        var modal = document.getElementById(MODAL_ID);
+        var modal = safeGetElement(MODAL_ID);
         if (modal) modal.style.display = 'flex';
       }
     },
@@ -535,7 +535,7 @@
       if (typeof closeModalById === 'function') {
         closeModalById(MODAL_ID);
       } else {
-        var modal = document.getElementById(MODAL_ID);
+        var modal = safeGetElement(MODAL_ID);
         if (modal) modal.style.display = 'none';
       }
       _options = null;
