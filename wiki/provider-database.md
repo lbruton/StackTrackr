@@ -2,8 +2,8 @@
 title: Provider Database (Turso)
 category: infrastructure
 owner: staktrakr-api
-lastUpdated: v3.33.18
-date: 2026-02-26
+lastUpdated: v3.33.19
+date: 2026-03-01
 sourceFiles: []
 relatedPages:
   - turso-schema.md
@@ -25,7 +25,7 @@ Provider data (which vendors to scrape, URLs, coin metadata) is stored in **Turs
 
 The shared query module `provider-db.js` provides all read/write operations. All consumers — Fly.io poller scripts, home poller, dashboard, and the publish pipeline — import from this module.
 
-**Current stats:** 73 coins (silver, gold, goldback, platinum), 377 vendors.
+**Current stats:** 73 coins in live Turso (silver, gold, goldback, platinum), 377 vendors. The committed `main` branch manifest reports 11 coins.
 
 ---
 
@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS provider_vendors (
   id         INTEGER PRIMARY KEY AUTOINCREMENT,
   coin_slug  TEXT NOT NULL REFERENCES provider_coins(slug),
   vendor_id  TEXT NOT NULL,        -- "jmbullion", "apmex", etc.
-  vendor_name TEXT,                -- display name
+  vendor_name TEXT NOT NULL,                -- display name
   url        TEXT,                 -- scrape URL (null = disabled/no URL)
   enabled    INTEGER NOT NULL DEFAULT 1,
   selector   TEXT,                 -- CSS selector override (nullable)
@@ -85,7 +85,7 @@ Added in STAK-349. Populated by `recordFailure()` in `db.js` — called from `pr
 ```sql
 CREATE INDEX IF NOT EXISTS idx_pv_coin ON provider_vendors(coin_slug);
 CREATE INDEX IF NOT EXISTS idx_pv_vendor ON provider_vendors(vendor_id);
-CREATE INDEX IF NOT EXISTS idx_pv_enabled ON provider_vendors(enabled);
+CREATE INDEX IF NOT EXISTS idx_pv_enabled ON provider_vendors(coin_slug, enabled);
 CREATE INDEX IF NOT EXISTS idx_pf_coin_vendor ON provider_failures(coin_slug, vendor_id);
 CREATE INDEX IF NOT EXISTS idx_pf_failed_at ON provider_failures(failed_at);
 ```
@@ -94,7 +94,7 @@ CREATE INDEX IF NOT EXISTS idx_pf_failed_at ON provider_failures(failed_at);
 
 ## provider-db.js API
 
-Shared module at `StakTrakrApi/devops/fly-poller/provider-db.js`. All functions take a Turso `client` as the first argument.
+Shared module at `StakTrakrApi/devops/fly-poller/provider-db.js`. Most functions take a Turso `client` as the first argument. Exceptions: `loadProvidersFromFile(dataDir)` reads from the local filesystem, and `loadProviders(client, dataDir)` uses Turso-first with file fallback.
 
 | Function | Description |
 |----------|-------------|
@@ -110,7 +110,7 @@ Shared module at `StakTrakrApi/devops/fly-poller/provider-db.js`. All functions 
 | `deleteVendor(client, coinSlug, vendorId)` | Delete a single vendor row |
 | `updateVendorFields(client, coinSlug, vendorId, { selector, hints })` | Update selector/hints metadata |
 | `getVendorScrapeStatus(client)` | Latest scrape result per vendor (window function query) |
-| `getFailureStats(client)` | Vendors with 3+ failures in last 10 days |
+| `getFailureStats(client)` | Vendors with 3+ failures in last 7 days |
 | `getRunStats(client)` | Poller run aggregates (last 24h) |
 | `batchToggleVendor(client, { vendorId, metal, enabled })` | Toggle all vendors of a vendor ID + metal type. Returns `{ rowsAffected }` |
 | `batchDeleteVendor(client, { vendorId, metal })` | Delete all vendor entries for a vendor ID + metal type. Returns `{ rowsAffected }` |
@@ -126,7 +126,7 @@ Shared module at `StakTrakrApi/devops/fly-poller/provider-db.js`. All functions 
 
 ## Sync Between Pollers
 
-`provider-db.js` is shared between Fly.io (`StakTrakrApi/devops/fly-poller/`) and the home poller (`/opt/poller/`). The home poller copy may contain **extra functions** (e.g. `getCoverageStats`, `getMissingItems`) that `dashboard.js` imports but that haven't been committed to StakTrakrApi yet.
+`provider-db.js` is shared between Fly.io (`StakTrakrApi/devops/fly-poller/`) and the home poller (`/opt/poller/`). Both copies should stay in sync. The home poller copy may contain extra dashboard-specific functions that have not yet been committed to StakTrakrApi.
 
 **Safe sync procedure:**
 
@@ -211,7 +211,7 @@ Powered by `getCoverageStats()` and `getMissingItems()` in `provider-db.js`.
 
 A dedicated page at `/failures` shows vendors with repeated scrape failures:
 
-- Aggregated from `provider_failures` table (3+ failures in last 10 days)
+- Aggregated from `provider_failures` table (3+ failures in last 7 days)
 - Shows coin name, vendor ID, failure count, last error, and scrape URL
 - Links back to the vendor's entry in `/providers` for editing
 

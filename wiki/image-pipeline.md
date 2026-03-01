@@ -1,19 +1,27 @@
 ---
 title: "Image Pipeline"
-category: infrastructure
-owner: staktrakr-api
-lastUpdated: v3.32.42
-date: 2026-02-25
-sourceFiles: []
+category: frontend
+owner: staktrakr
+lastUpdated: v3.33.19
+date: 2026-03-01
+sourceFiles:
+  - js/image-cache.js
+  - js/image-processor.js
+  - js/events.js
+  - js/viewModal.js
+  - js/inventory.js
+  - js/card-view.js
+  - js/bulk-image-cache.js
+  - js/image-cache-modal.js
 relatedPages:
-  - health.md
-  - spot-pipeline.md
-  - fly-container.md
+  - frontend-overview.md
+  - data-model.md
+  - dom-patterns.md
 ---
 
 # Image Pipeline
 
-> **Last updated:** v3.32.42 — 2026-02-25
+> **Last updated:** v3.33.19 — 2026-03-01
 > **Source files:** `js/image-cache.js`, `js/image-processor.js`, `js/events.js`, `js/viewModal.js`, `js/inventory.js`, `js/card-view.js`, `js/bulk-image-cache.js`, `js/image-cache-modal.js`
 
 ## Overview
@@ -180,6 +188,6 @@ Pattern rules let a single image cover many items that share a name pattern.
 
 ## Related Pages
 
-- [health.md](health.md) — API and poller health checks
-- [spot-pipeline.md](spot-pipeline.md) — Spot price data pipeline
-- [fly-container.md](fly-container.md) — Fly.io container management
+- [Frontend Overview](frontend-overview.md) — File load order, script block, constants role
+- [Data Model](data-model.md) — Item schema, storage patterns, spot state
+- [DOM Patterns](dom-patterns.md) — `safeGetElement()` and element access rules

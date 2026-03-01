@@ -2,7 +2,7 @@
 title: Retail Market Price Pipeline
 category: infrastructure
 owner: staktrakr-api
-lastUpdated: v3.33.18
+lastUpdated: v3.33.19
 date: 2026-02-25
 sourceFiles: []
 relatedPages:
@@ -22,7 +22,7 @@ relatedPages:
 
 ## Overview
 
-The retail pipeline scrapes coin dealer prices from **7 vendors × 17 bullion coins** every cycle, writes to a shared Turso database, then exports to REST JSON and pushes to GitHub Pages.
+The retail pipeline scrapes coin dealer prices from **7 vendors × 11 bullion coins** every cycle, writes to a shared Turso database, then exports to REST JSON and pushes to GitHub Pages.
 
 **Goldback expansion (STAK-335):** 56 per-state Goldback slugs are scaffolded in `providers.json` but start disabled (`url: null`). They add zero scrape load until vendor URLs are populated. See [goldback-pipeline.md](goldback-pipeline.md) for the full state × denomination matrix.
 
@@ -34,7 +34,7 @@ Two independent pollers write to the **same Turso database**. A single publisher
 
 | Poller | Location | Cron | Script | POLLER_ID |
 |--------|----------|------|--------|-----------|
-| **Fly.io** (primary) | `staktrakr` app, `dfw` region | `0 * * * *` | `run-local.sh` | `api` |
+| **Fly.io** (primary) | `staktrakr` app, `dfw` region | `15,45 * * * *` | `run-local.sh` | `api` |
 | **Home LXC** (secondary) | Proxmox Ubuntu @ 192.168.1.81 | `30 * * * *` (1×/hr) | `run-home.sh` | `home` |
 
 **Why two pollers?**
@@ -48,11 +48,13 @@ Two independent pollers write to the **same Turso database**. A single publisher
 
 ### Scrape scripts (`run-local.sh` / `run-home.sh`)
 
-1. Sync `providers.json` from `api` branch via curl
+1. Load providers from Turso (Turso-first with file fallback)
 2. `price-extract.js` — scrape dealers, write results to Turso `price_snapshots`
-3. `capture.js` — screenshots via Playwright (Fly.io only)
-4. `extract-vision.js` — Gemini Vision cross-validation (Fly.io only, requires `GEMINI_API_KEY`)
+3. `capture.js` — screenshots via Playwright (requires `GEMINI_API_KEY`)
+4. `extract-vision.js` — Gemini Vision cross-validation (requires `GEMINI_API_KEY`)
 5. **Done** — does NOT touch Git
+
+> **Note:** Both Fly and home can run the vision pipeline when `GEMINI_API_KEY` is present.
 
 ### `run-publish.sh` (Fly.io only, every 15 min: `8,23,38,53 * * * *`)
 
@@ -69,17 +71,14 @@ Two independent pollers write to the **same Turso database**. A single publisher
 
 ```
 Fly.io run-local.sh  ──┐
-(0 * * * *)            ├──► Turso (price_snapshots) ──► api-export.js ──► data/api/ JSON
+(15,45 * * * *)        ├──► Turso (price_snapshots) ──► api-export.js ──► data/api/ JSON
 Home LXC run-home.sh ──┘    readLatestPerVendor()        (run-publish.sh, 8,23,38,53)
 (30 * * * *)
                                                               │
                                                               ▼
                                                    StakTrakrApi api branch
                                                               │
-                                               Merge Poller Branches GHA
-                                                              │
-                                                        main branch
-                                                              │
+                                                              ▼
                                                     GitHub Pages → api.staktrakr.com
 ```
 
@@ -106,9 +105,9 @@ Home LXC run-home.sh ──┘    readLatestPerVendor()        (run-publish.sh, 
 
 ---
 
-## providers.json
+## Provider Loading
 
-Lives on the **`api` branch** at `data/retail/providers.json`. Both pollers curl this before each run — URL corrections take effect next cycle with **no redeploy needed**.
+Provider data is loaded from **Turso first** (querying `provider_coins` + `provider_vendors` tables directly), with file fallback to `data/retail/providers.json`. `providers.json` on the `api` branch is **generated output** from `export-providers-json.js` — URL corrections should be made directly in Turso via `provider-db.js` or the dashboard at `http://192.168.1.81:3010/providers`. Changes take effect next cycle with **no redeploy needed**.
 
 ### URL strategy
 
@@ -186,9 +185,9 @@ When T4 fills a vendor slot, the manifest entry includes extra fields the fronte
 
 ---
 
-## Vision Pipeline (Fly.io only)
+## Vision Pipeline
 
-Requires `GEMINI_API_KEY`. Non-fatal — failure is logged and scrape continues.
+Requires `GEMINI_API_KEY`. Non-fatal — failure is logged and scrape continues. Both Fly and home can run vision when `GEMINI_API_KEY` is present.
 
 1. **`capture.js`** — Playwright screenshots each dealer page. Dismisses popups/modals (Escape + common close selectors) before screenshot.
 2. **`extract-vision.js`** — Sends screenshots to Gemini Vision. Extracts price from image, compares against Firecrawl price.
@@ -219,7 +218,7 @@ Requires `GEMINI_API_KEY`. Non-fatal — failure is logged and scrape continues.
 ## Deployment Notes
 
 - **Code changes** — `git push origin main` then `fly deploy` from `devops/fly-poller/`
-- **providers.json URL fixes** — push to `api` branch; auto-synced next cycle, no redeploy
+- **Provider URL fixes** — update directly in Turso via `provider-db.js` or the dashboard; auto-synced next cycle, no redeploy
 - **Home LXC code update** — curl changed files from `raw.githubusercontent.com/lbruton/StakTrakrApi/main/devops/fly-poller/`
 - **After deploy** — `fly logs --app staktrakr | grep -E 'retail|publish|ERROR'`
 
@@ -229,13 +228,11 @@ Requires `GEMINI_API_KEY`. Non-fatal — failure is logged and scrape continues.
 
 | Script | Cron | Purpose |
 |--------|------|---------|
-| `run-local.sh` | `0 * * * *` | Retail scrape (hourly) |
-| `run-spot.sh` | `5,20,35,50 * * * *` | Spot price scrape |
+| `run-local.sh` | `15,45 * * * *` | Retail scrape (2x/hr) |
+| `run-spot.sh` | `0,30 * * * *` | Spot price poll (MetalPriceAPI → Turso + JSON) |
 | `run-publish.sh` | `8,23,38,53 * * * *` | Export Turso → JSON, push to `api` branch |
 | `run-retry.sh` | `15 * * * *` | T3 proxy retry of failed SKUs |
-| `run-fbp.sh` | `0 20 * * *` | FBP gap-fill for remaining failures |
-
-**Note:** `run-goldback.sh` is no longer in the cron schedule — goldback is scraped via the standard retail pipeline. Legacy `goldback-g{N}` slugs are deprecated; per-state slugs (`goldback-{state}-g{denom}`) are the new standard. See [goldback-pipeline.md](goldback-pipeline.md).
+| `run-goldback.sh` | `1 * * * *` | Goldback G1 rate scrape (skips if today's price captured) |
 
 See [cron-schedule.md](cron-schedule.md) for the full timeline view and design rationale.
 
