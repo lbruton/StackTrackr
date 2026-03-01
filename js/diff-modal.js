@@ -413,16 +413,20 @@
 
   function _onApply() {
     var selected = _buildSelectedChanges();
+    // Capture callback before close() — close() nullifies _options
+    var callback = _options && _options.onApply;
     DiffModal.close();
-    if (_options && typeof _options.onApply === 'function') {
-      _options.onApply(selected);
+    if (typeof callback === 'function') {
+      callback(selected);
     }
   }
 
   function _onCancel() {
+    // Capture callback before close() — close() nullifies _options
+    var callback = _options && _options.onCancel;
     DiffModal.close();
-    if (_options && typeof _options.onCancel === 'function') {
-      _options.onCancel();
+    if (typeof callback === 'function') {
+      callback();
     }
   }
 
