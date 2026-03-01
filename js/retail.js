@@ -1862,8 +1862,15 @@ const initRetailPrices = () => {
   // Restore manifest slug list from localStorage (so we don't fall back to 12-item RETAIL_SLUGS)
   try {
     const cached = localStorage.getItem(RETAIL_MANIFEST_SLUGS_KEY);
-    if (cached) _manifestSlugs = JSON.parse(cached);
-  } catch { /* ignore */ }
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      _manifestSlugs = Array.isArray(parsed) ? parsed : null;
+      if (!_manifestSlugs) localStorage.removeItem(RETAIL_MANIFEST_SLUGS_KEY);
+    }
+  } catch {
+    _manifestSlugs = null;
+    try { localStorage.removeItem(RETAIL_MANIFEST_SLUGS_KEY); } catch { /* ignore */ }
+  }
   loadRetailPrices();
   loadRetailPriceHistory();
   loadRetailIntradayData();
@@ -1907,7 +1914,7 @@ const startRetailBackgroundSync = () => {
   const lastSync = retailPrices && retailPrices.lastSync ? new Date(retailPrices.lastSync).getTime() : 0;
   const isStale = Date.now() - lastSync > RETAIL_STALE_MS;
   const missingProviders = !retailProviders || Object.keys(retailProviders).length === 0;
-  const missingSlugs = !_manifestSlugs || _manifestSlugs.length === 0;
+  const missingSlugs = !Array.isArray(_manifestSlugs) || _manifestSlugs.length === 0;
   if (isStale || missingProviders || missingSlugs) {
     debugLog(`[retail] Background sync triggered (stale=${isStale}, missingProviders=${missingProviders}, missingSlugs=${missingSlugs})`, "info");
     _runSilentSync();
