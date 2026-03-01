@@ -1994,13 +1994,12 @@ const updateSummary = () => {
     // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml
     allRealizedGl.innerHTML = rgl === 0 ? '$0.00' : formatLossProfit(rgl, rglPct);
   }
+
+  // Respect show/hide realized setting (STAK-72)
+  const showRealized = loadData(SHOW_REALIZED_KEY) !== 'false';
+  applyRealizedVisibility(showRealized);
 };
 
-/**
- * Deletes inventory item at specified index after confirmation
- * 
- * @param {number} idx - Index of item to delete
- */
 /**
  * Opens the combined Remove Item modal (STAK-72).
  * Handles both delete and dispose flows via checkbox toggle.
@@ -3821,6 +3820,18 @@ const exportPdf = () => {
   // Save PDF
   doc.save(`metal_inventory_${new Date().toISOString().slice(0,10).replace(/-/g,'')}.pdf`);
 };
+/**
+ * Show or hide the "Realized:" row on all summary cards (STAK-72).
+ * Called from settings toggle and on page load.
+ */
+const applyRealizedVisibility = (show) => {
+  const metals = ['Silver', 'Gold', 'Platinum', 'Palladium', 'All'];
+  metals.forEach(m => {
+    const el = document.getElementById(`realizedGainLoss${m}`);
+    if (el && el.parentElement) el.parentElement.style.display = show ? '' : 'none';
+  });
+};
+
 // =============================================================================
 // Expose inventory actions globally for inline event handlers
 window.importCsv = importCsv;
@@ -3829,6 +3840,7 @@ window.importJson = importJson;
 window.exportJson = exportJson;
 window.exportPdf = exportPdf;
 window.updateSummary = updateSummary;
+window.applyRealizedVisibility = applyRealizedVisibility;
 window.toggleGlobalPriceView = toggleGlobalPriceView;
 window.editItem = editItem;
 window.duplicateItem = duplicateItem;
