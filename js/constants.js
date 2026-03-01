@@ -727,6 +727,9 @@ const HEADER_BTN_SHOW_TEXT_KEY = "headerBtnShowText";
 /** @constant {string} RETAIL_MANIFEST_TS_KEY - LocalStorage key for market manifest generated_at timestamp */
 const RETAIL_MANIFEST_TS_KEY = "retailManifestGeneratedAt";
 
+/** @constant {string} RETAIL_MANIFEST_SLUGS_KEY - LocalStorage key for cached manifest coin slug list */
+const RETAIL_MANIFEST_SLUGS_KEY = "retailManifestSlugs";
+
 // =============================================================================
 // IMAGE PROCESSOR DEFAULTS (STACK-95)
 // =============================================================================
@@ -861,6 +864,7 @@ const ALLOWED_STORAGE_KEYS = [
   HEADER_CLOUD_SYNC_BTN_KEY,  // boolean string: "true"/"false" — cloud sync button visibility
   HEADER_BTN_SHOW_TEXT_KEY,   // boolean string: "true"/"false" — show text labels under header icons
   RETAIL_MANIFEST_TS_KEY,     // string ISO timestamp — market manifest generated_at cache
+  RETAIL_MANIFEST_SLUGS_KEY,  // JSON array: cached manifest coin slug list
   "layoutVisibility",         // JSON object: { spotPrices, totals, search, table } (STACK-54) — legacy, migrated to layoutSectionConfig
   "layoutSectionConfig",      // JSON array: ordered section config [{ id, label, enabled }] (STACK-54)
   LAST_VERSION_CHECK_KEY,     // timestamp: last remote version check (STACK-67)
@@ -1787,6 +1791,7 @@ if (typeof window !== "undefined") {
   window.HEADER_CLOUD_SYNC_BTN_KEY = HEADER_CLOUD_SYNC_BTN_KEY;
   window.HEADER_BTN_SHOW_TEXT_KEY = HEADER_BTN_SHOW_TEXT_KEY;
   window.RETAIL_MANIFEST_TS_KEY = RETAIL_MANIFEST_TS_KEY;
+  window.RETAIL_MANIFEST_SLUGS_KEY = RETAIL_MANIFEST_SLUGS_KEY;
   window.RETAIL_ANOMALY_THRESHOLD = RETAIL_ANOMALY_THRESHOLD;
   window.RETAIL_SPIKE_NEIGHBOR_TOLERANCE = RETAIL_SPIKE_NEIGHBOR_TOLERANCE;
   // Disposition types for realized gains (STAK-72)
