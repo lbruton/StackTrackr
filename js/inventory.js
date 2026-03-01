@@ -2735,8 +2735,133 @@ const endImportProgress = () => {
 };
 
 /**
+ * Post-import cleanup — registers names, syncs catalog, saves, and re-renders.
+ * @param {Array} newItems - Items that were added during import
+ * @param {Map|null} pendingTagsByUuid - Optional map of uuid -> tag[] for deferred tag application
+ */
+const _postImportCleanup = (newItems, pendingTagsByUuid) => {
+  // Apply deferred tags if needed
+  if (pendingTagsByUuid && typeof addItemTag === 'function') {
+    for (const item of newItems) {
+      const tags = pendingTagsByUuid.get(item.uuid);
+      if (tags && tags.length) {
+        tags.forEach(tag => addItemTag(item.uuid, tag, false));
+      }
+    }
+    if (typeof saveItemTags === 'function') saveItemTags();
+  }
+
+  // Register names
+  for (const item of newItems) {
+    if (typeof registerName === 'function') registerName(item.name);
+  }
+
+  // Catalog sync, save, render
+  if (typeof catalogManager !== 'undefined' && catalogManager.syncInventory) {
+    inventory = catalogManager.syncInventory(inventory);
+  }
+  saveInventory();
+  renderTable();
+  if (typeof renderActiveFilters === 'function') renderActiveFilters();
+  if (typeof updateStorageStats === 'function') updateStorageStats();
+};
+
+/**
+ * Shared import review helper — DiffEngine + DiffModal pattern.
+ * Used by importCsv, importJson, and importNumistaCsv to deduplicate
+ * the diff-review workflow.
+ *
+ * @param {Array} parsedItems - Parsed items to import
+ * @param {object} sourceInfo - { type: 'csv'|'json', label: string }
+ * @param {object} [options] - Optional: { settingsDiff, pendingTagsByUuid }
+ * @param {function} onComplete - Called after apply with summary { added, modified, deleted }
+ */
+const showImportDiffReview = (parsedItems, sourceInfo, options, onComplete) => {
+  options = options || {};
+
+  // Guard: if DiffEngine or DiffModal unavailable, fall back to concat-all
+  if (typeof DiffEngine === 'undefined' || typeof DiffModal === 'undefined') {
+    debugLog('showImportDiffReview fallback', 'DiffEngine/DiffModal unavailable');
+    inventory = inventory.concat(parsedItems);
+    _postImportCleanup(parsedItems, options.pendingTagsByUuid);
+    if (onComplete) onComplete({ added: parsedItems.length, modified: 0, deleted: 0 });
+    return;
+  }
+
+  const diffResult = DiffEngine.compareItems(inventory, parsedItems);
+
+  // Build settings diff if provided via options (JSON imports only)
+  const settingsDiff = options.settingsDiff || null;
+
+  // No changes? Inform user
+  const totalChanges = diffResult.added.length + diffResult.modified.length + diffResult.deleted.length;
+  if (totalChanges === 0 && !settingsDiff) {
+    if (typeof showToast === 'function') showToast('No changes detected \u2014 inventory is up to date');
+    return;
+  }
+
+  DiffModal.show({
+    source: sourceInfo,
+    diff: diffResult,
+    settingsDiff: settingsDiff,
+    onApply: function(selectedChanges) {
+      if (!selectedChanges || selectedChanges.length === 0) return;
+
+      inventory = DiffEngine.applySelectedChanges(inventory, selectedChanges);
+
+      // Apply tags for added items if pendingTagsByUuid provided
+      if (options.pendingTagsByUuid && typeof addItemTag === 'function') {
+        const addedItems = selectedChanges.filter(function(c) { return c.type === 'add'; });
+        for (const change of addedItems) {
+          if (change.item) {
+            const tags = options.pendingTagsByUuid.get(change.item.uuid);
+            if (tags && tags.length) {
+              tags.forEach(function(tag) { addItemTag(change.item.uuid, tag, false); });
+            }
+          }
+        }
+        if (typeof saveItemTags === 'function') saveItemTags();
+      }
+
+      // Apply settings changes if present
+      if (settingsDiff && settingsDiff.changed && settingsDiff.changed.length > 0) {
+        for (const sc of settingsDiff.changed) {
+          saveDataSync(sc.key, sc.remoteVal);
+        }
+      }
+
+      _postImportCleanup(
+        selectedChanges.filter(function(c) { return c.type === 'add'; }).map(function(c) { return c.item; }).filter(Boolean),
+        null  // tags already handled above
+      );
+
+      // Toast summary
+      const addCount = selectedChanges.filter(function(c) { return c.type === 'add'; }).length;
+      const modCount = selectedChanges.filter(function(c) { return c.type === 'modify'; }).length;
+      const delCount = selectedChanges.filter(function(c) { return c.type === 'delete'; }).length;
+      const parts = [];
+      if (addCount > 0) parts.push(addCount + ' added');
+      if (modCount > 0) parts.push(modCount + ' updated');
+      if (delCount > 0) parts.push(delCount + ' removed');
+      if (typeof showToast === 'function') {
+        showToast('Import complete: ' + (parts.length > 0 ? parts.join(', ') : 'no changes applied'));
+      }
+
+      if (onComplete) onComplete({ added: addCount, modified: modCount, deleted: delCount });
+
+      if (localStorage.getItem('staktrakr.debug') && typeof window.showDebugModal === 'function') {
+        showDebugModal();
+      }
+    },
+    onCancel: function() {
+      debugLog('Import cancelled by user');
+    }
+  });
+};
+
+/**
  * Imports inventory data from CSV file with comprehensive validation and error handling
- * 
+ *
  * @param {File} file - CSV file selected by user through file input
  * @param {boolean} [override=false] - Replace existing inventory instead of merging
  */
@@ -2922,98 +3047,9 @@ const importCsv = (file, override = false) => {
           return;
         }
 
-        // --- Merge path: use DiffEngine + DiffModal for reviewed import ---
-        // Guard: if DiffEngine or DiffModal are unavailable, fall back to
-        // legacy behaviour (add all parsed items without review)
-        if (typeof DiffEngine === 'undefined' || typeof DiffModal === 'undefined') {
-          debugLog('importCsv fallback', 'DiffEngine/DiffModal unavailable — adding all items');
-          inventory = inventory.concat(imported);
-
-          if (typeof catalogManager !== 'undefined' && catalogManager.syncInventory) {
-            inventory = catalogManager.syncInventory(inventory);
-          }
-
-          for (const item of imported) {
-            if (typeof registerName === 'function') {
-              registerName(item.name);
-            }
-          }
-
-          saveInventory();
-          renderTable();
-          if (typeof renderActiveFilters === 'function') {
-            renderActiveFilters();
-          }
-          if (typeof updateStorageStats === 'function') {
-            updateStorageStats();
-          }
-          debugLog('importCsv fallback complete', imported.length, 'items added');
-          return;
-        }
-
-        // Compute diff between current inventory and parsed CSV items
-        const diffResult = DiffEngine.compareItems(inventory, imported);
-
-        // If there are no changes at all, inform the user and bail
-        if (diffResult.added.length === 0 && diffResult.modified.length === 0 && diffResult.deleted.length === 0) {
-          if (typeof showAppAlert === 'function') {
-            showAppAlert('No new or changed items found in CSV.', 'CSV Import');
-          }
-          return;
-        }
-
-        // Show the diff review modal — user selects which changes to apply
-        DiffModal.show({
-          source: { type: 'csv', label: file.name },
-          diff: diffResult,
-          onApply: function(selectedChanges) {
-            if (!selectedChanges || selectedChanges.length === 0) return;
-
-            // Apply user-selected changes via DiffEngine
-            inventory = DiffEngine.applySelectedChanges(inventory, selectedChanges);
-
-            // Synchronize with catalog manager
-            if (typeof catalogManager !== 'undefined' && catalogManager.syncInventory) {
-              inventory = catalogManager.syncInventory(inventory);
-            }
-
-            // Register names for newly added items
-            const addedChanges = selectedChanges.filter(function(c) { return c.type === 'add'; });
-            for (const change of addedChanges) {
-              if (change.item && typeof registerName === 'function') {
-                registerName(change.item.name);
-              }
-            }
-
-            saveInventory();
-            renderTable();
-            if (typeof renderActiveFilters === 'function') {
-              renderActiveFilters();
-            }
-            if (typeof updateStorageStats === 'function') {
-              updateStorageStats();
-            }
-
-            // Show summary toast
-            const addCount = addedChanges.length;
-            const modCount = selectedChanges.filter(function(c) { return c.type === 'modify'; }).length;
-            const delCount = selectedChanges.filter(function(c) { return c.type === 'delete'; }).length;
-            const parts = [];
-            if (addCount > 0) parts.push(addCount + ' added');
-            if (modCount > 0) parts.push(modCount + ' updated');
-            if (delCount > 0) parts.push(delCount + ' removed');
-            if (typeof showToast === 'function') {
-              showToast('Import complete: ' + parts.join(', '));
-            }
-
-            debugLog('importCsv DiffEngine complete', addCount, 'added', modCount, 'modified', delCount, 'deleted');
-            if (localStorage.getItem('staktrakr.debug') && typeof window.showDebugModal === 'function') {
-              showDebugModal();
-            }
-          },
-          onCancel: function() {
-            debugLog('importCsv cancelled by user');
-          }
+        // --- Merge path: use shared DiffEngine + DiffModal helper ---
+        showImportDiffReview(imported, { type: 'csv', label: file.name }, {}, function(summary) {
+          debugLog('importCsv DiffEngine complete', summary.added, 'added', summary.modified, 'modified', summary.deleted, 'deleted');
         });
       },
       error: function(error) {
@@ -3221,58 +3257,29 @@ const importNumistaCsv = (file, override = false) => {
           return;
         }
 
-        const existingSerials = new Set(override ? [] : inventory.map(item => item.serial));
-        const existingKeys = new Set(
-          (override ? [] : inventory)
-            .filter(item => item.numistaId)
-            .map(item => `${item.numistaId}|${item.name}|${item.date}`)
-        );
-        const deduped = [];
-        let duplicateCount = 0;
+        // --- Override path: skip DiffEngine, import all items directly ---
+        if (override) {
+          inventory = imported;
 
-        for (const item of imported) {
-          const key = item.numistaId ? `${item.numistaId}|${item.name}|${item.date}` : null;
-          if (existingSerials.has(item.serial) || (key && existingKeys.has(key))) {
-            duplicateCount++;
-            continue;
+          for (const item of imported) {
+            if (typeof registerName === 'function') registerName(item.name);
           }
-          existingSerials.add(item.serial);
-          if (key) existingKeys.add(key);
-          deduped.push(item);
-        }
 
-        if (duplicateCount > 0) {
-          console.info(`${duplicateCount} duplicate items skipped during import.`);
-        }
-
-        if (deduped.length === 0) {
-          if (typeof showAppAlert === 'function') showAppAlert('No items to import.', 'Numista Import');
+          if (typeof catalogManager !== 'undefined' && catalogManager.syncInventory) {
+            inventory = catalogManager.syncInventory(inventory);
+          }
+          saveInventory();
+          renderTable();
+          if (typeof renderActiveFilters === 'function') renderActiveFilters();
+          if (typeof updateStorageStats === 'function') updateStorageStats();
+          debugLog('importNumistaCsv override complete', imported.length, 'items replaced');
           return;
         }
 
-        for (const item of deduped) {
-          if (typeof registerName === "function") {
-            registerName(item.name);
-          }
-        }
-
-        if (override) {
-          inventory = deduped;
-        } else {
-          inventory = inventory.concat(deduped);
-        }
-
-        // Synchronize all items with catalog manager
-        inventory = catalogManager.syncInventory(inventory);
-
-        saveInventory();
-        renderTable();
-        if (typeof renderActiveFilters === 'function') {
-          renderActiveFilters();
-        }
-        if (typeof updateStorageStats === 'function') {
-          updateStorageStats();
-        }
+        // --- Merge path: use shared DiffEngine + DiffModal helper ---
+        showImportDiffReview(imported, { type: 'csv', label: file.name }, {}, function(summary) {
+          debugLog('importNumistaCsv DiffEngine complete', summary.added, 'added', summary.modified, 'modified', summary.deleted, 'deleted');
+        });
       } catch (error) {
         endImportProgress();
         handleError(error, 'Numista CSV import');
@@ -3679,167 +3686,37 @@ const importJson = (file, override = false) => {
         return;
       }
 
-      // ── DiffEngine + DiffModal path ──
-      if (typeof DiffEngine !== 'undefined' && typeof DiffModal !== 'undefined') {
-        const diffResult = DiffEngine.compareItems(inventory, imported);
-
-        // Build settings diff if the parsed JSON contains a settings object
-        let settingsDiff = null;
-        if (parsedSettings && typeof parsedSettings === 'object') {
-          const settingsKeys = (typeof SYNC_SCOPE_KEYS !== 'undefined' && Array.isArray(SYNC_SCOPE_KEYS))
-            ? SYNC_SCOPE_KEYS.filter(k => k !== 'metalInventory' && k !== 'itemTags')
-            : ['displayCurrency', 'appTheme', 'inlineChipConfig', 'filterChipCategoryConfig', 'viewModalSectionConfig', 'chipMinCount'];
-          const localSettings = {};
-          for (const key of settingsKeys) {
-            const val = loadDataSync(key, null);
-            if (val !== null) localSettings[key] = val;
-          }
-          const filteredRemote = {};
-          for (const key of settingsKeys) {
-            if (key in parsedSettings) filteredRemote[key] = parsedSettings[key];
-          }
-          if (Object.keys(filteredRemote).length > 0) {
-            settingsDiff = DiffEngine.compareSettings(localSettings, filteredRemote);
-            // Omit if no changes
-            if (settingsDiff.changed.length === 0) settingsDiff = null;
-          }
+      // ── DiffEngine + DiffModal path (via shared helper) ──
+      // Build settings diff if the parsed JSON contains a settings object
+      let settingsDiff = null;
+      if (parsedSettings && typeof parsedSettings === 'object' &&
+          typeof DiffEngine !== 'undefined' && typeof DiffEngine.compareSettings === 'function') {
+        const settingsKeys = (typeof SYNC_SCOPE_KEYS !== 'undefined' && Array.isArray(SYNC_SCOPE_KEYS))
+          ? SYNC_SCOPE_KEYS.filter(k => k !== 'metalInventory' && k !== 'itemTags')
+          : ['displayCurrency', 'appTheme', 'inlineChipConfig', 'filterChipCategoryConfig', 'viewModalSectionConfig', 'chipMinCount'];
+        const localSettings = {};
+        for (const key of settingsKeys) {
+          const val = loadDataSync(key, null);
+          if (val !== null) localSettings[key] = val;
         }
-
-        // If no changes at all, inform user and bail
-        const totalChanges = diffResult.added.length + diffResult.modified.length + diffResult.deleted.length;
-        if (totalChanges === 0 && !settingsDiff) {
-          if (typeof showToast === 'function') showToast('No changes detected \u2014 inventory is up to date');
-          return;
+        const filteredRemote = {};
+        for (const key of settingsKeys) {
+          if (key in parsedSettings) filteredRemote[key] = parsedSettings[key];
         }
-
-        DiffModal.show({
-          source: { type: 'json', label: file.name },
-          diff: diffResult,
-          settingsDiff: settingsDiff,
-          onApply: function(selectedChanges) {
-            // Apply item changes via DiffEngine
-            inventory = DiffEngine.applySelectedChanges(inventory, selectedChanges);
-
-            // Apply tags for newly added items
-            if (typeof addItemTag === 'function') {
-              const addedItems = selectedChanges.filter(function(c) { return c.type === 'add'; });
-              for (const change of addedItems) {
-                if (change.item) {
-                  const tags = pendingTagsByUuid.get(change.item.uuid);
-                  if (tags && tags.length) {
-                    tags.forEach(function(tag) { addItemTag(change.item.uuid, tag, false); });
-                  }
-                }
-              }
-              if (typeof saveItemTags === 'function') saveItemTags();
-            }
-
-            // Register names for added items
-            const addedForNames = selectedChanges.filter(function(c) { return c.type === 'add'; });
-            for (const change of addedForNames) {
-              if (change.item && typeof registerName === 'function') {
-                registerName(change.item.name);
-              }
-            }
-
-            // Apply settings changes if present
-            if (settingsDiff && settingsDiff.changed && settingsDiff.changed.length > 0) {
-              for (const sc of settingsDiff.changed) {
-                saveDataSync(sc.key, sc.remoteVal);
-              }
-            }
-
-            // Post-import synchronization
-            if (typeof catalogManager !== 'undefined' && catalogManager.syncInventory) {
-              inventory = catalogManager.syncInventory(inventory);
-            }
-
-            saveInventory();
-            renderTable();
-            if (typeof renderActiveFilters === 'function') renderActiveFilters();
-            if (typeof updateStorageStats === 'function') updateStorageStats();
-
-            // Show toast summary
-            const addCount = selectedChanges.filter(function(c) { return c.type === 'add'; }).length;
-            const modCount = selectedChanges.filter(function(c) { return c.type === 'modify'; }).length;
-            const delCount = selectedChanges.filter(function(c) { return c.type === 'delete'; }).length;
-            const parts = [];
-            if (addCount > 0) parts.push(addCount + ' added');
-            if (modCount > 0) parts.push(modCount + ' updated');
-            if (delCount > 0) parts.push(delCount + ' removed');
-            if (typeof showToast === 'function') {
-              showToast('Import complete: ' + (parts.length > 0 ? parts.join(', ') : 'no changes applied'));
-            }
-
-            debugLog('importJson DiffEngine complete', addCount, 'added', modCount, 'modified', delCount, 'deleted');
-            if (localStorage.getItem('staktrakr.debug') && typeof window.showDebugModal === 'function') {
-              showDebugModal();
-            }
-          },
-          onCancel: function() {
-            debugLog('importJson cancelled by user via DiffModal');
-          }
-        });
-
-        return;
-      }
-
-      // ── Fallback: legacy dedup when DiffEngine/DiffModal unavailable ──
-      const existingSerials = new Set(inventory.map(item => item.serial));
-      const existingKeys = new Set(
-        inventory
-          .filter(item => item.numistaId)
-          .map(item => `${item.numistaId}|${item.name}|${item.date}`)
-      );
-      const deduped = [];
-      let duplicateCount = 0;
-
-      for (const item of imported) {
-        const key = item.numistaId ? `${item.numistaId}|${item.name}|${item.date}` : null;
-        if (existingSerials.has(item.serial) || (key && existingKeys.has(key))) {
-          duplicateCount++;
-          continue;
+        if (Object.keys(filteredRemote).length > 0) {
+          settingsDiff = DiffEngine.compareSettings(localSettings, filteredRemote);
+          // Omit if no changes
+          if (settingsDiff.changed.length === 0) settingsDiff = null;
         }
-        existingSerials.add(item.serial);
-        if (key) existingKeys.add(key);
-        deduped.push(item);
       }
 
-      if (duplicateCount > 0) {
-        console.info(`${duplicateCount} duplicate items skipped during import.`);
-      }
-
-      if (deduped.length === 0) {
-        if (typeof showAppAlert === 'function') showAppAlert('No items to import.', 'JSON Import');
-        return;
-      }
-
-      if (typeof addItemTag === 'function') {
-        for (const item of deduped) {
-          const pendingTags = pendingTagsByUuid.get(item.uuid);
-          if (pendingTags && pendingTags.length) {
-            pendingTags.forEach(tag => addItemTag(item.uuid, tag, false));
-          }
-        }
-        if (typeof saveItemTags === 'function') saveItemTags();
-      }
-
-      for (const item of deduped) {
-        if (typeof registerName === 'function') registerName(item.name);
-      }
-
-      inventory = inventory.concat(deduped);
-      if (typeof catalogManager !== 'undefined' && catalogManager.syncInventory) {
-        inventory = catalogManager.syncInventory(inventory);
-      }
-      saveInventory();
-      renderTable();
-      if (typeof renderActiveFilters === 'function') renderActiveFilters();
-      if (typeof updateStorageStats === 'function') updateStorageStats();
-      debugLog('importJson complete', deduped.length, 'items added');
-      if (localStorage.getItem('staktrakr.debug') && typeof window.showDebugModal === 'function') {
-        showDebugModal();
-      }
+      // Use shared helper for diff review — handles DiffEngine fallback internally
+      showImportDiffReview(imported, { type: 'json', label: file.name }, {
+        settingsDiff: settingsDiff,
+        pendingTagsByUuid: pendingTagsByUuid,
+      }, function(summary) {
+        debugLog('importJson DiffEngine complete', summary.added, 'added', summary.modified, 'modified', summary.deleted, 'deleted');
+      });
     } catch (error) {
       endImportProgress();
       if (typeof showAppAlert === 'function') {
