@@ -3268,6 +3268,25 @@ if (removeItemOpenLog) {
 }
 
 // =============================================================================
+// Summary Totals — show/hide realized G/L row (STAK-72)
+// =============================================================================
+
+const settingsShowRealized = document.getElementById('settingsShowRealized');
+if (settingsShowRealized) {
+  // Initialize from stored preference (default: true — show realized)
+  const stored = loadData(SHOW_REALIZED_KEY);
+  const showRealized = stored !== 'false';
+  settingsShowRealized.checked = showRealized;
+  applyRealizedVisibility(showRealized);
+
+  settingsShowRealized.addEventListener('change', () => {
+    const show = settingsShowRealized.checked;
+    saveData(SHOW_REALIZED_KEY, show ? 'true' : 'false');
+    applyRealizedVisibility(show);
+  });
+}
+
+// =============================================================================
 
 // Early cleanup of stray localStorage entries before application initialization
 document.addEventListener('DOMContentLoaded', cleanupStorage);

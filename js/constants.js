@@ -694,6 +694,9 @@ const DEFAULT_SORT_COL_KEY = "defaultSortColumn";
 /** @constant {string} DEFAULT_SORT_DIR_KEY - LocalStorage key for default inventory sort direction */
 const DEFAULT_SORT_DIR_KEY = "defaultSortDir";
 
+/** @constant {string} SHOW_REALIZED_KEY - LocalStorage key for showing realized G/L in summary cards (STAK-72) */
+const SHOW_REALIZED_KEY = "showRealizedGainLoss";
+
 /** @constant {string} METAL_ORDER_KEY - LocalStorage key for metal order/visibility config */
 const METAL_ORDER_KEY = "metalOrderConfig";
 
@@ -876,6 +879,7 @@ const ALLOWED_STORAGE_KEYS = [
   DESKTOP_CARD_VIEW_KEY,                 // boolean string: "true"/"false" — desktop card view (STAK-118)
   DEFAULT_SORT_COL_KEY,                  // number string: default sort column index
   DEFAULT_SORT_DIR_KEY,                  // string: "asc"|"desc" — default sort direction
+  SHOW_REALIZED_KEY,                     // boolean string: "true"/"false" — show realized G/L in summary cards (STAK-72)
   METAL_ORDER_KEY,                       // JSON array: metal order/visibility config
   ITEM_TAGS_KEY,                           // JSON object: per-item tags keyed by UUID (STAK-126)
   "enabledSeedRules",                        // JSON array: enabled built-in Numista lookup rule IDs
