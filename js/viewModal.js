@@ -716,7 +716,6 @@ function buildViewContent(item, index) {
     numista:      () => _buildNumistaPlaceholderSection(),
     tags:         () => _buildTagsSection(item),
     notes:        () => _buildNotesSection(item),
-    disposition:  () => _buildDispositionSection(item),
   };
 
   _appendSectionsInConfiguredOrder(frag, sectionBuilders);

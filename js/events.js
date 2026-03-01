@@ -3243,6 +3243,10 @@ if (dispositionTypeSelect) {
     const typeInfo = DISPOSITION_TYPES[dispositionTypeSelect.value];
     const amountGroup = document.getElementById('dispositionAmountGroup');
     if (amountGroup) amountGroup.style.display = typeInfo?.requiresAmount ? '' : 'none';
+    if (!typeInfo || !typeInfo.requiresAmount) {
+      const amountInput = document.getElementById('dispositionAmount');
+      if (amountInput) amountInput.value = '';
+    }
   });
 }
 
@@ -3274,7 +3278,7 @@ if (removeItemOpenLog) {
 const settingsShowRealized = document.getElementById('settingsShowRealized');
 if (settingsShowRealized) {
   // Initialize from stored preference (default: true — show realized)
-  const stored = loadData(SHOW_REALIZED_KEY);
+  const stored = loadDataSync(SHOW_REALIZED_KEY, 'true');
   const showRealized = stored !== 'false';
   settingsShowRealized.checked = showRealized;
   applyRealizedVisibility(showRealized);
