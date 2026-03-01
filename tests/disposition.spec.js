@@ -5,12 +5,13 @@ import { dismissAckModal } from './test-utils.js';
  * Disposition E2E Tests (STAK-72)
  *
  * Covers the realized-gains disposition feature:
- *  1. Dispose an item as "sold"
+ *  1. Dispose an item as "sold" (via combined Remove Item modal)
  *  2. Show disposed items toggle
  *  3. View modal shows disposition details
  *  4. Undo disposition
  *  5. Summary card shows realized G/L
  *  6. CSV export includes disposition columns
+ *  7. Settings toggle hides/shows realized G/L row
  */
 
 /**
@@ -46,8 +47,8 @@ const switchToTableView = async (page) => {
 
 /**
  * Dispose the first matching item in table view.
- * Finds the row containing `itemName`, clicks its Dispose button,
- * fills the disposition modal, and submits.
+ * Uses the combined Remove Item modal: clicks Delete (trash) icon,
+ * enables the "Track as disposed" toggle, fills disposition fields, submits.
  *
  * @param {import('@playwright/test').Page} page
  * @param {string} itemName - Text to match in the table row
@@ -73,12 +74,21 @@ const disposeItemInTable = async (page, itemName, opts = {}) => {
   const row = page.locator('#inventoryTable tbody tr', { hasText: itemName });
   await expect(row).toBeVisible();
 
-  const disposeBtn = row.locator('button[title="Dispose item"]');
-  await expect(disposeBtn).toBeVisible();
-  await disposeBtn.click();
+  // Click the Delete (trash) icon to open the combined Remove Item modal
+  const deleteBtn = row.locator('button[title="Delete item"]');
+  await expect(deleteBtn).toBeVisible();
+  await deleteBtn.click();
 
-  // Disposition modal should appear
-  await expect(page.locator('#dispositionModal')).toBeVisible();
+  // Remove Item modal should appear
+  await expect(page.locator('#removeItemModal')).toBeVisible();
+
+  // Enable the "Track this item as disposed" toggle
+  const disposeToggle = page.locator('#removeItemDisposeCheck');
+  await disposeToggle.check();
+  await page.waitForTimeout(300);
+
+  // Disposition fields should now be visible
+  await expect(page.locator('#removeItemDisposeFields')).toBeVisible();
 
   await page.selectOption('#dispositionType', type);
   await page.fill('#dispositionDate', date);
@@ -96,7 +106,7 @@ const disposeItemInTable = async (page, itemName, opts = {}) => {
     await page.fill('#dispositionNotes', notes);
   }
 
-  await page.locator('#dispositionSubmitBtn').click();
+  await page.locator('#removeItemDisposeBtn').click();
   await page.waitForTimeout(500);
 };
 
@@ -134,8 +144,8 @@ test.describe('Disposition Feature (STAK-72)', () => {
     // Dispose via table view
     await disposeItemInTable(page, 'Sold Eagle', { type: 'sold', amount: '650' });
 
-    // Disposition modal should close
-    await expect(page.locator('#dispositionModal')).not.toBeVisible();
+    // Remove Item modal should close
+    await expect(page.locator('#removeItemModal')).not.toBeVisible();
 
     // A toast should confirm the disposition
     await expect(page.locator('.toast')).toBeVisible({ timeout: 5000 });
@@ -241,19 +251,15 @@ test.describe('Disposition Feature (STAK-72)', () => {
   });
 
   test('Summary card shows realized gain/loss', async ({ page }) => {
+    // Ensure the realized row setting is enabled
+    await page.evaluate(() => localStorage.setItem('showRealizedGainLoss', 'true'));
+
     await addSilverItem(page, 'Summary Eagle', '500');
     await disposeItemInTable(page, 'Summary Eagle', { type: 'sold', amount: '650' });
 
-    // The disposed summary section for Silver should become visible
-    const disposedWrap = page.locator('#disposedWrapSilver');
-    await expect(disposedWrap).toBeVisible({ timeout: 5000 });
-
-    // Disposed items count should show 1
-    const disposedCount = page.locator('#disposedItemsSilver');
-    await expect(disposedCount).toContainText('1');
-
-    // Realized G/L should show the gain ($650 - $500 = $150)
+    // Realized G/L row on Silver card should show the gain ($650 - $500 = $150)
     const realizedGL = page.locator('#realizedGainLossSilver');
+    await expect(realizedGL).toBeVisible({ timeout: 5000 });
     await expect(realizedGL).toContainText('$150');
   });
 
@@ -323,5 +329,46 @@ test.describe('Disposition Feature (STAK-72)', () => {
     expect(csvContent).toContain('sold');
     expect(csvContent).toContain('750');
     expect(csvContent).toContain('250'); // realized G/L: 750 - 500
+  });
+
+  test('Settings toggle hides/shows realized G/L row', async ({ page }) => {
+    // Seed an item and dispose it so the realized row has data
+    await page.evaluate(() => localStorage.setItem('showRealizedGainLoss', 'true'));
+    await addSilverItem(page, 'Settings Eagle', '500');
+    await disposeItemInTable(page, 'Settings Eagle', { type: 'sold', amount: '800' });
+
+    // Realized row should be visible (setting is on)
+    const realizedGL = page.locator('#realizedGainLossSilver');
+    await expect(realizedGL).toBeVisible({ timeout: 5000 });
+
+    // Open Settings → Appearance → Summary Totals toggle
+    await page.locator('#settingsBtn').click();
+    const appearanceTab = page.locator('#settingsModal .settings-nav-item[data-section="appearance"]');
+    if (await appearanceTab.isVisible()) {
+      await appearanceTab.click();
+    }
+    const realizedToggle = page.locator('#settingsShowRealized');
+    await expect(realizedToggle).toBeVisible();
+
+    // Toggle OFF
+    await realizedToggle.uncheck();
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(300);
+
+    // Realized row should be hidden
+    const realizedParent = page.locator('#realizedGainLossSilver').locator('..');
+    await expect(realizedParent).not.toBeVisible();
+
+    // Re-open settings and toggle ON
+    await page.locator('#settingsBtn').click();
+    if (await appearanceTab.isVisible()) {
+      await appearanceTab.click();
+    }
+    await realizedToggle.check();
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(300);
+
+    // Realized row should be visible again
+    await expect(realizedGL).toBeVisible();
   });
 });
