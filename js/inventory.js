@@ -4185,7 +4185,7 @@ function _openThumbPopover(cell, item) {
 
   pop.innerHTML = `
     <div class="bulk-img-popover-header">
-      <span class="bulk-img-popover-title">${item.name ? item.name.slice(0, 28) + (item.name.length > 28 ? '…' : '') : 'Photos'}</span>
+      <span class="bulk-img-popover-title">${item.name ? sanitizeHtml(item.name.slice(0, 28) + (item.name.length > 28 ? '…' : '')) : 'Photos'}</span>
       <button class="bulk-img-popover-close" type="button" aria-label="Close">×</button>
     </div>
     <div class="bulk-img-popover-sides">

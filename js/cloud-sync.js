@@ -1666,12 +1666,13 @@ function _applyAndFinalize(newInventory, selectedChanges, settingsChanges, remot
   if (typeof renderActiveFilters === 'function') renderActiveFilters();
   if (typeof updateStorageStats === 'function') updateStorageStats();
 
-  // 5. Record pull metadata
-  if (typeof _previewPullMeta !== 'undefined' && _previewPullMeta) {
+  // 5. Record pull metadata — prefer explicit remoteMeta arg, fall back to global _previewPullMeta
+  var meta = remoteMeta || (typeof _previewPullMeta !== 'undefined' ? _previewPullMeta : null);
+  if (meta) {
     if (typeof syncSetLastPull === 'function') {
-      syncSetLastPull(_previewPullMeta);
+      syncSetLastPull(meta);
     }
-    _previewPullMeta = null;
+    if (typeof _previewPullMeta !== 'undefined') _previewPullMeta = null;
   }
 
   // 6. Toast summary
@@ -1758,9 +1759,17 @@ function showRestorePreviewModal(diffResult, settingsDiff, remotePayload, remote
         if (typeof DiffEngine === 'undefined' || !DiffEngine.applySelectedChanges) {
           debugLog('[CloudSync] DiffEngine not available — falling back to full overwrite');
           syncSaveOverrideBackup();
-          restoreVaultData(remotePayload);
-          updateSyncStatusIndicator('idle', 'just now');
-          if (typeof refreshSyncUI === 'function') refreshSyncUI();
+          restoreVaultData(remotePayload).then(function () {
+            updateSyncStatusIndicator('idle', 'just now');
+            if (typeof refreshSyncUI === 'function') refreshSyncUI();
+            debugLog('[CloudSync] Full overwrite restore completed via fallback');
+          }).catch(function (restoreErr) {
+            debugLog('[CloudSync] Full overwrite restore failed:', restoreErr);
+            updateSyncStatusIndicator('error', 'Restore failed');
+            if (typeof showCloudToast === 'function') {
+              showCloudToast('Restore failed: ' + (restoreErr.message || 'Unknown error'));
+            }
+          });
           return;
         }
 
@@ -1871,9 +1880,12 @@ async function _deferredVaultRestore(token, password, remoteMeta, selectedChange
 
       if (payload && payload.data) {
         // Extract remote items from the vault payload
+        // Vault stores raw localStorage strings which may be CMP1-compressed for large inventories
         var remoteItems = [];
         try {
-          remoteItems = JSON.parse(payload.data.metalInventory || '[]');
+          var rawInv = payload.data.metalInventory || '[]';
+          var decompressedInv = typeof __decompressIfNeeded === 'function' ? __decompressIfNeeded(rawInv) : rawInv;
+          remoteItems = JSON.parse(decompressedInv);
         } catch (parseErr) {
           debugLog('[CloudSync] Could not parse metalInventory from vault:', parseErr.message);
         }
@@ -1898,6 +1910,9 @@ async function _deferredVaultRestore(token, password, remoteMeta, selectedChange
 
         var localItems = typeof inventory !== 'undefined' ? inventory : [];
         var newInv = DiffEngine.applySelectedChanges(localItems, selectedChanges);
+        // Manifest-first selective apply intentionally applies inventory only.
+        // Sync-scoped settings are not restored via this path (null settingsChanges);
+        // they update only during vault-first pulls which have full payload access.
         _applyAndFinalize(newInv, selectedChanges, null, remoteMeta, { source: 'sync' });
         debugLog('[CloudSync] Deferred vault restore complete (selective apply)');
         return;

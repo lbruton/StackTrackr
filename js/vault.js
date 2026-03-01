@@ -505,6 +505,10 @@ async function vaultDecryptToData(fileBytes, password) {
  * @returns {Promise<void>}
  */
 async function vaultRestoreWithPreview(fileBytes, password) {
+  // Capture image vault file before closeVaultModal() can nullify it —
+  // the onApply callback fires later, after the vault modal is closed
+  var capturedImageFile = _vaultPendingImageFile;
+
   // 1. Decrypt without side effects
   var payload = await vaultDecryptToData(fileBytes, password);
 
@@ -519,9 +523,12 @@ async function vaultRestoreWithPreview(fileBytes, password) {
   }
 
   // 3. Extract inventory items from the payload
+  // Vault stores raw localStorage strings which may be CMP1-compressed for large inventories
   var backupItems = [];
   try {
-    backupItems = JSON.parse(payload.data.metalInventory || '[]');
+    var rawInv = payload.data.metalInventory || '[]';
+    var decompressedInv = typeof __decompressIfNeeded === 'function' ? __decompressIfNeeded(rawInv) : rawInv;
+    backupItems = JSON.parse(decompressedInv);
   } catch (e) {
     debugLog('[Vault] Could not parse metalInventory from backup:', e);
   }
@@ -547,9 +554,11 @@ async function vaultRestoreWithPreview(fileBytes, password) {
       // Only include recognized storage keys
       if (settingsKeys.indexOf(k) === -1) continue;
 
-      // Parse the remote value (vault stores raw localStorage strings)
+      // Parse the remote value (vault stores raw localStorage strings, possibly CMP1-compressed)
+      var rawSettingVal = payload.data[k];
+      var decompressedVal = typeof __decompressIfNeeded === 'function' ? __decompressIfNeeded(rawSettingVal) : rawSettingVal;
       var remoteVal;
-      try { remoteVal = JSON.parse(payload.data[k]); } catch (_e) { remoteVal = payload.data[k]; }
+      try { remoteVal = JSON.parse(decompressedVal); } catch (_e) { remoteVal = decompressedVal; }
       remoteSettings[k] = remoteVal;
 
       // Load matching local value
@@ -591,54 +600,64 @@ async function vaultRestoreWithPreview(fileBytes, password) {
       appVersion: payloadMeta.appVersion || null
     },
     onApply: function (selectedChanges) {
-      if (!selectedChanges || selectedChanges.length === 0) {
-        // Settings-only apply (no item changes selected but settings were checked)
+      try {
+        var hasItemChanges = Array.isArray(selectedChanges) && selectedChanges.length > 0;
+
+        // Apply items selectively when item changes were selected
+        if (hasItemChanges) {
+          var currentInv = (typeof inventory !== 'undefined' && Array.isArray(inventory)) ? inventory : [];
+          var newInv = DiffEngine.applySelectedChanges(currentInv, selectedChanges);
+          inventory = newInv;
+        }
+
+        // Apply settings changes (settings are all-or-nothing until DiffModal adds
+        // per-setting checkboxes — intentional, not a bug)
+        var appliedSettings = false;
         if (settingsDiff && settingsDiff.changed) {
           for (var si = 0; si < settingsDiff.changed.length; si++) {
             if (typeof saveDataSync === 'function') {
               saveDataSync(settingsDiff.changed[si].key, settingsDiff.changed[si].remoteVal);
+              appliedSettings = true;
             }
           }
         }
-        if (typeof showToast === 'function') {
-          showToast('Backup restored: settings updated');
-        }
-        return;
-      }
 
-      // Apply items selectively
-      var currentInv = (typeof inventory !== 'undefined' && Array.isArray(inventory)) ? inventory : [];
-      var newInv = DiffEngine.applySelectedChanges(currentInv, selectedChanges);
-      inventory = newInv;
+        // Save & render
+        if (typeof saveInventory === 'function') saveInventory();
+        if (typeof renderTable === 'function') renderTable();
+        if (typeof renderActiveFilters === 'function') renderActiveFilters();
+        if (typeof updateStorageStats === 'function') updateStorageStats();
 
-      // Apply checked settings
-      if (settingsDiff && settingsDiff.changed) {
-        for (var si2 = 0; si2 < settingsDiff.changed.length; si2++) {
-          if (typeof saveDataSync === 'function') {
-            saveDataSync(settingsDiff.changed[si2].key, settingsDiff.changed[si2].remoteVal);
+        // Toast summary
+        var addCount = 0, modCount = 0, delCount = 0;
+        if (hasItemChanges) {
+          for (var j = 0; j < selectedChanges.length; j++) {
+            if (selectedChanges[j].type === 'add') addCount++;
+            else if (selectedChanges[j].type === 'modify') modCount++;
+            else if (selectedChanges[j].type === 'delete') delCount++;
           }
         }
-      }
-
-      // Save & render
-      if (typeof saveInventory === 'function') saveInventory();
-      if (typeof renderTable === 'function') renderTable();
-      if (typeof renderActiveFilters === 'function') renderActiveFilters();
-      if (typeof updateStorageStats === 'function') updateStorageStats();
-
-      // Toast summary
-      var addCount = 0, modCount = 0, delCount = 0;
-      for (var j = 0; j < selectedChanges.length; j++) {
-        if (selectedChanges[j].type === 'add') addCount++;
-        else if (selectedChanges[j].type === 'modify') modCount++;
-        else if (selectedChanges[j].type === 'delete') delCount++;
-      }
-      var parts = [];
-      if (addCount > 0) parts.push(addCount + ' added');
-      if (modCount > 0) parts.push(modCount + ' updated');
-      if (delCount > 0) parts.push(delCount + ' removed');
-      if (typeof showToast === 'function') {
-        showToast('Backup restored: ' + (parts.length > 0 ? parts.join(', ') : 'no changes applied'));
+        var parts = [];
+        if (addCount > 0) parts.push(addCount + ' added');
+        if (modCount > 0) parts.push(modCount + ' updated');
+        if (delCount > 0) parts.push(delCount + ' removed');
+        if (appliedSettings && !hasItemChanges) parts.push('settings updated');
+        if (typeof showToast === 'function') {
+          showToast('Backup restored: ' + (parts.length > 0 ? parts.join(', ') : 'no changes applied'));
+        }
+        // Restore companion photo vault if present
+        if (capturedImageFile && typeof vaultDecryptAndRestoreImages === 'function') {
+          vaultDecryptAndRestoreImages(capturedImageFile, password).then(function (imgCount) {
+            debugLog('[Vault] Restored ' + imgCount + ' photo(s) from companion image vault');
+          }).catch(function (imgErr) {
+            debugLog('[Vault] Image restore failed:', imgErr);
+          });
+        }
+      } catch (applyErr) {
+        debugLog('[Vault] Restore apply failed:', applyErr);
+        if (typeof showToast === 'function') {
+          showToast('Restore failed: ' + (applyErr.message || 'Unknown error'));
+        }
       }
     },
     onCancel: function () {
