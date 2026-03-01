@@ -1661,7 +1661,7 @@ const renderTable = () => {
       const gainLossPrefix = gainLoss > 0 ? '+' : gainLoss < 0 ? '-' : '';
 
   rows.push(`
-      <tr data-idx="${originalIdx}">
+      <tr data-idx="${originalIdx}"${isDisposed(item) ? ' class="disposed-row"' : ''}>
   <td class="shrink" data-column="date" data-label="Date">${filterLink('date', item.date, 'var(--text-primary)', item.date ? formatDisplayDate(item.date) : '—')}</td>
       <td class="shrink" data-column="metal" data-label="Metal" data-metal="${escapeAttribute(item.composition || item.metal || '')}">${filterLink('metal', item.composition || item.metal || 'Silver', METAL_COLORS[item.metal] || 'var(--primary)', getDisplayComposition(item.composition || item.metal || 'Silver'))}</td>
       <td class="shrink" data-column="type" data-label="Type">${filterLink('type', item.type, getTypeColor(item.type))}</td>
@@ -1670,7 +1670,7 @@ const renderTable = () => {
         <div class="name-cell-content">
         ${featureFlags.isEnabled('COIN_IMAGES')
           ? `<span class="filter-text" style="color: var(--text-primary); cursor: pointer;" onclick="showViewModal(${originalIdx})" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' ')showViewModal(${originalIdx})" title="View ${escapeAttribute(item.name)}">${sanitizeHtml(item.name)}</span>`
-          : filterLink('name', item.name, 'var(--text-primary)', undefined, item.name)}${orderedChips}
+          : filterLink('name', item.name, 'var(--text-primary)', undefined, item.name)}${isDisposed(item) ? `<span class="disposition-badge disposition-badge--${item.disposition.type}">${DISPOSITION_TYPES[item.disposition.type]?.label || item.disposition.type}</span>` : ''}${orderedChips}
         </div>
       </td>
       <td class="shrink" data-column="qty" data-label="Qty">${filterLink('qty', item.qty, 'var(--text-primary)')}</td>
@@ -1691,6 +1691,14 @@ const renderTable = () => {
         ${formatPurchaseLocation(item.purchaseLocation)}
       </td>
       <td class="icon-col actions-cell" data-column="actions" data-label=""><div class="actions-row">
+  ${isDisposed(item) ? `
+        <button class="icon-btn action-icon" role="button" tabindex="0" onclick="undoDisposition(${originalIdx})" aria-label="Undo disposition" title="Undo disposition">
+          <svg class="icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg>
+        </button>
+        <button class="icon-btn action-icon danger" role="button" tabindex="0" onclick="deleteItem(${originalIdx})" aria-label="Delete item" title="Delete item">
+          <svg class="icon-svg delete-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 7h12v13a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V7zm3-4h6l1 1h4v2H3V4h4l1-1z"/></svg>
+        </button>
+  ` : `
         <button class="icon-btn action-icon edit-icon" role="button" tabindex="0" onclick="editItem(${originalIdx})" aria-label="Edit ${sanitizeHtml(item.name)}" title="Edit item">
           <svg class="icon-svg edit-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.22,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.67 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"/></svg>
         </button>
@@ -1700,6 +1708,7 @@ const renderTable = () => {
         <button class="icon-btn action-icon danger" role="button" tabindex="0" onclick="deleteItem(${originalIdx})" aria-label="Delete item" title="Delete item">
           <svg class="icon-svg delete-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 7h12v13a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V7zm3-4h6l1 1h4v2H3V4h4l1-1z"/></svg>
         </button>
+  `}
       </div></td>
       </tr>
       `);
@@ -1836,7 +1845,10 @@ const updateSummary = () => {
       totalMeltValue: 0,
       totalPurchased: 0,
       totalRetailValue: 0,
-      totalGainLoss: 0
+      totalGainLoss: 0,
+      disposedItems: 0,
+      realizedGainLoss: 0,
+      totalDisposedCost: 0
     };
     metalNameMap[metalConfig.name] = metalConfig.key;
   });
@@ -1847,6 +1859,15 @@ const updateSummary = () => {
     // Skip items with unknown metal types
     if (metalKey && metalTotals[metalKey]) {
       const totals = metalTotals[metalKey];
+
+      // Skip disposed items from active totals, accumulate realized G/L (STAK-72)
+      if (isDisposed(item)) {
+        const qty = Number(item.qty) || 0;
+        totals.disposedItems += qty;
+        totals.realizedGainLoss += (item.disposition?.realizedGainLoss || 0);
+        totals.totalDisposedCost += (parseFloat(item.price) || 0) * (Number(item.qty) || 0);
+        continue;
+      }
 
       const qty = Number(item.qty) || 0;
       const weight = parseFloat(item.weight) || 0;
@@ -1908,6 +1929,15 @@ const updateSummary = () => {
       const avgCost = totals.totalWeight > 0 ? totals.totalPurchased / totals.totalWeight : 0;
       els.avgCostPerOz.textContent = formatCurrency(avgCost);
     }
+
+    // Realized G/L — always visible on every card (STAK-72)
+    const realizedGlEl = document.getElementById(`realizedGainLoss${metalConfig.name}`);
+    if (realizedGlEl) {
+      const rgl = totals.realizedGainLoss || 0;
+      const rglPct = totals.totalDisposedCost > 0 ? (rgl / totals.totalDisposedCost) * 100 : 0;
+      // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml
+      realizedGlEl.innerHTML = rgl === 0 ? '$0.00' : formatLossProfit(rgl, rglPct);
+    }
   });
 
   // Calculate combined totals for all metals
@@ -1917,7 +1947,10 @@ const updateSummary = () => {
     totalMeltValue: 0,
     totalPurchased: 0,
     totalRetailValue: 0,
-    totalGainLoss: 0
+    totalGainLoss: 0,
+    disposedItems: 0,
+    realizedGainLoss: 0,
+    totalDisposedCost: 0
   };
 
   Object.values(metalTotals).forEach(totals => {
@@ -1927,6 +1960,9 @@ const updateSummary = () => {
     allTotals.totalPurchased += totals.totalPurchased;
     allTotals.totalRetailValue += totals.totalRetailValue;
     allTotals.totalGainLoss += totals.totalGainLoss;
+    allTotals.disposedItems += totals.disposedItems;
+    allTotals.realizedGainLoss += totals.realizedGainLoss;
+    allTotals.totalDisposedCost += totals.totalDisposedCost;
   });
 
   // Update "All" totals display if elements exist
@@ -1953,25 +1989,132 @@ const updateSummary = () => {
       elements.totals.all.avgCostPerOz.textContent = formatCurrency(avgCost);
     }
   }
+
+  // Realized G/L — always visible on "All" card (STAK-72)
+  const allRealizedGl = document.getElementById('realizedGainLossAll');
+  if (allRealizedGl) {
+    const rgl = allTotals.realizedGainLoss || 0;
+    const rglPct = allTotals.totalDisposedCost > 0 ? (rgl / allTotals.totalDisposedCost) * 100 : 0;
+    // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml
+    allRealizedGl.innerHTML = rgl === 0 ? '$0.00' : formatLossProfit(rgl, rglPct);
+  }
+
+  // Respect show/hide realized setting (STAK-72)
+  const showRealized = loadDataSync(SHOW_REALIZED_KEY, 'true') !== 'false';
+  applyRealizedVisibility(showRealized);
 };
 
 /**
- * Deletes inventory item at specified index after confirmation
- * 
- * @param {number} idx - Index of item to delete
+ * Opens the combined Remove Item modal (STAK-72).
+ * Handles both delete and dispose flows via checkbox toggle.
+ *
+ * @param {number} idx - Index of item to remove
+ * @param {boolean} [preDispose=false] - Pre-check the dispose checkbox
  */
-const deleteItem = async (idx) => {
+const openRemoveItemModal = (idx, preDispose = false) => {
   const item = inventory[idx];
-  const itemLabel = item ? item.name : 'this item';
-  const confirmed = typeof showAppConfirm === 'function'
-    ? await showAppConfirm(`Delete ${itemLabel}?\n\nThis can be undone from the Activity Log.`, 'Delete Item')
-    : false;
-  if (confirmed) {
+  if (!item) return;
+
+  const idxInput = document.getElementById('removeItemIdx');
+  if (idxInput) idxInput.value = idx;
+
+  const nameEl = document.getElementById('removeItemName');
+  if (nameEl) nameEl.textContent = item.name || 'Unnamed item';
+
+  const checkbox = document.getElementById('removeItemDisposeCheck');
+  const fieldsWrap = document.getElementById('removeItemDisposeFields');
+  const deleteBtn = document.getElementById('removeItemDeleteBtn');
+  const disposeBtn = document.getElementById('removeItemDisposeBtn');
+
+  // Reset disposition fields
+  const typeSelect = document.getElementById('dispositionType');
+  if (typeSelect) typeSelect.value = 'sold';
+  const dateInput = document.getElementById('dispositionDate');
+  if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+  const amountInput = document.getElementById('dispositionAmount');
+  if (amountInput) amountInput.value = '';
+  const recipientInput = document.getElementById('dispositionRecipient');
+  if (recipientInput) recipientInput.value = '';
+  const notesInput = document.getElementById('dispositionNotes');
+  if (notesInput) notesInput.value = '';
+  const amountGroup = document.getElementById('dispositionAmountGroup');
+  if (amountGroup) amountGroup.style.display = '';
+
+  // Set checkbox state and toggle fields/buttons
+  if (checkbox) checkbox.checked = preDispose;
+  if (fieldsWrap) fieldsWrap.style.display = preDispose ? '' : 'none';
+  if (deleteBtn) deleteBtn.style.display = preDispose ? 'none' : '';
+  if (disposeBtn) disposeBtn.style.display = preDispose ? '' : 'none';
+
+  openModalById('removeItemModal');
+};
+
+const deleteItem = (idx) => {
+  openRemoveItemModal(idx, false);
+};
+
+const disposeItem = (idx) => {
+  const item = inventory[idx];
+  if (!item || isDisposed(item)) return;
+  openRemoveItemModal(idx, true);
+};
+
+/**
+ * Confirms removal from the combined Remove Item modal (STAK-72).
+ * Reads checkbox state to decide between plain delete and disposition.
+ */
+const confirmRemoveItem = () => {
+  const idxInput = document.getElementById('removeItemIdx');
+  const idx = parseInt(idxInput?.value, 10);
+  if (isNaN(idx) || !inventory[idx]) return;
+
+  const item = inventory[idx];
+  const checkbox = document.getElementById('removeItemDisposeCheck');
+  const isDispose = checkbox?.checked;
+
+  if (isDispose) {
+    // Disposition flow — validate fields
+    const type = document.getElementById('dispositionType')?.value;
+    const date = document.getElementById('dispositionDate')?.value;
+    const amount = parseFloat(document.getElementById('dispositionAmount')?.value) || 0;
+    const recipient = document.getElementById('dispositionRecipient')?.value?.trim() || '';
+    const notes = document.getElementById('dispositionNotes')?.value?.trim() || '';
+
+    if (!type || !DISPOSITION_TYPES[type]) {
+      showToast('Please select a disposition type.');
+      return;
+    }
+    if (DISPOSITION_TYPES[type].requiresAmount && amount <= 0) {
+      showToast('Please enter a sale/trade/refund amount.');
+      return;
+    }
+    if (!date) {
+      showToast('Please enter a disposition date.');
+      return;
+    }
+
+    const purchaseTotal = (parseFloat(item.price) || 0) * (Number(item.qty) || 1);
+    const realizedGainLoss = amount - purchaseTotal;
+
+    const disposition = {
+      type, date, amount,
+      currency: (typeof displayCurrency !== 'undefined' ? displayCurrency : 'USD'),
+      recipient, notes,
+      realizedGainLoss,
+      disposedAt: new Date().toISOString()
+    };
+
+    inventory[idx].disposition = disposition;
+    saveInventory();
+    closeModalById('removeItemModal');
+    logChange(item.name, 'Disposed', '', JSON.stringify(disposition), idx);
+    showToast(`${item.name} marked as ${DISPOSITION_TYPES[type].label.toLowerCase()}.`);
+  } else {
+    // Plain delete flow
     inventory.splice(idx, 1);
     saveInventory();
-    renderTable();
-    renderActiveFilters();
-    if (item) logChange(item.name, 'Deleted', JSON.stringify(item), '', idx);
+    closeModalById('removeItemModal');
+    logChange(item.name, 'Deleted', JSON.stringify(item), '', idx);
 
     // Clean up user images from IndexedDB (STAK-120)
     if (item?.uuid && window.imageCache?.isAvailable()) {
@@ -1984,6 +2127,34 @@ const deleteItem = async (idx) => {
     if (item?.uuid && typeof deleteItemTags === 'function') {
       deleteItemTags(item.uuid);
     }
+  }
+
+  renderTable();
+  renderActiveFilters();
+  updateSummary();
+};
+
+/**
+ * Restores a disposed item back to active inventory after
+ * user confirmation (STAK-72).
+ *
+ * @param {number} idx - Index of item to restore
+ */
+const undoDisposition = async (idx) => {
+  const item = inventory[idx];
+  if (!item || !isDisposed(item)) return;
+  const confirmed = typeof showAppConfirm === 'function'
+    ? await showAppConfirm(`Restore "${item.name}" to active inventory?`, 'Undo Disposition')
+    : false;
+  if (confirmed) {
+    const oldDisposition = JSON.stringify(item.disposition);
+    inventory[idx].disposition = null;
+    saveInventory();
+    logChange(item.name, 'Disposition Undone', oldDisposition, '', idx);
+    showToast(`${item.name} restored to active inventory.`);
+    renderTable();
+    renderActiveFilters();
+    updateSummary();
   }
 };
 
@@ -2308,9 +2479,11 @@ const editItem = (idx, logIdx = null) => {
     else if (urlInputWrap) urlInputWrap.style.display = 'none';
   });
 
-  // Show clone/view buttons in edit mode (STAK-173)
+  // Show clone/view/remove buttons in edit mode (STAK-173, STAK-72)
   if (elements.cloneItemBtn) elements.cloneItemBtn.style.display = '';
   if (elements.viewItemFromEditBtn) elements.viewItemFromEditBtn.style.display = '';
+  const deleteFromEditBtn = document.getElementById('deleteFromEditBtn');
+  if (deleteFromEditBtn) deleteFromEditBtn.style.display = '';
 
   // Populate Numista Data fields: item data first, API cache as fallback (STAK-173)
   populateNumistaDataFields(item.numistaId || item.catalog || '', item.numistaData);
@@ -3153,7 +3326,8 @@ const exportCsv = () => {
     "Date","Metal","Type","Name","Year","Qty","Weight(oz)","Weight Unit","Purity",
     "Purchase Price","Melt Value","Retail Price","Gain/Loss",
     "Purchase Location","N#","PCGS #","Grade","Grading Authority","Cert #","Serial Number","Notes","UUID",
-    "Obverse Image URL","Reverse Image URL"
+    "Obverse Image URL","Reverse Image URL",
+    "Disposition Type","Disposition Date","Disposition Amount","Realized Gain/Loss"
   ];
 
   const sortedInventory = sortInventoryByDateNewestFirst();
@@ -3192,7 +3366,11 @@ const exportCsv = () => {
       i.notes || '',
       i.uuid || '',
       i.obverseImageUrl || '',
-      i.reverseImageUrl || ''
+      i.reverseImageUrl || '',
+      i.disposition ? (DISPOSITION_TYPES[i.disposition.type]?.label || i.disposition.type) : '',
+      i.disposition?.date || '',
+      i.disposition ? (i.disposition.amount || 0) : '',
+      i.disposition ? (i.disposition.realizedGainLoss || 0) : ''
     ]);
   }
 
@@ -3646,6 +3824,18 @@ const exportPdf = () => {
   // Save PDF
   doc.save(`metal_inventory_${new Date().toISOString().slice(0,10).replace(/-/g,'')}.pdf`);
 };
+/**
+ * Show or hide the "Realized:" row on all summary cards (STAK-72).
+ * Called from settings toggle and on page load.
+ */
+const applyRealizedVisibility = (show) => {
+  const metals = ['Silver', 'Gold', 'Platinum', 'Palladium', 'All'];
+  metals.forEach(m => {
+    const el = document.getElementById(`realizedGainLoss${m}`);
+    if (el && el.parentElement) el.parentElement.style.display = show ? '' : 'none';
+  });
+};
+
 // =============================================================================
 // Expose inventory actions globally for inline event handlers
 window.importCsv = importCsv;
@@ -3654,12 +3844,17 @@ window.importJson = importJson;
 window.exportJson = exportJson;
 window.exportPdf = exportPdf;
 window.updateSummary = updateSummary;
+window.applyRealizedVisibility = applyRealizedVisibility;
 window.toggleGlobalPriceView = toggleGlobalPriceView;
 window.editItem = editItem;
 window.duplicateItem = duplicateItem;
 window.cloneItem = cloneItem;
 window.populateNumistaDataFields = populateNumistaDataFields;
 window.deleteItem = deleteItem;
+window.disposeItem = disposeItem;
+window.openRemoveItemModal = openRemoveItemModal;
+window.confirmRemoveItem = confirmRemoveItem;
+window.undoDisposition = undoDisposition;
 window.showNotes = showNotes;
 
 /**
