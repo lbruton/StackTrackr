@@ -687,6 +687,15 @@ const setupSearchAndChipListeners = () => {
   if (typeof wireChipSortToggle === 'function') {
     wireChipSortToggle('chipSortOrder', 'settingsChipSortOrder');
   }
+
+  // Show Disposed toggle (STAK-72)
+  const showDisposedToggle = document.getElementById('showDisposedToggle');
+  if (showDisposedToggle) {
+    showDisposedToggle.addEventListener('change', () => {
+      if (typeof renderTable === 'function') renderTable();
+      if (typeof renderActiveFilters === 'function') renderActiveFilters();
+    });
+  }
 };
 
 /**
@@ -972,7 +981,7 @@ const parseItemFormFields = (isEditing, existingItem) => {
     storageLocation: elements.storageLocation.value.trim(),
     serialNumber: elements.itemSerialNumber?.value?.trim() ?? '',
     notes: elements.itemNotes.value.trim(),
-    date: document.getElementById('itemDateNA')?.checked ? '' : (elements.itemDate.value || (isEditing ? (existingItem.date || '') : todayStr())),
+    date: elements.itemDateNABtn?.classList.contains('active') ? '' : (elements.itemDate.value || (isEditing ? (existingItem.date || '') : todayStr())),
     catalog: elements.itemCatalog ? elements.itemCatalog.value.trim() : '',
     year: elements.itemYear?.value?.trim() ?? '',
     grade: elements.itemGrade?.value?.trim() ?? '',
@@ -1091,6 +1100,7 @@ const commitItemToInventory = (f, isEditing, editIdx) => {
       ...buildItemFields(f),
       numistaId: f.catalog,
       numistaData: f.numistaData,
+      fieldMeta: oldItem.fieldMeta || f.numistaData?.fieldMeta || undefined,
       currency: f.currency,
       // STAK-308: Use nullish coalescing — empty string is intentional (user cleared URL)
       obverseImageUrl: f.obverseImageUrl !== '' ? (f.obverseImageUrl || window.selectedNumistaResult?.imageUrl || '') : '',
@@ -1099,6 +1109,22 @@ const commitItemToInventory = (f, isEditing, editIdx) => {
       reverseSharedImageId: oldItem.reverseSharedImageId || null,
       ignorePatternImages: f.ignorePatternImages || false,
     };
+
+    // Track user-modified fields by comparing old vs new values
+    if (typeof window.markUserModified === 'function') {
+      const cur = inventory[editIdx];
+      const trackedFields = ['metal', 'composition', 'name', 'qty', 'type', 'weight',
+        'weightUnit', 'price', 'marketValue', 'date', 'purchaseLocation',
+        'storageLocation', 'serialNumber', 'notes', 'year', 'grade',
+        'gradingAuthority', 'certNumber', 'pcgsNumber', 'purity',
+        'country', 'denomination', 'shape', 'diameter', 'thickness',
+        'orientation', 'description', 'technique'];
+      for (const field of trackedFields) {
+        if (oldItem[field] !== cur[field]) {
+          window.markUserModified(cur, field);
+        }
+      }
+    }
 
     addCompositionOption(f.composition);
 
@@ -1155,6 +1181,7 @@ const commitItemToInventory = (f, isEditing, editIdx) => {
       uuid: generateUUID(),
       numistaId: f.catalog,
       numistaData: f.numistaData,
+      fieldMeta: window.selectedNumistaResult?.fieldMeta || f.numistaData?.fieldMeta || undefined,
       currency: f.currency,
       obverseImageUrl: f.obverseImageUrl !== '' ? (f.obverseImageUrl || window.selectedNumistaResult?.imageUrl || '') : '',
       reverseImageUrl: f.reverseImageUrl !== '' ? (f.reverseImageUrl || window.selectedNumistaResult?.reverseImageUrl || '') : '',
@@ -1238,6 +1265,11 @@ const setupItemFormListeners = () => {
         const isEditing = editingIndex !== null;
         const existingItem = isEditing ? { ...inventory[editingIndex] } : {};
 
+        // Clone mode: clear unchecked fields BEFORE parsing so they aren't saved
+        if (window._cloneMode && typeof clearUncheckedCloneFields === 'function') {
+          clearUncheckedCloneFields();
+        }
+
         const fields = parseItemFormFields(isEditing, existingItem);
         const error = validateItemFields(fields);
         if (error) { appAlert(error); return; }
@@ -1245,6 +1277,37 @@ const setupItemFormListeners = () => {
         // Capture index before commit — commitItemToInventory nulls editingIndex
         const savedEditIdx = editingIndex;
         commitItemToInventory(fields, isEditing, editingIndex);
+
+        // Clone mode handling — intercept post-commit flow (STAK-375)
+        if (window._cloneMode) {
+          const newItem = inventory[inventory.length - 1];
+          // Copy tags from source to new clone (if tags checkbox is checked)
+          if (typeof getItemTags === 'function' && typeof addItemTag === 'function' && typeof saveItemTags === 'function' && window._cloneSourceItem?.uuid) {
+            const sourceTags = getItemTags(window._cloneSourceItem.uuid) || [];
+            if (Array.isArray(sourceTags) && sourceTags.length > 0 && typeof isCloneFieldChecked === 'function' && isCloneFieldChecked('tags')) {
+              sourceTags.forEach(tag => addItemTag(newItem.uuid, tag, false));
+              saveItemTags();
+            }
+          }
+
+          window._cloneSessionCount++;
+          window._cloneDirty = true;
+          if (typeof updateCloneCounter === 'function') updateCloneCounter();
+
+          // Clear spot lookup hidden field
+          if (elements.itemSpotPrice) elements.itemSpotPrice.value = '';
+
+          if (window._cloneSaveAndClose) {
+            window._cloneSaveAndClose = true; // Reset default for next session
+            if (typeof exitCloneMode === 'function') exitCloneMode(true); // silent — don't re-open edit
+            // Fall through to normal close logic below
+          } else {
+            // Save & Clone Another — reset unchecked fields, stay open
+            window._cloneSaveAndClose = true; // Reset default for Enter-key safety
+            if (typeof resetUncheckedCloneFields === 'function') resetUncheckedCloneFields();
+            return; // Don't close modal, don't reset form
+          }
+        }
 
         // Save user-uploaded image if pending (STACK-32)
         // Pattern toggle: promote images to a pattern rule instead of (or in addition to) per-item save
@@ -1372,6 +1435,11 @@ const setupItemFormListeners = () => {
   const closeItemModal = (e) => {
     if (e && typeof e.preventDefault === 'function') e.preventDefault();
     if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+    // In clone mode, "Back" returns to edit mode instead of closing (STAK-375)
+    if (window._cloneMode && typeof exitCloneMode === 'function') {
+      exitCloneMode();
+      return;
+    }
     // Dismiss any open autocomplete dropdowns (BUG-002/003)
     if (typeof dismissAllAutocompletes === 'function') dismissAllAutocompletes();
     try { if (typeof closeModalById === 'function') closeModalById('itemModal'); } catch(closeErr) {}
@@ -1448,47 +1516,6 @@ const setupItemFormListeners = () => {
         });
       }
     });
-    const refreshImageUrlsBtnEl = document.getElementById('refreshImageUrlsBtn');
-    if (refreshImageUrlsBtnEl) refreshImageUrlsBtnEl.style.display = '';
-  }
-
-  // Refresh image URLs button — bypasses SW cache, fetches direct from Numista
-  const refreshImageUrlsBtn = document.getElementById('refreshImageUrlsBtn');
-  if (refreshImageUrlsBtn) {
-    safeAttachListener(refreshImageUrlsBtn, 'click', async () => {
-      const catalogId = (elements.itemCatalog?.value || '').trim();
-      if (!catalogId) {
-        appAlert('Enter a Numista # first.');
-        return;
-      }
-      refreshImageUrlsBtn.disabled = true;
-      refreshImageUrlsBtn.title = 'Fetching…';
-      try {
-        const config = typeof catalogConfig !== 'undefined' ? catalogConfig.getNumistaConfig() : null;
-        if (!config?.apiKey) {
-          appAlert('Numista API key not configured.');
-          return;
-        }
-        const url = `https://api.numista.com/v3/types/${catalogId}?lang=en`;
-        const resp = await fetch(url, {
-          headers: { 'Numista-API-Key': config.apiKey, 'Content-Type': 'application/json' },
-          cache: 'no-cache',
-        });
-        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-        const data = await resp.json();
-        const obv = data.obverse_thumbnail || data.obverse?.thumbnail || '';
-        const rev = data.reverse_thumbnail || data.reverse?.thumbnail || '';
-        if (elements.itemObverseImageUrl) elements.itemObverseImageUrl.value = obv;
-        if (elements.itemReverseImageUrl) elements.itemReverseImageUrl.value = rev;
-        if (!obv && !rev) appAlert('No image URLs returned by Numista for this item.');
-      } catch (err) {
-        console.error('Image URL refresh failed:', err);
-        appAlert('Failed to fetch image URLs: ' + err.message);
-      } finally {
-        refreshImageUrlsBtn.disabled = false;
-        refreshImageUrlsBtn.title = 'Fetch image URLs from Numista API (bypasses cache)';
-      }
-    }, 'Refresh image URLs button');
   }
 
   // IMAGE UPLOAD BUTTONS — Obverse + Reverse (STACK-32/33)
@@ -1853,21 +1880,36 @@ const setupItemFormListeners = () => {
     );
   }
 
-  // CLONE ITEM BUTTON — duplicate current item as new entry (STAK-173)
+  // CLONE ITEM BUTTON — enter clone mode on the edit modal (STAK-375)
   if (elements.cloneItemBtn) {
     safeAttachListener(
       elements.cloneItemBtn,
       "click",
       () => {
-        if (typeof editingIndex === 'number' && editingIndex >= 0 && typeof duplicateItem === 'function') {
-          const modal = document.getElementById('itemModal');
-          if (modal) modal.style.display = 'none';
-          duplicateItem(editingIndex);
+        if (typeof editingIndex === 'number' && editingIndex >= 0 && typeof enterCloneMode === 'function') {
+          enterCloneMode(editingIndex);
         }
       },
       "Clone item button",
     );
   }
+
+  // SAVE & CLONE ANOTHER BUTTON — submit form, stay in clone mode (STAK-375)
+  if (elements.cloneItemSaveAnotherBtn) {
+    safeAttachListener(
+      elements.cloneItemSaveAnotherBtn,
+      "click",
+      () => {
+        window._cloneSaveAndClose = false;
+        if (elements.inventoryForm) elements.inventoryForm.requestSubmit();
+      },
+      "Save & clone another button",
+    );
+  }
+
+  // SAVE & CLOSE IN CLONE MODE — _cloneSaveAndClose defaults to true, so
+  // Enter-key and submit-button clicks both route to Save & Close.
+  // Only the "Save & Clone Another" button sets it to false before requestSubmit().
 
   // VIEW ITEM BUTTON — open view modal from edit mode (STAK-173)
   if (elements.viewItemFromEditBtn) {
@@ -1876,8 +1918,12 @@ const setupItemFormListeners = () => {
       "click",
       () => {
         if (typeof editingIndex === 'number' && editingIndex >= 0 && typeof showViewModal === 'function') {
-          const modal = document.getElementById('itemModal');
-          if (modal) modal.style.display = 'none';
+          if (typeof closeModalById === 'function') closeModalById('itemModal');
+          else {
+            const modal = document.getElementById('itemModal');
+            if (modal) modal.style.display = 'none';
+            document.body.style.overflow = '';
+          }
           showViewModal(editingIndex);
         }
       },
@@ -1899,19 +1945,20 @@ const setupItemFormListeners = () => {
     );
   }
 
-  // ESTIMATE RETAIL FROM SPOT — toggle modifier field (STAK-173)
-  const itemDateNA = document.getElementById("itemDateNA");
-  if (itemDateNA && elements.itemDate) {
+  // DATE N/A TOGGLE BUTTON (STAK-375)
+  if (elements.itemDateNABtn && elements.itemDate) {
     safeAttachListener(
-      itemDateNA,
-      "change",
+      elements.itemDateNABtn,
+      "click",
       () => {
-        elements.itemDate.disabled = itemDateNA.checked;
-        if (itemDateNA.checked) {
+        const isActive = elements.itemDateNABtn.classList.toggle('active');
+        elements.itemDateNABtn.setAttribute('aria-pressed', isActive);
+        elements.itemDate.disabled = isActive;
+        if (isActive) {
           elements.itemDate.value = "";
         }
       },
-      "Date N/A checkbox",
+      "Date N/A toggle button",
     );
   }
 
@@ -2111,6 +2158,62 @@ const setupSpotPriceListeners = () => {
     },
     true,
   );
+
+  // Long-press handler for mobile inline spot price editing (STAK-285)
+  // Mirrors shift+click behavior: hold 600ms on spot price to open manual input
+  let _spotLongPressTimer = null;
+  let _spotLongPressFired = false;
+
+  document.addEventListener("touchstart", (e) => {
+    const valueEl = e.target.closest(".spot-card-value");
+    if (!valueEl) return;
+    // Clear any existing timer to prevent orphaned timeouts on rapid re-touch
+    if (_spotLongPressTimer) { clearTimeout(_spotLongPressTimer); _spotLongPressTimer = null; }
+    _spotLongPressFired = false;
+    _spotLongPressTimer = setTimeout(() => {
+      _spotLongPressFired = true;
+      _spotLongPressTimer = null;
+      const card = valueEl.closest(".spot-card");
+      if (!card || !card.dataset.metal) return;
+      if (typeof startSpotInlineEdit === "function") {
+        startSpotInlineEdit(valueEl, card.dataset.metal);
+      }
+    }, 600);
+  }, { passive: false });
+
+  // Suppress context menu during long-press (preventDefault inside setTimeout is stale)
+  document.addEventListener("contextmenu", (e) => {
+    if (_spotLongPressFired || _spotLongPressTimer) {
+      e.preventDefault();
+    }
+  });
+
+  document.addEventListener("touchend", (e) => {
+    if (_spotLongPressTimer) {
+      clearTimeout(_spotLongPressTimer);
+      _spotLongPressTimer = null;
+    }
+    // Suppress the click/tap that follows a successful long-press
+    if (_spotLongPressFired) {
+      e.preventDefault();
+      _spotLongPressFired = false;
+    }
+  }, { passive: false });
+
+  document.addEventListener("touchmove", () => {
+    if (_spotLongPressTimer) {
+      clearTimeout(_spotLongPressTimer);
+      _spotLongPressTimer = null;
+    }
+  }, { passive: true });
+
+  // Cancel long-press when browser cancels the gesture (e.g., incoming call, scroll takeover)
+  document.addEventListener("touchcancel", () => {
+    if (_spotLongPressTimer) {
+      clearTimeout(_spotLongPressTimer);
+      _spotLongPressTimer = null;
+    }
+  }, { passive: true });
 
 };
 
@@ -2609,9 +2712,8 @@ const setupSearch = () => {
           // Hide clone/view buttons in add mode (STAK-173)
           if (elements.cloneItemBtn) elements.cloneItemBtn.style.display = 'none';
           if (elements.viewItemFromEditBtn) elements.viewItemFromEditBtn.style.display = 'none';
-          // Reset date N/A checkbox
-          const addDateNA = document.getElementById('itemDateNA');
-          if (addDateNA) { addDateNA.checked = false; }
+          // Reset date N/A toggle button
+          if (elements.itemDateNABtn) { elements.itemDateNABtn.classList.remove('active'); elements.itemDateNABtn.setAttribute('aria-pressed', 'false'); }
           if (elements.itemDate) elements.itemDate.disabled = false;
           // Reset estimate retail checkbox
           if (elements.estimateRetailFromSpot) elements.estimateRetailFromSpot.checked = false;
@@ -3101,6 +3203,96 @@ function handleAdvancedSavePassword() {
   }
 }
 window.handleAdvancedSavePassword = handleAdvancedSavePassword;
+
+// =============================================================================
+// Remove Item modal event listeners (STAK-72)
+// =============================================================================
+
+// Checkbox toggles disposition fields + footer buttons
+const removeItemDisposeCheck = document.getElementById('removeItemDisposeCheck');
+if (removeItemDisposeCheck) {
+  removeItemDisposeCheck.addEventListener('change', () => {
+    const checked = removeItemDisposeCheck.checked;
+    const fields = document.getElementById('removeItemDisposeFields');
+    const deleteBtn = document.getElementById('removeItemDeleteBtn');
+    const disposeBtn = document.getElementById('removeItemDisposeBtn');
+    if (fields) fields.style.display = checked ? '' : 'none';
+    if (deleteBtn) deleteBtn.style.display = checked ? 'none' : '';
+    if (disposeBtn) disposeBtn.style.display = checked ? '' : 'none';
+  });
+}
+
+// Delete button (plain delete, no disposition)
+const removeItemDeleteBtn = document.getElementById('removeItemDeleteBtn');
+if (removeItemDeleteBtn) {
+  removeItemDeleteBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (typeof confirmRemoveItem === 'function') confirmRemoveItem();
+  });
+}
+
+// Dispose button (disposition flow)
+const removeItemDisposeBtn = document.getElementById('removeItemDisposeBtn');
+if (removeItemDisposeBtn) {
+  removeItemDisposeBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (typeof confirmRemoveItem === 'function') confirmRemoveItem();
+  });
+}
+
+// Disposition type changes show/hide amount field
+const dispositionTypeSelect = document.getElementById('dispositionType');
+if (dispositionTypeSelect) {
+  dispositionTypeSelect.addEventListener('change', () => {
+    const typeInfo = DISPOSITION_TYPES[dispositionTypeSelect.value];
+    const amountGroup = document.getElementById('dispositionAmountGroup');
+    if (amountGroup) amountGroup.style.display = typeInfo?.requiresAmount ? '' : 'none';
+    if (!typeInfo || !typeInfo.requiresAmount) {
+      const amountInput = document.getElementById('dispositionAmount');
+      if (amountInput) amountInput.value = '';
+    }
+  });
+}
+
+// Delete/dispose from edit modal — close edit modal, open remove item modal
+const deleteFromEditBtn = document.getElementById('deleteFromEditBtn');
+if (deleteFromEditBtn) {
+  deleteFromEditBtn.addEventListener('click', () => {
+    const idx = typeof editingIndex !== 'undefined' ? editingIndex : null;
+    if (idx === null || idx === undefined) return;
+    closeModalById('itemModal');
+    if (typeof openRemoveItemModal === 'function') openRemoveItemModal(idx, false);
+  });
+}
+
+// Activity Log link inside remove-item modal
+const removeItemOpenLog = document.getElementById('removeItemOpenLog');
+if (removeItemOpenLog) {
+  removeItemOpenLog.addEventListener('click', (e) => {
+    e.preventDefault();
+    closeModalById('removeItemModal');
+    if (typeof openModalById === 'function') openModalById('changeLogModal');
+  });
+}
+
+// =============================================================================
+// Summary Totals — show/hide realized G/L row (STAK-72)
+// =============================================================================
+
+const settingsShowRealized = document.getElementById('settingsShowRealized');
+if (settingsShowRealized) {
+  // Initialize from stored preference (default: true — show realized)
+  const stored = loadDataSync(SHOW_REALIZED_KEY, 'true');
+  const showRealized = stored !== 'false';
+  settingsShowRealized.checked = showRealized;
+  applyRealizedVisibility(showRealized);
+
+  settingsShowRealized.addEventListener('change', () => {
+    const show = settingsShowRealized.checked;
+    saveData(SHOW_REALIZED_KEY, show ? 'true' : 'false');
+    applyRealizedVisibility(show);
+  });
+}
 
 // =============================================================================
 

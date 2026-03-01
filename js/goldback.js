@@ -284,6 +284,24 @@ const fetchGoldbackApiPrices = async () => {
   return { ok: true, g1_usd: g1 };
 };
 
+/**
+ * Returns the Goldback vendor reference price for a goldback slug.
+ * @param {string} slug - e.g. "goldback-oklahoma-g1"
+ * @returns {{ price: number, updatedAt: number, isStale: boolean, source: string } | null}
+ */
+const getGoldbackVendorPrice = (slug) => {
+  if (!slug || !slug.startsWith("goldback-")) return null;
+  const denomMatch = slug.match(/g([\d.]+)$/);
+  if (!denomMatch) return null;
+  const denomKey = denomMatch[1]; // "1", "5", "25", etc.
+  if (!goldbackPrices || !goldbackPrices[denomKey]) return null;
+  const entry = goldbackPrices[denomKey];
+  if (entry.price == null) return null;
+  const STALE_MS = 25 * 60 * 60 * 1000; // 25 hours
+  const isStale = !entry.updatedAt || (Date.now() - entry.updatedAt) > STALE_MS;
+  return { price: entry.price, updatedAt: entry.updatedAt, isStale, source: "goldback.com" };
+};
+
 // =============================================================================
 // GOLDBACK PRICE HISTORY MODAL
 // =============================================================================
@@ -477,6 +495,7 @@ if (typeof window !== 'undefined') {
   window.getGoldbackDenominationPrice = getGoldbackDenominationPrice;
   window.isGoldbackPricingActive = isGoldbackPricingActive;
   window.fetchGoldbackApiPrices = fetchGoldbackApiPrices;
+  window.getGoldbackVendorPrice = getGoldbackVendorPrice;
   window.showGoldbackHistoryModal = showGoldbackHistoryModal;
   window.hideGoldbackHistoryModal = hideGoldbackHistoryModal;
   window.exportGoldbackHistory = exportGoldbackHistory;

@@ -7,7 +7,9 @@ const DEV_MODE = false; // Set to true during development — bypasses all cachi
 
 
 
-const CACHE_NAME = 'staktrakr-v3.33.00-b1772106603';
+
+const CACHE_NAME = 'staktrakr-v3.33.19-b1772403473';
+
 
 
 
@@ -30,6 +32,7 @@ const CORE_ASSETS = [
   './js/file-protocol-fix.js',
   './js/debug-log.js',
   './js/constants.js',
+  './js/field-meta.js',
   './js/state.js',
   './js/utils.js',
   './js/dialogs.js',
@@ -44,6 +47,7 @@ const CORE_ASSETS = [
   './js/versionCheck.js',
   './js/changeLog.js',
   './js/diff-engine.js',
+  './js/diff-modal.js',
   './js/charts.js',
   './js/theme.js',
   './js/search.js',
@@ -81,6 +85,7 @@ const CORE_ASSETS = [
   './js/settings.js',
   './js/settings-listeners.js',
   './js/bulkEdit.js',
+  './js/clone-picker.js',
   './js/events.js',
   './js/init.js',
   './data/spot-history-bundle.js',
@@ -154,6 +159,9 @@ self.addEventListener('fetch', (event) => {
 
   // Never cache OAuth callback — must always hit network for fresh code
   if (url.pathname.includes('oauth-callback')) return;
+
+  // Skip wiki pages — Docsify handles its own routing
+  if (url.pathname.startsWith('/wiki/')) return;
 
   // Network-first for API calls (spot prices, catalog lookups)
   if (API_HOSTS.some((host) => url.hostname === host)) {

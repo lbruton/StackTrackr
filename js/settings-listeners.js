@@ -1086,9 +1086,14 @@ const _cloudBackupWithCachedPw = (provider, password, btn) =>
  */
 const _cloudRestoreWithCachedPw = async (provider, password, fileBytes) => {
   try {
-    await vaultDecryptAndRestore(fileBytes, password);
-    if (typeof showCloudToast === 'function') showCloudToast('Restore complete. Reloading\u2026');
-    setTimeout(function () { location.reload(); }, 1200);
+    if (typeof vaultRestoreWithPreview === 'function') {
+      await vaultRestoreWithPreview(fileBytes, password);
+      // DiffModal now showing (or fallback applied if unavailable)
+    } else {
+      await vaultDecryptAndRestore(fileBytes, password);
+      if (typeof showCloudToast === 'function') showCloudToast('Restore complete. Reloading\u2026');
+      setTimeout(function () { location.reload(); }, 1200);
+    }
   } catch (err) {
     appAlert('Decryption failed. Opening password prompt.');
     openVaultModal('cloud-import', {
@@ -1101,6 +1106,14 @@ const _cloudRestoreWithCachedPw = async (provider, password, fileBytes) => {
 const bindCloudStorageListeners = () => {
   var panel = document.getElementById('inventoryCloudSection') || document.getElementById('settingsPanel_cloud');
   if (!panel) return;
+
+  // Backup history depth selector
+  var historySelect = safeGetElement('cloudBackupHistoryDepth');
+  if (historySelect) {
+    historySelect.addEventListener('change', function () {
+      saveData(CLOUD_BACKUP_HISTORY_KEY, historySelect.value);
+    });
+  }
 
   bindCloudCacheListeners();
 

@@ -20,6 +20,9 @@ const _VIEW_CHART_RANGE_LABELS = ['7d', '14d', '30d', '60d', '90d', '180d', '1Y'
 /** @type {number} Default chart range in days (-1 = from purchase date, falls back to 30d) */
 const _VIEW_CHART_DEFAULT_RANGE = -1;
 
+/** Session-persistent state for "Show more fields" toggle in re-sync picker */
+let _resyncPickerShowMore = false;
+
 // ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
@@ -66,6 +69,7 @@ async function showViewModal(index) {
   }
 
   modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
 
   // Load images and Numista data asynchronously after modal is visible
   // Share a single API result to avoid duplicate calls
@@ -118,6 +122,7 @@ async function showViewModal(index) {
 function closeViewModal() {
   const modal = document.getElementById('viewItemModal');
   if (modal) modal.style.display = 'none';
+  document.body.style.overflow = '';
 
   // Destroy price history chart to free canvas resources
   if (_viewModalChartInstance) {
@@ -253,7 +258,7 @@ function _buildImageCertGrade(item, authority, certNum, pcgsNo) {
       e.stopPropagation();
       const url = hasCoinFacts
         ? _buildPcgsCoinFactsUrl(item.grade || '', pcgsNo)
-        : certUrlTemplate.replace(/\{certNumber\}/g, encodeURIComponent(certNum)).replace(/\{grade\}/g, encodeURIComponent(item.grade || ''));
+        : certUrlTemplate.replace(/\{certNumber\}/g, encodeURIComponent(certNum)).replace(/\{grade\}/g, encodeURIComponent(_extractNumericGrade(item.grade)));
       const popupName = `cert_${authority}_${certNum || pcgsNo}`.replace(/[^a-zA-Z0-9_]/g, '_');
       const popup = window.open(url, popupName, 'width=1250,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no');
       if (popup) {
@@ -267,8 +272,12 @@ function _buildImageCertGrade(item, authority, certNum, pcgsNo) {
   return gradeSpan;
 }
 
+function _extractNumericGrade(gradeText) {
+  return (gradeText || '').match(/\d+/)?.[0] || '';
+}
+
 function _buildPcgsCoinFactsUrl(gradeText, pcgsNo) {
-  const gradeNum = gradeText.match(/\d+/)?.[0] || '';
+  const gradeNum = _extractNumericGrade(gradeText);
   return gradeNum
     ? `https://www.pcgs.com/coinfacts/coin/detail/${encodeURIComponent(pcgsNo)}/${encodeURIComponent(gradeNum)}`
     : `https://www.pcgs.com/coinfacts/coin/${encodeURIComponent(pcgsNo)}`;
@@ -396,6 +405,62 @@ function _buildValuationSection(item, metrics) {
   }
   valSection.appendChild(valGrid);
   return valSection;
+}
+
+/**
+ * Build the disposition section for disposed items (STAK-72).
+ * Returns null for active (non-disposed) items — no visual change.
+ * @param {Object} item - Inventory item
+ * @returns {HTMLElement|null}
+ */
+function _buildDispositionSection(item) {
+  if (!item.disposition) return null;
+
+  const d = item.disposition;
+  const section = _section('Disposition');
+  const grid = _el('div', 'view-detail-grid three-col');
+
+  // Type
+  const typeLabel = (typeof DISPOSITION_TYPES !== 'undefined' && DISPOSITION_TYPES[d.type])
+    ? DISPOSITION_TYPES[d.type].label
+    : d.type;
+  _addDetail(grid, 'Type', typeLabel);
+
+  // Date
+  const dateStr = d.date ? (typeof formatDisplayDate === 'function' ? formatDisplayDate(d.date) : d.date) : '—';
+  _addDetail(grid, 'Date', dateStr);
+
+  // Amount (show "N/A" for lost/gifted where amount is 0 and not required)
+  const requiresAmount = (typeof DISPOSITION_TYPES !== 'undefined' && DISPOSITION_TYPES[d.type])
+    ? DISPOSITION_TYPES[d.type].requiresAmount
+    : true;
+  _addDetail(grid, 'Amount', requiresAmount ? formatCurrency(d.amount || 0) : 'N/A');
+
+  section.appendChild(grid);
+
+  // Optional fields
+  if (d.recipient) {
+    const grid2 = _el('div', 'view-detail-grid two-col');
+    _addDetail(grid2, 'Recipient', sanitizeHtml(d.recipient));
+    section.appendChild(grid2);
+  }
+
+  if (d.notes) {
+    const grid3 = _el('div', 'view-detail-grid two-col');
+    _addDetail(grid3, 'Notes', sanitizeHtml(d.notes));
+    section.appendChild(grid3);
+  }
+
+  // Realized G/L (color-coded like existing gain/loss)
+  const glGrid = _el('div', 'view-detail-grid two-col');
+  const glItem = _detailItem('Realized Gain/Loss',
+    (d.realizedGainLoss >= 0 ? '+' : '') + formatCurrency(d.realizedGainLoss || 0));
+  const valEl = glItem.querySelector('.view-detail-value');
+  if (valEl) valEl.classList.add(d.realizedGainLoss >= 0 ? 'gain' : 'loss');
+  glGrid.appendChild(glItem);
+  section.appendChild(glGrid);
+
+  return section;
 }
 
 function _getPriceHistoryContext(item, metrics) {
@@ -555,7 +620,7 @@ function _attachGradingCertLink(certItem, item) {
   if (!item.gradingAuthority || typeof CERT_LOOKUP_URLS === 'undefined' || !CERT_LOOKUP_URLS[item.gradingAuthority]) return;
   const url = CERT_LOOKUP_URLS[item.gradingAuthority]
     .replace(/{certNumber}/g, encodeURIComponent(item.certNumber))
-    .replace(/{grade}/g, encodeURIComponent(item.grade || ''));
+    .replace(/{grade}/g, encodeURIComponent(_extractNumericGrade(item.grade)));
   const valEl = certItem.querySelector('.view-detail-value');
   if (!valEl) return;
   valEl.textContent = '';
@@ -615,20 +680,64 @@ function _renderHeaderActions(item, index) {
     if (typeof openEbayBuySearch === 'function') openEbayBuySearch(searchTerm);
     else if (typeof openEbaySoldSearch === 'function') openEbaySoldSearch(searchTerm);
   });
+  headerActions.appendChild(ebayBtn);
+}
+
+function _renderFooterActions(item, index) {
+  const footer = document.getElementById('viewModalFooter');
+  if (!footer) return;
+  footer.textContent = '';
+
+  // Left group — destructive
+  const left = document.createElement('div');
+  left.className = 'view-footer-left';
+
+  const removeBtn = document.createElement('button');
+  removeBtn.className = 'view-footer-btn danger';
+  removeBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-1px;margin-right:0.2rem;"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>Remove';
+  removeBtn.addEventListener('click', () => {
+    closeViewModal();
+    if (typeof deleteItem === 'function') deleteItem(index);
+  });
+  left.appendChild(removeBtn);
+
+  // Right group — constructive
+  const right = document.createElement('div');
+  right.className = 'view-footer-right';
+
   const editBtn = document.createElement('button');
-  editBtn.className = 'view-edit-btn';
+  editBtn.className = 'view-footer-btn primary';
   editBtn.textContent = 'Edit';
   editBtn.addEventListener('click', () => {
     closeViewModal();
     if (typeof editItem === 'function') editItem(index);
   });
+
+  const cloneBtn = document.createElement('button');
+  cloneBtn.className = 'view-footer-btn secondary';
+  cloneBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-1px;margin-right:0.2rem;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Clone';
+  cloneBtn.addEventListener('click', () => {
+    closeViewModal();
+    if (typeof cloneItem === 'function') cloneItem(index);
+  });
+
   const closeBtn = document.createElement('button');
-  closeBtn.className = 'view-close-btn';
+  closeBtn.className = 'view-footer-btn secondary';
   closeBtn.textContent = 'Close';
   closeBtn.addEventListener('click', closeViewModal);
-  headerActions.appendChild(ebayBtn);
-  headerActions.appendChild(editBtn);
-  headerActions.appendChild(closeBtn);
+
+  right.appendChild(cloneBtn);
+  right.appendChild(closeBtn);
+  right.appendChild(editBtn);
+
+  footer.appendChild(left);
+  footer.appendChild(right);
+
+  // Wire up header close X button
+  const closeX = document.getElementById('viewModalCloseX');
+  if (closeX) {
+    closeX.onclick = closeViewModal;
+  }
 }
 
 /**
@@ -656,7 +765,17 @@ function buildViewContent(item, index) {
   };
 
   _appendSectionsInConfiguredOrder(frag, sectionBuilders);
+
+  // Always append disposition section if item is disposed (STAK-72).
+  // This ensures the section appears even if 'disposition' is not yet
+  // in the user's saved sectionConfig order.
+  if (typeof isDisposed === 'function' && isDisposed(item)) {
+    const dispositionEl = _buildDispositionSection(item);
+    if (dispositionEl) frag.appendChild(dispositionEl);
+  }
+
   _renderHeaderActions(item, index);
+  _renderFooterActions(item, index);
   return frag;
 }
 
@@ -759,7 +878,7 @@ async function loadViewNumistaData(item, container, apiResult) {
   const section = _el('div', 'view-numista-section');
 
   const badge = _el('span', 'view-numista-badge');
-  badge.textContent = 'Numista Data';
+  badge.textContent = 'Catalog Data';
   section.appendChild(badge);
 
   const grid = _el('div', 'view-detail-grid');
@@ -866,11 +985,36 @@ async function loadViewNumistaData(item, container, apiResult) {
 
   placeholder.replaceWith(section);
 
-  // STAK-126: Auto-apply Numista tags to the item's tag store and refresh
-  // the tags section so it shows Numista tags with proper visual distinction
-  if (meta.tags && meta.tags.length > 0 && item.uuid && typeof applyNumistaTags === 'function') {
+  // STAK-126 + Numista Search Overhaul: Re-sync via picker modal
+  // If we have a full normalized API result, show the picker for field-level control.
+  // Otherwise fall back to direct tag application (legacy path).
+  if (apiResult && typeof showResyncPicker === 'function' && typeof window.applyPickerSelections === 'function') {
+    showResyncPicker(item, apiResult, function (selections) {
+      // Apply checked fields via field-meta helper
+      window.applyPickerSelections(item, selections, apiResult, 'numista');
+
+      // If tags were selected, apply them through the tag system
+      if (selections.tags && meta.tags && meta.tags.length > 0 && item.uuid && typeof applyNumistaTags === 'function') {
+        applyNumistaTags(item.uuid, meta.tags, true, true);
+      }
+
+      // Persist inventory changes
+      if (typeof saveInventory === 'function') {
+        saveInventory();
+      }
+
+      // Rebuild the tags section in the modal
+      const tagsSectionEl = container.querySelector('#viewTagsSection');
+      if (tagsSectionEl && typeof buildTagSection === 'function') {
+        const newTagsSection = buildTagSection(item.uuid, meta.tags || [], () => {
+          if (typeof renderActiveFilters === 'function') renderActiveFilters();
+        });
+        tagsSectionEl.replaceWith(newTagsSection);
+      }
+    });
+  } else if (meta.tags && meta.tags.length > 0 && item.uuid && typeof applyNumistaTags === 'function') {
+    // Legacy fallback: direct tag application when picker is not available
     applyNumistaTags(item.uuid, meta.tags);
-    // Rebuild the tags section in the modal with Numista tag info
     const tagsSectionEl = container.querySelector('#viewTagsSection');
     if (tagsSectionEl && typeof buildTagSection === 'function') {
       const newTagsSection = buildTagSection(item.uuid, meta.tags, () => {
@@ -1370,6 +1514,361 @@ function _createPriceHistoryChart(canvas, allSpotEntries, allRetailEntries, purc
 }
 
 // ---------------------------------------------------------------------------
+// Re-Sync Picker Modal
+// ---------------------------------------------------------------------------
+
+/** Human-readable labels for picker fields */
+const _FIELD_LABELS = {
+  name: 'Name',
+  numistaId: 'Catalog N#',
+  year: 'Year',
+  type: 'Type',
+  weight: 'Weight',
+  tags: 'Tags',
+  country: 'Country',
+  denomination: 'Denomination',
+  composition: 'Composition',
+  shape: 'Shape',
+  diameter: 'Diameter',
+  thickness: 'Thickness',
+  metal: 'Metal',
+  orientation: 'Orientation',
+  description: 'Description',
+  grade: 'Grade',
+  mintage: 'Mintage',
+  technique: 'Technique',
+  commemorative: 'Commemorative',
+};
+
+/**
+ * Format a field value for display in the picker modal.
+ * @param {string} fieldName
+ * @param {*} value
+ * @returns {string}
+ */
+function _formatPickerValue(fieldName, value) {
+  if (value === null || value === undefined || value === '') return '';
+  if (fieldName === 'tags' && Array.isArray(value)) {
+    return value.length > 0 ? '[' + value.length + ' tag' + (value.length !== 1 ? 's' : '') + ']' : '';
+  }
+  if (fieldName === 'weight' && typeof value === 'number') return value + 'g';
+  if (fieldName === 'diameter' && typeof value === 'number' && value > 0) return value + 'mm';
+  if (fieldName === 'thickness' && typeof value === 'number' && value > 0) return value + 'mm';
+  if (fieldName === 'commemorative') return value ? 'Yes' : 'No';
+  return String(value);
+}
+
+/**
+ * Determine whether a field's current and incoming values are effectively equal.
+ * @param {*} current
+ * @param {*} incoming
+ * @returns {boolean}
+ */
+function _valuesMatch(current, incoming) {
+  if (current === incoming) return true;
+  if (Array.isArray(current) && Array.isArray(incoming)) {
+    return current.length === incoming.length &&
+      current.every((v, i) => v === incoming[i]);
+  }
+  // Loose numeric comparison (e.g. "26.73" vs 26.73)
+  if (current !== null && current !== undefined && incoming !== null && incoming !== undefined && Number(current) === Number(incoming) && !isNaN(Number(current))) return true;
+  return false;
+}
+
+/**
+ * Build and show the re-sync picker modal.
+ *
+ * @param {object} item - Current inventory item
+ * @param {object} normalizedData - Normalized API data from normalizeItemData()
+ * @param {function} onConfirm - Called with { fieldName: boolean } selections map
+ * @param {function} [onCancel] - Called when user cancels
+ */
+function showResyncPicker(item, normalizedData, onConfirm, onCancel) {
+  if (!item || !normalizedData) return;
+
+  const tiers = window.FIELD_TIERS || { tier1: [], tier2: [] };
+  const tagsAutoApply = typeof loadDataSync === 'function'
+    ? loadDataSync('numista_tags_auto', true)
+    : true;
+
+  // State: track checkbox states keyed by field name
+  const checkStates = {};
+  const fieldDisabled = {};
+
+  // Remove any existing picker modal
+  const existingModal = safeGetElement('resyncPickerModal');
+  if (existingModal) existingModal.remove();
+
+  // Backdrop
+  const backdrop = document.createElement('div');
+  backdrop.className = 'modal-backdrop fade show';
+  backdrop.id = 'resyncPickerBackdrop';
+
+  // Modal root
+  const modal = document.createElement('div');
+  modal.className = 'modal fade show';
+  modal.id = 'resyncPickerModal';
+  modal.style.display = 'block';
+  modal.setAttribute('tabindex', '-1');
+  modal.setAttribute('role', 'dialog');
+  modal.setAttribute('aria-labelledby', 'resyncPickerTitle');
+
+  const dialog = document.createElement('div');
+  dialog.className = 'modal-dialog modal-dialog-centered';
+
+  const content = document.createElement('div');
+  content.className = 'modal-content';
+
+  // --- Header ---
+  const header = document.createElement('div');
+  header.className = 'modal-header';
+
+  const title = document.createElement('h5');
+  title.className = 'modal-title';
+  title.id = 'resyncPickerTitle';
+  title.textContent = 'Re-sync from Numista';
+  header.appendChild(title);
+
+  const closeBtn = document.createElement('button');
+  closeBtn.type = 'button';
+  closeBtn.className = 'btn-close';
+  closeBtn.setAttribute('aria-label', 'Close');
+  closeBtn.addEventListener('click', _dismiss);
+  header.appendChild(closeBtn);
+
+  content.appendChild(header);
+
+  // --- Body ---
+  const body = document.createElement('div');
+  body.className = 'modal-body';
+  body.style.maxHeight = '60vh';
+  body.style.overflowY = 'auto';
+
+  /**
+   * Build a single field row (checkbox + label + incoming value + diff hint).
+   * @param {string} fieldName
+   * @returns {HTMLElement}
+   */
+  function _buildFieldRow(fieldName) {
+    const currentVal = item[fieldName];
+    const incomingVal = normalizedData[fieldName];
+    const meta = typeof getFieldMeta === 'function'
+      ? getFieldMeta(item, fieldName)
+      : { source: 'manual', userModified: true };
+
+    const hasCurrentValue = currentVal !== null && currentVal !== undefined && currentVal !== '' &&
+      !(Array.isArray(currentVal) && currentVal.length === 0) && currentVal !== 0 && currentVal !== false;
+    const hasIncomingValue = incomingVal !== null && incomingVal !== undefined && incomingVal !== '' &&
+      !(Array.isArray(incomingVal) && incomingVal.length === 0) && incomingVal !== 0 && incomingVal !== false;
+    const valuesEqual = _valuesMatch(currentVal, incomingVal);
+
+    // Determine pre-check state
+    let checked = false;
+    let disabled = false;
+    let dimmed = false;
+
+    if (!hasIncomingValue) {
+      // Nothing from API — skip this row entirely
+      return null;
+    } else if (valuesEqual) {
+      // Already matches — checked but dimmed/disabled
+      checked = true;
+      disabled = true;
+      dimmed = true;
+    } else if (!hasCurrentValue) {
+      // Empty in current → fill from API
+      checked = true;
+    } else if (meta.source === 'numista' && !meta.userModified) {
+      // Numista-sourced, not user-modified → safe to update
+      checked = true;
+    } else if (meta.userModified) {
+      // User-modified → protect
+      checked = false;
+    } else {
+      checked = true;
+    }
+
+    // Tags row: override default based on auto-apply setting
+    if (fieldName === 'tags' && !disabled) {
+      checked = tagsAutoApply;
+    }
+
+    checkStates[fieldName] = checked && !disabled;
+    fieldDisabled[fieldName] = disabled;
+
+    const row = document.createElement('div');
+    row.className = 'mb-2';
+    if (dimmed) row.style.opacity = '0.5';
+
+    const formCheck = document.createElement('div');
+    formCheck.className = 'form-check';
+
+    const input = document.createElement('input');
+    input.type = 'checkbox';
+    input.className = 'form-check-input';
+    input.id = 'resync-field-' + fieldName;
+    input.checked = checked;
+    input.disabled = disabled;
+    input.addEventListener('change', function () {
+      checkStates[fieldName] = this.checked;
+      _updateApplyButton();
+    });
+    formCheck.appendChild(input);
+
+    const label = document.createElement('label');
+    label.className = 'form-check-label';
+    label.setAttribute('for', 'resync-field-' + fieldName);
+
+    const labelText = document.createElement('span');
+    labelText.textContent = (_FIELD_LABELS[fieldName] || fieldName);
+    label.appendChild(labelText);
+
+    // Show incoming value
+    const incomingDisplay = _formatPickerValue(fieldName, incomingVal);
+    if (incomingDisplay) {
+      const valSpan = document.createElement('span');
+      valSpan.className = 'text-muted ms-2';
+      valSpan.style.fontSize = '0.85em';
+      valSpan.textContent = typeof sanitizeHtml === 'function'
+        ? sanitizeHtml(incomingDisplay)
+        : incomingDisplay;
+      label.appendChild(valSpan);
+    }
+
+    if (dimmed) {
+      const matchSpan = document.createElement('span');
+      matchSpan.className = 'text-muted ms-2';
+      matchSpan.style.fontSize = '0.8em';
+      matchSpan.textContent = '(already matches)';
+      label.appendChild(matchSpan);
+    }
+
+    formCheck.appendChild(label);
+    row.appendChild(formCheck);
+
+    // Diff hint: show current value for unchecked fields where incoming differs
+    if (!checked && !disabled && hasCurrentValue && !valuesEqual) {
+      const diffHint = document.createElement('div');
+      diffHint.className = 'text-muted ms-4';
+      diffHint.style.fontSize = '0.8em';
+      const currentDisplay = _formatPickerValue(fieldName, currentVal);
+      diffHint.textContent = 'Current: ' + (typeof sanitizeHtml === 'function'
+        ? sanitizeHtml(currentDisplay)
+        : currentDisplay);
+      row.appendChild(diffHint);
+    }
+
+    return row;
+  }
+
+  // Build Tier 1 rows
+  const tier1Fields = tiers.tier1 || [];
+  for (const fieldName of tier1Fields) {
+    const row = _buildFieldRow(fieldName);
+    if (row) body.appendChild(row);
+  }
+
+  // "Show more fields" toggle + Tier 2 container
+  const tier2Fields = tiers.tier2 || [];
+  const tier2Container = document.createElement('div');
+  tier2Container.id = 'resyncTier2Container';
+  tier2Container.style.display = _resyncPickerShowMore ? 'block' : 'none';
+
+  for (const fieldName of tier2Fields) {
+    const row = _buildFieldRow(fieldName);
+    if (row) tier2Container.appendChild(row);
+  }
+
+  // Only show toggle if tier2 has visible rows
+  if (tier2Container.childNodes.length > 0) {
+    const toggleBtn = document.createElement('button');
+    toggleBtn.type = 'button';
+    toggleBtn.className = 'btn btn-link btn-sm p-0 mt-2 mb-2';
+    toggleBtn.textContent = _resyncPickerShowMore ? '\u25BE Hide extra fields' : '\u25B8 Show more fields';
+    toggleBtn.addEventListener('click', function () {
+      _resyncPickerShowMore = !_resyncPickerShowMore;
+      tier2Container.style.display = _resyncPickerShowMore ? 'block' : 'none';
+      this.textContent = _resyncPickerShowMore ? '\u25BE Hide extra fields' : '\u25B8 Show more fields';
+    });
+    body.appendChild(toggleBtn);
+    body.appendChild(tier2Container);
+  }
+
+  content.appendChild(body);
+
+  // --- Footer ---
+  const footer = document.createElement('div');
+  footer.className = 'modal-footer';
+
+  const cancelBtn = document.createElement('button');
+  cancelBtn.type = 'button';
+  cancelBtn.className = 'btn secondary';
+  cancelBtn.textContent = 'Cancel';
+  cancelBtn.addEventListener('click', _dismiss);
+  footer.appendChild(cancelBtn);
+
+  const applyBtn = document.createElement('button');
+  applyBtn.type = 'button';
+  applyBtn.className = 'btn premium';
+  applyBtn.id = 'resyncApplyBtn';
+  footer.appendChild(applyBtn);
+
+  content.appendChild(footer);
+  dialog.appendChild(content);
+  modal.appendChild(dialog);
+
+  /** Count checked (non-disabled) fields */
+  function _getCheckedCount() {
+    let count = 0;
+    for (const fn of Object.keys(checkStates)) {
+      if (checkStates[fn] && !fieldDisabled[fn]) count++;
+    }
+    return count;
+  }
+
+  /** Update apply button text and disabled state */
+  function _updateApplyButton() {
+    const count = _getCheckedCount();
+    applyBtn.textContent = count > 0 ? 'Apply (' + count + ')' : 'Apply (0)';
+    applyBtn.disabled = count === 0;
+  }
+
+  _updateApplyButton();
+
+  applyBtn.addEventListener('click', function () {
+    // Build selections map (only non-disabled)
+    const selections = {};
+    for (const fn of Object.keys(checkStates)) {
+      if (!fieldDisabled[fn]) {
+        selections[fn] = checkStates[fn];
+      }
+    }
+    _cleanup();
+    if (typeof onConfirm === 'function') onConfirm(selections);
+  });
+
+  function _dismiss() {
+    _cleanup();
+    if (typeof onCancel === 'function') onCancel();
+  }
+
+  function _cleanup() {
+    const m = safeGetElement('resyncPickerModal');
+    if (m) m.remove();
+    const b = safeGetElement('resyncPickerBackdrop');
+    if (b) b.remove();
+  }
+
+  // Append to DOM
+  document.body.appendChild(backdrop);
+  document.body.appendChild(modal);
+
+  // Focus the first checkbox
+  const firstCheck = modal.querySelector('input[type="checkbox"]:not(:disabled)');
+  if (firstCheck) firstCheck.focus();
+}
+
+// ---------------------------------------------------------------------------
 // DOM helpers (private)
 // ---------------------------------------------------------------------------
 
@@ -1465,4 +1964,5 @@ document.addEventListener('keydown', (e) => {
 if (typeof window !== 'undefined') {
   window.showViewModal = showViewModal;
   window.closeViewModal = closeViewModal;
+  window.showResyncPicker = showResyncPicker;
 }
