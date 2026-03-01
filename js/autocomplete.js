@@ -461,7 +461,6 @@ const generateLookupTable = (inventory, options = {}) => {
       return createEmptyLookupTable();
     }
     
-    console.log(`🔍 Generating lookup table from ${data.length} inventory items...`);
     
     // Extract unique values for each field from inventory
     const inventoryNames = extractUniqueValues(data, 'name');
