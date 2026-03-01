@@ -8667,6 +8667,7 @@ th {
   padding: 0.3rem 0.75rem;
   font-size: 0.72rem;
   font-weight: 700;
+  min-height: auto;
 }
 
 #inventoryForm .item-modal-actions-left .btn.secondary,
@@ -8694,6 +8695,7 @@ th {
 #inventoryForm #itemModalSubmit.premium {
   border-radius: 999px;
   padding: 0.3rem 0.85rem;
+  min-height: auto;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
 }
 
