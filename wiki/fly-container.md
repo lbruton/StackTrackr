@@ -20,7 +20,7 @@ Single Fly.io app (`staktrakr`) that runs all retail polling, spot price polling
 
 As of 2026-02-24, outbound scraping traffic is routed through a residential home VM via Tailscale exit node rather than a third-party proxy service.
 
-Goldback pricing was migrated from a standalone daily scraper (`run-goldback.sh`) to the standard retail pipeline in Feb 2026 — it is now scraped as the `goldback-g1` coin via `providers.json`, once per hour alongside all other coins. See [goldback-pipeline.md](goldback-pipeline.md).
+Goldback retail prices are scraped as `goldback-{state}-g{denom}` coins via `providers.json` in the regular retail pipeline. Additionally, `run-goldback.sh` runs hourly at :01 to scrape the official G1 exchange rate from goldback.com via Firecrawl and writes `goldback-spot.json` + `goldback-YYYY.json`. The hourly cron skips if today's price is already captured. See [goldback-pipeline.md](goldback-pipeline.md).
 
 ---
 
@@ -66,8 +66,9 @@ Written dynamically by `docker-entrypoint.sh` at container start. `CRON_SCHEDULE
 | `8,23,38,53 * * * *` | `/app/run-publish.sh` | `/var/log/publish.log` |
 | `15 * * * *` | `/app/run-retry.sh` | `/var/log/retail-retry.log` |
 | `0 20 * * *` | `/app/run-fbp.sh` | `/var/log/retail-poller.log` |
+| `1 * * * *` | `/app/run-goldback.sh` | `/var/log/goldback-poller.log` |
 
-> **Staggered dual-poller cadence.** Fly.io runs at `:00`, home poller at `:30` — fresh data every 30 minutes. The `CRON_SCHEDULE` env var in `docker-entrypoint.sh` defaults to `0`. Override with a Fly secret only if needed. Goldback is scraped as part of the regular retail cycle (via `goldback-g1` coin in `providers.json`) — there is no separate goldback cron.
+> **Staggered dual-poller cadence.** Fly.io runs at `:00`, home poller at `:30` — fresh data every 30 minutes. The `CRON_SCHEDULE` env var in `docker-entrypoint.sh` defaults to `0`. Override with a Fly secret only if needed. The goldback cron runs hourly at :01 but skips if today's G1 rate is already captured — effectively a once-daily scrape with automatic retry on failure.
 
 ---
 
