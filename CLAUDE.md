@@ -29,7 +29,7 @@ Works on `file://` and HTTP. Runtime artifact: zero build step, zero install. Se
 
 **Runbook:** See wiki/ for current runbooks: [`health.md`](wiki/health.md), [`fly-container.md`](wiki/fly-container.md), [`spot-pipeline.md`](wiki/spot-pipeline.md). (`docs/devops/api-infrastructure-runbook.md` is deprecated.)
 
-Three feeds served from `lbruton/StakTrakrApi` main branch via GitHub Pages at `api.staktrakr.com`:
+Three feeds served from `lbruton/StakTrakrApi` **api branch** via GitHub Pages at `api.staktrakr.com`:
 
 | Feed | File | Poller | Stale threshold | Healthy check |
 |---|---|---|---|---|
