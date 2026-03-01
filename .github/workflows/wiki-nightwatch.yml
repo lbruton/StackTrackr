@@ -1,0 +1,75 @@
+name: Wiki Nightwatch
+
+on:
+  schedule:
+    - cron: '0 6 * * *' # 6 AM UTC — ~11 PM PT nightly
+  workflow_dispatch: # manual trigger
+
+permissions:
+  contents: write
+
+jobs:
+  nightwatch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dev
+
+      - name: Wiki accuracy check
+        uses: anthropic/claude-code-action@beta
+        with:
+          prompt: |
+            You are a wiki accuracy hunter. Your mission is to find ONE specific
+            inaccuracy in a wiki page by cross-checking it against the actual code.
+
+            Step 1: Read wiki/.nightwatch-log.json to get the rotation state.
+            If the file does not exist, create it with nextIndex: 0 and a rotation
+            array of all wiki/*.md files that have "owner: staktrakr" in frontmatter
+            (skip _sidebar.md, README.md, CHANGELOG.md, and any owner: staktrakr-api pages).
+
+            Step 2: Pick the page at rotation[nextIndex].
+
+            Step 3: Read the wiki page completely. Extract sourceFiles from frontmatter.
+            Read EVERY source file listed.
+
+            Step 4: Cross-check ALL factual claims:
+            - Counts (script tags, storage keys, CORE_ASSETS entries)
+            - Function/variable names and signatures
+            - Window globals and exports
+            - Code patterns described
+            - Related page links (do the .md files exist?)
+            - Version numbers, constant values, enum members
+
+            Step 5: Report exactly ONE of:
+
+            INACCURACY FOUND:
+            Page: {page}
+            Section: {heading}
+            Wiki claims: "{quote}"
+            Code shows: "{actual}"
+            File: {source file}
+
+            OR:
+
+            VERIFIED OK:
+            Page: {page}
+            Confirmed: 1) ... 2) ... 3) ...
+
+            Step 6: Update wiki/.nightwatch-log.json — append to history (cap 30),
+            increment nextIndex (wrap at end). Commit the log file.
+
+            Be thorough. Read actual code line by line. One real finding is more
+            valuable than a false "all clear."
+          allowed_tools: "Read,Grep,Glob,Bash(git status),Bash(wc -l),Bash(grep -c)"
+
+      - name: Commit log update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if [ -f wiki/.nightwatch-log.json ]; then
+            git add wiki/.nightwatch-log.json
+            git diff --cached --quiet || git commit -m "chore: wiki nightwatch — $(date +%Y-%m-%d)"
+            git push
+          fi
