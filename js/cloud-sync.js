@@ -1440,129 +1440,27 @@ function showSyncConflictModal(opts) {
  * @param {object} remoteMeta - Remote sync metadata
  */
 function showRestorePreviewModal(diffResult, settingsDiff, remotePayload, remoteMeta) {
-  var modal = safeGetElement('restorePreviewModal');
-  if (!modal) {
-    debugLog('[CloudSync] Restore preview modal not found in DOM — falling back');
+  // Delegate to DiffModal (STAK-184) — falls back to false if unavailable
+  if (typeof DiffModal === 'undefined' || !DiffModal.show) {
+    debugLog('[CloudSync] DiffModal not available — falling back');
     return false;
   }
 
-  // Populate header metadata
-  var remoteCountEl = safeGetElement('restorePreviewRemoteCount');
-  var localCountEl = safeGetElement('restorePreviewLocalCount');
-  var deviceEl = safeGetElement('restorePreviewDevice');
-  var versionEl = safeGetElement('restorePreviewVersion');
-
-  if (remoteCountEl) remoteCountEl.textContent = remoteMeta.itemCount != null ? String(remoteMeta.itemCount) : '\u2014';
-  if (localCountEl) localCountEl.textContent = typeof inventory !== 'undefined' ? String(inventory.length) : '\u2014';
-  if (deviceEl) deviceEl.textContent = remoteMeta.deviceId ? remoteMeta.deviceId.slice(0, 8) + '\u2026' : 'unknown';
-  if (versionEl) versionEl.textContent = remoteMeta.appVersion ? 'v' + remoteMeta.appVersion : '\u2014';
-
-  // Summary line
-  var summaryEl = safeGetElement('restorePreviewSummary');
   var addedCount = diffResult.added ? diffResult.added.length : 0;
   var removedCount = diffResult.deleted ? diffResult.deleted.length : 0;
   var modifiedCount = diffResult.modified ? diffResult.modified.length : 0;
-  var unchangedCount = diffResult.unchanged ? diffResult.unchanged.length : 0;
-  var settingsChangedCount = settingsDiff && settingsDiff.changed ? settingsDiff.changed.length : 0;
 
-  if (summaryEl) {
-    var parts = [];
-    if (addedCount > 0) parts.push(addedCount + ' added');
-    if (removedCount > 0) parts.push(removedCount + ' removed');
-    if (modifiedCount > 0) parts.push(modifiedCount + ' modified');
-    if (unchangedCount > 0) parts.push(unchangedCount + ' unchanged');
-    if (settingsChangedCount > 0) parts.push(settingsChangedCount + ' setting' + (settingsChangedCount > 1 ? 's' : '') + ' changed');
-    summaryEl.textContent = parts.length > 0 ? parts.join(', ') : 'No changes detected';
-  }
-
-  // Build diff list HTML
-  var diffListEl = safeGetElement('restorePreviewDiffList');
-  if (diffListEl) {
-    var html = '';
-    var _s = typeof sanitizeHtml === 'function' ? sanitizeHtml : function (t) { return String(t || ''); };
-
-    // Added items (green)
-    for (var a = 0; a < addedCount; a++) {
-      var addedItem = diffResult.added[a];
-      var addedName = _s(addedItem.name || 'Unnamed item');
-      html += '<div style="padding:4px 6px;margin:2px 0;border-radius:4px;background:rgba(40,167,69,0.12);color:var(--text-color,#333)">';
-      html += '<strong style="color:#28a745">+ Added:</strong> ' + addedName;
-      html += '</div>';
-    }
-
-    // Removed items (red)
-    for (var r = 0; r < removedCount; r++) {
-      var removedItem = diffResult.deleted[r];
-      var removedName = _s(removedItem.name || 'Unnamed item');
-      html += '<div style="padding:4px 6px;margin:2px 0;border-radius:4px;background:rgba(220,53,69,0.12);color:var(--text-color,#333)">';
-      html += '<strong style="color:#dc3545">&minus; Removed:</strong> ' + removedName;
-      html += '</div>';
-    }
-
-    // Modified items (amber)
-    for (var m = 0; m < modifiedCount; m++) {
-      var mod = diffResult.modified[m];
-      var modName = _s(mod.item.name || 'Unnamed item');
-      html += '<div style="padding:4px 6px;margin:2px 0;border-radius:4px;background:rgba(255,193,7,0.15);color:var(--text-color,#333)">';
-      html += '<strong style="color:#e6a800">&#9998; Modified:</strong> ' + modName;
-      if (mod.changes && mod.changes.length > 0) {
-        html += '<div style="margin-left:1.2rem;font-size:0.85rem;opacity:0.85">';
-        for (var c = 0; c < mod.changes.length; c++) {
-          var ch = mod.changes[c];
-          html += '<div>' + _s(ch.field) + ': ' + _s(String(ch.localVal != null ? ch.localVal : '\u2014')) + ' \u2192 ' + _s(String(ch.remoteVal != null ? ch.remoteVal : '\u2014')) + '</div>';
-        }
-        html += '</div>';
-      }
-      html += '</div>';
-    }
-
-    if (addedCount === 0 && removedCount === 0 && modifiedCount === 0) {
-      html = '<div style="padding:8px;text-align:center;opacity:0.6">No item changes detected</div>';
-    }
-
-    diffListEl.innerHTML = html;
-  }
-
-  // Settings diff section
-  var settingsDiffEl = safeGetElement('restorePreviewSettingsDiff');
-  if (settingsDiffEl) {
-    if (settingsChangedCount > 0) {
-      var sHtml = '<details style="margin-top:0.25rem"><summary class="settings-subtext" style="cursor:pointer;font-weight:600">' + settingsChangedCount + ' setting change' + (settingsChangedCount > 1 ? 's' : '') + '</summary>';
-      sHtml += '<div style="font-size:0.85rem;margin-top:4px">';
-      var _s2 = typeof sanitizeHtml === 'function' ? sanitizeHtml : function (t) { return String(t || ''); };
-      for (var si = 0; si < settingsDiff.changed.length; si++) {
-        var sc = settingsDiff.changed[si];
-        sHtml += '<div style="padding:2px 0">' + _s2(sc.key) + ': ' + _s2(String(sc.localVal != null ? sc.localVal : '\u2014')) + ' \u2192 ' + _s2(String(sc.remoteVal != null ? sc.remoteVal : '\u2014')) + '</div>';
-      }
-      sHtml += '</div></details>';
-      settingsDiffEl.innerHTML = sHtml;
-      settingsDiffEl.style.display = '';
-    } else {
-      settingsDiffEl.innerHTML = '';
-      settingsDiffEl.style.display = 'none';
-    }
-  }
-
-  // Hide error, show modal
-  var errorEl = safeGetElement('restorePreviewError');
-  if (errorEl) errorEl.style.display = 'none';
-
-  // Wire buttons
-  var applyBtn = safeGetElement('restorePreviewApplyBtn');
-  var cancelBtn = safeGetElement('restorePreviewCancelBtn');
-  var dismissX = safeGetElement('restorePreviewDismissX');
-
-  var closePreview = function () {
-    modal.style.display = 'none';
-    if (typeof closeModalById === 'function') closeModalById('restorePreviewModal');
-  };
-
-  if (cancelBtn) cancelBtn.onclick = closePreview;
-  if (dismissX) dismissX.onclick = closePreview;
-
-  if (applyBtn) {
-    applyBtn.onclick = function () {
-      closePreview();
+  DiffModal.show({
+    source: { type: 'sync', label: _syncProvider || 'Cloud' },
+    diff: diffResult,
+    settingsDiff: settingsDiff || null,
+    meta: {
+      deviceId: remoteMeta.deviceId,
+      timestamp: remoteMeta.timestamp,
+      itemCount: remoteMeta.itemCount,
+      appVersion: remoteMeta.appVersion
+    },
+    onApply: function () {
       try {
         syncSaveOverrideBackup();
         restoreVaultData(remotePayload);
@@ -1586,14 +1484,9 @@ function showRestorePreviewModal(diffResult, settingsDiff, remotePayload, remote
         updateSyncStatusIndicator('error', 'Restore failed');
         if (typeof showCloudToast === 'function') showCloudToast('Restore failed: ' + applyErr.message);
       }
-    };
-  }
-
-  if (typeof openModalById === 'function') {
-    openModalById('restorePreviewModal');
-  } else {
-    modal.style.display = 'flex';
-  }
+    },
+    onCancel: function () { /* no-op */ }
+  });
 
   return true;
 }
