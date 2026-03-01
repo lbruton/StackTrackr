@@ -283,10 +283,10 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.33.18 &ndash; Diff/Merge Architecture Foundation</strong>: Manifest path constants, pruning threshold storage key, diffReviewModal HTML scaffold, and diff-modal.js script registration for the reusable change-review UI</li>
     <li><strong>v3.33.17 &ndash; Realized Gains/Losses</strong>: Disposition workflow to mark items as Sold, Traded, Lost, Gifted, or Returned. Calculates realized gain/loss, adds disposition badges, filter toggle, portfolio summary breakdown, and CSV export columns</li>
     <li><strong>v3.33.16 &ndash; Clone Mode Redesign</strong>: Clone button activates clone mode on the edit modal with field-level checkboxes. Edit modal sections always visible, date N/A restyled as toggle button, Numista refresh button removed</li>
     <li><strong>v3.33.15 &ndash; Beta Domain Toast</strong>: Environment badge (BETA/PREVIEW/LOCAL) next to logo on non-production domains. One-time session toast explains data isolation between origins</li>
-    <li><strong>v3.33.14 &ndash; Goldback G&frac12; Fix</strong>: Goldback G&frac12; denominations now display correctly on market page &mdash; slug parser accepts both ghalf and g0.5 formats</li>
   `;
 };
 
@@ -296,9 +296,9 @@ const getEmbeddedWhatsNew = () => {
  */
 const getEmbeddedRoadmap = () => {
   return `
+    <li><strong>Diff/Merge Architecture (STAK-184)</strong>: Reusable DiffModal, manifest-first pull, import dedup consolidation &mdash; in progress</li>
     <li><strong>Market Page Phase 3</strong>: Inventory-to-market linking with auto-update retail prices</li>
     <li><strong>Cloud Backup Conflict Detection (STAK-150)</strong>: Smarter conflict resolution using item count direction, not just timestamps</li>
-    <li><strong>Accessible Table Mode (STAK-144)</strong>: Style D with horizontal scroll, long-press to edit, 300% zoom support</li>
   `;
 };
 

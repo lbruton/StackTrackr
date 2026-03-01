@@ -926,7 +926,8 @@ const sanitizeObjectFields = (obj) => {
   for (const key of Object.keys(cleaned)) {
     if (typeof cleaned[key] === "string" && key !== 'notes') {
       // URL fields must not be sanitized — they contain :, /, . characters
-      if (key === 'obverseImageUrl' || key === 'reverseImageUrl') continue;
+      // UUID fields must not be sanitized — hyphens are part of the format
+      if (key === 'obverseImageUrl' || key === 'reverseImageUrl' || key === 'uuid') continue;
       const allowHyphen = key === 'date';
       cleaned[key] =
         (key === 'name' || key === 'purchaseLocation' || key === 'year' || key === 'grade' || key === 'gradingAuthority' || key === 'certNumber' || key === 'serialNumber')
@@ -1191,8 +1192,10 @@ const sanitizeImportedItem = (item) => {
     sanitized.totalPremium = 0;
   }
 
-  // Ensure every item has a stable UUID
-  if (!sanitized.uuid) sanitized.uuid = generateUUID();
+  // UUID generation is NOT done here — callers provide uuid from the import
+  // source (CSV/JSON/Numista), and loadInventory() assigns UUIDs to items
+  // that reach storage without one. This allows the DiffEngine serial→UUID
+  // bridge to work for backward-compat imports (STAK-380).
 
   return sanitizeObjectFields(sanitized);
 };
