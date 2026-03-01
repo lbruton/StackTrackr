@@ -1620,7 +1620,6 @@ const renderTable = () => {
       // Table thumbnail — obverse + reverse preview in name cell
       // Omit src attribute entirely when no URL (avoids browser requesting page URL for src="")
       // Hidden when tableImagesEnabled toggle is off
-      const _tableImagesOn = _tableImagesOnSetting;
       const _thumbType = (item.type || '').toLowerCase();
       const _isRectThumb = _thumbType === 'bar' || _thumbType === 'note' || _thumbType === 'aurum'
         || _thumbType === 'set' || item.weightUnit === 'gb';
@@ -1635,10 +1634,9 @@ const renderTable = () => {
                data-item-name="${escapeAttribute(item.name || '')}"
                data-item-metal="${escapeAttribute(item.metal || '')}"
                data-item-type="${escapeAttribute(item.type || '')}"`;
-      const _tableImageSides = _tableImageSidesSetting;
-      const _showObv = _tableImageSides === 'both' || _tableImageSides === 'obverse';
-      const _showRev = _tableImageSides === 'both' || _tableImageSides === 'reverse';
-      const thumbHtml = _tableImagesOn && featureFlags.isEnabled('COIN_IMAGES')
+      const _showObv = _tableImageSidesSetting === 'both' || _tableImageSidesSetting === 'obverse';
+      const _showRev = _tableImageSidesSetting === 'both' || _tableImageSidesSetting === 'reverse';
+      const thumbHtml = _tableImagesOnSetting && featureFlags.isEnabled('COIN_IMAGES')
         ? (_showObv ? `<img class="table-thumb${_thumbShapeClass}"${obvSrcAttr}
                ${_sharedThumbAttrs} data-side="obverse"
                alt="" loading="lazy" />` : '')
