@@ -74,7 +74,7 @@ Active feature flags as of v3.33.06:
 
 | Flag | Default | Description |
 |---|---|---|
-| `MARKET_LIST_VIEW` | `false` | New full-width market card layout with search, sort, and inline 7-day trend charts |
+| `MARKET_LIST_VIEW` | `true` | New single-row market card layout with search, sort, and inline charts |
 | `MARKET_DASHBOARD_ITEMS` | `false` | Show goldback and dashboard items in the market list |
 | `MARKET_AUTO_RETAIL` | `false` | Auto-update inventory retail prices from linked market data |
 
