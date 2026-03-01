@@ -16,8 +16,10 @@ This wiki is the **shared source of truth** between two independent Claude agent
 
 | Agent | Repo | Owns |
 |-------|------|------|
-| StakTrakrApi Claude | `lbruton/StakTrakrApi` | Poller source code, GHA workflows, data pipeline |
-| StakScraper Claude | `lbruton/stakscrapr` | Home poller env config, Ubuntu-specific setup |
+| StakTrakrApi Claude | `lbruton/StakTrakrApi` | Poller source code, GHA workflows, data pipeline, home poller setup (`devops/home-scraper/`) |
+| StakTrakr Claude Code | `lbruton/StakTrakr` | Frontend app, service worker, wiki maintenance |
+
+> **Note:** Home poller environment config and setup scripts (`setup-lxc.sh`, `run-home.sh`) are committed in `StakTrakrApi/devops/home-scraper/`. The legacy `lbruton/stakscrapr` repo is no longer the canonical source.
 
 Both agents can read and write this wiki. When behavior diverges between Fly.io and the home poller (intentionally or by drift), it should be documented here so either agent can identify it, reconcile it, or propose it upstream.
 
@@ -42,7 +44,10 @@ Pages covering the API backend, data pipelines, and operational runbooks. Mainta
 | [Cron Schedule](cron-schedule.md) | Full timeline view, design rationale |
 | [providers.json](providers.md) | URL strategy, year-start patterns, update process |
 | [Secrets & Keys](secrets.md) | Where every secret lives, how to rotate |
+| [Provider Database](provider-database.md) | Turso provider tables, vendor management, coverage stats |
 | [Health & Diagnostics](health.md) | Quick health checks, stale thresholds, diagnosis commands |
+| [Poller Parity](poller-parity.md) | Fly vs home poller comparison, schedule differences, drift tracking |
+| [Vendor Quirks](vendor-quirks.md) | Per-vendor scraping workarounds, selector overrides, known issues |
 
 ---
 
@@ -78,10 +83,10 @@ Pages covering the StakTrakr single-page app — architecture, patterns, and wor
 ### Update Policy
 
 - Every code change in StakTrakr or StakTrakrApi that affects documented behavior must include a wiki update in the same PR
-- Use `claude-context` to search before writing (avoid duplication): `mcp__claude-context__search_code` with `path: /Volumes/DATA/GitHub/StakTrakrWiki`
+- Use `claude-context` to search before writing (avoid duplication): `mcp__claude-context__search_code` with `path: /Volumes/DATA/GitHub/StakTrakr/wiki`
 - If uncertain about accuracy, add `> ⚠️ NEEDS VERIFICATION` rather than omitting content
 - Add a one-line entry to `CHANGELOG.md` in this repo for each structural change
-- Re-index the wiki after major updates: `mcp__claude-context__index_codebase` with `path: /Volumes/DATA/GitHub/StakTrakrWiki` and `force: true`
+- Re-index the wiki after major updates: `mcp__claude-context__index_codebase` with `path: /Volumes/DATA/GitHub/StakTrakr/wiki` and `force: true`
 
 ### Documenting drift between pollers
 

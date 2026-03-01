@@ -2,7 +2,7 @@
 title: Spot Price Pipeline
 category: infrastructure
 owner: staktrakr-api
-lastUpdated: v3.33.18
+lastUpdated: v3.33.19
 date: 2026-02-25
 sourceFiles: []
 relatedPages: []
@@ -10,27 +10,17 @@ relatedPages: []
 
 # Spot Price Pipeline
 
-> **Last verified:** 2026-02-25 — audited from live Fly.io container `poller.py` and `update-seed-data.py`
-> ⚠️ **ARCHITECTURE GAP:** Spot poller still writes to files, not Turso — See STAK-331
+> **Last verified:** 2026-03-01 — audited from live Fly.io container `spot-extract.js` (Node.js)
 
 ---
 
 ## Overview
 
-Spot prices (gold, silver, platinum, palladium in USD/oz) are polled **4× per hour** (every 15 minutes) from MetalPriceAPI and written as JSON files to the persistent volume. Published to the `api` branch by `run-publish.sh`.
+Spot prices (gold, silver, platinum, palladium in USD/oz) are polled **2x per hour** (every 30 minutes) from MetalPriceAPI, written to Turso `spot_prices` table, and also saved as JSON files to the persistent volume. Published to the `api` branch by `run-publish.sh`.
 
 **Writer:** `run-spot.sh` cron inside the Fly.io container
-**Cadence:** `5,20,35,50 * * * *` (4×/hr, offset from retail at `:00`)
+**Cadence:** `0,30 * * * *` (2x/hr, on the hour and half-hour)
 **Stale threshold:** 75 minutes
-
----
-
-## ⚠️ Known Architecture Gap (STAK-331)
-
-The spot price poller (`poller.py`) is **not yet writing to Turso**. It writes directly to JSON files on the Fly.io persistent volume.
-
-**Expected architecture:** `poller.py` → Turso `spot_prices` table → `api-export.js` reads Turso → JSON files
-**Actual state:** `poller.py` → JSON files directly (Turso bypassed entirely for spot data)
 
 ---
 
@@ -40,40 +30,38 @@ The spot price poller (`poller.py`) is **not yet writing to Turso**. It writes d
 MetalPriceAPI.com
   /v1/latest?base=USD&currencies=XAU,XAG,XPT,XPD
          │
-         │  HTTP GET (Python requests)
+         │  HTTP GET (Node.js fetch)
          │  API key: METAL_PRICE_API_KEY (Fly secret)
          ▼
 ┌──────────────────────────────┐
-│  spot-poller/poller.py       │
-│  (--once mode via cron)      │
+│  spot-extract.js (Node.js)   │
+│  (called by run-spot.sh)     │
 │                              │
-│  1. backfill_recent_hours()  │
-│     └─ Scan last 24h for     │
-│        missing hourly files  │
-│     └─ Use /timeframe to fill│
-│                              │
-│  2. poll_once()              │
-│     └─ fetch /latest         │
-│     └─ Invert rates:         │
-│        1/XAU = $/oz gold     │
-│        1/XAG = $/oz silver   │
-│        1/XPT = $/oz platinum │
-│        1/XPD = $/oz palladium│
+│  1. Fetch /v1/latest         │
+│  2. Rate conversion:         │
+│     rate >= 1 → use directly │
+│     rate < 1  → invert (1/r) │
+│  3. Sanity bounds check      │
+│  4. Write to Turso           │
+│     spot_prices table        │
+│  5. Write JSON files         │
 └───────────┬──────────────────┘
             │
-    ┌───────┼────────────────────────┐
-    │       │                        │
-    ▼       ▼                        ▼
- Hourly    15-min                 Daily Seed
- file      snapshot               (at noon EST / 17:00 UTC)
-    │       │                        │
-    ▼       ▼                        ▼
-data/hourly/     data/15min/        data/spot-history-{YYYY}.json
-YYYY/MM/DD/      YYYY/MM/DD/
-HH.json          HHMM.json
-            │
-            ▼ (via run-publish.sh at 8,23,38,53)
-   api branch → GitHub Pages → api.staktrakr.com
+    ┌───────┼──────────────┐
+    │       │              │
+    ▼       ▼              ▼
+ Turso    Hourly         15-min
+ DB       file           snapshot
+    │       │              │
+    │       ▼              ▼
+    │  data/hourly/     data/15min/
+    │  YYYY/MM/DD/      YYYY/MM/DD/
+    │  HH.json          HHMM.json
+    │       │
+    │       ▼ (via run-publish.sh at 8,23,38,53)
+    │  api branch → GitHub Pages → api.staktrakr.com
+    │
+    └──► api-export.js reads spot data from Turso for export
 ```
 
 ---
@@ -87,22 +75,32 @@ HH.json          HHMM.json
 | Endpoint | Purpose |
 |----------|---------|
 | `/v1/latest` | Current spot prices (each poll) |
-| `/v1/timeframe` | Historical backfill (gap recovery) |
 
-**Rate conversion:** API returns rates as "units of metal per 1 USD". Inversion gives USD/oz:
+**Rate conversion:** MetalPriceAPI returns USD prices per troy oz. The conversion is conditional:
 
-| Symbol | Metal | Calculation |
-|--------|-------|-------------|
-| `XAU` | Gold | `1 / rate` = USD per troy oz |
-| `XAG` | Silver | `1 / rate` = USD per troy oz |
-| `XPT` | Platinum | `1 / rate` = USD per troy oz |
-| `XPD` | Palladium | `1 / rate` = USD per troy oz |
+| Condition | Calculation |
+|-----------|-------------|
+| `rate >= 1` | Use the returned value directly (already USD/oz) |
+| `rate < 1` | Invert: `1 / rate` = USD per troy oz |
+
+After conversion, a sanity bounds check rejects prices outside reasonable ranges (e.g., $5 < price < $50,000).
+
+| Symbol | Metal |
+|--------|-------|
+| `XAU` | Gold |
+| `XAG` | Silver |
+| `XPT` | Platinum |
+| `XPD` | Palladium |
 
 ---
 
-## Output Files
+## Output
 
-Each poll writes **three** types of files:
+Each poll writes to **Turso** and **two** types of JSON files:
+
+### Turso `spot_prices` table
+
+The primary data store. `spot-extract.js` inserts rows via `insertSpotPrices()` with gold, silver, platinum, palladium prices and a floored 15-minute window timestamp.
 
 ### Hourly (`data/hourly/YYYY/MM/DD/HH.json`)
 
@@ -114,48 +112,44 @@ data/hourly/2026/02/25/19.json
 
 ### 15-Minute (`data/15min/YYYY/MM/DD/HHMM.json`)
 
-**Immutable** — each poll creates its own file. Never overwritten. Used for fine-grained historical analysis.
+**Immutable** — each poll creates its own file if it does not already exist. Never overwritten. Used for fine-grained historical analysis.
 
 ```
-data/15min/2026/02/25/1905.json
-data/15min/2026/02/25/1920.json
-data/15min/2026/02/25/1935.json
-data/15min/2026/02/25/1950.json
+data/15min/2026/02/25/1900.json
+data/15min/2026/02/25/1930.json
 ```
-
-### Daily Seed (`data/spot-history-YYYY.json`)
-
-Written **once per day** at noon EST (17:00 UTC). Contains one entry per day per metal. Used for long-term historical charts.
-
-**Warning:** This is a **seed file**, not live data. Do not use it for freshness checks.
 
 ---
 
-## Backfill Logic
+## Legacy: poller.py (inactive)
 
-`poller.py` runs `backfill_recent_hours()` before each poll (in `--once` mode). It:
+The Python-based `poller.py` is no longer the active spot path. It has been replaced by `spot-extract.js` (Node.js). Legacy behavior included:
 
-1. Scans the last 24 hours for missing hourly files
-2. Calls `/v1/timeframe` to fetch historical rates for missing dates
-3. Writes the missing hourly files
+- `backfill_recent_hours()` — scanned last 24h for missing hourly files, called `/v1/timeframe` to fill gaps
+- Daily seed file (`data/spot-history-YYYY.json`) — written once per day at noon EST (17:00 UTC)
+- Used Python `requests` library with always-invert rate conversion
 
-This ensures no gaps from missed cron cycles, container restarts, or deploys.
+The daily seed file (`data/spot-history-YYYY.json`) is still present on disk but is **not written by the active `spot-extract.js` path**. Do not use it for freshness checks.
 
 ---
 
 ## run-spot.sh
 
-Thin wrapper that calls `poller.py --once`:
+Thin wrapper that calls `spot-extract.js`:
 
 ```bash
-DATA_DIR="/data/staktrakr-api-export/data" \
-  METAL_PRICE_API_KEY="$METAL_PRICE_API_KEY" \
-  python3 /app/spot-poller/poller.py --once
+METAL_PRICE_API_KEY="$METAL_PRICE_API_KEY" \
+  DATA_DIR="/data/staktrakr-api-export/data" \
+  TURSO_DATABASE_URL="$TURSO_DATABASE_URL" \
+  TURSO_AUTH_TOKEN="$TURSO_AUTH_TOKEN" \
+  POLLER_ID=fly-spot \
+  node /app/spot-extract.js
 ```
 
 Requires:
 - Volume mounted at `/data/staktrakr-api-export`
 - `METAL_PRICE_API_KEY` env var set
+- `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN` for Turso writes (degrades gracefully if unavailable)
 
 ---
 

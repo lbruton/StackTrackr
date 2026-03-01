@@ -2,8 +2,8 @@
 title: Turso Database Schema
 category: infrastructure
 owner: staktrakr-api
-lastUpdated: v3.33.18
-date: 2026-02-25
+lastUpdated: v3.33.19
+date: 2026-03-01
 sourceFiles: []
 relatedPages:
   - provider-database.md
@@ -23,9 +23,7 @@ relatedPages:
 
 ## Overview
 
-Turso is the **single source of truth** for retail price data. Both pollers (Fly.io and Home LXC) write to the same database. `api-export.js` reads from Turso at publish time and generates static JSON files.
-
-**Note:** Spot prices (MetalPriceAPI) are NOT in Turso — they write directly to hourly JSON files. See [spot-pipeline.md](spot-pipeline.md) and STAK-331.
+Turso is the **single source of truth** for both retail and spot price data. Both pollers (Fly.io and Home LXC) write to the same database. `api-export.js` reads from Turso at publish time and generates static JSON files.
 
 ---
 
@@ -105,6 +103,57 @@ CREATE TABLE IF NOT EXISTS poller_runs (
 
 ```sql
 CREATE INDEX idx_runs_poller_started ON poller_runs(poller_id, started_at DESC);
+```
+
+---
+
+### `provider_failures`
+
+One row per failed scrape attempt. Populated by `recordFailure()` in `db.js` when a scrape returns no price for an in-stock vendor.
+
+```sql
+CREATE TABLE IF NOT EXISTS provider_failures (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  coin_slug  TEXT NOT NULL,
+  vendor_id  TEXT NOT NULL,
+  url        TEXT,
+  error      TEXT,
+  failed_at  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+```
+
+**Indexes:**
+
+```sql
+CREATE INDEX IF NOT EXISTS idx_pf_coin_vendor ON provider_failures(coin_slug, vendor_id);
+CREATE INDEX IF NOT EXISTS idx_pf_failed_at ON provider_failures(failed_at);
+```
+
+---
+
+### `spot_prices`
+
+One row per metal per 15-minute floor. Written by `spot-extract.js` via `insertSpotPrices()` in `db.js`. Read by `api-export.js` for spot JSON generation.
+
+```sql
+CREATE TABLE IF NOT EXISTS spot_prices (
+  id              INTEGER PRIMARY KEY AUTOINCREMENT,
+  metal           TEXT NOT NULL,           -- "gold", "silver", "platinum", "palladium"
+  spot            REAL NOT NULL,           -- USD price per troy oz
+  source          TEXT NOT NULL DEFAULT 'metalprice-api',
+  poller_id       TEXT NOT NULL,           -- "fly-spot" or "home-spot"
+  timestamp       TEXT NOT NULL,           -- ISO 8601 UTC timestamp of poll
+  timestamp_floor TEXT NOT NULL,           -- 15-min floor (e.g. "2026-02-25T14:15:00Z")
+  scraped_at      TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(metal, timestamp_floor)
+);
+```
+
+**Indexes:**
+
+```sql
+CREATE INDEX IF NOT EXISTS idx_spot_metal_floor ON spot_prices(metal, timestamp_floor DESC);
+CREATE INDEX IF NOT EXISTS idx_spot_floor ON spot_prices(timestamp_floor DESC);
 ```
 
 ---
@@ -200,7 +249,7 @@ CREATE TABLE IF NOT EXISTS provider_vendors (
   id         INTEGER PRIMARY KEY AUTOINCREMENT,
   coin_slug  TEXT NOT NULL REFERENCES provider_coins(slug),
   vendor_id  TEXT NOT NULL,
-  vendor_name TEXT,
+  vendor_name TEXT NOT NULL,
   url        TEXT,
   enabled    INTEGER NOT NULL DEFAULT 1,
   selector   TEXT,
@@ -216,7 +265,7 @@ CREATE TABLE IF NOT EXISTS provider_vendors (
 ```sql
 CREATE INDEX IF NOT EXISTS idx_pv_coin ON provider_vendors(coin_slug);
 CREATE INDEX IF NOT EXISTS idx_pv_vendor ON provider_vendors(vendor_id);
-CREATE INDEX IF NOT EXISTS idx_pv_enabled ON provider_vendors(enabled);
+CREATE INDEX IF NOT EXISTS idx_pv_enabled ON provider_vendors(coin_slug, enabled);
 ```
 
 See [Provider Database](provider-database.md) for the full `provider-db.js` API and CRUD details.
@@ -229,4 +278,4 @@ See [Provider Database](provider-database.md) for the full `provider-db.js` API 
 - [Retail Pipeline](retail-pipeline.md) — how data flows into Turso
 - [REST API Reference](rest-api-reference.md) — how data flows out of Turso to JSON
 - [Architecture Overview](architecture-overview.md) — system-level view
-- [Spot Pipeline](spot-pipeline.md) — NOT yet in Turso (STAK-331)
+- [Spot Pipeline](spot-pipeline.md) — spot data flows through Turso via `spot_prices` table

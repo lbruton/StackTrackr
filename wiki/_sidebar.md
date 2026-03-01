@@ -23,6 +23,8 @@
   - [Storage Patterns](storage-patterns.md)
   - [DOM Patterns](dom-patterns.md)
   - [Cloud Sync](sync-cloud.md)
+  - [Image Pipeline](image-pipeline.md)
+  - [Backup & Restore](backup-restore.md)
   - [Retail Modal](retail-modal.md)
   - [API Consumption](api-consumption.md)
   - [Release Workflow](release-workflow.md)

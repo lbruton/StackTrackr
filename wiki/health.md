@@ -2,7 +2,7 @@
 title: "Health & Diagnostics"
 category: infrastructure
 owner: staktrakr-api
-lastUpdated: v3.33.18
+lastUpdated: v3.33.19
 date: 2026-02-25
 sourceFiles: []
 relatedPages: []
@@ -89,7 +89,7 @@ fly ssh console --app staktrakr -C "tail -20 /var/log/goldback-poller.log"
 ## GitHub Actions Status
 
 ```bash
-# Merge Poller Branches (runs */15)
+# Merge Poller Branches (retired/manual-only)
 gh run list --repo lbruton/StakTrakrApi --workflow "Merge Poller Branches" --limit 5
 
 # Spot poller (retired — manual trigger only)
@@ -128,8 +128,8 @@ Expected: rows from both `api` (Fly.io) and `home` (LXC) pollers within the last
 | OOM on Fly.io | Concurrent api-export.js invocations | Verify `run-local.sh` does NOT call `api-export.js` |
 | Monument Metals missing at year-start | Random-year SKU on pre-order | Switch to year-specific SKU in providers.json |
 | JMBullion presale coins show OOS | Pre-order pattern matching | Verify `PREORDER_TOLERANT_PROVIDERS` includes `jmbullion` |
-| Merge workflow failing | Branch conflict or jq parse error | Check GHA run logs; verify `api` branch has valid JSON |
-| Both pollers firing at same time | `CRON_SCHEDULE` set to `*/15` instead of `0` | `fly ssh console -C "head -1 /etc/cron.d/retail-poller"` — must show `0` |
+| Merge workflow failing | Branch conflict or jq parse error | Retired/manual-only — `api` branch is now served directly by GitHub Pages |
+| Both pollers firing at same time | `CRON_SCHEDULE` set to `*/15` instead of `15,45` | `fly ssh console -C "head -1 /etc/cron.d/retail-poller"` — must show `15,45` |
 | `api-export.js` import crash | `db.js` missing export after refactor | `fly ssh console -C "sh -c 'tail -5 /var/log/publish.log'"` — look for `SyntaxError` |
 
 ---
@@ -185,7 +185,7 @@ ssh stakpoller@192.168.1.81 "rm -f /tmp/retail-poller.lock"
 
 **Fix:** Commit `c80442f` on StakTrakrApi main:
 - Added `readLatestPerVendor()` to `db.js` (latest non-failed row per vendor within lookback window)
-- Changed `CRON_SCHEDULE` default from `*/15` to `15,45` (later relaxed to `0` in 2026-02-26)
+- Changed `CRON_SCHEDULE` default from `*/15` to `15,45`
 - Three deploys total to restore full pipeline
 
 **Lesson:** After any `git mv` refactor that touches the Fly.io deploy path, verify all ES module imports resolve on the deployed container before moving on. The `SyntaxError` is fatal at parse time -- nothing runs.

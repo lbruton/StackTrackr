@@ -2,7 +2,7 @@
 title: "Poller Parity — Fly.io vs Home Poller"
 category: infrastructure
 owner: staktrakr-api
-lastUpdated: v3.33.18
+lastUpdated: v3.33.19
 date: 2026-02-26
 sourceFiles: []
 relatedPages: []
@@ -16,7 +16,7 @@ relatedPages: []
 
 ## Goal
 
-Both pollers should produce identical scrape results for the same coin/vendor target, offset only by their cron schedule (Fly.io at `:00`, home at `:30`). Any configuration drift between them is a bug.
+Both pollers should produce identical scrape results for the same coin/vendor target, offset only by their cron schedule (Fly.io at `:15/:45`, home at `:30`). Any configuration drift between them is a bug.
 
 ---
 
@@ -38,7 +38,7 @@ Both pollers should produce identical scrape results for the same coin/vendor ta
 | **Redis** | In-container | systemd |
 | **RabbitMQ** | In-container | systemd |
 | **Proxy (HOME_PROXY_URL_2)** | `""` (empty — not used) | Not set |
-| **Cron schedule** | `:00` every hour | `:30` every hour |
+| **Cron schedule** | `:15/:45` every hour | `:30` every hour |
 | **Vision pipeline** | Yes (GEMINI_API_KEY set) | Yes (if GEMINI_API_KEY set in .env) |
 | **Run script** | `run-local.sh` | `run-home.sh` |
 | **Git push** | Yes (`run-publish.sh` at `:08/:23/:38/:53`) | No (Turso only) |
@@ -143,14 +143,12 @@ The **home poller copy** has diverged from the repo. Key differences:
 | Command | `node /opt/playwright-service/dist/api.js` | `node /opt/playwright-service/dist/api.js` |
 | Port | 3003 | 3003 |
 | `PLAYWRIGHT_BROWSERS_PATH` | `/usr/local/share/playwright` | `/usr/local/share/playwright` |
-| `PROXY_SERVER` | `http://p.webshare.io:80` | **Not set** |
-| `PROXY_USERNAME` / `PROXY_PASSWORD` | Webshare creds (from Fly secrets) | **Not set** |
-| `BLOCK_MEDIA` | `True` | **Not set** |
+| `PROXY_SERVER` | `%(ENV_HOME_PROXY_URL_2)s` (home tinyproxy via Tailscale) | **Not set** |
 | `HOME_PROXY_URL_2` | From env (empty string) | **Not set** |
 | Chromium version | `chromium-1208` (from Docker stage) | `chromium-1208` (from `npx playwright install`) |
 | Log output | `/dev/stdout` (Docker) | `/var/log/supervisor/playwright-service.log` |
 
-> **Key difference:** Fly.io Playwright Service has Webshare proxy config and `BLOCK_MEDIA=True`. Home poller Playwright Service has neither. This means Firecrawl on Fly.io can route through a proxy when scraping via the Playwright microservice, but the home poller cannot. However, `price-extract.js` Playwright fallback (Phase 2) handles its own proxy chain independently of the Playwright Service.
+> **Key difference:** Fly.io Playwright Service uses `HOME_PROXY_URL_2` (home tinyproxy via Tailscale) as its proxy. Home poller Playwright Service has no proxy configured. However, `price-extract.js` Playwright fallback (Phase 2) handles its own proxy chain independently of the Playwright Service.
 
 ### Firecrawl API (supervisord)
 
@@ -180,12 +178,7 @@ The **home poller copy** has diverged from the repo. Key differences:
 
 ### package.json
 
-| Dependency | Fly.io (repo) | Home Poller |
-|------------|---------------|-------------|
-| `playwright` | `^1.49.0` | `^1.58.2` |
-| `playwright-core` | `^1.49.0` | `^1.49.0` |
-
-> **Drift:** Home poller has `playwright@^1.58.2` (installed today) while repo pins `^1.49.0`. The `playwright` package is only used for `BROWSER_MODE=local` Chromium launch — the actual browser binary (`chromium-1208`) is the same version on both. Update the repo `package.json` to match: `"playwright": "^1.58.2"`.
+Both pollers share the same `package.json` — no package drift.
 
 ### Chromium Browser
 
@@ -207,22 +200,17 @@ These are **NOT in Turso** — they are hardcoded Sets and Maps in `price-extrac
 
 ### PLAYWRIGHT_ONLY_PROVIDERS (skip Firecrawl entirely)
 
-| Vendor | Reason | Line |
-|--------|--------|------|
-| `jmbullion` | Firecrawl ignores `waitFor` — product table renders as "Loading..." — fractional_weight fires on nav links | 430 |
-| `bullionexchanges` | Cloudflare bot detection redirects to homepage — markdown is a single banner image | 430 |
-
-> **Note:** Both vendors are currently `enabled: false` in Turso for all coins, so this Set has no runtime effect.
+Currently **empty** (`new Set([])`). No vendors skip Firecrawl entirely.
 
 ### SLOW_PROVIDERS (extra wait time in Firecrawl + Playwright)
 
 | Vendor | Firecrawl `waitFor` | Playwright extra wait | Reason | Line |
 |--------|--------------------|-----------------------|--------|------|
-| `jmbullion` | 6000ms | 8000ms | Next.js/React — price tables take ~5s | 422 |
-| `herobullion` | 6000ms | 8000ms | React app — needs render time | 422 |
-| `monumentmetals` | 6000ms | 8000ms | React Native Web SPA — router mounts at ~6s | 422 |
-| `summitmetals` | 6000ms | 8000ms | Shopify SPA — JS render delay | 422 |
-| `bullionexchanges` | 6000ms | 8000ms | React/Magento SPA — pricing grid at ~6-8s | 422 |
+| `jmbullion` | 8000ms | 8000ms | Next.js/React — price tables take ~5s | 422 |
+| `herobullion` | 8000ms | 8000ms | React app — needs render time | 422 |
+| `monumentmetals` | 8000ms | 8000ms | React Native Web SPA — router mounts at ~6s | 422 |
+| `summitmetals` | 8000ms | 8000ms | Shopify SPA — JS render delay | 422 |
+| `bullionexchanges` | 8000ms | 8000ms | React/Magento SPA — pricing grid at ~6-8s | 422 |
 
 ### PREORDER_TOLERANT_PROVIDERS (skip pre-order OOS detection)
 
@@ -234,7 +222,8 @@ These are **NOT in Turso** — they are hardcoded Sets and Maps in `price-extrac
 
 | Vendor | Reason | Line |
 |--------|--------|------|
-| `jmbullion` | Mega-menu always lists "1/2 oz Gold Eagle" etc. — causes false fractional_weight detection | 438 |
+| `jmbullion` | Mega-menu always lists "1/2 oz Gold Eagle" etc. — causes false fractional_weight detection | 440 |
+| `bullionexchanges` | Similar navigation structure causes false fractional_weight detection | 440 |
 
 ### MARKDOWN_CUTOFF_PATTERNS (trim page tail)
 
@@ -253,8 +242,8 @@ These are **NOT in Turso** — they are hardcoded Sets and Maps in `price-extrac
 
 | Vendor | `onlyMainContent` | `waitFor` | Line |
 |--------|-------------------|-----------|------|
-| `jmbullion` | `false` (disabled — React pages return empty with it on) | 6000ms | 449, 453 |
-| All SLOW_PROVIDERS | default (`true`) | 6000ms | 453 |
+| `jmbullion` | `false` (disabled — React pages return empty with it on) | 8000ms | 449, 453 |
+| All SLOW_PROVIDERS | default (`true`) | 8000ms | 453 |
 | All others | `true` | none | 449 |
 
 ### Price Extraction Strategy (extractPrice)
@@ -377,7 +366,7 @@ For each enabled coin/vendor target:
   2. Phase 1: Firecrawl
      - POST to localhost:3002/v1/scrape
      - onlyMainContent: true (false for jmbullion)
-     - waitFor: 6000ms if SLOW_PROVIDERS, else none
+     - waitFor: 8000ms if SLOW_PROVIDERS, else none
      - Retry up to 2x on failure
      - preprocessMarkdown() strips header/nav + tail sections
      - detectStockStatus() checks OOS patterns

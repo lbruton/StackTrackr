@@ -2,8 +2,8 @@
 title: Release Workflow
 category: frontend
 owner: staktrakr
-lastUpdated: v3.32.24
-date: 2026-02-23
+lastUpdated: v3.33.19
+date: 2026-03-01
 sourceFiles:
   - .claude/skills/release/SKILL.md
   - devops/version-lock-protocol.md
@@ -13,7 +13,7 @@ relatedPages:
 ---
 # Release Workflow
 
-> **Last updated:** v3.32.24 — 2026-02-23
+> **Last updated:** v3.33.19 — 2026-03-01
 > **Source files:** `.claude/skills/release/SKILL.md`, `devops/version-lock-protocol.md`
 
 ## Overview
@@ -22,7 +22,7 @@ StakTrakr uses a structured patch versioning workflow. Every meaningful change �
 
 The two commands that drive this workflow are:
 
-- **`/release patch`** — claims the next version, isolates work in a worktree, bumps 7 files, commits, and opens a draft PR to `dev`
+- **`/release patch`** — claims the next version, isolates work in a worktree, bumps version files, commits, and opens a draft PR to `dev`
 - **`/ship`** (Phase 4.5 of the release skill) — explicit `dev → main` release using version tags as the changelog source; never runs automatically
 
 ---
@@ -45,34 +45,47 @@ Defined in `js/constants.js` as `APP_VERSION`:
 
 ```
 BRANCH.RELEASE.PATCH
-  3  .  32  .  24
+  3  .  33  .  19
 ```
 
 - `BRANCH` — major branch (rarely changes)
 - `RELEASE` — bumped when shipping a batch to `main` via `/release release`
 - `PATCH` — bumped after every meaningful committed change via `/release patch`
 
-Current value as of this writing: `3.32.24`
+The current version is always defined in `js/constants.js` as `APP_VERSION`.
 
 ---
 
 ### Version Lock (`devops/version.lock`)
 
-The lock prevents two concurrent agents from claiming the same version number. It is the first thing written and the last thing deleted.
+The lock prevents two concurrent agents from claiming the same version number. It uses a **claims array** model — multiple agents can hold concurrent claims on different version numbers.
 
 **Lock file format** (`devops/version.lock` — gitignored):
 
 ```json
 {
-  "locked": "3.32.25",
-  "locked_by": "claude-sonnet / STAK-XX feature name",
-  "locked_at": "2026-02-23T19:00:00Z",
-  "expires_at": "2026-02-23T19:30:00Z"
+  "claims": [
+    {
+      "version": "3.33.20",
+      "claimed_by": "claude / STAK-XX feature name",
+      "issue": "STAK-XX",
+      "claimed_at": "2026-03-01T10:00:00Z",
+      "expires_at": "2026-03-01T10:30:00Z"
+    },
+    {
+      "version": "3.33.21",
+      "claimed_by": "user / local hotfix",
+      "issue": null,
+      "claimed_at": "2026-03-01T10:05:00Z",
+      "expires_at": "2026-03-01T10:35:00Z"
+    }
+  ]
 }
 ```
 
-- TTL is 30 minutes. Any agent may take over an expired lock (and must log the takeover in mem0).
-- If the lock is held and not expired, stop and report to the user — do not proceed.
+- TTL is 30 minutes per claim. On any read, expired entries are pruned before computing the next available version.
+- No agent ever takes over another agent's version — each claim is independently owned.
+- If an agent's claim expires with no PR merged, the version is effectively skipped. Minor gaps in the version sequence are acceptable.
 
 ---
 
@@ -89,19 +102,22 @@ Worktrees are stored at `.claude/worktrees/patch-VERSION/` and are gitignored.
 
 ---
 
-### 7 Files Bumped per Patch
+### Files Updated per Patch
 
-Every `/release patch` run touches exactly these files:
+Every `/release patch` run updates version information across these files:
 
-| # | File | What changes |
-|---|------|--------------|
-| 1 | `js/constants.js` | `APP_VERSION` string |
-| 2 | `sw.js` | `CACHE_NAME` — auto-stamped by pre-commit hook (`devops/hooks/stamp-sw-cache.sh`); no manual edit needed |
-| 3 | `CHANGELOG.md` | New version section with bullets |
-| 4 | `docs/announcements.md` | Prepend one-line entry to What's New; trim to 3–5 entries |
-| 5 | `js/about.js` | `getEmbeddedWhatsNew()` and `getEmbeddedRoadmap()` — must mirror `announcements.md` exactly |
-| 6 | `version.json` | `version` + `releaseDate` fields |
-| 7 | wiki (via `wiki-update` skill) | `release-workflow.md` and related pages updated as part of the wiki system |
+| # | File | What changes | Edit type |
+|---|------|--------------|-----------|
+| 1 | `js/constants.js` | `APP_VERSION` string | Manual |
+| 2 | `sw.js` | `CACHE_NAME` — auto-stamped by pre-commit hook (`devops/hooks/stamp-sw-cache.sh`) | Automatic (hook) |
+| 3 | `CHANGELOG.md` | New version section with bullets | Manual |
+| 4 | `docs/announcements.md` | Prepend one-line entry to What's New; trim to 3–5 entries | Manual |
+| 5 | `js/about.js` | `getEmbeddedWhatsNew()` and `getEmbeddedRoadmap()` — must mirror `announcements.md` exactly | Manual |
+| 6 | `version.json` | `version` + `releaseDate` fields | Manual |
+
+**5 files are manually edited** by the release skill. `sw.js` is auto-stamped by the pre-commit hook — no manual edit needed. Seed data files (`data/spot-history-*.json`) are staged conditionally if the poller has written new entries.
+
+After a successful commit, the `wiki-update` skill is dispatched as a background task to update any affected wiki pages — this is a post-commit step, not one of the version bump files.
 
 `announcements.md` and `js/about.js` (files 4 and 5) **must stay in sync** — HTTP users read the former via `fetch()`; `file://` users fall back to the latter.
 
@@ -135,23 +151,25 @@ If the count is greater than 0: **STOP.** Pull first, then restart.
 git pull origin dev
 ```
 
-### Phase 0a: Version Lock Check
+### Phase 0a: Version Lock Claim
 
 ```bash
 cat devops/version.lock 2>/dev/null || echo "UNLOCKED"
 ```
 
-- Locked and not expired → stop, report to user
-- Locked but expired (>30 min) → take over, log takeover in mem0
-- Unlocked → proceed: compute `next_version = APP_VERSION + 1 (PATCH)`, write lock, create worktree
+1. Read and prune expired claims from the `claims` array (remove entries where `expires_at` < now)
+2. Find the highest `version` among active claims (or read `APP_VERSION` from `js/constants.js` if no active claims)
+3. Increment the PATCH component by 1 — this is your claimed version
+4. Append your claim to the `claims` array and write the file
+5. Create the worktree: `git worktree add .claude/worktrees/patch-VERSION -b patch/VERSION`
 
 ### Phase 1: Implement + Version Bump
 
-All work happens inside `.claude/worktrees/patch-VERSION/`. The skill bumps all 7 files, then presents a release plan for user confirmation before writing anything.
+All work happens inside `.claude/worktrees/patch-VERSION/`. The skill bumps version files, then presents a release plan for user confirmation before writing anything.
 
 ### Phase 2: Verify
 
-Grep for the new version string in all 7 files. Confirm `announcements.md` has 3–5 What's New entries, `about.js` mirrors it exactly, and `version.json` has today's date.
+Grep for the new version string in all version files. Confirm `announcements.md` has 3–5 What's New entries, `about.js` mirrors it exactly, and `version.json` has today's date.
 
 ### Phase 3: Commit
 
@@ -192,8 +210,8 @@ git worktree remove .claude/worktrees/patch-VERSION --force
 git branch -d patch/VERSION
 git push origin --delete patch/VERSION
 
-# Release the version lock
-rm -f devops/version.lock
+# Release the version lock — remove your claim entry by version match
+# Leave other active claims intact. Delete the file only when no claims remain.
 ```
 
 Note: this tag lands on `dev`, not `main`. It is NOT a GitHub Release — it appears only in the Tags tab. The actual GitHub Release is created in Phase 5 after the `dev → main` merge.
@@ -242,7 +260,7 @@ Without this step, the GitHub Releases page shows a stale version and the "Lates
 | Creating a `dev → main` PR automatically | Ships code before QA | Phase 4.5 only runs when user explicitly requests it |
 | Skipping Phase 5 (GitHub Release) | `version.json` `releaseUrl` resolves to stale release; "Latest" badge is wrong | Always create the GitHub Release after `dev → main` merge |
 | Editing `announcements.md` without updating `about.js` | HTTP users and `file://` users see different What's New content | Keep both files in sync at all times |
-| Forgetting to delete `version.lock` after cleanup | Next agent sees a stale lock and stops unnecessarily | `rm -f devops/version.lock` is part of cleanup |
+| Forgetting to remove your claim from `version.lock` after cleanup | Next agent sees a stale claim and computes a version gap unnecessarily | Remove your claim entry; delete the file only when no claims remain |
 
 ---
 

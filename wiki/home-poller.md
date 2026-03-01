@@ -2,8 +2,8 @@
 title: Home Poller (Ubuntu VM)
 category: infrastructure
 owner: staktrakr-api
-lastUpdated: v3.33.18
-date: 2026-02-25
+lastUpdated: v3.33.19
+date: 2026-03-01
 sourceFiles: []
 relatedPages: []
 ---
@@ -98,7 +98,7 @@ Node.js HTTP server (`/opt/poller/dashboard.js`) showing:
 - All poller runs from Turso (`poller_runs` table — home + Fly.io)
 - Home poller log tail (last 300 lines)
 - **`/providers`** — Provider URL editor (inline CRUD against Turso — see [Provider Database](provider-database.md))
-- **`/failures`** — Failure queue (URLs with 3+ failures in last 10 days from Turso)
+- **`/failures`** — Failure queue (URLs with 3+ failures in last 7 days from Turso)
 
 ### Grafana (`http://192.168.1.81:3000`)
 
@@ -128,13 +128,13 @@ As of 2026-02-24, this VM runs **tinyproxy** as an HTTP proxy for the Fly.io con
 
 | Property | Value |
 |----------|-------|
-| Proxy URL | `http://100.112.198.50:8888` |
+| Proxy URL | `http://100.112.198.50:8889` (referenced as `HOME_PROXY_URL_2` on Fly) |
 | Accepts connections from | Tailscale IPs only (100.112.198.50, 100.90.171.110) |
 | Residential egress IP | `98.184.142.225` |
 | Config | `/etc/tinyproxy/tinyproxy.conf` |
 | `DisableViaHeader` | Yes (no proxy fingerprint) |
 
-The Fly.io container sets `PROXY_SERVER=http://100.112.198.50:8888` and routes scraper traffic through it. The home VM exits as a residential IP — retail bullion dealers don't block residential IPs.
+The Fly.io container sets `HOME_PROXY_URL_2=http://100.112.198.50:8889` and the Playwright service routes scraper traffic through it. The home VM exits as a residential IP — retail bullion dealers don't block residential IPs.
 
 **Previous approach (deprecated):** Tailscale exit node — `sudo tailscale set --advertise-exit-node=true`. This was replaced by tinyproxy in Feb 2026 for better reliability and selective routing.
 
@@ -166,8 +166,8 @@ The home poller runs Playwright with **local Chromium** — no Docker, no Browse
 | Property | Home Poller | Fly.io Container |
 |----------|-------------|------------------|
 | `BROWSER_MODE` | `local` | `local` |
-| Playwright package | `playwright` (full, from npm) | `playwright-core` (connects to service) |
-| Chromium source | Playwright-managed (`npx playwright install chromium`) | Playwright Service image (port 3003) |
+| Playwright package | `playwright` (full, from npm) | `playwright-core` with local Chromium launch (`PLAYWRIGHT_LAUNCH=1`) |
+| Chromium source | Playwright-managed (`npx playwright install chromium`) | Dockerfile-installed Chromium; separate Playwright service (port 3003) is used by Firecrawl, not by `price-extract.js` directly |
 | Browser path | `/usr/local/share/playwright/` + `/root/.cache/ms-playwright/` | `/usr/local/share/playwright/` (copied from Docker stage) |
 | System deps | Ubuntu apt packages (pre-installed) | Dockerfile `apt-get install` |
 

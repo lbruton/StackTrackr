@@ -2,8 +2,8 @@
 title: "providers.json"
 category: infrastructure
 owner: staktrakr-api
-lastUpdated: v3.33.18
-date: 2026-02-24
+lastUpdated: v3.33.19
+date: 2026-03-01
 sourceFiles: []
 relatedPages: []
 ---
@@ -109,7 +109,7 @@ Monument Metals maintains **parallel SKUs** for each coin:
 | `ase` | `2026-american-silver-eagle.html` | Year-specific (random was pre-order) |
 | `age` | `2026-american-1-oz-gold-eagle-bu.html` | Year-specific (random was pre-order) |
 | `maple-gold` | `2026-1oz-gold-maple.html` | Year-specific (random was pre-order) |
-| `krugerrand-silver` | `south-africa-1-oz-silver-krugerrand-bu-random-date.html` | Random-date (2026 was pre-order — opposite) |
+| `krugerrand-silver` | `2026-south-africa-1-oz-silver-krugerrand-bu.html` | Year-specific (committed 2026 SKU) |
 
 > Check Monument Metals in late March/April to see if random-year SKUs are back in stock.
 

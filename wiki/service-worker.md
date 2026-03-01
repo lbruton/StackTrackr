@@ -2,7 +2,7 @@
 title: Service Worker
 category: frontend
 owner: staktrakr
-lastUpdated: v3.33.18
+lastUpdated: v3.33.19
 date: 2026-03-01
 sourceFiles:
   - sw.js
@@ -13,7 +13,7 @@ relatedPages:
 ---
 # Service Worker
 
-> **Last updated:** v3.33.18 — 2026-03-01
+> **Last updated:** v3.33.19 — 2026-03-01
 > **Source files:** `sw.js`, `devops/hooks/stamp-sw-cache.sh`
 
 ## Overview
@@ -42,18 +42,27 @@ staktrakr-v{APP_VERSION}-b{EPOCH}
 Example from current source:
 
 ```js
-const CACHE_NAME = 'staktrakr-v3.33.18-b1772346419';
+const CACHE_NAME = 'staktrakr-v3.33.19-b1772404151';
 ```
 
-- `APP_VERSION` — read from `js/constants.js` at commit time (e.g. `3.33.18`)
+- `APP_VERSION` — read from `js/constants.js` at commit time (e.g. `3.33.19`)
 - `EPOCH` — Unix timestamp in seconds at commit time, making every build unique
 - When the name changes, the browser treats it as a new cache bucket and re-fetches all assets
 
 ### Cache strategy
 
-- **CORE_ASSETS** — cache-first (installed during the `install` event via `cache.addAll()`)
-- **API hosts** — network-first (live spot/price feeds must never be served stale)
-- **Everything else** — network-first with cache fallback
+Requests are routed through different strategies based on URL matching in the `fetch` handler:
+
+| Bucket | Hosts / Paths | Strategy | Rationale |
+|---|---|---|---|
+| **Pre-cached shell** | `CORE_ASSETS` list | Cached on `install` via `cache.addAll()` | Ensures offline availability of core app |
+| **External API hosts** | `metalpriceapi.com`, `metals-api.com`, `gold-api.com`, `numista.com` | Network-first | Live price feeds must always return fresh data |
+| **CDN libraries** | `cdnjs.cloudflare.com`, `cdn.jsdelivr.net`, `unpkg.com` | Stale-while-revalidate | Serve fast from cache, update in background |
+| **StakTrakr API** | `api.staktrakr.com`, `api2.staktrakr.com` | Stale-while-revalidate | Hourly price feeds benefit from fast cached response with background refresh |
+| **Spot history seed data** | Local `/data/spot-history*` | Stale-while-revalidate | Seed files updated between releases |
+| **Local JS/CSS** | Same-origin `*.js`, `*.css` | Network-first | Always serve fresh code when online |
+| **Navigation** | Same-origin `navigate` requests | Cached app shell (`./`) | PWA launch and page reload serve the cached index; falls back to offline page |
+| **Other local assets** | Same-origin (images, fonts, etc.) | Stale-while-revalidate | Fast cached response with background refresh |
 
 ### Pre-commit hook: `devops/hooks/stamp-sw-cache.sh`
 
@@ -81,7 +90,7 @@ ln -sf ../../devops/hooks/stamp-sw-cache.sh .git/hooks/pre-commit
 
 ## CORE_ASSETS
 
-The full pre-cache list as of v3.33.18 (76 entries). This list **must be kept in sync** with the `<script>` load order in `index.html`.
+The full pre-cache list as of v3.33.19 (76 entries). This list **must be kept in sync** with the `<script>` load order in `index.html`.
 
 ```js
 const CORE_ASSETS = [

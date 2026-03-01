@@ -2,8 +2,8 @@
 title: "Retail View Modal & Market List View"
 category: frontend
 owner: staktrakr
-lastUpdated: v3.33.06
-date: 2026-02-27
+lastUpdated: v3.33.19
+date: 2026-03-01
 sourceFiles:
   - js/retail-view-modal.js
   - js/retail.js
@@ -15,20 +15,20 @@ relatedPages:
 ---
 # Retail View Modal & Market List View
 
-> **Last updated:** v3.33.06 — 2026-02-27
+> **Last updated:** v3.33.19 — 2026-03-01
 > **Source files:** `js/retail-view-modal.js`, `js/retail.js`, `css/styles.css`
 
 ## Overview
 
 The retail subsystem has two presentation modes for market pricing:
 
-1. **Grid view** (default) — the original card-per-coin layout rendered by `renderRetailCards()`.
-2. **Market list view** (v3.33.06, feature-flagged) — a full-width single-row card layout with inline 7-day trend charts, spike detection, vendor price chips, computed stats (MED/LOW/AVG), card click-to-expand, and search/sort. Activated by `?market_list_view=true` or via the `MARKET_LIST_VIEW` feature flag in Settings.
+1. **Market list view** (default since v3.33.06) — a full-width single-row card layout with inline 7-day trend charts, spike detection, vendor price chips, computed stats (MED/LOW/AVG), card click-to-expand, and search/sort. `MARKET_LIST_VIEW` is enabled by default in `FEATURE_FLAGS`. Can be toggled via `?market_list_view=false` or in Settings.
+2. **Grid view** (fallback) — the original card-per-coin layout rendered by `renderRetailCards()`. Active when `MARKET_LIST_VIEW` is disabled.
 
 The **Retail View Modal** is a per-coin detail panel that opens when a user clicks a coin card in the Grid view. It contains two tabs:
 
 - **24h Chart** (default on open) — a Chart.js line chart of vendor prices over the past 24 hours, plus a "Recent windows" table beneath it.
-- **Price History** — a daily candlestick-style chart and 30-day history table showing average vendor prices per day.
+- **Price History** — a Chart.js line chart with per-vendor lines (or a fallback "Avg Median" series when no per-vendor data exists) and a 30-day history table showing average vendor prices per day.
 
 As of v3.32.25 the modal also forward-fills vendor prices across gap windows and shows out-of-stock (OOS) vendors as clickable links in the vendor legend.
 
@@ -54,6 +54,9 @@ retailIntradayData[slug].windows_24h   (raw 15-min windows from API)
          |
          v
   _forwardFillVendors(bucketed)        -> filled[]    (gaps filled, _carriedVendors set on each window)
+         |
+         v
+  _flagAnomalies(filled)               -> flagged[]   (anomalous prices nulled, originals in _anomalyOriginals)
          |
          +-->  _buildIntradayChart()   -> Chart.js line chart; tooltip prefixes carried values with "~"
          +-->  _buildIntradayTable()   -> Recent windows table; carried cells shown as "~$XX.XX" muted italic
@@ -143,6 +146,7 @@ Vendor colors were brightened in v3.33.06 for better contrast on dark background
 | `herobullion` | Hero | `#f87171` red |
 | `bullionexchanges` | BullionX | `#f472b6` bright pink |
 | `summitmetals` | Summit | `#22d3ee` bright cyan |
+| `goldback` | Goldback | `#d4a017` deep gold |
 
 ### Vendor chip layout (Market List View)
 
@@ -220,13 +224,14 @@ Renders the Chart.js 24h line chart and delegates to `_buildIntradayTable`.
 **Steps:**
 1. Reads `retailIntradayData[slug].windows_24h`.
 2. Calls `_bucketWindows` then `_forwardFillVendors` to produce the filled window array.
-3. Shows "no data" placeholder if fewer than 2 windows are available.
-4. Destroys any existing `_retailViewIntradayChart` instance before creating a new one.
-5. Builds one dataset per active vendor (vendors with at least one non-null price in the filled windows), using `RETAIL_VENDOR_NAMES` to determine order and `RETAIL_VENDOR_COLORS` for line colors.
-6. Falls back to Median + Low datasets when no per-vendor data exists (pre-vendor-format windows).
-7. Attaches a `_carriedIndices: Set<number>` to each dataset — the bucket indices whose value was forward-filled.
-8. Tooltip `label` callback: if `ctx.raw` is null (guard required — `ctx.raw` can be null on `spanGaps: true` datasets), returns nothing; if the index is in `_carriedIndices`, prefixes with `~` (e.g. `~$32.15`); otherwise formats normally.
-9. Calls `_buildIntradayTable(slug, filled)` at the end.
+3. Calls `_flagAnomalies(filled)` to detect and null anomalous vendor prices (originals preserved in `_anomalyOriginals` for table display).
+4. Shows "no data" placeholder if fewer than 2 windows are available.
+5. Destroys any existing `_retailViewIntradayChart` instance before creating a new one.
+6. Builds one dataset per active vendor (vendors with at least one non-null price in the flagged windows), using `RETAIL_VENDOR_NAMES` to determine order and `RETAIL_VENDOR_COLORS` for line colors.
+7. Falls back to Median + Low datasets when no per-vendor data exists (pre-vendor-format windows).
+8. Attaches a `_carriedIndices: Set<number>` to each dataset — the bucket indices whose value was forward-filled.
+9. Tooltip `label` callback: if `ctx.raw` is null (guard required — `ctx.raw` can be null on `spanGaps: true` datasets), returns nothing; if the index is in `_carriedIndices`, prefixes with `~` (e.g. `~$32.15`); otherwise formats normally.
+10. Calls `_buildIntradayTable(slug, bucketed)` at the end, passing the flagged array.
 
 **Chart options:**
 - `spanGaps: true` — lines bridge over null entries.
@@ -265,7 +270,7 @@ Renders the colored vendor legend above the price-history chart showing current 
 
 **Behavior:**
 - Clears the `#retailViewVendorLegend` container on every call.
-- `hasAny` check: at least one vendor in `RETAIL_VENDOR_NAMES` must have a non-null `price` in `retailPrices.prices[slug].vendors`. If no vendors pass this check, the function returns early (no legend rendered).
+- `hasAny` check: at least one vendor in `RETAIL_VENDOR_NAMES` must have either a non-null `price` in `retailPrices.prices[slug].vendors` **or** an OOS flag in `retailAvailability[slug][v] === false`. If no vendors pass either condition, the function returns early (no legend rendered).
 - Iterates all `RETAIL_VENDOR_NAMES` keys in declaration order.
 
 **Per-vendor item:**
@@ -394,6 +399,8 @@ window.openRetailViewModal   // called from retail card buttons
 window.closeRetailViewModal  // called from modal close button
 window._switchRetailViewTab  // called from tab button onclick
 window._bucketWindows        // exported for console/smoke-test inspection
+window._forwardFillVendors   // exported for console/smoke-test inspection
+window._flagAnomalies        // exported for console/smoke-test inspection
 window._buildIntradayTable   // exported for row-count dropdown onchange
 
 // Market List View (added v3.33.06)
@@ -402,7 +409,7 @@ window._buildMarketListCard    // build a single card (debugging/testing)
 window._getFilteredSortedSlugs // filter+sort inspection
 ```
 
-`_forwardFillVendors`, `_buildIntradayChart`, and `_buildVendorLegend` are module-private.
+`_buildIntradayChart` and `_buildVendorLegend` are module-private.
 `_filterHistorySpikes`, `_interpolateGaps`, `_initMarketCardChart`, `_onMarketSearch`, `_onMarketSort`, and `_initMarketListViewListeners` are module-private.
 
 ---
@@ -451,9 +458,9 @@ Chart.js passes `ctx.raw = null` for gap points when `spanGaps: true`. Calling `
 
 `RETAIL_VENDOR_NAMES`, `RETAIL_VENDOR_COLORS`, and `RETAIL_VENDOR_URLS` must all be updated together in `retail.js`. A vendor missing from `RETAIL_VENDOR_NAMES` will never appear in the chart, table, or legend — the other two maps are irrelevant without the name entry.
 
-### OOS legend items disappearing after a `retailPrices` refresh
+### OOS legend items after a `retailPrices` refresh
 
-`_buildVendorLegend` currently reads current prices from `retailPrices.prices[slug].vendors`. OOS vendors have `price == null` in that snapshot. The `hasAny` guard checks `RETAIL_VENDOR_NAMES` keys against live prices — if all vendors are OOS, `hasAny` is false and the legend is suppressed entirely. If OOS vendors must always be shown, check `retailAvailability` in the `hasAny` guard as well.
+`_buildVendorLegend` reads current prices from `retailPrices.prices[slug].vendors`. The `hasAny` guard already checks both live prices (`vendorMap[v].price != null`) **and** OOS availability (`retailAvailability[slug][v] === false`), so all-OOS vendors are not suppressed from the legend. OOS vendors render at `opacity: 0.5` with a strikethrough price and an "OOS" badge.
 
 ### Not destroying the old Chart.js instance before creating a new one
 

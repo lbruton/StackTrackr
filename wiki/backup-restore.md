@@ -2,8 +2,8 @@
 title: "Backup & Restore"
 category: frontend
 owner: staktrakr
-lastUpdated: v3.32.41
-date: 2026-02-25
+lastUpdated: v3.33.19
+date: 2026-03-01
 sourceFiles:
   - js/inventory.js
   - js/vault.js
@@ -19,7 +19,7 @@ relatedPages:
 ---
 # Backup & Restore
 
-> **Last updated:** v3.32.41 — 2026-02-25
+> **Last updated:** v3.33.19 — 2026-03-01
 > **Source files:** `js/inventory.js`, `js/vault.js`, `js/cloud-sync.js`, `js/cloud-storage.js`, `js/image-cache.js`
 
 ## Overview
@@ -56,7 +56,7 @@ StakTrakr has **4 backup/restore mechanisms**. Each covers a different slice of 
 | File in ZIP | Contents | Storage restored to |
 |-------------|----------|---------------------|
 | `inventory_data.json` | Full inventory array (includes CDN URLs: `obverseImageUrl`, `reverseImageUrl`) | localStorage (`LS_KEY`) |
-| `settings.json` | Theme, currency, catalog mappings, feature flags, chip config, table settings | localStorage (multiple keys) |
+| `settings.json` | Theme, catalog mappings, feature flags, chip config, table settings | localStorage (multiple keys) |
 | `spot_price_history.json` | Historical spot prices | localStorage (`SPOT_HISTORY_KEY`) |
 | `item_price_history.json` | Per-item price history | Merged via `mergeItemPriceHistory()` |
 | `item_tags.json` | Item tags | localStorage |
@@ -127,7 +127,7 @@ All localStorage keys listed in `ALLOWED_STORAGE_KEYS` (~80+ keys), including:
 
 **Functions:** `collectAndHashImageVault()` → `vaultEncryptImageVault()` in `js/vault.js`
 **Crypto:** AES-256-GCM (same as regular vault)
-**Cloud path:** `/StakTrakr/staktrakr-images.stvault` (Dropbox)
+**Cloud path:** `/StakTrakr/sync/staktrakr-images.stvault` (Dropbox)
 
 ### What is included
 
@@ -179,9 +179,11 @@ All `userImages` IDB records serialized as base64 blobs.
 
 | File | Path | Contents |
 |------|------|----------|
-| Inventory vault | `/StakTrakr/staktrakr-sync.stvault` | Sync-scoped vault (inventory + display prefs) |
-| Image vault | `/StakTrakr/staktrakr-images.stvault` | `userImages` blobs only |
-| Metadata pointer | `/StakTrakr/staktrakr-sync.json` | `imageHash`, `itemCount`, `syncId`, `deviceId` |
+| Inventory vault | `/StakTrakr/sync/staktrakr-sync.stvault` | Sync-scoped vault (inventory + display prefs) |
+| Image vault | `/StakTrakr/sync/staktrakr-images.stvault` | `userImages` blobs only |
+| Metadata pointer | `/StakTrakr/sync/staktrakr-sync.json` | `imageHash`, `itemCount`, `syncId`, `deviceId` |
+
+> **Legacy paths:** Flat-root paths (`/StakTrakr/staktrakr-sync.*`) are retained as `*_LEGACY` constants in `js/constants.js` for migration only. Active sync uses `/StakTrakr/sync/`; backups go to `/StakTrakr/backups/`.
 
 ### Push sequence
 
@@ -193,7 +195,7 @@ All `userImages` IDB records serialized as base64 blobs.
 
 ### Pull sequence
 
-1. `syncSaveOverrideBackup()` — snapshot local state before overwrite (conflict detection)
+1. `syncSaveOverrideBackup()` — snapshot local state before overwrite (rollback-only backup)
 2. Download + decrypt inventory vault → `vaultDecryptAndRestore()`
 3. Check remote `imageVault` hash vs local — if differs: download + decrypt image vault → `vaultDecryptAndRestoreImages()`
 4. Post-restore sequence: `loadInventory()` → `renderTable()` → `renderActiveFilters()` → `loadSpotHistory()`
@@ -206,7 +208,7 @@ Intentionally excludes: API keys, OAuth tokens, spot price history.
 
 ### Conflict detection
 
-`syncSaveOverrideBackup()` stores a pre-pull snapshot. The UI surfaces a conflict resolution prompt if item counts diverge between the snapshot and the pulled data.
+`syncSaveOverrideBackup()` stores a pre-pull snapshot as a rollback-only backup (enabling the "Restore Override Backup" button in the sync history section). Conflict detection is driven by `syncHasLocalChanges()`, which checks whether both local and remote have diverged (i.e., the last push timestamp is more recent than the last pull timestamp). When both sides have diverged, the conflict modal appears; it is not triggered by item-count differences between the snapshot and pulled data.
 
 ---
 
@@ -263,7 +265,7 @@ Intentionally excludes: API keys, OAuth tokens, spot price history.
 | "Pattern images disappeared after restore" | Only the ZIP backup includes `pattern_images/`. Cloud sync and the image vault do not cover this store. | Restore from ZIP backup to recover pattern images. |
 | "Numista images came back immediately after vault restore" | Expected behavior. Numista CDN URLs (`obverseImageUrl`, `reverseImageUrl`) are stored on the inventory items in localStorage, so they survive any vault restore without touching IDB. | No action needed — this is correct. |
 | "Image vault upload failed during cloud push" | Image vault upload is non-fatal — the inventory vault still succeeds. | Check Dropbox token validity. The next successful push will retry the image vault if the hash changed. |
-| "Conflict prompt appeared after cloud pull" | Item counts diverged between the pre-pull snapshot and pulled data. | Review the conflict UI and choose which version to keep. |
+| "Conflict prompt appeared after cloud pull" | Both local and remote have diverged — last push is more recent than last pull, meaning both sides have independent changes. | Review the conflict UI and choose which version to keep. |
 
 > **Never modify the `coinImages` IDB store.** It is a legacy store retained only to avoid a forced migration. It is never read or written. ZIP restore explicitly skips `coinImages/` and logs: `"skipping legacy coinImages folder (store deprecated)"`.
 
