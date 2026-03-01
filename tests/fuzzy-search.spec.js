@@ -17,9 +17,7 @@ test.describe('Levenshtein Distance Calculation', () => {
       };
     });
 
-    expect(distances.apple).toBe(0);
-    expect(distances.eagle).toBe(0);
-    expect(distances.empty).toBe(0);
+    expect(distances).toEqual({ apple: 0, eagle: 0, empty: 0 });
   });
 
   test('Single character differences (substitution)', async ({ page }) => {
@@ -30,8 +28,7 @@ test.describe('Levenshtein Distance Calculation', () => {
       };
     });
 
-    expect(distances.apply).toBe(1);
-    expect(distances.sitten).toBe(1);
+    expect(distances).toEqual({ apply: 1, sitten: 1 });
   });
 
   test('Single character differences (insertion/deletion)', async ({ page }) => {
@@ -43,9 +40,7 @@ test.describe('Levenshtein Distance Calculation', () => {
       };
     });
 
-    expect(distances.apples).toBe(1);
-    expect(distances.apple).toBe(1);
-    expect(distances.siver).toBe(1);
+    expect(distances).toEqual({ apples: 1, apple: 1, siver: 1 });
   });
 
   test('Multiple edits', async ({ page }) => {
@@ -57,9 +52,7 @@ test.describe('Levenshtein Distance Calculation', () => {
       };
     });
 
-    expect(distances.sitting).toBe(3);
-    expect(distances.rosetta).toBe(8);
-    expect(distances.sunday).toBe(3);
+    expect(distances).toEqual({ sitting: 3, rosetta: 8, sunday: 3 });
   });
 
   test('Empty strings', async ({ page }) => {
@@ -70,8 +63,7 @@ test.describe('Levenshtein Distance Calculation', () => {
       };
     });
 
-    expect(distances.hello).toBe(5);
-    expect(distances.world).toBe(5);
+    expect(distances).toEqual({ hello: 5, world: 5 });
   });
 
   test('Case sensitivity', async ({ page }) => {
@@ -82,8 +74,7 @@ test.describe('Levenshtein Distance Calculation', () => {
       };
     });
 
-    expect(distances.apple).toBe(1);
-    expect(distances.silver).toBe(6);
+    expect(distances).toEqual({ apple: 1, silver: 6 });
   });
 
   test('Non-string inputs', async ({ page }) => {
@@ -97,9 +88,6 @@ test.describe('Levenshtein Distance Calculation', () => {
       };
     });
 
-    expect(distances.null1).toBe(4);
-    expect(distances.undef).toBe(4);
-    expect(distances.num).toBe(3);
-    expect(distances.null2).toBe(0);
+    expect(distances).toEqual({ null1: 4, undef: 4, num: 3, null2: 0 });
   });
 });
