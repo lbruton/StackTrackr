@@ -132,9 +132,9 @@ test('STAK-222: PCGS cache read/write roundtrip', async ({ page }) => {
     const hit = window.loadPcgsCache('cert-99999999');
     const miss = window.loadPcgsCache('cert-00000000');
 
-    // Write a stale entry (31 days old) and verify it's rejected
+    // Write a stale entry (32 days old) and verify it's rejected
     const key = window.PCGS_RESPONSE_CACHE_KEY;
-    const cache = window.loadDataSync(key) || {};
+    const cache = window.loadDataSync(key, {});
     cache['cert-stale'] = {
       data: { PCGSNo: '9999999', Grade: 60, Name: 'Stale Coin' },
       fetchedAt: new Date(Date.now() - 32 * 24 * 60 * 60 * 1000).toISOString(),
