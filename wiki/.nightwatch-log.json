@@ -20,6 +20,14 @@
       "status": "inaccuracy_found",
       "finding": "Page incorrectly listed saveData/loadData as window globals; only saveDataSync/loadDataSync are exposed on window (js/utils.js).",
       "verified": []
+    },
+    {
+      "date": "2026-03-01",
+      "page": "frontend-overview.md",
+      "track": "frontend",
+      "status": "inaccuracy_found",
+      "finding": "MARKET_LIST_VIEW feature flag default listed as false but is enabled: true in js/constants.js:1317; description also diverged",
+      "verified": []
     }
   ]
 }
