@@ -8,6 +8,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  id-token: write
 
 jobs:
   nightwatch:
@@ -142,4 +143,4 @@ jobs:
             - Make minimal corrections — fix the specific claim, don't refactor.
             - Always include file:line evidence in the PR body.
             - Draft PRs only — human reviews before merge.
-          allowed_tools: "Read,Grep,Glob,Edit,Write,Bash(git config:*),Bash(git checkout:*),Bash(git add:*),Bash(git commit:*),Bash(git push:*),Bash(git status),Bash(gh pr create:*),Bash(wc *),Bash(grep -c:*),Bash(date *)"
+          claude_args: '--allowed-tools "Read,Grep,Glob,Edit,Write,Bash(git config:*),Bash(git checkout:*),Bash(git add:*),Bash(git commit:*),Bash(git push:*),Bash(git status),Bash(gh pr create:*),Bash(wc *),Bash(grep -c:*),Bash(date *)"'
