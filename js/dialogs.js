@@ -40,8 +40,8 @@
           <input id="appDialogInput" type="text" class="form-control" style="display:none; width:100%" />
         </div>
         <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:.5rem">
-          <button type="button" id="appDialogCancel" class="btn btn-secondary" style="display:none">Cancel</button>
-          <button type="button" id="appDialogOk" class="btn btn-primary">OK</button>
+          <button type="button" id="appDialogCancel" class="btn secondary" style="display:none">Cancel</button>
+          <button type="button" id="appDialogOk" class="btn premium">OK</button>
         </div>
       </div>`;
 

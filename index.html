@@ -679,8 +679,12 @@
                 <span class="total-value" id="retailValueSilver">$0.00</span>
               </div>
               <div class="total-item total-item-bottom-line">
-                <span class="total-label">Gain/Loss:</span>
+                <span class="total-label">Gain:</span>
                 <span class="total-value" id="lossProfitSilver">$0.00</span>
+              </div>
+              <div class="total-item">
+                <span class="total-label">Realized:</span>
+                <span class="total-value" id="realizedGainLossSilver">$0.00</span>
               </div>
             </div>
           </div>
@@ -715,8 +719,12 @@
                 <span class="total-value" id="retailValueGold">$0.00</span>
               </div>
               <div class="total-item total-item-bottom-line">
-                <span class="total-label">Gain/Loss:</span>
+                <span class="total-label">Gain:</span>
                 <span class="total-value" id="lossProfitGold">$0.00</span>
+              </div>
+              <div class="total-item">
+                <span class="total-label">Realized:</span>
+                <span class="total-value" id="realizedGainLossGold">$0.00</span>
               </div>
             </div>
           </div>
@@ -751,8 +759,12 @@
                 <span class="total-value" id="retailValuePlatinum">$0.00</span>
               </div>
               <div class="total-item total-item-bottom-line">
-                <span class="total-label">Gain/Loss:</span>
+                <span class="total-label">Gain:</span>
                 <span class="total-value" id="lossProfitPlatinum">$0.00</span>
+              </div>
+              <div class="total-item">
+                <span class="total-label">Realized:</span>
+                <span class="total-value" id="realizedGainLossPlatinum">$0.00</span>
               </div>
             </div>
           </div>
@@ -787,8 +799,12 @@
                 <span class="total-value" id="retailValuePalladium">$0.00</span>
               </div>
               <div class="total-item total-item-bottom-line">
-                <span class="total-label">Gain/Loss:</span>
+                <span class="total-label">Gain:</span>
                 <span class="total-value" id="lossProfitPalladium">$0.00</span>
+              </div>
+              <div class="total-item">
+                <span class="total-label">Realized:</span>
+                <span class="total-value" id="realizedGainLossPalladium">$0.00</span>
               </div>
             </div>
           </div>
@@ -823,8 +839,12 @@
                 <span class="total-value" id="retailValueAll">$0.00</span>
               </div>
               <div class="total-item total-item-bottom-line">
-                <span class="total-label">Gain/Loss:</span>
+                <span class="total-label">Gain:</span>
                 <span class="total-value" id="lossProfitAll">$0.00</span>
+              </div>
+              <div class="total-item">
+                <span class="total-label">Realized:</span>
+                <span class="total-value" id="realizedGainLossAll">$0.00</span>
               </div>
             </div>
           </div>
@@ -941,6 +961,10 @@
               </div>
               <div class="control-group" id="saveSearchPatternGroup" style="display:none">
                 <button type="button" class="chip-sort-btn save-filter-btn" id="saveSearchPatternBtn" title="Save current search as a custom filter chip">Save Filter</button>
+              </div>
+              <div class="control-group">
+                <label for="showDisposedToggle" class="control-label">Disposed:</label>
+                <input type="checkbox" id="showDisposedToggle" title="Show disposed items in the inventory view">
               </div>
             </div>
             <div class="filter-row">
@@ -1688,6 +1712,14 @@
                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
                   </svg>View
                 </button>
+                <button class="btn danger" id="deleteFromEditBtn" type="button" style="display:none"
+                        title="Delete or dispose this item">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                       stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                       style="vertical-align: -2px; margin-right: 0.2rem;">
+                    <path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+                  </svg>Remove
+                </button>
               </div>
               <div class="item-modal-actions-right">
                 <span id="clonePickerCount" class="clone-picker-count" style="display:none"></span>
@@ -1979,7 +2011,7 @@
             </div>
           </div>
           <div class="alert-actions">
-            <button class="btn btn-primary about-accept-btn" id="ackAcceptBtn">
+            <button class="btn premium about-accept-btn" id="ackAcceptBtn">
               ✅ I Understand - Continue to Application
             </button>
           </div>
@@ -2102,7 +2134,7 @@
           </div>
 
           <div class="alert-actions">
-            <button class="btn btn-primary" id="versionAcceptBtn">Accept and continue</button>
+            <button class="btn premium" id="versionAcceptBtn">Accept and continue</button>
           </div>
         </div>
       </div>
@@ -2305,8 +2337,28 @@
                     <div class="chip-grouping-empty">Loading...</div>
                   </div>
                 </div>
+              </div>
+
+              <!-- ── Summary Totals ── -->
+              <div class="settings-fieldset">
+                <div class="settings-fieldset-title">Summary Totals</div>
                 <div class="settings-group">
-                  <div class="settings-group-label">Item detail modal</div>
+                  <div class="settings-group-label">Show realized gains/losses</div>
+                  <p class="settings-subtext">Display the "Realized" line on summary cards for disposed items.</p>
+                  <label class="dispose-toggle-card" for="settingsShowRealized" style="width:fit-content">
+                    <span class="toggle-switch">
+                      <input type="checkbox" id="settingsShowRealized">
+                      <span class="toggle-track"></span>
+                    </span>
+                    <span>Realized row</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- ── Item Detail Modal ── -->
+              <div class="settings-fieldset">
+                <div class="settings-fieldset-title">Item Detail Modal</div>
+                <div class="settings-group">
                   <p class="settings-subtext">Reorder and toggle sections in the item view modal.</p>
                   <div class="chip-grouping-table-container" id="viewModalSectionConfigContainer">
                     <div class="chip-grouping-empty">Loading...</div>
@@ -3572,7 +3624,7 @@
               <div class="settings-group">
                 <label>Refresh from API</label>
                 <p class="settings-subtext">Fetch today's official Goldback exchange rate from the StakTrakr API and populate all denomination prices automatically.</p>
-                <button class="btn btn-primary" id="goldbackEstimateRefreshBtn" type="button" style="display:none;">Refresh from API</button>
+                <button class="btn premium" id="goldbackEstimateRefreshBtn" type="button" style="display:none;">Refresh from API</button>
               </div>
 
               <div class="settings-group">
@@ -3581,7 +3633,7 @@
                 <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.75rem;">
                   <span id="gbQuickFillSymbol" style="color:var(--text-secondary);">$</span>
                   <input type="number" id="goldbackQuickFillInput" min="0" step="0.01" placeholder="1 GB rate" style="width:100px;" />
-                  <button class="btn btn-primary" id="goldbackQuickFillBtn" type="button">Set All</button>
+                  <button class="btn premium" id="goldbackQuickFillBtn" type="button">Set All</button>
                 </div>
               </div>
 
@@ -3600,7 +3652,7 @@
                     <!-- Rows rendered dynamically by syncGoldbackSettingsUI() -->
                   </tbody>
                 </table>
-                <button class="btn btn-primary" id="goldbackSavePricesBtn" type="button" style="margin-top: 0.5rem;">Save Prices</button>
+                <button class="btn premium" id="goldbackSavePricesBtn" type="button" style="margin-top: 0.5rem;">Save Prices</button>
                 <button class="btn" id="goldbackHistoryBtn" type="button" style="margin-top: 0.5rem;">Goldback History</button>
               </div>
             </div>
@@ -3688,7 +3740,7 @@
               <div class="settings-log-panel" id="logPanel_changelog">
                 <p class="settings-subtext">Recent inventory changes. Click a row to edit the item, or undo/redo individual changes.</p>
                 <div class="settings-changelog-actions">
-                  <button class="btn btn-secondary" id="settingsChangeLogClearBtn" type="button">Clear Log</button>
+                  <button class="btn secondary" id="settingsChangeLogClearBtn" type="button">Clear Log</button>
                 </div>
                 <div class="settings-changelog-wrap">
                   <table id="settingsChangeLogTable">
@@ -3711,7 +3763,7 @@
               <div class="settings-log-panel" id="logPanel_metals" style="display: none">
                 <p class="settings-subtext">Spot price updates recorded from API syncs and manual edits.</p>
                 <div class="settings-changelog-actions">
-                  <button class="btn btn-secondary" id="settingsSpotHistoryClearBtn" type="button">Clear Spot History</button>
+                  <button class="btn secondary" id="settingsSpotHistoryClearBtn" type="button">Clear Spot History</button>
                 </div>
                 <div class="settings-changelog-wrap">
                   <table id="settingsSpotHistoryTable">
@@ -3742,7 +3794,7 @@
                   </select>
                   <input class="settings-filter-input" id="settingsLbmaStartDate" type="date">
                   <input class="settings-filter-input" id="settingsLbmaEndDate" type="date">
-                  <button class="btn btn-secondary" id="settingsLbmaResetBtn" type="button">Reset</button>
+                  <button class="btn secondary" id="settingsLbmaResetBtn" type="button">Reset</button>
                   <span class="settings-subtext" id="settingsLbmaResultCount" style="margin-left:auto;"></span>
                 </div>
                 <div class="settings-changelog-wrap">
@@ -3764,7 +3816,7 @@
               <div class="settings-log-panel" id="logPanel_catalogs" style="display: none">
                 <p class="settings-subtext">Catalog API call history. Failed lookups are highlighted in red.</p>
                 <div class="settings-changelog-actions">
-                  <button class="btn btn-secondary" id="settingsCatalogHistoryClearBtn" type="button">Clear Catalog History</button>
+                  <button class="btn secondary" id="settingsCatalogHistoryClearBtn" type="button">Clear Catalog History</button>
                 </div>
                 <div class="settings-changelog-wrap">
                   <table id="settingsCatalogHistoryTable">
@@ -3789,7 +3841,7 @@
                 <p class="settings-subtext">Per-item price snapshots recorded on add, edit, and spot price sync.</p>
                 <div class="settings-pricehistory-controls">
                   <input class="settings-filter-input" id="priceHistoryFilterInput" placeholder="Filter by item name..." type="text">
-                  <button class="btn btn-secondary" id="settingsPriceHistoryClearBtn" type="button">Clear Price History</button>
+                  <button class="btn secondary" id="settingsPriceHistoryClearBtn" type="button">Clear Price History</button>
                 </div>
                 <div class="settings-changelog-wrap">
                   <table id="settingsPriceHistoryTable">
@@ -3812,7 +3864,7 @@
               <div class="settings-log-panel" id="logPanel_cloud" style="display: none">
                 <p class="settings-subtext">Cloud sync activity — backups, restores, connections, and token refreshes.</p>
                 <div class="settings-changelog-actions">
-                  <button class="btn btn-secondary" id="settingsCloudActivityClearBtn" type="button">Clear Cloud Log</button>
+                  <button class="btn secondary" id="settingsCloudActivityClearBtn" type="button">Clear Cloud Log</button>
                 </div>
                 <div class="settings-changelog-wrap">
                   <table id="settingsCloudActivityTable">
@@ -4510,7 +4562,7 @@
         <div class="modal-footer api-history-footer">
           <button type="button" class="btn" id="exportSpotHistoryBtn">Export History</button>
           <button type="button" class="btn" id="importSpotHistoryBtn">Import History</button>
-          <button type="button" class="btn btn-secondary" id="restoreHistoricalDataBtn">Restore Historical Data</button>
+          <button type="button" class="btn secondary" id="restoreHistoricalDataBtn">Restore Historical Data</button>
           <input type="file" id="importSpotHistoryFile" accept=".csv,.json" style="display:none">
         </div>
       </div>
@@ -4935,6 +4987,75 @@
             <p style="font-size:0.95rem;line-height:1.6">If this policy changes, the updated version will appear in the app with a new date. Questions about this policy can be directed to the project's <a href="https://github.com/lbruton/StakTrakr/issues" target="_blank" rel="noopener">GitHub Issues</a> page.</p>
           </div>
 
+        </div>
+      </div>
+    </div>
+
+    <!-- =============================================================================
+       REMOVE ITEM MODAL
+
+       Combined delete + dispose flow. Checkbox toggles between simple delete
+       (unchecked) and disposition tracking (checked). Replaces the separate
+       #dispositionModal and showAppConfirm() delete confirmation (STAK-72).
+       ============================================================================= -->
+    <div class="modal" id="removeItemModal" style="display: none">
+      <div class="modal-content" style="max-width: 440px">
+        <div class="modal-header">
+          <h2>Remove Item</h2>
+          <button aria-label="Close modal" class="modal-close" onclick="closeModalById('removeItemModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="removeItemIdx">
+          <p id="removeItemName" style="margin:0 0 0.75rem; font-weight:600"></p>
+          <p style="margin:0 0 1rem; color:var(--text-secondary); font-size:0.9rem">
+            This can be undone from the <a href="#" id="removeItemOpenLog" style="color:var(--primary); text-decoration:underline; cursor:pointer">Activity Log</a>.
+          </p>
+
+          <label class="dispose-toggle-card" for="removeItemDisposeCheck">
+            <span class="toggle-switch">
+              <input type="checkbox" id="removeItemDisposeCheck">
+              <span class="toggle-track"></span>
+            </span>
+            <span>Track this item as disposed</span>
+          </label>
+
+          <div id="removeItemDisposeFields" style="display:none">
+            <div class="form-group">
+              <label for="dispositionType">Type</label>
+              <select id="dispositionType">
+                <option value="sold">Sold</option>
+                <option value="traded">Traded</option>
+                <option value="lost">Lost</option>
+                <option value="gifted">Gifted</option>
+                <option value="returned">Returned</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="dispositionDate">Date</label>
+              <input type="date" id="dispositionDate">
+            </div>
+
+            <div class="form-group" id="dispositionAmountGroup">
+              <label for="dispositionAmount">Amount</label>
+              <input type="number" id="dispositionAmount" min="0" step="0.01" placeholder="0.00">
+            </div>
+
+            <div class="form-group">
+              <label for="dispositionRecipient">Recipient</label>
+              <input type="text" id="dispositionRecipient" placeholder="Optional">
+            </div>
+
+            <div class="form-group">
+              <label for="dispositionNotes">Notes</label>
+              <textarea id="dispositionNotes" rows="3" placeholder="Optional notes..."></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer" style="justify-content:space-between">
+          <button class="btn secondary" type="button" onclick="closeModalById('removeItemModal')">Cancel</button>
+          <button class="btn danger" type="button" id="removeItemDeleteBtn">Delete</button>
+          <button class="btn premium" type="button" id="removeItemDisposeBtn" style="display:none">Confirm Disposition</button>
         </div>
       </div>
     </div>
