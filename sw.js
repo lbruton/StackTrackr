@@ -7,7 +7,7 @@ const DEV_MODE = false; // Set to true during development — bypasses all cachi
 
 
 
-const CACHE_NAME = 'staktrakr-v3.33.18-b1772364125';
+const CACHE_NAME = 'staktrakr-v3.33.18-b1772396785';
 
 
 
@@ -157,6 +157,9 @@ self.addEventListener('fetch', (event) => {
 
   // Never cache OAuth callback — must always hit network for fresh code
   if (url.pathname.includes('oauth-callback')) return;
+
+  // Skip wiki pages — Docsify handles its own routing
+  if (url.pathname.startsWith('/wiki/')) return;
 
   // Network-first for API calls (spot prices, catalog lookups)
   if (API_HOSTS.some((host) => url.hostname === host)) {

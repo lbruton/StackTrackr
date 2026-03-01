@@ -1,0 +1,32 @@
+- [Home](/)
+
+- **Infrastructure**
+  - [Architecture Overview](architecture-overview.md)
+  - [REST API Reference](rest-api-reference.md)
+  - [Turso Schema](turso-schema.md)
+  - [Cron Schedule](cron-schedule.md)
+  - [Retail Pipeline](retail-pipeline.md)
+  - [Fly.io Container](fly-container.md)
+  - [Home Poller (LXC)](home-poller.md)
+  - [Spot Pipeline](spot-pipeline.md)
+  - [Goldback Pipeline](goldback-pipeline.md)
+  - [Provider Database](provider-database.md)
+  - [providers.json](providers.md)
+  - [Secrets & Keys](secrets.md)
+  - [Health & Diagnostics](health.md)
+  - [Poller Parity](poller-parity.md)
+  - [Vendor Quirks](vendor-quirks.md)
+
+- **Frontend**
+  - [Frontend Overview](frontend-overview.md)
+  - [Data Model](data-model.md)
+  - [Storage Patterns](storage-patterns.md)
+  - [DOM Patterns](dom-patterns.md)
+  - [Cloud Sync](sync-cloud.md)
+  - [Retail Modal](retail-modal.md)
+  - [API Consumption](api-consumption.md)
+  - [Release Workflow](release-workflow.md)
+  - [Service Worker](service-worker.md)
+
+- **Meta**
+  - [Changelog](CHANGELOG.md)
