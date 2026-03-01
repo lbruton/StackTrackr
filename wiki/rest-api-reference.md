@@ -216,7 +216,7 @@ All endpoints are static JSON files served via GitHub Pages from the `api` branc
 | Endpoint | Description | Updated |
 |----------|-------------|---------|
 | `data/api/goldback-spot.json` | G1 USD rate + all denomination multipliers | Every 15 min (from Turso) |
-| `data/goldback-YYYY.json` | Rolling annual history log (newest first) | Daily (legacy scraper) |
+| `data/goldback-YYYY.json` | Rolling annual history log (newest first) | Hourly :01 (skips if today's entry exists) |
 
 ### Legacy (deprecated — backward compat)
 
