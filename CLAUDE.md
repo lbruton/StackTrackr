@@ -20,14 +20,14 @@ Works on `file://` and HTTP. Runtime artifact: zero build step, zero install. Se
 ## Code Search Paths
 
 - `mcp__claude-context__search_code` path: `/Volumes/DATA/GitHub/StakTrakr`
-- Wiki docs path: `/Volumes/DATA/GitHub/StakTrakrWiki` — e.g. "find wiki pages about spot pipeline stale thresholds"
+- Wiki docs path: `wiki/` (in-repo) — e.g. "find wiki pages about spot pipeline stale thresholds"
 - **CGC setup**: `cd devops/cgc && docker compose up -d`
 
 ## API Infrastructure
 
 > **Separation of duties:** `StakTrakr` = frontend only. All API backend poller code, Fly.io devops, and GHA data workflows live in `lbruton/StakTrakrApi`. Do not add poller scripts, Fly.io config, or data-pipeline workflows to this repo.
 
-**Runbook:** See StakTrakrWiki for current runbooks: [`health.md`](https://github.com/lbruton/StakTrakrWiki/blob/main/health.md), [`fly-container.md`](https://github.com/lbruton/StakTrakrWiki/blob/main/fly-container.md), [`spot-pipeline.md`](https://github.com/lbruton/StakTrakrWiki/blob/main/spot-pipeline.md). (`docs/devops/api-infrastructure-runbook.md` is deprecated.)
+**Runbook:** See wiki/ for current runbooks: [`health.md`](wiki/health.md), [`fly-container.md`](wiki/fly-container.md), [`spot-pipeline.md`](wiki/spot-pipeline.md). (`docs/devops/api-infrastructure-runbook.md` is deprecated.)
 
 Three feeds served from `lbruton/StakTrakrApi` main branch via GitHub Pages at `api.staktrakr.com`:
 

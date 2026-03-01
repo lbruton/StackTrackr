@@ -290,7 +290,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-12 - STACK-38/STACK-31: Responsive card view + mobile layout
  */
 
-const APP_VERSION = "3.33.17";
+const APP_VERSION = "3.33.19";
 
 /**
  * Numista metadata cache TTL: 30 days in milliseconds.
@@ -727,6 +727,9 @@ const HEADER_BTN_SHOW_TEXT_KEY = "headerBtnShowText";
 /** @constant {string} RETAIL_MANIFEST_TS_KEY - LocalStorage key for market manifest generated_at timestamp */
 const RETAIL_MANIFEST_TS_KEY = "retailManifestGeneratedAt";
 
+/** @constant {string} RETAIL_MANIFEST_SLUGS_KEY - LocalStorage key for cached manifest coin slug list */
+const RETAIL_MANIFEST_SLUGS_KEY = "retailManifestSlugs";
+
 // =============================================================================
 // IMAGE PROCESSOR DEFAULTS (STACK-95)
 // =============================================================================
@@ -772,6 +775,12 @@ const SYNC_META_PATH = '/StakTrakr/sync/staktrakr-sync.json';
 
 /** Dropbox path for the encrypted user-image vault (v2 — /sync/ subfolder) */
 const SYNC_IMAGES_PATH = '/StakTrakr/sync/staktrakr-images.stvault';
+
+/** Dropbox path for the encrypted change manifest (v2 — /sync/ subfolder) */
+const SYNC_MANIFEST_PATH = '/StakTrakr/sync/staktrakr-sync.stmanifest';
+
+/** Legacy Dropbox path for the encrypted change manifest (flat root) */
+const SYNC_MANIFEST_PATH_LEGACY = '/StakTrakr/staktrakr-sync.stmanifest';
 
 /** Dropbox folder for cloud-side backups */
 const SYNC_BACKUP_FOLDER = '/StakTrakr/backups';
@@ -861,6 +870,7 @@ const ALLOWED_STORAGE_KEYS = [
   HEADER_CLOUD_SYNC_BTN_KEY,  // boolean string: "true"/"false" — cloud sync button visibility
   HEADER_BTN_SHOW_TEXT_KEY,   // boolean string: "true"/"false" — show text labels under header icons
   RETAIL_MANIFEST_TS_KEY,     // string ISO timestamp — market manifest generated_at cache
+  RETAIL_MANIFEST_SLUGS_KEY,  // JSON array: cached manifest coin slug list
   "layoutVisibility",         // JSON object: { spotPrices, totals, search, table } (STACK-54) — legacy, migrated to layoutSectionConfig
   "layoutSectionConfig",      // JSON array: ordered section config [{ id, label, enabled }] (STACK-54)
   LAST_VERSION_CHECK_KEY,     // timestamp: last remote version check (STACK-67)
@@ -868,7 +878,6 @@ const ALLOWED_STORAGE_KEYS = [
   LATEST_REMOTE_URL_KEY,      // string: cached latest remote release URL (STACK-67)
   "ff_migration_fuzzy_autocomplete", // one-time migration flag (v3.26.01)
   "migration_hourlySource",          // one-time migration flag: re-tag StakTrakr hourly entries
-  "migration_seedHistoryMerge",      // one-time migration flag: backfill full historical seed data (v3.32.01)
   "numistaLookupRules",              // custom Numista search lookup rules (JSON array)
   "numistaViewFields",               // view modal Numista field visibility config (JSON object)
   TIMEZONE_KEY,                        // string: "auto" | "UTC" | IANA zone (STACK-63)
@@ -909,6 +918,7 @@ const ALLOWED_STORAGE_KEYS = [
   "numista_tags_auto",                                 // boolean string: "true"/"false" — auto-tag from Numista data
   "cloud_sync_migrated",                               // string: "v2" — cloud folder migration flag (flat → /sync/ + /backups/)
   "cloud_backup_history_depth",                        // string: "3"|"5"|"10"|"20" — max cloud backups to retain
+  "manifestPruningThreshold",                          // number string: max sync cycles to retain in manifest before pruning older entries (STAK-184)
 ];
 
 // =============================================================================
@@ -1718,6 +1728,8 @@ if (typeof window !== "undefined") {
   window.SYNC_FILE_PATH_LEGACY = SYNC_FILE_PATH_LEGACY;
   window.SYNC_META_PATH_LEGACY = SYNC_META_PATH_LEGACY;
   window.SYNC_IMAGES_PATH_LEGACY = SYNC_IMAGES_PATH_LEGACY;
+  window.SYNC_MANIFEST_PATH = SYNC_MANIFEST_PATH;
+  window.SYNC_MANIFEST_PATH_LEGACY = SYNC_MANIFEST_PATH_LEGACY;
   window.SYNC_BACKUP_FOLDER = SYNC_BACKUP_FOLDER;
   window.CLOUD_BACKUP_HISTORY_KEY = CLOUD_BACKUP_HISTORY_KEY;
   window.CLOUD_BACKUP_HISTORY_DEFAULT = CLOUD_BACKUP_HISTORY_DEFAULT;
@@ -1787,6 +1799,7 @@ if (typeof window !== "undefined") {
   window.HEADER_CLOUD_SYNC_BTN_KEY = HEADER_CLOUD_SYNC_BTN_KEY;
   window.HEADER_BTN_SHOW_TEXT_KEY = HEADER_BTN_SHOW_TEXT_KEY;
   window.RETAIL_MANIFEST_TS_KEY = RETAIL_MANIFEST_TS_KEY;
+  window.RETAIL_MANIFEST_SLUGS_KEY = RETAIL_MANIFEST_SLUGS_KEY;
   window.RETAIL_ANOMALY_THRESHOLD = RETAIL_ANOMALY_THRESHOLD;
   window.RETAIL_SPIKE_NEIGHBOR_TOLERANCE = RETAIL_SPIKE_NEIGHBOR_TOLERANCE;
   // Disposition types for realized gains (STAK-72)

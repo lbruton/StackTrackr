@@ -9,6 +9,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.19] - 2026-03-01
+
+### Added — DiffMerge Integration: Selective Apply for Cloud Sync and Vault Restore (STAK-190)
+
+- **Added**: `_applyAndFinalize()` shared post-apply helper consolidating backup, inventory assignment, settings apply, save/render, pull metadata, toast summary, status indicator, and tab broadcast
+- **Changed**: Cloud sync vault-first pull uses DiffModal for selective apply instead of full overwrite via `restoreVaultData()`
+- **Changed**: Cloud sync manifest-first pull passes user selections through `_deferredVaultRestore()` for selective apply after vault download
+- **Changed**: Encrypted vault restore (.stvault) shows DiffModal preview with item and settings diffs — users choose which changes to accept
+- **Added**: E2E Playwright tests for selective apply paths covering CSV import deselection, vault restore preview, and DiffModal callback structure
+
+---
+
+## [3.33.18] - 2026-03-01
+
+### Added — Diff/Merge Architecture Foundation (STAK-184)
+
+- **Added**: `SYNC_MANIFEST_PATH` and `SYNC_MANIFEST_PATH_LEGACY` constants for encrypted change manifest storage
+- **Added**: `manifestPruningThreshold` storage key for configurable manifest entry retention
+- **Added**: `diffReviewModal` HTML scaffold — reusable change-review modal for sync, CSV import, and JSON import
+- **Added**: `diff-modal.js` script load order and service worker cache registration
+
+---
+
 ## [3.33.17] - 2026-02-28
 
 ### Added — Realized Gains/Losses — Item Disposition (STAK-72)

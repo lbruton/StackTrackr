@@ -290,48 +290,62 @@ Playwright test harness (`js/test-loader.js`) loads in localhost-only mode and i
 - Use `safeGetElement()` for DOM access
 - No `eval()` or `Function()` constructor
 
-## Documentation (StakTrakrWiki)
+## Documentation (Wiki)
 
-StakTrakr maintains a private wiki at `github.com/lbruton/StakTrakrWiki` as the single source of truth for the codebase. Reference it before making architectural changes. Pages are maintained by agents — do not let docs drift after meaningful patches.
+StakTrakr maintains an in-repo wiki at `wiki/` (served via Docsify) as the single source of truth for the codebase. Reference it before making architectural changes. Pages are maintained by agents — do not let docs drift after meaningful patches.
 
 ### Frontend pages (maintained by Claude Code / StakTrakr agents)
 
 | Page | Contents |
 |------|----------|
-| [Frontend Overview](https://github.com/lbruton/StakTrakrWiki/blob/main/frontend-overview.md) | File structure, 67-script load order, service worker, PWA |
-| [Data Model](https://github.com/lbruton/StakTrakrWiki/blob/main/data-model.md) | Portfolio model, storage keys, coin/entry schema |
-| [Storage Patterns](https://github.com/lbruton/StakTrakrWiki/blob/main/storage-patterns.md) | saveData/loadData wrappers, sync variants, key validation |
-| [DOM Patterns](https://github.com/lbruton/StakTrakrWiki/blob/main/dom-patterns.md) | safeGetElement, sanitizeHtml, event delegation |
-| [Cloud Sync](https://github.com/lbruton/StakTrakrWiki/blob/main/sync-cloud.md) | Cloudflare R2 backup/restore, vault encryption, sync flow |
-| [Retail Modal](https://github.com/lbruton/StakTrakrWiki/blob/main/retail-modal.md) | Coin detail modal, vendor legend, OOS detection, price carry-forward |
-| [API Consumption](https://github.com/lbruton/StakTrakrWiki/blob/main/api-consumption.md) | Spot feed, market price feed, goldback feed, health checks |
-| [Release Workflow](https://github.com/lbruton/StakTrakrWiki/blob/main/release-workflow.md) | Patch cycle, version bump, worktree pattern, ship to main |
-| [Service Worker](https://github.com/lbruton/StakTrakrWiki/blob/main/service-worker.md) | CORE_ASSETS, cache strategy, pre-commit stamp hook |
+| [Frontend Overview](wiki/frontend-overview.md) | File structure, 67-script load order, service worker, PWA |
+| [Data Model](wiki/data-model.md) | Portfolio model, storage keys, coin/entry schema |
+| [Storage Patterns](wiki/storage-patterns.md) | saveData/loadData wrappers, sync variants, key validation |
+| [DOM Patterns](wiki/dom-patterns.md) | safeGetElement, sanitizeHtml, event delegation |
+| [Cloud Sync](wiki/sync-cloud.md) | Cloudflare R2 backup/restore, vault encryption, sync flow |
+| [Retail Modal](wiki/retail-modal.md) | Coin detail modal, vendor legend, OOS detection, price carry-forward |
+| [API Consumption](wiki/api-consumption.md) | Spot feed, market price feed, goldback feed, health checks |
+| [Release Workflow](wiki/release-workflow.md) | Patch cycle, version bump, worktree pattern, ship to main |
+| [Service Worker](wiki/service-worker.md) | CORE_ASSETS, cache strategy, pre-commit stamp hook |
 
 ### Infrastructure pages (maintained by StakTrakrApi agents)
 
-Architecture, data pipelines, Fly.io, pollers, secrets — see `github.com/lbruton/StakTrakrWiki` README for full index.
+Architecture, data pipelines, Fly.io, pollers, secrets — see `wiki/README.md` for full index.
 
 ### Wiki update policy
 
 - Use `/wiki-update` after any patch that changes JS, CSS, skills, or devops files
 - Use `/wiki-audit` for background drift detection and auto-correction
-- Raw pages accessible at `raw.githubusercontent.com/lbruton/StakTrakrWiki/main/<page>.md`
+- Pages live at `wiki/*.md` in this repo
 
 ## Documentation Policy
 
-StakTrakrWiki (`lbruton/StakTrakrWiki`) is the single source of truth for all
-architecture, operational runbooks, and pattern documentation. Do not create
-new markdown documentation in this repo (except `docs/plans/` for planning artifacts).
+The `wiki/` subfolder is the single source of truth for all
+architecture, operational runbooks, and pattern documentation.
+New documentation goes in `wiki/` (or `docs/plans/` for planning artifacts).
 
-After any commit that changes behavior, update the relevant wiki page via `gh api`.
-Use `claude-context` to search the wiki: index path `/Volumes/DATA/GitHub/StakTrakrWiki`.
+After any commit that changes behavior, update the relevant wiki page directly.
+Use `claude-context` to search the wiki: index path includes `wiki/` within the StakTrakr repo.
 
 ```
 mcp__claude-context__search_code
   query: "your question about how something works"
-  path: /Volumes/DATA/GitHub/StakTrakrWiki
+  path: /Volumes/DATA/GitHub/StakTrakr
 ```
+
+---
+
+## Wiki Nightwatch (Jules Scheduled Task)
+
+Jules runs a nightly wiki accuracy patrol as a custom scheduled task. It picks ONE frontend wiki page per run, cross-checks every factual claim against the actual codebase, and opens a draft PR with corrections when it finds an inaccuracy.
+
+**Rotation state:** `wiki/.nightwatch-log.json` tracks which page is next and keeps a capped history of results. Frontend pages have `owner: staktrakr` in YAML frontmatter. Skip `_sidebar.md`, `README.md`, `CHANGELOG.md`, and `owner: staktrakr-api` pages.
+
+**Verification targets:** Each wiki page lists its `sourceFiles` in YAML frontmatter. Read every source file and cross-check counts, function names/signatures, window globals, storage keys, CORE_ASSETS entries, related page links, version numbers, and code patterns.
+
+**On inaccuracy:** Create a `nightwatch/fix-*` branch, make the minimum correction, commit both the wiki fix and the log update, and open a draft PR to `dev` with structured justification (what the wiki claimed, what the code shows, the correction, file:line evidence).
+
+**On verified OK:** Commit the log update directly to `dev` with 3 specific confirmed claims.
 
 ---
 
