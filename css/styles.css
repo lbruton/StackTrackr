@@ -4936,6 +4936,7 @@ td input:checked + .slider:before {
   align-items: center;
   justify-content: space-between;
   gap: var(--spacing-sm);
+  min-width: 0;
 }
 
 /* Badges row — catalog ID + count chip */
