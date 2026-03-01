@@ -495,6 +495,177 @@ async function vaultDecryptToData(fileBytes, password) {
   return payload;
 }
 
+/**
+ * Decrypt a .stvault file and show a DiffEngine + DiffModal preview instead
+ * of silently overwriting all data.  Falls back to the legacy full-overwrite
+ * path when DiffEngine or DiffModal are not loaded.
+ *
+ * @param {Uint8Array|ArrayBuffer} fileBytes - Raw .stvault bytes
+ * @param {string} password
+ * @returns {Promise<void>}
+ */
+async function vaultRestoreWithPreview(fileBytes, password) {
+  // Capture image vault file before closeVaultModal() can nullify it —
+  // the onApply callback fires later, after the vault modal is closed
+  var capturedImageFile = _vaultPendingImageFile;
+
+  // 1. Decrypt without side effects
+  var payload = await vaultDecryptToData(fileBytes, password);
+
+  // 2. Guard: fall back to legacy restore if DiffEngine / DiffModal unavailable
+  if (typeof DiffEngine === 'undefined' || typeof DiffModal === 'undefined') {
+    debugLog('[Vault] DiffEngine/DiffModal not available — falling back to full restore');
+    if (typeof showToast === 'function') {
+      showToast('Diff preview unavailable — restoring full backup');
+    }
+    await restoreVaultData(payload);
+    return;
+  }
+
+  // 3. Extract inventory items from the payload
+  // Vault stores raw localStorage strings which may be CMP1-compressed for large inventories
+  var backupItems = [];
+  try {
+    var rawInv = payload.data.metalInventory || '[]';
+    var decompressedInv = typeof __decompressIfNeeded === 'function' ? __decompressIfNeeded(rawInv) : rawInv;
+    backupItems = JSON.parse(decompressedInv);
+  } catch (e) {
+    debugLog('[Vault] Could not parse metalInventory from backup:', e);
+  }
+
+  // 4. Compute item diff
+  var localItems = (typeof inventory !== 'undefined' && Array.isArray(inventory)) ? inventory : [];
+  var diffResult = DiffEngine.compareItems(localItems, backupItems);
+
+  // 5. Compute settings diff
+  var settingsDiff = null;
+  if (typeof DiffEngine.compareSettings === 'function') {
+    var settingsKeys = (typeof ALLOWED_STORAGE_KEYS !== 'undefined' && Array.isArray(ALLOWED_STORAGE_KEYS))
+      ? ALLOWED_STORAGE_KEYS
+      : [];
+    var localSettings = {};
+    var remoteSettings = {};
+    var payloadKeys = Object.keys(payload.data);
+
+    for (var i = 0; i < payloadKeys.length; i++) {
+      var k = payloadKeys[i];
+      // Skip inventory — handled separately via DiffEngine.compareItems
+      if (k === 'metalInventory') continue;
+      // Only include recognized storage keys
+      if (settingsKeys.indexOf(k) === -1) continue;
+
+      // Parse the remote value (vault stores raw localStorage strings, possibly CMP1-compressed)
+      var rawSettingVal = payload.data[k];
+      var decompressedVal = typeof __decompressIfNeeded === 'function' ? __decompressIfNeeded(rawSettingVal) : rawSettingVal;
+      var remoteVal;
+      try { remoteVal = JSON.parse(decompressedVal); } catch (_e) { remoteVal = decompressedVal; }
+      remoteSettings[k] = remoteVal;
+
+      // Load matching local value
+      var localVal = (typeof loadDataSync === 'function') ? loadDataSync(k, null) : null;
+      if (localVal !== null) {
+        localSettings[k] = localVal;
+      }
+    }
+
+    if (Object.keys(remoteSettings).length > 0) {
+      settingsDiff = DiffEngine.compareSettings(localSettings, remoteSettings);
+      // Omit if no changes
+      if (settingsDiff && settingsDiff.changed && settingsDiff.changed.length === 0) {
+        settingsDiff = null;
+      }
+    }
+  }
+
+  // 6. Check for zero changes
+  var totalChanges = diffResult.added.length + diffResult.modified.length + diffResult.deleted.length;
+  if (totalChanges === 0 && !settingsDiff) {
+    if (typeof showToast === 'function') {
+      showToast('No differences found \u2014 backup matches current data');
+    }
+    return;
+  }
+
+  // 7. Build metadata from payload._meta
+  var payloadMeta = payload._meta || {};
+
+  // 8. Show DiffModal
+  DiffModal.show({
+    source: { type: 'vault', label: 'Encrypted Backup' },
+    diff: diffResult,
+    settingsDiff: settingsDiff,
+    meta: {
+      timestamp: payloadMeta.exportTimestamp || null,
+      itemCount: backupItems.length,
+      appVersion: payloadMeta.appVersion || null
+    },
+    onApply: function (selectedChanges) {
+      try {
+        var hasItemChanges = Array.isArray(selectedChanges) && selectedChanges.length > 0;
+
+        // Apply items selectively when item changes were selected
+        if (hasItemChanges) {
+          var currentInv = (typeof inventory !== 'undefined' && Array.isArray(inventory)) ? inventory : [];
+          var newInv = DiffEngine.applySelectedChanges(currentInv, selectedChanges);
+          inventory = newInv;
+        }
+
+        // Apply settings changes (settings are all-or-nothing until DiffModal adds
+        // per-setting checkboxes — intentional, not a bug)
+        var appliedSettings = false;
+        if (settingsDiff && settingsDiff.changed) {
+          for (var si = 0; si < settingsDiff.changed.length; si++) {
+            if (typeof saveDataSync === 'function') {
+              saveDataSync(settingsDiff.changed[si].key, settingsDiff.changed[si].remoteVal);
+              appliedSettings = true;
+            }
+          }
+        }
+
+        // Save & render
+        if (typeof saveInventory === 'function') saveInventory();
+        if (typeof renderTable === 'function') renderTable();
+        if (typeof renderActiveFilters === 'function') renderActiveFilters();
+        if (typeof updateStorageStats === 'function') updateStorageStats();
+
+        // Toast summary
+        var addCount = 0, modCount = 0, delCount = 0;
+        if (hasItemChanges) {
+          for (var j = 0; j < selectedChanges.length; j++) {
+            if (selectedChanges[j].type === 'add') addCount++;
+            else if (selectedChanges[j].type === 'modify') modCount++;
+            else if (selectedChanges[j].type === 'delete') delCount++;
+          }
+        }
+        var parts = [];
+        if (addCount > 0) parts.push(addCount + ' added');
+        if (modCount > 0) parts.push(modCount + ' updated');
+        if (delCount > 0) parts.push(delCount + ' removed');
+        if (appliedSettings && !hasItemChanges) parts.push('settings updated');
+        if (typeof showToast === 'function') {
+          showToast('Backup restored: ' + (parts.length > 0 ? parts.join(', ') : 'no changes applied'));
+        }
+        // Restore companion photo vault if present
+        if (capturedImageFile && typeof vaultDecryptAndRestoreImages === 'function') {
+          vaultDecryptAndRestoreImages(capturedImageFile, password).then(function (imgCount) {
+            debugLog('[Vault] Restored ' + imgCount + ' photo(s) from companion image vault');
+          }).catch(function (imgErr) {
+            debugLog('[Vault] Image restore failed:', imgErr);
+          });
+        }
+      } catch (applyErr) {
+        debugLog('[Vault] Restore apply failed:', applyErr);
+        if (typeof showToast === 'function') {
+          showToast('Restore failed: ' + (applyErr.message || 'Unknown error'));
+        }
+      }
+    },
+    onCancel: function () {
+      debugLog('[Vault] Restore preview cancelled');
+    }
+  });
+}
+
 // =============================================================================
 // IMAGE VAULT (STAK-181) — cloud sync for user-uploaded IndexedDB photos
 // =============================================================================
@@ -746,8 +917,8 @@ async function importEncryptedBackup(fileBytes, password) {
   }
 
   debugLog("Vault: importing with", backend, "backend");
-  await vaultDecryptAndRestore(fileBytes, password);
-  debugLog("Vault: import complete");
+  await vaultRestoreWithPreview(fileBytes, password);
+  debugLog("Vault: import complete (preview shown or fallback applied)");
 }
 
 // =============================================================================
@@ -993,24 +1164,35 @@ async function handleVaultAction() {
     showVaultStatus("info", "Decrypting\u2026");
 
     try {
+      // Determine whether the diff preview path is available
+      var hasDiffPreview = (typeof DiffEngine !== 'undefined' && typeof DiffModal !== 'undefined');
+
       await importEncryptedBackup(_vaultPendingFile, password);
       // Cache password for this browser session
       if (isCloudImport && _cloudContext && typeof cloudCachePassword === 'function') {
         cloudCachePassword(_cloudContext.provider, password);
       }
-      if (_vaultPendingImageFile) {
-        showVaultStatus("info", "Restoring photos\u2026");
-        try {
-          var imgCount = await vaultDecryptAndRestoreImages(_vaultPendingImageFile, password);
-          showVaultStatus("success", "Data and " + imgCount + " photo" + (imgCount === 1 ? "" : "s") + " restored. Reloading\u2026");
-        } catch (imgErr) {
-          // Inventory already restored — show error but still reload to apply it
-          showVaultStatus("error", "Inventory restored, but photo file failed: " + (imgErr.message || "decryption error") + ". Reloading\u2026");
-        }
+
+      if (hasDiffPreview) {
+        // DiffModal is now showing the preview — close the vault modal so
+        // the user can interact with the diff review.  No reload needed;
+        // the onApply callback inside vaultRestoreWithPreview handles save/render.
+        closeVaultModal();
       } else {
-        showVaultStatus("success", "Data restored successfully. Reloading\u2026");
+        // Fallback: full overwrite already happened, handle image vault + reload
+        if (_vaultPendingImageFile) {
+          showVaultStatus("info", "Restoring photos\u2026");
+          try {
+            var imgCount = await vaultDecryptAndRestoreImages(_vaultPendingImageFile, password);
+            showVaultStatus("success", "Data and " + imgCount + " photo" + (imgCount === 1 ? "" : "s") + " restored. Reloading\u2026");
+          } catch (imgErr) {
+            showVaultStatus("error", "Inventory restored, but photo file failed: " + (imgErr.message || "decryption error") + ". Reloading\u2026");
+          }
+        } else {
+          showVaultStatus("success", "Data restored successfully. Reloading\u2026");
+        }
+        setTimeout(function () { location.reload(); }, 1200);
       }
-      setTimeout(function () { location.reload(); }, 1200);
     } catch (err) {
       showVaultStatus("error", err.message || "Import failed.");
     } finally {
@@ -1260,6 +1442,7 @@ window.closeVaultModal = closeVaultModal;
 window.vaultEncryptToBytes = vaultEncryptToBytes;
 window.vaultEncryptToBytesScoped = vaultEncryptToBytesScoped;
 window.vaultDecryptAndRestore = vaultDecryptAndRestore;
+window.vaultRestoreWithPreview = vaultRestoreWithPreview;
 window.vaultDecryptToData = vaultDecryptToData;
 window.collectVaultData = collectVaultData;
 window.collectAndHashImageVault = collectAndHashImageVault;

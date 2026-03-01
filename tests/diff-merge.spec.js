@@ -545,4 +545,349 @@ test.describe('Diff/Merge Import Flows', () => {
     await page.locator('#diffReviewCancelBtn').click();
     await expect(modal).not.toBeVisible({ timeout: 5000 });
   });
+
+  // -----------------------------------------------------------------------
+  // Test 8: CSV import — selective apply (deselect deletes, keep adds + mods)
+  // -----------------------------------------------------------------------
+
+  test('CSV import selective apply — deselect deletes keeps local-only items', async ({ page }) => {
+    await seedAndReload(page);
+
+    const initialCount = await getInventoryCount(page);
+    expect(initialCount).toBe(5);
+
+    // CSV has 3 matching (SN-001 modified, SN-002/SN-003 unchanged) + 2 new
+    // Missing SN-004, SN-005 → those would be "deleted" if all checked
+    const csvPath = writeTempFile('import.csv', TEST_CSV);
+
+    await openImportSection(page);
+
+    const fileChooserPromise = page.waitForEvent('filechooser');
+    await page.locator('#importCsvMerge').click();
+    const fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles(csvPath);
+
+    // DiffModal should appear
+    const modal = page.locator('#diffReviewModal');
+    await expect(modal).toBeVisible({ timeout: 10000 });
+
+    // Verify deletes are present in the modal
+    const summary = page.locator('#diffReviewSummary');
+    await expect(summary.locator('text=/deleted/')).toBeVisible();
+
+    // Uncheck ALL deleted items — keep only adds and modifications
+    // Deleted items have checkboxes with data-check="deleted-N"
+    const deleteCheckboxes = page.locator('#diffReviewList input[type="checkbox"][data-check^="deleted-"]');
+    const deleteCount = await deleteCheckboxes.count();
+    expect(deleteCount).toBeGreaterThan(0);
+
+    for (let i = 0; i < deleteCount; i++) {
+      await deleteCheckboxes.nth(i).uncheck();
+    }
+
+    // Apply button should still be enabled (adds + mods still checked)
+    const applyBtn = page.locator('#diffReviewApplyBtn');
+    await expect(applyBtn).toBeEnabled();
+
+    // Click Apply
+    await applyBtn.click();
+    await expect(modal).not.toBeVisible({ timeout: 5000 });
+
+    // Wait for localStorage to be updated
+    await page.waitForTimeout(500);
+
+    // Verify: SN-004 and SN-005 should STILL be present (deletes were unchecked)
+    // Plus the 2 new items should be added, and SN-001 should be modified
+    // NOTE: Match by name rather than serial — CSV import may reassign serial numbers
+    // during _postImportCleanup / saveInventory cycle.
+    const result = await page.evaluate(() => {
+      const inv = JSON.parse(localStorage.getItem('metalInventory') || '[]');
+      const names = inv.map(i => i.name).sort();
+      return {
+        count: inv.length,
+        names: names,
+        hasPalladiumBar: inv.some(i => i.name === '1oz Palladium Bar'),
+        hasSunshineBar: inv.some(i => i.name === '10oz Sunshine Bar'),
+        hasSilverEagle: inv.some(i => i.name === '2025 Silver Eagle'),
+        hasGoldMaple: inv.some(i => i.name === '2024 Gold Maple'),
+      };
+    });
+
+    // Original 5 + 2 new = 7 items (deletes not applied)
+    expect(result.count).toBe(7);
+    expect(result.hasPalladiumBar).toBe(true);  // was "deleted" but unchecked
+    expect(result.hasSunshineBar).toBe(true);   // was "deleted" but unchecked
+    expect(result.hasSilverEagle).toBe(true);   // new item added
+    expect(result.hasGoldMaple).toBe(true);      // new item added
+  });
+
+  // -----------------------------------------------------------------------
+  // Test 9: DiffEngine.applySelectedChanges — direct integration test
+  // -----------------------------------------------------------------------
+
+  test('DiffEngine.applySelectedChanges applies only selected changes correctly', async ({ page }) => {
+    await seedAndReload(page);
+
+    const result = await page.evaluate((seedItems) => {
+      // DiffEngine is a global in the app
+      if (typeof DiffEngine === 'undefined') return { error: 'DiffEngine not loaded' };
+
+      // Start with the seed inventory
+      const localInv = JSON.parse(JSON.stringify(seedItems));
+
+      // Build selective changes: add 1 item, modify 1 item, delete 1 item
+      const selectedChanges = [
+        // Add a new item
+        {
+          type: 'add',
+          item: {
+            uuid: 'new-apply-test', serial: 'SN-APPLY-NEW', name: 'Applied New Item',
+            metal: 'Gold', weight: 1, weightUnit: 'oz', qty: 1,
+            price: 2000, purchasePrice: 2000, date: '2025-06-01',
+          }
+        },
+        // Modify test-001 qty from 3 to 10
+        {
+          type: 'modify',
+          itemKey: 'test-001',
+          field: 'qty',
+          value: 10,
+        },
+        // Delete test-003 (Generic Silver Round)
+        {
+          type: 'delete',
+          itemKey: 'test-003',
+        },
+      ];
+
+      const newInv = DiffEngine.applySelectedChanges(localInv, selectedChanges);
+
+      // Analyze the result
+      const findByUuid = (uuid) => newInv.find(i => i.uuid === uuid);
+      const item001 = findByUuid('test-001');
+      const item003 = findByUuid('test-003');
+      const newItem = findByUuid('new-apply-test');
+
+      return {
+        totalCount: newInv.length,
+        // Original 5 - 1 delete + 1 add = 5
+        item001Qty: item001 ? item001.qty : null,
+        item003Exists: !!item003,
+        newItemExists: !!newItem,
+        newItemName: newItem ? newItem.name : null,
+        // Unchanged items should still be present
+        item002Exists: !!findByUuid('test-002'),
+        item004Exists: !!findByUuid('test-004'),
+        item005Exists: !!findByUuid('test-005'),
+      };
+    }, SEED_INVENTORY);
+
+    expect(result.error).toBeUndefined();
+    expect(result.totalCount).toBe(5); // 5 - 1 + 1 = 5
+    expect(result.item001Qty).toBe(10); // modified
+    expect(result.item003Exists).toBe(false); // deleted
+    expect(result.newItemExists).toBe(true); // added
+    expect(result.newItemName).toBe('Applied New Item');
+    expect(result.item002Exists).toBe(true); // unchanged
+    expect(result.item004Exists).toBe(true); // unchanged
+    expect(result.item005Exists).toBe(true); // unchanged
+  });
+
+  // -----------------------------------------------------------------------
+  // Test 10: DiffEngine.applySelectedChanges with empty selectedChanges
+  // -----------------------------------------------------------------------
+
+  test('DiffEngine.applySelectedChanges with no changes returns inventory copy', async ({ page }) => {
+    await seedAndReload(page);
+
+    const result = await page.evaluate((seedItems) => {
+      if (typeof DiffEngine === 'undefined') return { error: 'DiffEngine not loaded' };
+
+      const localInv = JSON.parse(JSON.stringify(seedItems));
+
+      // Empty changes — should return a copy of the original inventory
+      const newInv = DiffEngine.applySelectedChanges(localInv, []);
+
+      return {
+        sameLength: newInv.length === localInv.length,
+        isNewArray: newInv !== localInv,
+        allItemsMatch: newInv.every((item, idx) => item.uuid === localInv[idx].uuid),
+      };
+    }, SEED_INVENTORY);
+
+    expect(result.error).toBeUndefined();
+    expect(result.sameLength).toBe(true);
+    expect(result.isNewArray).toBe(true);
+    expect(result.allItemsMatch).toBe(true);
+  });
+
+  // -----------------------------------------------------------------------
+  // Test 11: Vault restore preview — selective apply via DiffModal
+  // -----------------------------------------------------------------------
+
+  test('Vault restore preview selective apply updates only selected items', async ({ page }) => {
+    await seedAndReload(page);
+
+    const initialCount = await getInventoryCount(page);
+    expect(initialCount).toBe(5);
+
+    // Programmatically trigger a DiffModal preview and capture the onApply callback.
+    // This simulates what vaultRestoreWithPreview() does after decrypting: it calls
+    // DiffEngine.compareItems(), then DiffModal.show() with an onApply that calls
+    // DiffEngine.applySelectedChanges().
+    //
+    // We use page.evaluate to:
+    // 1. Build a diff result as if we had a remote backup with 1 added + 1 modified
+    // 2. Build the selectedChanges array for only the "add" (skip the modify)
+    // 3. Call DiffEngine.applySelectedChanges directly
+    // 4. Assign to inventory and saveInventory()
+    const result = await page.evaluate((seedItems) => {
+      if (typeof DiffEngine === 'undefined') return { error: 'DiffEngine not loaded' };
+
+      // Simulate a backup that has:
+      //   - All 5 original items (test-001 through test-005)
+      //   - test-001 with modified qty (3 -> 8)
+      //   - 1 new item (backup-new-1)
+      const backupItems = JSON.parse(JSON.stringify(seedItems));
+      // Modify test-001 in the backup
+      const item001 = backupItems.find(i => i.uuid === 'test-001');
+      if (item001) item001.qty = 8;
+      // Add a new item to the backup
+      backupItems.push({
+        uuid: 'backup-new-1', serial: 'SN-BKP-001', name: 'Backup-Only Item',
+        metal: 'Platinum', composition: 'Platinum', type: 'Coin', weight: 1,
+        weightUnit: 'oz', purity: 1.0, qty: 1, price: 1000, purchasePrice: 1000,
+        marketValue: 0, date: '2025-08-01',
+      });
+
+      // Compute the diff (what vaultRestoreWithPreview does)
+      var diffResult = DiffEngine.compareItems(inventory, backupItems);
+
+      // Simulate user only selecting the "add" — NOT the modify
+      // In the real UI, the user unchecks the modified item checkbox
+      var selectedChanges = [];
+      for (var a = 0; a < diffResult.added.length; a++) {
+        selectedChanges.push({ type: 'add', item: diffResult.added[a] });
+      }
+      // Note: we deliberately skip modified items (user unchecked them)
+
+      // Apply via DiffEngine (what the onApply callback does)
+      var newInv = DiffEngine.applySelectedChanges(inventory, selectedChanges);
+      inventory = newInv;
+      if (typeof saveInventory === 'function') saveInventory();
+
+      return {
+        count: inventory.length,
+        // test-001 should keep original qty (modify was NOT applied)
+        item001Qty: inventory.find(i => i.uuid === 'test-001')?.qty,
+        // New item should be added
+        hasBackupItem: inventory.some(i => i.uuid === 'backup-new-1'),
+        addedCount: diffResult.added.length,
+        modifiedCount: diffResult.modified.length,
+      };
+    }, SEED_INVENTORY);
+
+    expect(result.error).toBeUndefined();
+    expect(result.count).toBe(6); // 5 original + 1 added
+    expect(result.item001Qty).toBe(3); // unchanged — modify was not selected
+    expect(result.hasBackupItem).toBe(true); // added item applied
+    expect(result.addedCount).toBe(1); // diff detected 1 addition
+    expect(result.modifiedCount).toBe(1); // diff detected 1 modification
+
+    // Verify localStorage was updated
+    const lsResult = await page.evaluate(() => {
+      const inv = JSON.parse(localStorage.getItem('metalInventory') || '[]');
+      return {
+        count: inv.length,
+        hasBackupItem: inv.some(i => i.uuid === 'backup-new-1'),
+        item001Qty: inv.find(i => i.uuid === 'test-001')?.qty,
+      };
+    });
+    expect(lsResult.count).toBe(6);
+    expect(lsResult.hasBackupItem).toBe(true);
+    expect(lsResult.item001Qty).toBe(3);
+  });
+
+  // -----------------------------------------------------------------------
+  // Test 12: DiffModal.show() wires onApply with correct selectedChanges structure
+  // -----------------------------------------------------------------------
+
+  test('DiffModal.show onApply callback receives correctly structured selectedChanges', async ({ page }) => {
+    await seedAndReload(page);
+
+    // Set up a diff result and show DiffModal programmatically
+    await page.evaluate((seedItems) => {
+      // Build a diff result with known added/modified/deleted items
+      var diff = {
+        added: [
+          {
+            uuid: 'modal-add-1', serial: 'SN-MODAL-ADD', name: 'Modal Added Item',
+            metal: 'Silver', weight: 1, weightUnit: 'oz', qty: 2, price: 30,
+            purchasePrice: 30, date: '2025-01-01',
+          },
+        ],
+        modified: [
+          {
+            item: seedItems[0], // test-001
+            changes: [
+              { field: 'qty', localVal: 3, remoteVal: 7 },
+              { field: 'purchasePrice', localVal: 29.99, remoteVal: 35.00 },
+            ],
+          },
+        ],
+        deleted: [
+          seedItems[4], // test-005
+        ],
+        unchanged: [seedItems[1], seedItems[2], seedItems[3]],
+      };
+
+      // Store reference so we can capture onApply result
+      window.__testApplyResult = null;
+
+      DiffModal.show({
+        source: { type: 'json', label: 'Test' },
+        diff: diff,
+        onApply: function (selectedChanges) {
+          window.__testApplyResult = selectedChanges;
+        },
+        onCancel: function () {},
+      });
+    }, SEED_INVENTORY);
+
+    // DiffModal should be visible
+    const modal = page.locator('#diffReviewModal');
+    await expect(modal).toBeVisible({ timeout: 5000 });
+
+    // All items should be checked by default
+    const applyBtn = page.locator('#diffReviewApplyBtn');
+    const applyText = await applyBtn.textContent();
+    // Expect Apply (3): 1 added + 1 modified (counted as 1 item) + 1 deleted = 3
+    expect(applyText).toMatch(/Apply\s*\(3\)/);
+
+    // Click Apply with all checked
+    await applyBtn.click();
+    await expect(modal).not.toBeVisible({ timeout: 5000 });
+
+    // Verify the selectedChanges structure passed to onApply
+    const applyResult = await page.evaluate(() => window.__testApplyResult);
+
+    expect(applyResult).toBeTruthy();
+    expect(Array.isArray(applyResult)).toBe(true);
+
+    // Should have: 1 add + 2 modify fields + 1 delete = 4 entries
+    const adds = applyResult.filter(c => c.type === 'add');
+    const mods = applyResult.filter(c => c.type === 'modify');
+    const dels = applyResult.filter(c => c.type === 'delete');
+
+    expect(adds.length).toBe(1);
+    expect(adds[0].item.uuid).toBe('modal-add-1');
+
+    expect(mods.length).toBe(2); // one per changed field
+    expect(mods[0].field).toBe('qty');
+    expect(mods[0].value).toBe(7);
+    expect(mods[1].field).toBe('purchasePrice');
+    expect(mods[1].value).toBe(35.00);
+
+    expect(dels.length).toBe(1);
+  });
 });
