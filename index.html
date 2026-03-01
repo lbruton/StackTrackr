@@ -1286,10 +1286,7 @@
                 <label for="itemDate">Purchase Date <span style="font-weight:normal;opacity:0.6;">(optional)</span></label>
                 <div class="input-with-action">
                   <input id="itemDate" type="date" />
-                  <label class="date-na-inline" for="itemDateNA" title="Mark purchase date as N/A">
-                    <input type="checkbox" id="itemDateNA" />
-                    <span>N/A</span>
-                  </label>
+                  <button type="button" id="itemDateNABtn" class="inline-search-btn date-na-btn" title="Clear date (N/A)" aria-pressed="false" aria-controls="itemDate">N/A</button>
                 </div>
               </div>
               <div>
@@ -1366,43 +1363,17 @@
                   </div>
                 </div>
               </div>
-              <!-- Hidden wrapper preserved for feature-flag JS compatibility -->
-              <div id="imageUrlGroup" style="display:none"></div>
-              <!-- ignorePatternImagesGroup hidden — per-side cascade makes this redundant (STAK-339); planned for future per-slot control -->
-              <div id="ignorePatternImagesGroup" class="image-pattern-toggle-group" style="display:none">
-                <div class="pattern-toggle-row">
-                  <label class="settings-checkbox-label pattern-toggle-label">
-                    <input type="checkbox" id="itemIgnorePatternImages" />
-                    Ignore image pattern rules for this item
-                  </label>
-                </div>
-              </div>
-              <div id="imagePatternToggleGroup" class="image-pattern-toggle-group" style="display:none">
-                <div class="pattern-toggle-row">
-                  <label class="settings-checkbox-label pattern-toggle-label">
-                    <input type="checkbox" id="imagePatternToggle" />
-                    Apply to all matching items
-                  </label>
-                  <button id="refreshImageUrlsBtn" type="button" class="btn secondary btn-sm pattern-refresh-btn" style="display:none" title="Fetch image URLs from Numista API (bypasses cache)">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                         stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                      <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
-                      <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-                    </svg>
-                  </button>
-                </div>
-                <div id="imagePatternKeywordsGroup" style="display:none">
-                  <input type="text" id="imagePatternKeywords" class="form-control" placeholder="e.g. American Silver Eagle, 2024" />
-                  <small class="pattern-rule-tip">Pre-filled with the item name. Add year or keywords separated by commas to narrow matches.</small>
-                </div>
+              <!-- Hidden wrappers preserved for JS compatibility -->
+              <div id="imageUrlGroup" style="display:none">
+                <input id="itemIgnorePatternImages" type="checkbox" style="display:none" />
               </div>
             </div>
 
             <!-- ═══════════════════════════════════════════════════════
                  COLLAPSIBLE — Grading & Certification
                  ═══════════════════════════════════════════════════════ -->
-            <details class="form-section">
-              <summary class="form-section-header">
+            <div class="form-section">
+              <div class="form-section-header">
                 <span class="form-section-icon">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1410,7 +1381,7 @@
                   </svg>
                 </span>
                 Grading &amp; Certification
-              </summary>
+              </div>
               <div class="form-section-body">
                 <div class="grid grid-grade">
                   <div>
@@ -1507,13 +1478,13 @@
                   </div>
                 </div>
               </div>
-            </details>
+            </div>
 
             <!-- ═══════════════════════════════════════════════════════
-                 COLLAPSIBLE — Pricing & Details
+                 Pricing & Details
                  ═══════════════════════════════════════════════════════ -->
-            <details class="form-section">
-              <summary class="form-section-header">
+            <div class="form-section">
+              <div class="form-section-header">
                 <span class="form-section-icon">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1521,7 +1492,7 @@
                   </svg>
                 </span>
                 Pricing &amp; Details
-              </summary>
+              </div>
               <div class="form-section-body">
                 <div class="grid grid-2">
                   <div id="marketValueField">
@@ -1550,13 +1521,13 @@
                   </div>
                 </div>
               </div>
-            </details>
+            </div>
 
             <!-- ═══════════════════════════════════════════════════════
-                 COLLAPSIBLE — Numista Data
+                 Numista Data
                  ═══════════════════════════════════════════════════════ -->
-            <details class="form-section" id="numistaDataSection">
-              <summary class="form-section-header">
+            <div class="form-section" id="numistaDataSection">
+              <div class="form-section-header">
                 <span class="form-section-icon">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1564,7 +1535,7 @@
                   </svg>
                 </span>
                 Numista Data
-              </summary>
+              </div>
               <div class="form-section-body numista-data-fields">
                 <div class="grid grid-2">
                   <div>
@@ -1643,13 +1614,13 @@
                   <input id="numistaEdgeDesc" type="text" placeholder="Edge design description..." />
                 </div>
               </div>
-            </details>
+            </div>
 
             <!-- ═══════════════════════════════════════════════════════
-                 COLLAPSIBLE — Notes
+                 Notes
                  ═══════════════════════════════════════════════════════ -->
-            <details class="form-section">
-              <summary class="form-section-header">
+            <div class="form-section">
+              <div class="form-section-header">
                 <span class="form-section-icon">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1657,20 +1628,20 @@
                   </svg>
                 </span>
                 Notes
-              </summary>
+              </div>
               <div class="form-section-body">
                 <div>
                   <label for="itemNotes">Notes</label>
                   <input id="itemNotes" type="text" placeholder="Additional notes or comments..." />
                 </div>
               </div>
-            </details>
+            </div>
 
             <!-- ═══════════════════════════════════════════════════════
-                 COLLAPSIBLE — Tags
+                 Tags
                  ═══════════════════════════════════════════════════════ -->
-            <details class="form-section" id="tagsSection">
-              <summary class="form-section-header">
+            <div class="form-section" id="tagsSection">
+              <div class="form-section-header">
                 <span class="form-section-icon">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1678,7 +1649,7 @@
                   </svg>
                 </span>
                 Tags
-              </summary>
+              </div>
               <div class="form-section-body">
                 <div id="itemModalTagsContainer" class="tags-edit-container">
                   <div id="itemModalNumistaTags" class="tags-row">
@@ -1704,11 +1675,22 @@
                   </div>
                 </div>
               </div>
-            </details>
+            </div>
 
             <!-- Form action buttons -->
             <div class="item-modal-actions">
+              <div class="item-modal-actions-left">
+                <button class="btn secondary" id="viewItemFromEditBtn" type="button" style="display:none"
+                        title="View this item in read-only mode">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                       stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                       style="vertical-align: -2px; margin-right: 0.2rem;">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                  </svg>View
+                </button>
+              </div>
               <div class="item-modal-actions-right">
+                <span id="clonePickerCount" class="clone-picker-count" style="display:none"></span>
                 <button class="btn" id="undoChangeBtn" type="button" style="display:none">Undo</button>
                 <button class="btn" id="cancelItem" type="button">Cancel</button>
                 <button class="btn secondary" id="cloneItemBtn" type="button" style="display:none"
@@ -1719,14 +1701,7 @@
                     <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
                   </svg>Clone
                 </button>
-                <button class="btn secondary" id="viewItemFromEditBtn" type="button" style="display:none"
-                        title="View this item in read-only mode">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                       stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                       style="vertical-align: -2px; margin-right: 0.2rem;">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-                  </svg>View
-                </button>
+                <button class="btn" id="cloneItemSaveAnotherBtn" type="button" style="display:none">Save &amp; Clone Another</button>
                 <button class="btn premium" id="itemModalSubmit" type="submit">Add to Inventory</button>
               </div>
             </div>
@@ -5034,6 +5009,7 @@
     <script defer src="./js/settings.js"></script>
     <script defer src="./js/settings-listeners.js"></script>
     <script defer src="./js/bulkEdit.js"></script>
+    <script defer src="./js/clone-picker.js"></script>
     <script defer src="./js/events.js"></script>
     
     <!-- Test Scripts (Development) -->
