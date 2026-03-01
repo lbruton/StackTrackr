@@ -686,11 +686,15 @@ section {
   background: var(--glass-input-focus-bg, rgba(0, 0, 0, 0.07));
   border-color: var(--primary);
 }
+.modal-footer .btn.danger {
+  border: 1px solid var(--danger);
+}
 
 /* --- Toggle switch (iOS-style) ------------------------------------------- */
 .toggle-switch {
   position: relative;
   width: 40px;
+  min-width: 40px;
   height: 22px;
   flex-shrink: 0;
 }
@@ -744,7 +748,7 @@ section {
 .dispose-toggle-card:hover {
   border-color: var(--primary);
 }
-.dispose-toggle-card span {
+.dispose-toggle-card > span:last-child {
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--text-primary);
