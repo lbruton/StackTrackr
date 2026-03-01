@@ -1918,7 +1918,7 @@ const updateSummary = () => {
       // Dynamic label: "Gain:" green, "Loss:" red, "Gain/Loss:" neutral (STACK-50)
       const glLabel = els.lossProfit.parentElement && els.lossProfit.parentElement.querySelector('.total-label');
       if (glLabel) {
-        glLabel.textContent = gl > 0 ? 'Gain:' : gl < 0 ? 'Loss:' : 'Gain/Loss:';
+        glLabel.textContent = gl > 0 ? 'Gain:' : gl < 0 ? 'Loss:' : 'Gain:';
         glLabel.style.color = gl > 0 ? 'var(--success)' : gl < 0 ? 'var(--danger)' : '';
         glLabel.style.fontWeight = gl !== 0 ? '600' : '';
       }
@@ -1928,23 +1928,13 @@ const updateSummary = () => {
       els.avgCostPerOz.textContent = formatCurrency(avgCost);
     }
 
-    // Realized G/L display for disposed items (STAK-72)
-    const disposedCountEl = document.getElementById(`disposedItems${metalConfig.name}`);
+    // Realized G/L — always visible on every card (STAK-72)
     const realizedGlEl = document.getElementById(`realizedGainLoss${metalConfig.name}`);
-    const disposedWrapEl = document.getElementById(`disposedWrap${metalConfig.name}`);
-    if (disposedWrapEl) {
-      if (totals.disposedItems > 0) {
-        disposedWrapEl.style.display = '';
-        if (disposedCountEl) disposedCountEl.textContent = totals.disposedItems;
-        if (realizedGlEl) {
-          const rgl = totals.realizedGainLoss || 0;
-          const rglPct = totals.totalPurchased > 0 ? (rgl / totals.totalPurchased) * 100 : 0;
-          // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml
-          realizedGlEl.innerHTML = formatLossProfit(rgl, rglPct);
-        }
-      } else {
-        disposedWrapEl.style.display = 'none';
-      }
+    if (realizedGlEl) {
+      const rgl = totals.realizedGainLoss || 0;
+      const rglPct = totals.totalPurchased > 0 ? (rgl / totals.totalPurchased) * 100 : 0;
+      // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml
+      realizedGlEl.innerHTML = rgl === 0 ? '$0.00' : formatLossProfit(rgl, rglPct);
     }
   });
 
@@ -1985,7 +1975,7 @@ const updateSummary = () => {
       elements.totals.all.lossProfit.innerHTML = formatLossProfit(allGl, allGainLossPct);
       const allGlLabel = elements.totals.all.lossProfit.parentElement && elements.totals.all.lossProfit.parentElement.querySelector('.total-label');
       if (allGlLabel) {
-        allGlLabel.textContent = allGl > 0 ? 'Gain:' : allGl < 0 ? 'Loss:' : 'Gain/Loss:';
+        allGlLabel.textContent = allGl > 0 ? 'Gain:' : allGl < 0 ? 'Loss:' : 'Gain:';
         allGlLabel.style.color = allGl > 0 ? 'var(--success)' : allGl < 0 ? 'var(--danger)' : '';
         allGlLabel.style.fontWeight = allGl !== 0 ? '600' : '';
       }
@@ -1996,23 +1986,13 @@ const updateSummary = () => {
     }
   }
 
-  // Realized G/L display for "All" card disposed items (STAK-72)
-  const allDisposedWrap = document.getElementById('disposedWrapAll');
-  if (allDisposedWrap) {
-    if (allTotals.disposedItems > 0) {
-      allDisposedWrap.style.display = '';
-      const allDisposedCount = document.getElementById('disposedItemsAll');
-      const allRealizedGl = document.getElementById('realizedGainLossAll');
-      if (allDisposedCount) allDisposedCount.textContent = allTotals.disposedItems;
-      if (allRealizedGl) {
-        const rgl = allTotals.realizedGainLoss || 0;
-        const rglPct = allTotals.totalPurchased > 0 ? (rgl / allTotals.totalPurchased) * 100 : 0;
-        // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml
-        allRealizedGl.innerHTML = formatLossProfit(rgl, rglPct);
-      }
-    } else {
-      allDisposedWrap.style.display = 'none';
-    }
+  // Realized G/L — always visible on "All" card (STAK-72)
+  const allRealizedGl = document.getElementById('realizedGainLossAll');
+  if (allRealizedGl) {
+    const rgl = allTotals.realizedGainLoss || 0;
+    const rglPct = allTotals.totalPurchased > 0 ? (rgl / allTotals.totalPurchased) * 100 : 0;
+    // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml
+    allRealizedGl.innerHTML = rgl === 0 ? '$0.00' : formatLossProfit(rgl, rglPct);
   }
 };
 
