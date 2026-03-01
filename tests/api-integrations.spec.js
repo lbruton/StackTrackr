@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 
+
 /**
  * API Integration Tests
  *
@@ -285,4 +286,132 @@ test('STAK-215: syncStatus shows success message on happy path (saves succeed)',
   expect(statusText).toBeTruthy();
   expect(statusText).toMatch(/Synced/i);
   expect(statusText).not.toContain('could not save');
+});
+
+
+test.describe('verifyPcgsCert', () => {
+  test('returns error when preflight check fails (not configured)', async ({ page }) => {
+    // Navigate using a valid non-file URL so we bypass the file:// check.
+    // The actual host/port is configured via TEST_URL in playwright.config.js.
+    await page.goto('/');
+    await page.waitForFunction(() => typeof window.verifyPcgsCert === 'function');
+    const result = await page.evaluate(async () => {
+      // Mock catalogConfig to return false for isPcgsEnabled
+      window.catalogConfig.isPcgsEnabled = () => false;
+      return await window.verifyPcgsCert('1234567');
+    });
+
+    expect(result.verified).toBe(false);
+    expect(result.error).toContain('PCGS API not configured');
+  });
+
+  test('returns error when daily rate limit reached', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForFunction(() => typeof window.verifyPcgsCert === 'function');
+    const result = await page.evaluate(async () => {
+      window.catalogConfig.isPcgsEnabled = () => true;
+      window.catalogConfig.canMakePcgsRequest = () => false;
+      return await window.verifyPcgsCert('1234567');
+    });
+
+    expect(result.verified).toBe(false);
+    expect(result.error).toContain('PCGS daily rate limit reached');
+  });
+
+  test('successfully verifies a PCGS cert number', async ({ page }) => {
+    await page.route('https://api.pcgs.com/publicapi/coindetail/GetCoinFactsByCertNo/1234567', route => {
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          PCGSNo: '786060',
+          Grade: 65,
+          GradePrefix: 'MS',
+          Name: '1909-S VDB 1C',
+          Year: '1909',
+          Denomination: '1C',
+          CertNo: '1234567',
+          PriceGuideValue: 2500,
+          Images: [{ Thumbnail: 'thumb.jpg', Fullsize: 'full.jpg' }]
+        })
+      });
+    });
+
+    await page.goto('/');
+    await page.waitForFunction(() => typeof window.verifyPcgsCert === 'function');
+    const result = await page.evaluate(async () => {
+      window.catalogConfig.isPcgsEnabled = () => true;
+      window.catalogConfig.canMakePcgsRequest = () => true;
+      window.catalogConfig.getPcgsConfig = () => ({ bearerToken: 'fake-token' });
+      window.catalogConfig.incrementPcgsUsage = () => {};
+      window.recordCatalogHistory = () => {};
+
+      // Clear cache to ensure fresh fetch
+      window.clearPcgsCache();
+      return await window.verifyPcgsCert('1234567');
+    });
+
+    expect(result.verified).toBe(true);
+    expect(result.pcgsNumber).toBe('786060');
+    expect(result.grade).toBe('MS65');
+    expect(result.name).toBe('1909-S VDB 1C');
+    expect(result.year).toBe('1909');
+    expect(result.certNumber).toBe('1234567');
+    expect(result.priceGuide).toBe(2500);
+    expect(result.images).toHaveLength(1);
+    expect(result.images[0].thumbnail).toBe('thumb.jpg');
+    expect(result.coinFactsUrl).toBe('https://www.pcgs.com/coinfacts/coin/detail/786060/65');
+  });
+
+  test('returns 404 error when cert number is not found', async ({ page }) => {
+    await page.route('https://api.pcgs.com/publicapi/coindetail/GetCoinFactsByCertNo/0000000', route => {
+      return route.fulfill({
+        status: 404,
+        contentType: 'application/json',
+        body: JSON.stringify({ Message: 'No record found' })
+      });
+    });
+
+    await page.goto('/');
+    await page.waitForFunction(() => typeof window.verifyPcgsCert === 'function');
+    const result = await page.evaluate(async () => {
+      window.catalogConfig.isPcgsEnabled = () => true;
+      window.catalogConfig.canMakePcgsRequest = () => true;
+      window.catalogConfig.getPcgsConfig = () => ({ bearerToken: 'fake-token' });
+      window.catalogConfig.incrementPcgsUsage = () => {};
+      window.recordCatalogHistory = () => {};
+
+      window.clearPcgsCache();
+      return await window.verifyPcgsCert('0000000');
+    });
+
+    expect(result.verified).toBe(false);
+    expect(result.error).toBe('Not found in PCGS database.');
+  });
+
+  test('returns 401 error when token is invalid', async ({ page }) => {
+    await page.route('https://api.pcgs.com/publicapi/coindetail/GetCoinFactsByCertNo/1234567', route => {
+      return route.fulfill({
+        status: 401,
+        contentType: 'application/json',
+        body: JSON.stringify({ Message: 'Authorization has been denied for this request.' })
+      });
+    });
+
+    await page.goto('/');
+    await page.waitForFunction(() => typeof window.verifyPcgsCert === 'function');
+    const result = await page.evaluate(async () => {
+      window.catalogConfig.isPcgsEnabled = () => true;
+      window.catalogConfig.canMakePcgsRequest = () => true;
+      window.catalogConfig.getPcgsConfig = () => ({ bearerToken: 'invalid-token' });
+      window.catalogConfig.incrementPcgsUsage = () => {};
+      window.recordCatalogHistory = () => {};
+
+      window.clearPcgsCache();
+      return await window.verifyPcgsCert('1234567');
+    });
+
+    expect(result.verified).toBe(false);
+    expect(result.error).toBe('Invalid or expired PCGS bearer token.');
+  });
 });
