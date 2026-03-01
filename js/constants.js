@@ -878,7 +878,6 @@ const ALLOWED_STORAGE_KEYS = [
   LATEST_REMOTE_URL_KEY,      // string: cached latest remote release URL (STACK-67)
   "ff_migration_fuzzy_autocomplete", // one-time migration flag (v3.26.01)
   "migration_hourlySource",          // one-time migration flag: re-tag StakTrakr hourly entries
-  "migration_seedHistoryMerge",      // one-time migration flag: backfill full historical seed data (v3.32.01)
   "numistaLookupRules",              // custom Numista search lookup rules (JSON array)
   "numistaViewFields",               // view modal Numista field visibility config (JSON object)
   TIMEZONE_KEY,                        // string: "auto" | "UTC" | IANA zone (STACK-63)
