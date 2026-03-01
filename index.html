@@ -682,6 +682,16 @@
                 <span class="total-label">Gain/Loss:</span>
                 <span class="total-value" id="lossProfitSilver">$0.00</span>
               </div>
+              <div id="disposedWrapSilver" class="total-group-disposed" style="display:none">
+                <div class="total-item">
+                  <span class="total-label">Disposed:</span>
+                  <span class="total-value" id="disposedItemsSilver">0</span>
+                </div>
+                <div class="total-item">
+                  <span class="total-label">Realized G/L:</span>
+                  <span class="total-value" id="realizedGainLossSilver">$0.00</span>
+                </div>
+              </div>
             </div>
           </div>
           <!-- Gold totals card -->
@@ -717,6 +727,16 @@
               <div class="total-item total-item-bottom-line">
                 <span class="total-label">Gain/Loss:</span>
                 <span class="total-value" id="lossProfitGold">$0.00</span>
+              </div>
+              <div id="disposedWrapGold" class="total-group-disposed" style="display:none">
+                <div class="total-item">
+                  <span class="total-label">Disposed:</span>
+                  <span class="total-value" id="disposedItemsGold">0</span>
+                </div>
+                <div class="total-item">
+                  <span class="total-label">Realized G/L:</span>
+                  <span class="total-value" id="realizedGainLossGold">$0.00</span>
+                </div>
               </div>
             </div>
           </div>
@@ -754,6 +774,16 @@
                 <span class="total-label">Gain/Loss:</span>
                 <span class="total-value" id="lossProfitPlatinum">$0.00</span>
               </div>
+              <div id="disposedWrapPlatinum" class="total-group-disposed" style="display:none">
+                <div class="total-item">
+                  <span class="total-label">Disposed:</span>
+                  <span class="total-value" id="disposedItemsPlatinum">0</span>
+                </div>
+                <div class="total-item">
+                  <span class="total-label">Realized G/L:</span>
+                  <span class="total-value" id="realizedGainLossPlatinum">$0.00</span>
+                </div>
+              </div>
             </div>
           </div>
           <!-- Palladium totals card -->
@@ -790,6 +820,16 @@
                 <span class="total-label">Gain/Loss:</span>
                 <span class="total-value" id="lossProfitPalladium">$0.00</span>
               </div>
+              <div id="disposedWrapPalladium" class="total-group-disposed" style="display:none">
+                <div class="total-item">
+                  <span class="total-label">Disposed:</span>
+                  <span class="total-value" id="disposedItemsPalladium">0</span>
+                </div>
+                <div class="total-item">
+                  <span class="total-label">Realized G/L:</span>
+                  <span class="total-value" id="realizedGainLossPalladium">$0.00</span>
+                </div>
+              </div>
             </div>
           </div>
           <!-- All metals combined totals card -->
@@ -825,6 +865,16 @@
               <div class="total-item total-item-bottom-line">
                 <span class="total-label">Gain/Loss:</span>
                 <span class="total-value" id="lossProfitAll">$0.00</span>
+              </div>
+              <div id="disposedWrapAll" class="total-group-disposed" style="display:none">
+                <div class="total-item">
+                  <span class="total-label">Disposed:</span>
+                  <span class="total-value" id="disposedItemsAll">0</span>
+                </div>
+                <div class="total-item">
+                  <span class="total-label">Realized G/L:</span>
+                  <span class="total-value" id="realizedGainLossAll">$0.00</span>
+                </div>
               </div>
             </div>
           </div>
@@ -941,6 +991,10 @@
               </div>
               <div class="control-group" id="saveSearchPatternGroup" style="display:none">
                 <button type="button" class="chip-sort-btn save-filter-btn" id="saveSearchPatternBtn" title="Save current search as a custom filter chip">Save Filter</button>
+              </div>
+              <div class="control-group">
+                <label for="showDisposedToggle" class="control-label">Disposed:</label>
+                <input type="checkbox" id="showDisposedToggle" title="Show disposed items in the inventory view">
               </div>
             </div>
             <div class="filter-row">
@@ -4935,6 +4989,62 @@
             <p style="font-size:0.95rem;line-height:1.6">If this policy changes, the updated version will appear in the app with a new date. Questions about this policy can be directed to the project's <a href="https://github.com/lbruton/StakTrakr/issues" target="_blank" rel="noopener">GitHub Issues</a> page.</p>
           </div>
 
+        </div>
+      </div>
+    </div>
+
+    <!-- =============================================================================
+       DISPOSITION MODAL
+
+       Records how an inventory item was disposed of (sold, traded, lost, gifted,
+       returned). Captures disposition type, date, amount, recipient, and notes.
+       Opened from the view-item context menu via openDispositionModal().
+       ============================================================================= -->
+    <div class="modal" id="dispositionModal" style="display: none">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Dispose Item</h2>
+          <button aria-label="Close modal" class="modal-close" onclick="closeModalById('dispositionModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+          <form id="dispositionForm">
+            <input type="hidden" id="dispositionItemIdx">
+
+            <div class="form-group">
+              <label for="dispositionType">Type</label>
+              <select id="dispositionType">
+                <option value="sold">Sold</option>
+                <option value="traded">Traded</option>
+                <option value="lost">Lost</option>
+                <option value="gifted">Gifted</option>
+                <option value="returned">Returned</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="dispositionDate">Date</label>
+              <input type="date" id="dispositionDate">
+            </div>
+
+            <div class="form-group" id="dispositionAmountGroup">
+              <label for="dispositionAmount">Amount ($)</label>
+              <input type="number" id="dispositionAmount" min="0" step="0.01" placeholder="0.00">
+            </div>
+
+            <div class="form-group">
+              <label for="dispositionRecipient">Recipient</label>
+              <input type="text" id="dispositionRecipient" placeholder="Optional">
+            </div>
+
+            <div class="form-group">
+              <label for="dispositionNotes">Notes</label>
+              <textarea id="dispositionNotes" rows="3" placeholder="Optional notes..."></textarea>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" type="button" onclick="closeModalById('dispositionModal')">Cancel</button>
+          <button class="btn btn-primary" type="button" id="dispositionSubmitBtn">Confirm Disposition</button>
         </div>
       </div>
     </div>

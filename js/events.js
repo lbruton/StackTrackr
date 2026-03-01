@@ -687,6 +687,15 @@ const setupSearchAndChipListeners = () => {
   if (typeof wireChipSortToggle === 'function') {
     wireChipSortToggle('chipSortOrder', 'settingsChipSortOrder');
   }
+
+  // Show Disposed toggle (STAK-72)
+  const showDisposedToggle = document.getElementById('showDisposedToggle');
+  if (showDisposedToggle) {
+    showDisposedToggle.addEventListener('change', () => {
+      if (typeof renderTable === 'function') renderTable();
+      if (typeof renderActiveFilters === 'function') renderActiveFilters();
+    });
+  }
 };
 
 /**
@@ -3190,6 +3199,27 @@ function handleAdvancedSavePassword() {
   }
 }
 window.handleAdvancedSavePassword = handleAdvancedSavePassword;
+
+// =============================================================================
+// Disposition modal event listeners (STAK-72)
+// =============================================================================
+
+const dispositionSubmitBtn = document.getElementById('dispositionSubmitBtn');
+if (dispositionSubmitBtn) {
+  dispositionSubmitBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (typeof confirmDisposition === 'function') confirmDisposition();
+  });
+}
+
+const dispositionTypeSelect = document.getElementById('dispositionType');
+if (dispositionTypeSelect) {
+  dispositionTypeSelect.addEventListener('change', () => {
+    const typeInfo = DISPOSITION_TYPES[dispositionTypeSelect.value];
+    const amountGroup = document.getElementById('dispositionAmountGroup');
+    if (amountGroup) amountGroup.style.display = typeInfo?.requiresAmount ? '' : 'none';
+  });
+}
 
 // =============================================================================
 
