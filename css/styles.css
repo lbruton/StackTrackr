@@ -4889,19 +4889,35 @@ td input:checked + .slider:before {
 #viewItemModal .modal-header {
   background: linear-gradient(135deg, var(--primary), var(--primary-hover));
   color: #f8fafc;
-  padding: var(--spacing-sm) var(--spacing-xl);
+  padding: var(--spacing-lg) var(--spacing-xl) var(--spacing-sm);
   position: relative;
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   box-shadow: var(--shadow);
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--spacing-sm);
+  flex-direction: column;
+  gap: 2px;
 }
 
-.view-header-left {
-  flex: 1;
-  min-width: 0;
+/* Close X button — top-right corner */
+.view-modal-close {
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: var(--radius);
+  transition: color 0.15s ease, background 0.15s ease;
+  z-index: 1;
+}
+
+.view-modal-close:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.15);
 }
 
 #viewItemModal .modal-header h2 {
@@ -4914,14 +4930,25 @@ td input:checked + .slider:before {
   white-space: nowrap;
 }
 
+/* Title row — title left, eBay right */
+.view-header-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  min-width: 0;
+}
+
+/* Badges row — catalog ID + count chip */
 .view-header-badges {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin-top: 4px;
+  align-items: center;
+  min-height: 1.4rem;
 }
 
-/* --- Header action buttons (eBay, Edit, Close) --- */
+/* --- Header action buttons (eBay) --- */
 .view-header-actions {
   display: flex;
   gap: 6px;
@@ -4944,17 +4971,6 @@ td input:checked + .slider:before {
 
 .view-header-actions button:hover {
   background: rgba(255, 255, 255, 0.2);
-}
-
-.view-header-actions .view-edit-btn {
-  background: rgba(255, 255, 255, 0.9);
-  color: #1e293b;
-  border-color: transparent;
-  font-weight: 600;
-}
-
-.view-header-actions .view-edit-btn:hover {
-  background: #fff;
 }
 
 .view-header-actions .view-ebay-btn {
@@ -5450,7 +5466,67 @@ td input:checked + .slider:before {
   word-break: break-word;
 }
 
-/* (Footer removed — action buttons now live in .view-header-actions) */
+/* --- View modal sticky footer --- */
+.view-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.75rem var(--spacing-xl);
+  border-top: 1px solid var(--border);
+  background: var(--bg-secondary);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  flex-shrink: 0;
+}
+
+.view-footer-left,
+.view-footer-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.view-modal-footer .view-footer-btn {
+  border-radius: 999px;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.view-modal-footer .view-footer-btn.secondary {
+  background: var(--glass-input-bg, rgba(0, 0, 0, 0.04));
+  border: 1px solid var(--glass-input-border, var(--border));
+  color: var(--text-primary);
+}
+
+.view-modal-footer .view-footer-btn.secondary:hover {
+  background: var(--glass-input-focus-bg, rgba(0, 0, 0, 0.07));
+  border-color: var(--primary);
+}
+
+.view-modal-footer .view-footer-btn.primary {
+  background: var(--accent, #f59e0b);
+  color: #fff;
+  border: 1px solid transparent;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25);
+}
+
+.view-modal-footer .view-footer-btn.primary:hover {
+  filter: brightness(1.1);
+}
+
+.view-modal-footer .view-footer-btn.danger {
+  background: var(--danger, #ef4444);
+  color: #fff;
+  border: 1px solid transparent;
+}
+
+.view-modal-footer .view-footer-btn.danger:hover {
+  filter: brightness(1.1);
+}
 
 /* Clickable N# badge */
 .view-modal-catalog-id[style*="cursor: pointer"]:hover {
@@ -5478,10 +5554,6 @@ td input:checked + .slider:before {
   #viewItemModal .modal-header h2 {
     font-size: 0.95rem;
     line-height: 1.3;
-  }
-
-  .view-header-actions {
-    gap: 4px;
   }
 
   .view-header-actions button {
@@ -5545,6 +5617,10 @@ td input:checked + .slider:before {
 
   .view-numista-section {
     padding: var(--spacing-sm) var(--spacing);
+  }
+
+  .view-modal-footer {
+    border-radius: 0;
   }
 
 }
@@ -8618,7 +8694,7 @@ th {
   margin: 0.85rem calc(-1 * var(--spacing)) calc(-1 * var(--spacing));
   padding: 0.75rem var(--spacing) 0.65rem;
   border-top: 1px solid var(--border);
-  background: var(--bg-primary);
+  background: var(--bg-secondary);
   border-radius: 0 0 var(--radius-lg) var(--radius-lg);
   gap: 0.4rem;
   justify-content: flex-end;
@@ -8628,9 +8704,10 @@ th {
 #inventoryForm .item-modal-actions-left .btn,
 #inventoryForm .item-modal-actions-right .btn {
   border-radius: 999px;
-  padding: 0.35rem 0.9rem;
-  font-size: 0.78rem;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.72rem;
   font-weight: 700;
+  min-height: auto;
 }
 
 #inventoryForm .item-modal-actions-left .btn.secondary,
@@ -8657,7 +8734,8 @@ th {
 /* Submit button — premium gold/accent treatment */
 #inventoryForm #itemModalSubmit.premium {
   border-radius: 999px;
-  padding: 0.35rem 1rem;
+  padding: 0.3rem 0.85rem;
+  min-height: auto;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
 }
 

@@ -1918,8 +1918,12 @@ const setupItemFormListeners = () => {
       "click",
       () => {
         if (typeof editingIndex === 'number' && editingIndex >= 0 && typeof showViewModal === 'function') {
-          const modal = document.getElementById('itemModal');
-          if (modal) modal.style.display = 'none';
+          if (typeof closeModalById === 'function') closeModalById('itemModal');
+          else {
+            const modal = document.getElementById('itemModal');
+            if (modal) modal.style.display = 'none';
+            document.body.style.overflow = '';
+          }
           showViewModal(editingIndex);
         }
       },

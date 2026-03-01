@@ -1548,7 +1548,7 @@
             </div>
 
             <!-- ═══════════════════════════════════════════════════════
-                 Numista Data
+                 Catalog Data
                  ═══════════════════════════════════════════════════════ -->
             <div class="form-section" id="numistaDataSection">
               <div class="form-section-header">
@@ -1558,7 +1558,7 @@
                     <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
                   </svg>
                 </span>
-                Numista Data
+                Catalog Data
               </div>
               <div class="form-section-body numista-data-fields">
                 <div class="grid grid-2">
@@ -1704,14 +1704,6 @@
             <!-- Form action buttons -->
             <div class="item-modal-actions">
               <div class="item-modal-actions-left">
-                <button class="btn secondary" id="viewItemFromEditBtn" type="button" style="display:none"
-                        title="View this item in read-only mode">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
-                       stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                       style="vertical-align: -2px; margin-right: 0.2rem;">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-                  </svg>View
-                </button>
                 <button class="btn danger" id="deleteFromEditBtn" type="button" style="display:none"
                         title="Delete or dispose this item">
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
@@ -1724,7 +1716,14 @@
               <div class="item-modal-actions-right">
                 <span id="clonePickerCount" class="clone-picker-count" style="display:none"></span>
                 <button class="btn" id="undoChangeBtn" type="button" style="display:none">Undo</button>
-                <button class="btn" id="cancelItem" type="button">Cancel</button>
+                <button class="btn secondary" id="viewItemFromEditBtn" type="button" style="display:none"
+                        title="View this item in read-only mode">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                       stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                       style="vertical-align: -2px; margin-right: 0.2rem;">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                  </svg>View
+                </button>
                 <button class="btn secondary" id="cloneItemBtn" type="button" style="display:none"
                         title="Clone this item as a new entry">
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
@@ -1734,6 +1733,7 @@
                   </svg>Clone
                 </button>
                 <button class="btn" id="cloneItemSaveAnotherBtn" type="button" style="display:none">Save &amp; Clone Another</button>
+                <button class="btn" id="cancelItem" type="button">Cancel</button>
                 <button class="btn premium" id="itemModalSubmit" type="submit">Add to Inventory</button>
               </div>
             </div>
@@ -4801,16 +4801,18 @@
     <div class="modal" id="viewItemModal" style="display: none">
       <div class="modal-content">
         <div class="modal-header">
-          <div class="view-header-left">
+          <button class="view-modal-close" id="viewModalCloseX" aria-label="Close modal">&times;</button>
+          <div class="view-header-title-row">
             <h2 id="viewModalTitle"></h2>
-            <div class="view-header-badges">
-              <span class="view-modal-catalog-id" id="viewModalCatalogId"></span>
-              <span class="view-modal-count-chip" id="viewModalCountChip"></span>
-            </div>
+            <div class="view-header-actions" id="viewHeaderActions"></div>
           </div>
-          <div class="view-header-actions" id="viewHeaderActions"></div>
+          <div class="view-header-badges">
+            <span class="view-modal-catalog-id" id="viewModalCatalogId"></span>
+            <span class="view-modal-count-chip" id="viewModalCountChip"></span>
+          </div>
         </div>
         <div class="modal-body" id="viewModalBody"></div>
+        <div class="view-modal-footer" id="viewModalFooter"></div>
       </div>
     </div>
 
