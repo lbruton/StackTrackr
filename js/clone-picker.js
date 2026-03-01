@@ -141,6 +141,9 @@ function enterCloneMode(inventoryIndex) {
   if (elements.cloneItemSaveAnotherBtn) elements.cloneItemSaveAnotherBtn.style.display = '';
   if (elements.cloneItemBtn) elements.cloneItemBtn.style.display = 'none';
   if (elements.undoChangeBtn) elements.undoChangeBtn.style.display = 'none';
+  if (elements.viewItemFromEditBtn) elements.viewItemFromEditBtn.style.display = 'none';
+  const deleteFromEditBtn = document.getElementById('deleteFromEditBtn');
+  if (deleteFromEditBtn) deleteFromEditBtn.style.display = 'none';
   if (elements.cancelItemBtn) elements.cancelItemBtn.textContent = 'Back';
 
   // Clone counter (hidden until first save)
