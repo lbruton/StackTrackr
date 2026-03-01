@@ -915,7 +915,7 @@ const ALLOWED_STORAGE_KEYS = [
   "numista_tags_auto",                                 // boolean string: "true"/"false" — auto-tag from Numista data
   "cloud_sync_migrated",                               // string: "v2" — cloud folder migration flag (flat → /sync/ + /backups/)
   "cloud_backup_history_depth",                        // string: "3"|"5"|"10"|"20" — max cloud backups to retain
-  "manifestPruningThreshold",                          // number string: days to keep manifest entries before pruning (STAK-184)
+  "manifestPruningThreshold",                          // number string: max sync cycles to retain in manifest before pruning older entries (STAK-184)
 ];
 
 // =============================================================================

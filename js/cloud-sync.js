@@ -690,15 +690,7 @@ function pruneManifestEntries(entries, maxSyncs) {
   // Scan changeLog for sync-marker entries to find the cutoff timestamp
   // getManifestEntries already filters by timestamp, but we need to find
   // the Nth-most-recent sync-marker to establish the pruning boundary
-  var changeLogRaw = typeof loadData === 'function' ? loadData('changeLog') : null;
-  var changeLog = [];
-  if (changeLogRaw) {
-    try {
-      changeLog = typeof changeLogRaw === 'string' ? JSON.parse(changeLogRaw) : changeLogRaw;
-    } catch (_) {
-      changeLog = [];
-    }
-  }
+  var changeLog = typeof loadDataSync === 'function' ? loadDataSync('changeLog', []) : [];
 
   // Find all sync-marker entries, sorted by timestamp descending
   var syncMarkers = [];
@@ -755,8 +747,8 @@ async function buildAndUploadManifest(token, password, syncId) {
 
   // 2b. Prune entries to prevent manifest from growing unbounded
   var maxSyncs = 10;
-  if (typeof loadData === 'function') {
-    var threshold = loadData('manifestPruningThreshold');
+  if (typeof loadDataSync === 'function') {
+    var threshold = loadDataSync('manifestPruningThreshold', null);
     if (threshold != null) {
       var parsed = parseInt(threshold, 10);
       if (!isNaN(parsed) && parsed > 0) maxSyncs = parsed;
