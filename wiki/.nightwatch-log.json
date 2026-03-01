@@ -1,22 +1,25 @@
 {
   "nextIndex": 5,
   "rotation": [
-    "wiki/api-consumption.md",
-    "wiki/backup-restore.md",
-    "wiki/data-model.md",
-    "wiki/dom-patterns.md",
-    "wiki/frontend-overview.md",
-    "wiki/release-workflow.md",
-    "wiki/retail-modal.md",
-    "wiki/service-worker.md",
-    "wiki/storage-patterns.md",
-    "wiki/sync-cloud.md"
+    "api-consumption.md",
+    "backup-restore.md",
+    "data-model.md",
+    "dom-patterns.md",
+    "frontend-overview.md",
+    "release-workflow.md",
+    "retail-modal.md",
+    "service-worker.md",
+    "storage-patterns.md",
+    "sync-cloud.md"
   ],
   "history": [
     {
-      "timestamp": "2026-03-01T21:34:04.163Z",
-      "page": "wiki/frontend-overview.md",
-      "result": "INACCURACY FOUND"
+      "date": "2026-03-01",
+      "page": "frontend-overview.md",
+      "track": "frontend",
+      "status": "inaccuracy_found",
+      "finding": "Page incorrectly listed saveData/loadData as window globals; only saveDataSync/loadDataSync are exposed on window (js/utils.js).",
+      "verified": []
     }
   ]
 }
