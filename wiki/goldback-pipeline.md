@@ -25,7 +25,7 @@ Goldback pricing flows through **two paths**:
 
 1. **Retail pipeline** — Per-state Goldback coins (`goldback-{state}-g{denom}`) are tracked in `providers.json`, scraped from vendor product pages via `run-local.sh` cron → Turso → `api-export.js` → per-coin JSON endpoints.
 
-2. **Denomination spot JSON** — `api-export.js` generates `data/api/goldback-spot.json` with denomination prices computed from the G1 vendor rate (`G1 × multiplier`).
+2. **Denomination spot JSON** — `goldback-scraper.js` (invoked by `run-goldback.sh`) scrapes the official G1 rate from `goldback.com/exchange-rates/` and writes `data/api/goldback-spot.json` with the G1 USD price and denomination multipliers. `api-export.js` does not write this file.
 
 A separate **goldback cron** (`run-goldback.sh`) runs hourly at :01 to scrape the official G1 exchange rate from `goldback.com/exchange-rates/` via Firecrawl. It writes `goldback-spot.json` and `goldback-YYYY.json`, then skips subsequent runs if today's price is already captured.
 
@@ -181,7 +181,7 @@ See [rest-api-reference.md](rest-api-reference.md) for full endpoint schemas.
 |---------|-------------|-----|
 | `goldback-spot.json` > 25h stale | `goldback-g1` scrape failing or goldback.com down | Check `fly logs --app staktrakr \| grep goldback` |
 | G1 price null in manifest | Firecrawl timeout on JS-rendered page | goldback.com is in `SLOW_PROVIDERS` — verify `waitFor` is sufficient |
-| Denomination prices wrong | G1 base rate incorrect | Check Turso `goldback-g1` rows; compare to goldback.com/exchange-rate/ |
+| Denomination prices wrong | G1 base rate incorrect | Check Turso `goldback-g1` rows; compare to goldback.com/exchange-rates/ |
 | Per-denomination retail prices differ from computed spot | Normal — retail vendor prices ≠ official exchange rate | `goldback-spot.json` uses vendor G1 rate × multiplier; individual `goldback-gN` endpoints track actual retail prices |
 
 ---
