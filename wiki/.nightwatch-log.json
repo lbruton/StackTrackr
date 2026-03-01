@@ -1,5 +1,5 @@
 {
-  "nextIndex": 5,
+  "nextIndex": 6,
   "rotation": [
     "api-consumption.md",
     "backup-restore.md",
@@ -27,6 +27,14 @@
       "track": "frontend",
       "status": "inaccuracy_found",
       "finding": "MARKET_LIST_VIEW feature flag default listed as false but is enabled: true in js/constants.js:1317; description also diverged",
+      "verified": []
+    },
+    {
+      "date": "2026-03-01",
+      "page": "release-workflow.md",
+      "track": "frontend",
+      "status": "inaccuracy_found",
+      "finding": "Wiki claims lock format is {\"locked\": ...}, but devops/version-lock-protocol.md shows it is an array of claims: {\"claims\": [ ... ]}.",
       "verified": []
     }
   ]
