@@ -5,15 +5,16 @@
 
 /**
  * Computes a stable composite key for an inventory item.
- * If the item has a serial number, it is used as the sole key.
- * Otherwise a pipe-delimited composite of numistaId, name, and date is used.
+ * Mirrors DiffEngine.computeItemKey() — uuid → serial → numistaId|name|date → name|date.
  * @param {Object} item - Inventory item object
  * @returns {string} Stable item key
  */
 const computeItemKey = (item) => {
   if (!item) return '';
+  if (item.uuid) return String(item.uuid);
   if (item.serial) return String(item.serial);
-  return `${item.numistaId || ''}|${item.name || ''}|${item.date || ''}`;
+  if (item.numistaId) return `${item.numistaId}|${item.name || ''}|${item.date || ''}`;
+  return `${item.name || ''}|${item.date || ''}`;
 };
 
 /**

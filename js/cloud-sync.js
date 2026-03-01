@@ -6,8 +6,9 @@
 // .stvault to Dropbox. On other devices, a background poller detects the
 // new file via staktrakr-sync.json and prompts the user to pull.
 //
-// Sync file:  /StakTrakr/staktrakr-sync.stvault  (full encrypted snapshot)
-// Metadata:   /StakTrakr/staktrakr-sync.json     (lightweight pointer, polled)
+// Sync file:  /StakTrakr/sync/staktrakr-sync.stvault  (full encrypted snapshot)
+// Metadata:   /StakTrakr/sync/staktrakr-sync.json     (lightweight pointer, polled)
+// Backups:    /StakTrakr/backups/                      (pre-sync + manual backups)
 //
 // Depends on: cloud-storage.js, vault.js, constants.js, utils.js
 // =============================================================================
@@ -34,6 +35,21 @@ var scheduleSyncPush = null;
 /** @type {string} Currently active sync provider */
 var _syncProvider = 'dropbox';
 
+/** @type {BroadcastChannel|null} Multi-tab coordination channel */
+var _syncChannel = null;
+
+/** @type {boolean} Whether this tab is the sync leader */
+var _syncIsLeader = false;
+
+/** @type {number} Timestamp when this tab was opened (used for leader election) */
+var _syncTabOpenedAt = Date.now();
+
+/** @type {number|null} Timer for visibility-based leadership handoff */
+var _syncLeaderHiddenTimer = null;
+
+/** @type {object|null} Pull metadata stashed for deferred recording after preview apply */
+var _previewPullMeta = null;
+
 // ---------------------------------------------------------------------------
 // Device identity
 // ---------------------------------------------------------------------------
@@ -54,6 +70,190 @@ function getSyncDeviceId() {
 function _syncFallbackUUID() {
   return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, function (c) {
     return (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16);
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Manifest helpers (Layer 4 — REQ-4)
+// ---------------------------------------------------------------------------
+
+/**
+ * Convert a SHA-256 ArrayBuffer to a hex string.
+ * Shared by computeInventoryHash and computeSettingsHash.
+ * @param {ArrayBuffer} buffer
+ * @returns {string}
+ */
+function sha256BufferToHex(buffer) {
+  var hashArray = new Uint8Array(buffer);
+  var hex = '';
+  for (var j = 0; j < hashArray.length; j++) {
+    hex += ('0' + hashArray[j].toString(16)).slice(-2);
+  }
+  return hex;
+}
+
+/**
+ * Compute a deterministic SHA-256 hash of sorted item keys.
+ * Returns hex string or null if hashing is unavailable (file:// protocol).
+ * @param {object[]} items
+ * @returns {Promise<string|null>}
+ */
+async function computeInventoryHash(items) {
+  try {
+    if (!crypto || !crypto.subtle || !crypto.subtle.digest) return null;
+    var arr = Array.isArray(items) ? items : [];
+    var keys = [];
+    for (var i = 0; i < arr.length; i++) {
+      keys.push(typeof DiffEngine !== 'undefined' ? DiffEngine.computeItemKey(arr[i]) : String(i));
+    }
+    keys.sort();
+    var joined = keys.join('|');
+    var encoded = new TextEncoder().encode(joined);
+    var hashBuffer = await crypto.subtle.digest('SHA-256', encoded);
+    return sha256BufferToHex(hashBuffer);
+  } catch (e) {
+    debugLog('[CloudSync] computeInventoryHash failed:', e.message);
+    return null;
+  }
+}
+
+/**
+ * Summarize inventory by metal type.
+ * @param {object[]} items
+ * @returns {object} e.g. { gold: 12, silver: 45 }
+ */
+function summarizeMetals(items) {
+  var result = {};
+  var arr = Array.isArray(items) ? items : [];
+  for (var i = 0; i < arr.length; i++) {
+    var metal = arr[i].metal || 'unknown';
+    result[metal] = (result[metal] || 0) + 1;
+  }
+  return result;
+}
+
+/**
+ * Compute total weight in troy ounces (weight * qty for each item).
+ * @param {object[]} items
+ * @returns {number}
+ */
+function computeTotalWeight(items) {
+  var total = 0;
+  var arr = Array.isArray(items) ? items : [];
+  for (var i = 0; i < arr.length; i++) {
+    var w = parseFloat(arr[i].weight) || 0;
+    var q = parseInt(arr[i].qty, 10) || 1;
+    total += w * q;
+  }
+  return total;
+}
+
+/**
+ * Compute SHA-256 hash of sync-scoped settings (non-inventory localStorage keys).
+ * Returns hex string or null if hashing is unavailable.
+ * @returns {Promise<string|null>}
+ */
+async function computeSettingsHash() {
+  try {
+    if (!crypto || !crypto.subtle || !crypto.subtle.digest) return null;
+    var keys = typeof SYNC_SCOPE_KEYS !== 'undefined' ? SYNC_SCOPE_KEYS : [];
+    var settings = {};
+    for (var i = 0; i < keys.length; i++) {
+      if (keys[i] === 'metalInventory') continue; // skip inventory — covered by inventoryHash
+      var val = loadData(keys[i]);
+      if (val !== null && val !== undefined) settings[keys[i]] = val;
+    }
+    var sorted = JSON.stringify(settings, Object.keys(settings).sort());
+    var encoded = new TextEncoder().encode(sorted);
+    var hashBuffer = await crypto.subtle.digest('SHA-256', encoded);
+    return sha256BufferToHex(hashBuffer);
+  } catch (e) {
+    debugLog('[CloudSync] computeSettingsHash failed:', e.message);
+    return null;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Multi-tab sync coordination (Layer 7)
+// ---------------------------------------------------------------------------
+
+/**
+ * Initialize BroadcastChannel-based leader election so only one tab
+ * performs sync operations at a time. Falls back gracefully when
+ * BroadcastChannel is unavailable (e.g. Safari < 15.4) — every tab
+ * acts as leader in that case (no regression from current behavior).
+ */
+function initSyncTabCoordination() {
+  if (typeof BroadcastChannel === 'undefined') {
+    _syncIsLeader = true;
+    debugLog('[CloudSync] BroadcastChannel unavailable — this tab is leader (fallback)');
+    return;
+  }
+
+  try {
+    _syncChannel = new BroadcastChannel('staktrakr-sync');
+  } catch (e) {
+    _syncIsLeader = true;
+    debugLog('[CloudSync] BroadcastChannel creation failed — this tab is leader (fallback)');
+    return;
+  }
+
+  // Claim leadership immediately
+  _syncIsLeader = true;
+  debugLog('[CloudSync] Tab opened at', _syncTabOpenedAt, '— claiming leadership');
+  _syncChannel.postMessage({ type: 'leader-claim', tabId: getSyncDeviceId(), ts: _syncTabOpenedAt });
+
+  _syncChannel.onmessage = function (event) {
+    var msg = event.data;
+    if (!msg || !msg.type) return;
+
+    if (msg.type === 'leader-claim') {
+      // Yield to older tab (lower timestamp = opened earlier = wins)
+      if (msg.ts < _syncTabOpenedAt && _syncIsLeader) {
+        _syncIsLeader = false;
+        debugLog('[CloudSync] Yielding leadership to older tab (ts:', msg.ts, ')');
+      } else if (msg.ts > _syncTabOpenedAt && !_syncIsLeader) {
+        // We are older — reclaim
+        _syncIsLeader = true;
+        _syncChannel.postMessage({ type: 'leader-claim', tabId: getSyncDeviceId(), ts: _syncTabOpenedAt });
+        debugLog('[CloudSync] Reclaiming leadership (we are older)');
+      }
+    } else if (msg.type === 'sync-push-complete') {
+      debugLog('[CloudSync] Broadcast received: push complete from another tab');
+      refreshSyncUI();
+    } else if (msg.type === 'sync-pull-complete') {
+      debugLog('[CloudSync] Broadcast received: pull complete from another tab');
+      if (typeof loadInventory === 'function') loadInventory();
+      refreshSyncUI();
+    }
+  };
+
+  // Visibility-based leadership handoff
+  document.addEventListener('visibilitychange', function () {
+    if (!_syncChannel) return;
+
+    if (document.hidden && _syncIsLeader) {
+      // Leader tab hidden — start 60s handoff timer
+      _syncLeaderHiddenTimer = setTimeout(function () {
+        if (document.hidden && _syncIsLeader) {
+          _syncIsLeader = false;
+          debugLog('[CloudSync] Leader hidden >60s — releasing leadership');
+          _syncChannel.postMessage({ type: 'leader-claim', tabId: 'yield', ts: Infinity });
+        }
+      }, 60000);
+    } else if (!document.hidden) {
+      // Tab became visible
+      if (_syncLeaderHiddenTimer) {
+        clearTimeout(_syncLeaderHiddenTimer);
+        _syncLeaderHiddenTimer = null;
+      }
+      // If no leader, claim it
+      if (!_syncIsLeader) {
+        _syncIsLeader = true;
+        _syncChannel.postMessage({ type: 'leader-claim', tabId: getSyncDeviceId(), ts: _syncTabOpenedAt });
+        debugLog('[CloudSync] Tab visible — claiming leadership');
+      }
+    }
   });
 }
 
@@ -473,6 +673,182 @@ function logCloudSyncActivity(action, result, detail, duration) {
 }
 
 // ---------------------------------------------------------------------------
+// Manifest generation (diff-merge architecture — STAK-184 Task 4)
+// ---------------------------------------------------------------------------
+
+/**
+ * Prune manifest entries to only include those from the last N sync cycles.
+ * Prevents the manifest from growing unbounded.
+ * @param {Array} entries - Full array of changeLog entries
+ * @param {number} maxSyncs - Number of sync cycles to retain (default: 10)
+ * @returns {Array} Pruned entries (subset of input)
+ */
+function pruneManifestEntries(entries, maxSyncs) {
+  if (!entries || entries.length === 0) return entries;
+  if (!maxSyncs || maxSyncs <= 0) maxSyncs = 10;
+
+  // Scan changeLog for sync-marker entries to find the cutoff timestamp
+  // getManifestEntries already filters by timestamp, but we need to find
+  // the Nth-most-recent sync-marker to establish the pruning boundary
+  var changeLog = typeof loadDataSync === 'function' ? loadDataSync('changeLog', []) : [];
+
+  // Find all sync-marker entries, sorted by timestamp descending
+  var syncMarkers = [];
+  for (var i = 0; i < changeLog.length; i++) {
+    if (changeLog[i].type === 'sync-marker' && changeLog[i].timestamp) {
+      syncMarkers.push(changeLog[i]);
+    }
+  }
+  syncMarkers.sort(function(a, b) { return b.timestamp - a.timestamp; });
+
+  // If fewer than maxSyncs markers exist, keep all entries (no pruning needed)
+  if (syncMarkers.length < maxSyncs) return entries;
+
+  // The Nth sync-marker timestamp is the cutoff
+  var cutoffTimestamp = syncMarkers[maxSyncs - 1].timestamp;
+
+  // Filter entries to only include those at or after the cutoff
+  var pruned = [];
+  for (var j = 0; j < entries.length; j++) {
+    if (entries[j].timestamp >= cutoffTimestamp) {
+      pruned.push(entries[j]);
+    }
+  }
+
+  debugLog('[CloudSync] Manifest pruned:', entries.length, '→', pruned.length, 'entries (maxSyncs:', maxSyncs + ')');
+  return pruned;
+}
+
+/**
+ * Build a sync manifest from the changeLog and upload it encrypted to Dropbox.
+ * The manifest captures field-level changes since the last push so that
+ * diff-merge can resolve conflicts without downloading the full vault.
+ *
+ * Failure here is non-blocking — the caller wraps this in try/catch so that
+ * a manifest error never prevents the vault push from completing.
+ *
+ * @param {string} token   - Dropbox OAuth bearer token
+ * @param {string} password - Vault encryption password (composite key)
+ * @param {string} syncId  - The syncId generated for this push
+ * @returns {Promise<void>}
+ */
+async function buildAndUploadManifest(token, password, syncId) {
+  // 1. Determine the cutoff timestamp from the last successful push
+  var lastPush = syncGetLastPush();
+  var lastSyncTimestamp = lastPush ? lastPush.timestamp : null;
+
+  // 2. Collect changeLog entries since the last push
+  var entries = [];
+  if (typeof getManifestEntries === 'function') {
+    entries = getManifestEntries(lastSyncTimestamp) || [];
+  } else {
+    debugLog('[CloudSync] getManifestEntries not available — manifest will have empty changes');
+  }
+
+  // 2b. Prune entries to prevent manifest from growing unbounded
+  var maxSyncs = 10;
+  if (typeof loadDataSync === 'function') {
+    var threshold = loadDataSync('manifestPruningThreshold', null);
+    if (threshold != null) {
+      var parsed = parseInt(threshold, 10);
+      if (!isNaN(parsed) && parsed > 0) maxSyncs = parsed;
+    }
+  }
+  entries = pruneManifestEntries(entries, maxSyncs);
+
+  // 3. Transform entries: group by itemKey, collect field-level changes
+  var changesByKey = {};
+  var summary = { itemsAdded: 0, itemsEdited: 0, itemsDeleted: 0, settingsChanged: 0 };
+  var countedKeys = { add: {}, edit: {}, delete: {}, setting: {} };
+
+  for (var i = 0; i < entries.length; i++) {
+    var entry = entries[i];
+    var key = entry.itemKey || '_settings';
+
+    if (!changesByKey[key]) {
+      changesByKey[key] = {
+        itemKey: key,
+        itemName: entry.itemName || null,
+        type: entry.type,
+        fields: [],
+      };
+    }
+
+    changesByKey[key].fields.push({
+      field: entry.field || null,
+      oldValue: entry.oldValue != null ? entry.oldValue : null,
+      newValue: entry.newValue != null ? entry.newValue : null,
+      timestamp: entry.timestamp,
+    });
+
+    // Count unique items per type for the summary
+    var entryType = entry.type;
+    if (entryType === 'add' && !countedKeys.add[key]) {
+      countedKeys.add[key] = true;
+      summary.itemsAdded++;
+    } else if (entryType === 'edit' && !countedKeys.edit[key]) {
+      countedKeys.edit[key] = true;
+      summary.itemsEdited++;
+    } else if (entryType === 'delete' && !countedKeys.delete[key]) {
+      countedKeys.delete[key] = true;
+      summary.itemsDeleted++;
+    } else if (entryType === 'setting' && !countedKeys.setting[key]) {
+      countedKeys.setting[key] = true;
+      summary.settingsChanged++;
+    }
+  }
+
+  // Convert grouped changes object to array
+  var transformedEntries = [];
+  var keys = Object.keys(changesByKey);
+  for (var k = 0; k < keys.length; k++) {
+    transformedEntries.push(changesByKey[keys[k]]);
+  }
+
+  // 4. Build manifest JSON (schema v1)
+  var manifestPayload = {
+    version: 1,
+    generatedAt: new Date().toISOString(),
+    deviceId: getSyncDeviceId(),
+    syncId: syncId,
+    previousSyncId: lastPush ? lastPush.syncId : null,
+    changes: transformedEntries,
+    summary: summary,
+  };
+
+  // 5. Encrypt the manifest
+  if (typeof encryptManifest !== 'function') {
+    throw new Error('encryptManifest not available — cannot build manifest');
+  }
+  var manifestBytes = await encryptManifest(manifestPayload, password);
+
+  // 6. Upload encrypted manifest to Dropbox
+  debugLog('[CloudSync] Uploading manifest to', SYNC_MANIFEST_PATH, '…');
+  var manifestArg = JSON.stringify({
+    path: SYNC_MANIFEST_PATH,
+    mode: 'overwrite',
+    autorename: false,
+    mute: true,
+  });
+  var manifestResp = await fetch('https://content.dropboxapi.com/2/files/upload', {
+    method: 'POST',
+    headers: {
+      Authorization: 'Bearer ' + token,
+      'Content-Type': 'application/octet-stream',
+      'Dropbox-API-Arg': manifestArg,
+    },
+    body: manifestBytes,
+  });
+
+  if (!manifestResp.ok) {
+    var respBody = await manifestResp.text().catch(function () { return ''; });
+    throw new Error('Manifest upload failed: ' + manifestResp.status + ' ' + respBody);
+  }
+
+  debugLog('[CloudSync] Manifest uploaded:', transformedEntries.length, 'change groups,', entries.length, 'total entries');
+}
+
+// ---------------------------------------------------------------------------
 // Push (upload encrypted vault to Dropbox)
 // ---------------------------------------------------------------------------
 
@@ -486,6 +862,11 @@ async function pushSyncVault() {
 
   if (!syncIsEnabled()) {
     debugLog('[CloudSync] Push skipped — sync not enabled');
+    return;
+  }
+
+  if (!_syncIsLeader) {
+    debugLog('cloud-sync', 'Not leader tab — skipping push');
     return;
   }
 
@@ -514,12 +895,115 @@ async function pushSyncVault() {
   var pushStart = Date.now();
 
   try {
+    // -----------------------------------------------------------------------
+    // Layer 3 — Folder migration check (REQ-3)
+    // Migrate legacy flat /StakTrakr/ layout to /sync/ + /backups/ on first run.
+    // -----------------------------------------------------------------------
+    if (loadData('cloud_sync_migrated') !== 'v2') {
+      debugLog('[CloudSync] Migration needed — running cloudMigrateToV2');
+      try {
+        await cloudMigrateToV2(_syncProvider);
+      } catch (migErr) {
+        debugLog('[CloudSync] Migration error (non-blocking):', migErr.message);
+      }
+    }
+
+    // -----------------------------------------------------------------------
+    // Layer 1 — Empty-vault push guard (REQ-1)
+    // If local inventory is empty, check remote metadata before allowing push.
+    // Prevents overwriting a populated cloud vault from a fresh/empty browser.
+    // -----------------------------------------------------------------------
+    var localItemCount = typeof inventory !== 'undefined' ? inventory.length : 0;
+    if (localItemCount === 0) {
+      debugLog('[CloudSync] Empty-vault guard: local inventory is 0 — checking remote metadata');
+      var guardBlocked = false;
+      try {
+        var guardApiArg = JSON.stringify({ path: SYNC_META_PATH });
+        var guardResp = await fetch('https://content.dropboxapi.com/2/files/download', {
+          method: 'POST',
+          headers: {
+            Authorization: 'Bearer ' + token,
+            'Dropbox-API-Arg': guardApiArg,
+          },
+        });
+        if (guardResp.status === 409) {
+          // No remote meta file — first push, allow
+          debugLog('[CloudSync] Empty-vault guard: no remote meta (first push) — allowing');
+        } else if (guardResp.ok) {
+          var guardMeta = await guardResp.json();
+          if (guardMeta && guardMeta.itemCount && guardMeta.itemCount > 0) {
+            // Remote has items, local is empty — hard block
+            debugLog('[CloudSync] Empty-vault guard: BLOCKED — remote has', guardMeta.itemCount, 'items');
+            logCloudSyncActivity('auto_sync_push', 'blocked', 'Empty local vault, remote has ' + guardMeta.itemCount + ' items');
+            updateSyncStatusIndicator('error', 'Empty vault — pull first');
+            guardBlocked = true;
+            _syncPushInFlight = false;
+            showAppConfirm(
+              'Your local vault is empty but the cloud has ' + guardMeta.itemCount + ' items. ' +
+              'Push cancelled to prevent data loss. Pull from cloud instead?',
+              function () { pullWithPreview(); },
+              null,
+              'Pull from Cloud',
+              'Cancel'
+            );
+            return;
+          } else {
+            debugLog('[CloudSync] Empty-vault guard: remote is also empty — allowing');
+          }
+        } else {
+          // Network/API error — fail-safe: block push
+          debugLog('[CloudSync] Empty-vault guard: BLOCKED — meta check failed with status', guardResp.status);
+          logCloudSyncActivity('auto_sync_push', 'blocked', 'Empty vault guard: meta check failed (' + guardResp.status + ')');
+          updateSyncStatusIndicator('error', 'Sync check failed');
+          _syncPushInFlight = false;
+          return;
+        }
+      } catch (guardErr) {
+        // Network failure — fail-safe: block push
+        debugLog('[CloudSync] Empty-vault guard: BLOCKED — network error:', guardErr.message);
+        logCloudSyncActivity('auto_sync_push', 'blocked', 'Empty vault guard: network error — ' + String(guardErr.message || guardErr));
+        updateSyncStatusIndicator('error', 'Sync check failed');
+        _syncPushInFlight = false;
+        return;
+      }
+    }
+
     // Encrypt sync-scoped payload
     debugLog('[CloudSync] Encrypting payload…');
     var fileBytes = typeof vaultEncryptToBytesScoped === 'function'
       ? await vaultEncryptToBytesScoped(password)
       : await vaultEncryptToBytes(password);
     debugLog('[CloudSync] Encrypted:', fileBytes.byteLength, 'bytes');
+
+    // -----------------------------------------------------------------------
+    // Layer 2 — Cloud-side backup-before-overwrite (REQ-2)
+    // Copy the existing cloud vault to /backups/ before overwriting.
+    // Non-blocking: if copy fails (first push, no existing file), log and continue.
+    // -----------------------------------------------------------------------
+    try {
+      var backupTimestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      var backupPath = SYNC_BACKUP_FOLDER + '/pre-sync-' + backupTimestamp + '.stvault';
+      debugLog('[CloudSync] Backup-before-overwrite: copying vault to', backupPath);
+      var backupResp = await fetch('https://api.dropboxapi.com/2/files/copy_v2', {
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer ' + token,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from_path: SYNC_FILE_PATH,
+          to_path: backupPath,
+        }),
+      });
+      if (backupResp.ok) {
+        debugLog('[CloudSync] Backup-before-overwrite: created', backupPath);
+      } else {
+        var backupStatus = backupResp.status;
+        debugLog('[CloudSync] Backup-before-overwrite: copy returned', backupStatus, '(expected on first push)');
+      }
+    } catch (backupErr) {
+      debugLog('[CloudSync] Backup-before-overwrite: failed (non-blocking):', backupErr.message);
+    }
 
     var syncId = typeof generateUUID === 'function' ? generateUUID() : _syncFallbackUUID();
     var now = Date.now();
@@ -605,6 +1089,26 @@ async function pushSyncVault() {
       deviceId: deviceId,
     };
     if (imageVaultMeta) metaPayload.imageVault = imageVaultMeta;
+
+    // Layer 4 — Manifest schema v2 enrichment (REQ-4)
+    metaPayload.manifestVersion = 2;
+    metaPayload.vaultSizeBytes = fileBytes.byteLength;
+    var _inv = typeof inventory !== 'undefined' ? inventory : [];
+    metaPayload.metals = summarizeMetals(_inv);
+    metaPayload.totalWeight = computeTotalWeight(_inv);
+    try {
+      var invHash = await computeInventoryHash(_inv);
+      if (invHash) metaPayload.inventoryHash = invHash;
+    } catch (_hashErr) {
+      debugLog('[CloudSync] Inventory hash failed (omitting):', _hashErr.message);
+    }
+    try {
+      var setHash = await computeSettingsHash();
+      if (setHash) metaPayload.settingsHash = setHash;
+    } catch (_sHashErr) {
+      debugLog('[CloudSync] Settings hash failed (omitting):', _sHashErr.message);
+    }
+
     var metaBytes = new TextEncoder().encode(JSON.stringify(metaPayload));
     var metaArg = JSON.stringify({
       path: SYNC_META_PATH,
@@ -623,6 +1127,13 @@ async function pushSyncVault() {
     });
     if (!metaResp.ok) throw new Error('Metadata upload failed: ' + metaResp.status);
 
+    // Upload manifest (non-blocking — failure must NOT prevent push completion)
+    try {
+      await buildAndUploadManifest(token, password, syncId);
+    } catch (manifestErr) {
+      debugLog('[CloudSync] Manifest upload failed (non-blocking):', manifestErr.message);
+    }
+
     // Persist push state
     var pushMeta = { syncId: syncId, timestamp: now, rev: rev, itemCount: itemCount };
     if (imageVaultMeta) pushMeta.imageHash = imageVaultMeta.hash;
@@ -634,6 +1145,19 @@ async function pushSyncVault() {
     debugLog('[CloudSync] Push complete:', syncId, 'rev:', rev, '(' + duration + 'ms)');
     updateSyncStatusIndicator('idle', 'just now');
     refreshSyncUI();
+
+    // Auto-prune old backups (fire-and-forget)
+    if (typeof cloudPruneBackups === 'function') {
+      var pruneMax = parseInt(loadData(CLOUD_BACKUP_HISTORY_KEY), 10) || CLOUD_BACKUP_HISTORY_DEFAULT;
+      cloudPruneBackups(_syncProvider, pruneMax).catch(function (e) {
+        debugLog('[CloudSync] Prune error (non-blocking):', e.message);
+      });
+    }
+
+    // Broadcast push completion to other tabs
+    if (_syncChannel) {
+      try { _syncChannel.postMessage({ type: 'sync-push-complete', tabId: getSyncDeviceId() }); } catch (_) { /* ignore */ }
+    }
 
   } catch (err) {
     var errMsg = String(err.message || err);
@@ -656,10 +1180,24 @@ async function pushSyncVault() {
  */
 async function pollForRemoteChanges() {
   if (!syncIsEnabled()) return;
+  if (!_syncIsLeader) {
+    debugLog('cloud-sync', 'Not leader tab — skipping poll');
+    return;
+  }
   if (document.hidden) return; // Page Visibility API: skip background polls
 
   var token = typeof cloudGetToken === 'function' ? await cloudGetToken(_syncProvider) : null;
   if (!token) return;
+
+  // Layer 3 — Folder migration check (REQ-3)
+  if (loadData('cloud_sync_migrated') !== 'v2') {
+    debugLog('[CloudSync] Poll: migration needed — running cloudMigrateToV2');
+    try {
+      await cloudMigrateToV2(_syncProvider);
+    } catch (migErr) {
+      debugLog('[CloudSync] Poll: migration error (non-blocking):', migErr.message);
+    }
+  }
 
   try {
     var apiArg = JSON.stringify({ path: SYNC_META_PATH });
@@ -671,10 +1209,29 @@ async function pollForRemoteChanges() {
       },
     });
 
-    if (resp.status === 409) {
-      // File not found — no sync file yet (first device)
-      debugLog('[CloudSync] No remote sync file yet');
-      return;
+    // Layer 3d — Legacy fallback: if new path returns 404/409, retry at legacy path
+    if (resp.status === 409 || resp.status === 404) {
+      debugLog('[CloudSync] Poll: new meta path not found — trying legacy path');
+      var legacyApiArg = JSON.stringify({ path: SYNC_META_PATH_LEGACY });
+      var legacyResp = await fetch('https://content.dropboxapi.com/2/files/download', {
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer ' + token,
+          'Dropbox-API-Arg': legacyApiArg,
+        },
+      });
+      if (legacyResp.ok) {
+        debugLog('[CloudSync] Poll: found metadata at legacy path');
+        resp = legacyResp;
+      } else if (legacyResp.status === 409 || legacyResp.status === 404) {
+        // No sync file at either path — first device
+        debugLog('[CloudSync] No remote sync file yet (checked both paths)');
+        return;
+      }
+      // If legacy also failed with other status, fall through to existing error handling
+      if (!legacyResp.ok && legacyResp.status !== 409 && legacyResp.status !== 404) {
+        resp = legacyResp;
+      }
     }
     if (resp.status === 429) {
       _syncRetryDelay = Math.min(_syncRetryDelay * 2, 300000);
@@ -705,6 +1262,22 @@ async function pollForRemoteChanges() {
     if (lastPull && lastPull.syncId === remoteMeta.syncId) {
       debugLog('[CloudSync] Poll: no new changes');
       return;
+    }
+
+    // Layer 4 — Hash-based change detection (REQ-4)
+    // Skip notification if inventory hashes match (content is identical)
+    if (remoteMeta.inventoryHash) {
+      try {
+        var localInv = typeof inventory !== 'undefined' ? inventory : [];
+        var localHash = await computeInventoryHash(localInv);
+        if (localHash && localHash === remoteMeta.inventoryHash) {
+          debugLog('[CloudSync] Poll: inventoryHash matches — skipping notification');
+          syncSetLastPull({ syncId: remoteMeta.syncId, timestamp: remoteMeta.timestamp, rev: remoteMeta.rev });
+          return;
+        }
+      } catch (_hashErr) {
+        debugLog('[CloudSync] Poll: hash comparison failed (falling through):', _hashErr.message);
+      }
     }
 
     debugLog('[CloudSync] Poll: remote change detected — syncId:', remoteMeta.syncId);
@@ -816,7 +1389,8 @@ async function handleRemoteChange(remoteMeta) {
       debugLog('[CloudSync] User dismissed update — will retry next poll');
       return;
     }
-    await pullSyncVault(remoteMeta);
+    // Layer 5 — Show restore preview instead of direct pull (REQ-5)
+    await pullWithPreview(remoteMeta);
     return;
   }
 
@@ -945,6 +1519,11 @@ async function pullSyncVault(remoteMeta) {
     updateSyncStatusIndicator('idle', 'just now');
     refreshSyncUI();
 
+    // Broadcast pull completion to other tabs
+    if (_syncChannel) {
+      try { _syncChannel.postMessage({ type: 'sync-pull-complete', tabId: getSyncDeviceId() }); } catch (_) { /* ignore */ }
+    }
+
   } catch (err) {
     var errMsg = String(err.message || err);
     debugLog('[CloudSync] Pull failed:', errMsg);
@@ -972,8 +1551,8 @@ function showSyncConflictModal(opts) {
     if (typeof appConfirm === 'function') {
       appConfirm(msg, 'Sync Conflict').then(function (keepMine) {
         if (keepMine) pushSyncVault();
-        else pullSyncVault(opts.remoteMeta).catch(function (err) {
-          debugLog('[CloudSync] pullSyncVault failed in conflict fallback:', err);
+        else pullWithPreview(opts.remoteMeta).catch(function (err) {
+          debugLog('[CloudSync] pullWithPreview failed in conflict fallback:', err);
           updateSyncStatusIndicator('error', 'Pull failed — ' + err.message);
         });
       });
@@ -1014,8 +1593,9 @@ function showSyncConflictModal(opts) {
   if (keepTheirsBtn) {
     keepTheirsBtn.onclick = function () {
       closeModal();
-      pullSyncVault(opts.remoteMeta).catch(function (err) {
-        debugLog('[CloudSync] pullSyncVault failed on Keep Theirs:', err);
+      // Layer 5 — Show restore preview instead of direct pull (REQ-5)
+      pullWithPreview(opts.remoteMeta).catch(function (err) {
+        debugLog('[CloudSync] pullWithPreview failed on Keep Theirs:', err);
         updateSyncStatusIndicator('error', 'Pull failed — ' + err.message);
       });
     };
@@ -1028,6 +1608,631 @@ function showSyncConflictModal(opts) {
     openModalById('cloudSyncConflictModal');
   } else {
     modal.style.display = 'flex';
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Restore preview (Layer 5 — REQ-5)
+// ---------------------------------------------------------------------------
+
+/**
+ * Consolidated post-apply sequence for sync and vault restore paths.
+ * Handles backup, inventory assignment, settings application, save/render,
+ * pull metadata recording, toast summary, status indicator, UI refresh,
+ * and cross-tab broadcast.
+ *
+ * Extracted to eliminate duplication between showRestorePreviewModal onApply,
+ * _deferredVaultRestore, and the manifest-first pull path (STAK-DiffMerge).
+ *
+ * @param {object[]} newInventory - Result of DiffEngine.applySelectedChanges() (array)
+ * @param {object[]} selectedChanges - Changes array from DiffModal (for toast summary counts)
+ * @param {object[]|null} settingsChanges - Array of {key, remoteVal} for checked settings, or null
+ * @param {object|null} remoteMeta - For syncSetLastPull() recording, or null
+ * @param {object} [options] - Configuration options
+ * @param {string} [options.source='sync'] - 'sync' or 'vault' — controls toast prefix
+ * @param {boolean} [options.showToast=true] - Whether to show the summary toast
+ * @param {boolean} [options.broadcastPull=true] - Whether to broadcast pull-complete to other tabs
+ */
+function _applyAndFinalize(newInventory, selectedChanges, settingsChanges, remoteMeta, options) {
+  // Normalize options with defaults
+  var opts = options || {};
+  var source = opts.source || 'sync';
+  var shouldToast = opts.showToast !== false;
+  var shouldBroadcast = opts.broadcastPull !== false;
+
+  // 1. Pre-apply backup
+  if (typeof syncSaveOverrideBackup === 'function') {
+    syncSaveOverrideBackup();
+  }
+
+  // 2. Assign new inventory
+  if (typeof newInventory !== 'undefined' && newInventory !== null) {
+    inventory = newInventory;
+  }
+
+  // 3. Apply settings changes
+  if (settingsChanges && Array.isArray(settingsChanges)) {
+    for (var i = 0; i < settingsChanges.length; i++) {
+      var sc = settingsChanges[i];
+      if (sc && sc.key && typeof saveDataSync === 'function') {
+        saveDataSync(sc.key, sc.remoteVal);
+      }
+    }
+  }
+
+  // 4. Save & render
+  if (typeof saveInventory === 'function') saveInventory();
+  if (typeof renderTable === 'function') renderTable();
+  if (typeof renderActiveFilters === 'function') renderActiveFilters();
+  if (typeof updateStorageStats === 'function') updateStorageStats();
+
+  // 5. Record pull metadata — prefer explicit remoteMeta arg, fall back to global _previewPullMeta
+  var meta = remoteMeta || (typeof _previewPullMeta !== 'undefined' ? _previewPullMeta : null);
+  if (meta) {
+    if (typeof syncSetLastPull === 'function') {
+      syncSetLastPull(meta);
+    }
+    if (typeof _previewPullMeta !== 'undefined') _previewPullMeta = null;
+  }
+
+  // 6. Toast summary
+  if (shouldToast && typeof showCloudToast === 'function') {
+    var addCount = 0;
+    var modCount = 0;
+    var delCount = 0;
+
+    if (selectedChanges && Array.isArray(selectedChanges)) {
+      for (var t = 0; t < selectedChanges.length; t++) {
+        var changeType = selectedChanges[t] ? selectedChanges[t].type : '';
+        if (changeType === 'add') addCount++;
+        else if (changeType === 'modify') modCount++;
+        else if (changeType === 'delete') delCount++;
+      }
+    }
+
+    var parts = [];
+    if (addCount > 0) parts.push(addCount + ' added');
+    if (modCount > 0) parts.push(modCount + ' modified');
+    if (delCount > 0) parts.push(delCount + ' removed');
+
+    var prefix = source === 'vault' ? 'Backup applied: ' : 'Sync applied: ';
+    var summary = parts.length > 0 ? parts.join(', ') : 'no changes';
+    showCloudToast(prefix + summary);
+  }
+
+  // 7. Update status indicator
+  if (typeof updateSyncStatusIndicator === 'function') {
+    updateSyncStatusIndicator('idle', 'just now');
+  }
+
+  // 8. Refresh sync UI
+  if (typeof refreshSyncUI === 'function') {
+    refreshSyncUI();
+  }
+
+  // 9. Broadcast pull-complete to other tabs
+  if (shouldBroadcast && _syncChannel) {
+    try {
+      _syncChannel.postMessage({
+        type: 'sync-pull-complete',
+        tabId: getSyncDeviceId(),
+        ts: Date.now()
+      });
+    } catch (e) { /* ignore broadcast errors */ }
+  }
+
+  debugLog('[CloudSync] _applyAndFinalize complete (source=' + source + ')');
+}
+
+/**
+ * Show a modal previewing what will change when applying a remote vault.
+ * @param {object} diffResult - From DiffEngine.compareItems()
+ * @param {object} settingsDiff - From DiffEngine.compareSettings()
+ * @param {object} remotePayload - Decrypted remote vault payload
+ * @param {object} remoteMeta - Remote sync metadata
+ */
+function showRestorePreviewModal(diffResult, settingsDiff, remotePayload, remoteMeta, conflicts) {
+  // Delegate to DiffModal (STAK-184) — falls back to false if unavailable
+  if (typeof DiffModal === 'undefined' || !DiffModal.show) {
+    debugLog('[CloudSync] DiffModal not available — falling back');
+    return false;
+  }
+
+  var addedCount = diffResult.added ? diffResult.added.length : 0;
+  var removedCount = diffResult.deleted ? diffResult.deleted.length : 0;
+  var modifiedCount = diffResult.modified ? diffResult.modified.length : 0;
+
+  DiffModal.show({
+    source: { type: 'sync', label: _syncProvider || 'Cloud' },
+    diff: diffResult,
+    settingsDiff: settingsDiff || null,
+    conflicts: conflicts || null,
+    meta: {
+      deviceId: remoteMeta.deviceId,
+      timestamp: remoteMeta.timestamp,
+      itemCount: remoteMeta.itemCount,
+      appVersion: remoteMeta.appVersion
+    },
+    onApply: function (selectedChanges) {
+      try {
+        // Guard: fall back to full overwrite if DiffEngine unavailable
+        if (typeof DiffEngine === 'undefined' || !DiffEngine.applySelectedChanges) {
+          debugLog('[CloudSync] DiffEngine not available — falling back to full overwrite');
+          syncSaveOverrideBackup();
+          restoreVaultData(remotePayload).then(function () {
+            updateSyncStatusIndicator('idle', 'just now');
+            if (typeof refreshSyncUI === 'function') refreshSyncUI();
+            debugLog('[CloudSync] Full overwrite restore completed via fallback');
+          }).catch(function (restoreErr) {
+            debugLog('[CloudSync] Full overwrite restore failed:', restoreErr);
+            updateSyncStatusIndicator('error', 'Restore failed');
+            if (typeof showCloudToast === 'function') {
+              showCloudToast('Restore failed: ' + (restoreErr.message || 'Unknown error'));
+            }
+          });
+          return;
+        }
+
+        // Apply only the user-selected changes via DiffEngine
+        var newInv = DiffEngine.applySelectedChanges(inventory, selectedChanges);
+
+        // Build settings changes from settingsDiff
+        var settingsChanges = null;
+        if (settingsDiff && settingsDiff.changed && settingsDiff.changed.length > 0) {
+          settingsChanges = [];
+          for (var i = 0; i < settingsDiff.changed.length; i++) {
+            settingsChanges.push({
+              key: settingsDiff.changed[i].key,
+              remoteVal: settingsDiff.changed[i].remoteVal
+            });
+          }
+        }
+
+        // Delegate everything to _applyAndFinalize (backup, save, render, toast, status, broadcast)
+        _applyAndFinalize(newInv, selectedChanges, settingsChanges, remoteMeta, { source: 'sync' });
+        debugLog('[CloudSync] Restore preview: applied selected changes via DiffEngine');
+      } catch (applyErr) {
+        debugLog('[CloudSync] Restore preview: apply failed:', applyErr);
+        updateSyncStatusIndicator('error', 'Restore failed');
+        if (typeof showCloudToast === 'function') showCloudToast('Restore failed: ' + applyErr.message);
+      }
+    },
+    onCancel: function () { /* no-op */ }
+  });
+
+  return true;
+}
+
+/**
+ * Build a diff-like result from a decrypted manifest payload.
+ * Converts manifest.changes into the {added, modified, deleted, unchanged}
+ * format that DiffModal expects.
+ * @param {object} manifest - Decrypted manifest object from decryptManifest()
+ * @returns {object} DiffModal-compatible diff result
+ */
+function _buildDiffFromManifest(manifest) {
+  var added = [];
+  var modified = [];
+  var deleted = [];
+  var changes = manifest.changes || [];
+
+  for (var i = 0; i < changes.length; i++) {
+    var change = changes[i];
+    if (change.type === 'add') {
+      added.push({ name: change.itemName || change.itemKey, itemKey: change.itemKey });
+    } else if (change.type === 'edit') {
+      var modChanges = [];
+      var fields = change.fields || [];
+      for (var f = 0; f < fields.length; f++) {
+        modChanges.push({
+          field: fields[f].field,
+          localVal: fields[f].oldValue,
+          remoteVal: fields[f].newValue,
+        });
+      }
+      modified.push({ item: { name: change.itemName || change.itemKey }, changes: modChanges });
+    } else if (change.type === 'delete') {
+      deleted.push({ name: change.itemName || change.itemKey, itemKey: change.itemKey });
+    }
+  }
+
+  // We can't know the exact unchanged count from the manifest alone, so use
+  // an empty array — DiffModal handles empty unchanged gracefully.
+  var unchanged = [];
+
+  return { added: added, modified: modified, deleted: deleted, unchanged: unchanged };
+}
+
+/**
+ * Deferred vault restore — downloads the full vault, decrypts, and applies.
+ * Called from the manifest-first pull path's onApply callback, so the heavy
+ * vault download only happens when the user confirms the diff preview.
+ *
+ * When selectedChanges is provided and DiffEngine is available, performs a
+ * selective merge (only the user-approved changes). Otherwise falls back to
+ * the legacy full-overwrite path.
+ *
+ * @param {string} token - Dropbox OAuth bearer token
+ * @param {string} password - Vault encryption password
+ * @param {object} remoteMeta - Remote sync metadata
+ * @param {Array} [selectedChanges] - User-approved changes from DiffModal
+ * @returns {Promise<void>}
+ */
+async function _deferredVaultRestore(token, password, remoteMeta, selectedChanges) {
+  try {
+    updateSyncStatusIndicator('syncing');
+    var apiArg = JSON.stringify({ path: SYNC_FILE_PATH });
+    var resp = await fetch('https://content.dropboxapi.com/2/files/download', {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer ' + token,
+        'Dropbox-API-Arg': apiArg,
+      },
+    });
+    if (!resp.ok) throw new Error('Vault download failed: ' + resp.status);
+    var bytes = new Uint8Array(await resp.arrayBuffer());
+
+    // ── Selective apply path ──
+    if (selectedChanges && typeof DiffEngine !== 'undefined' && typeof DiffEngine.applySelectedChanges === 'function') {
+      var payload = typeof vaultDecryptToData === 'function'
+        ? await vaultDecryptToData(bytes, password)
+        : null;
+
+      if (payload && payload.data) {
+        // Extract remote items from the vault payload
+        // Vault stores raw localStorage strings which may be CMP1-compressed for large inventories
+        var remoteItems = [];
+        try {
+          var rawInv = payload.data.metalInventory || '[]';
+          var decompressedInv = typeof __decompressIfNeeded === 'function' ? __decompressIfNeeded(rawInv) : rawInv;
+          remoteItems = JSON.parse(decompressedInv);
+        } catch (parseErr) {
+          debugLog('[CloudSync] Could not parse metalInventory from vault:', parseErr.message);
+        }
+
+        // For 'add' changes that have an itemKey but no item object (manifest
+        // preview only provides keys), find the matching item in the decrypted
+        // vault and attach it so applySelectedChanges can insert it.
+        for (var i = 0; i < selectedChanges.length; i++) {
+          var change = selectedChanges[i];
+          if (change.type === 'add' && change.itemKey && !change.item) {
+            for (var j = 0; j < remoteItems.length; j++) {
+              var candidateKey = typeof DiffEngine.computeItemKey === 'function'
+                ? DiffEngine.computeItemKey(remoteItems[j])
+                : '';
+              if (candidateKey === change.itemKey) {
+                change.item = remoteItems[j];
+                break;
+              }
+            }
+          }
+        }
+
+        var localItems = typeof inventory !== 'undefined' ? inventory : [];
+        var newInv = DiffEngine.applySelectedChanges(localItems, selectedChanges);
+        // Manifest-first selective apply intentionally applies inventory only.
+        // Sync-scoped settings are not restored via this path (null settingsChanges);
+        // they update only during vault-first pulls which have full payload access.
+        _applyAndFinalize(newInv, selectedChanges, null, remoteMeta, { source: 'sync' });
+        debugLog('[CloudSync] Deferred vault restore complete (selective apply)');
+        return;
+      }
+      // payload missing or corrupt — fall through to full overwrite
+      debugLog('[CloudSync] Selective apply failed (bad payload) — falling back to full overwrite');
+    }
+
+    // ── Full-overwrite fallback ──
+    syncSaveOverrideBackup();
+    await vaultDecryptAndRestore(bytes, password);
+    debugLog('[CloudSync] Deferred vault restore complete (full overwrite)');
+
+    if (_previewPullMeta) {
+      syncSetLastPull(_previewPullMeta);
+      _previewPullMeta = null;
+    }
+    if (typeof showCloudToast === 'function') {
+      showCloudToast('Sync update applied');
+    }
+    updateSyncStatusIndicator('idle', 'just now');
+    refreshSyncUI();
+    if (_syncChannel) {
+      try { _syncChannel.postMessage({ type: 'sync-pull-complete', tabId: getSyncDeviceId(), ts: Date.now() }); } catch (e) { /* ignore */ }
+    }
+  } catch (err) {
+    debugLog('[CloudSync] Deferred vault restore failed:', err.message);
+    updateSyncStatusIndicator('error', 'Restore failed');
+    if (typeof showCloudToast === 'function') showCloudToast('Restore failed: ' + err.message);
+  }
+}
+
+/**
+ * Download remote vault, decrypt without restoring, compute diff, and show preview.
+ * Attempts manifest-first path (lightweight diff preview without full vault download).
+ * Falls back to vault-first path if manifest is unavailable or fails.
+ * @param {object} remoteMeta - Remote sync metadata
+ */
+async function pullWithPreview(remoteMeta) {
+  var password = getSyncPasswordSilent();
+  if (!password) {
+    password = await getSyncPassword();
+  }
+  if (!password) {
+    debugLog('[CloudSync] Pull preview cancelled — no password');
+    return;
+  }
+
+  var token = typeof cloudGetToken === 'function' ? await cloudGetToken(_syncProvider) : null;
+  if (!token) {
+    debugLog('[CloudSync] Pull preview — no token');
+    updateSyncStatusIndicator('error', 'Not connected');
+    return;
+  }
+
+  updateSyncStatusIndicator('syncing');
+
+  try {
+    // ── Manifest-first pull attempt ──
+    // Try downloading the lightweight .stmanifest first so we can show a
+    // diff preview without fetching the full vault. If the manifest is
+    // unavailable (404, decrypt failure, DiffModal missing) we fall through
+    // to the vault-first path below.
+    try {
+      if (typeof decryptManifest === 'function' && typeof DiffModal !== 'undefined' && DiffModal.show) {
+        var manifestApiArg = JSON.stringify({ path: SYNC_MANIFEST_PATH });
+        var manifestResp = await fetch('https://content.dropboxapi.com/2/files/download', {
+          method: 'POST',
+          headers: {
+            Authorization: 'Bearer ' + token,
+            'Dropbox-API-Arg': manifestApiArg,
+          },
+        });
+
+        if (manifestResp.ok) {
+          var manifestBytes = new Uint8Array(await manifestResp.arrayBuffer());
+          var manifest = await decryptManifest(manifestBytes, password);
+
+          // Build diff-like result from manifest data
+          var manifestDiff = _buildDiffFromManifest(manifest);
+
+          // Stash pull metadata
+          _previewPullMeta = {
+            syncId: remoteMeta ? remoteMeta.syncId : null,
+            timestamp: remoteMeta ? remoteMeta.timestamp : Date.now(),
+            rev: remoteMeta ? remoteMeta.rev : null,
+          };
+
+          // Detect conflicts: manifest changes vs local changes since last pull
+          var manifestConflicts = null;
+          try {
+            if (typeof DiffEngine !== 'undefined' && DiffEngine.detectConflicts && typeof getManifestEntries === 'function') {
+              var mLastPull = syncGetLastPull();
+              var mLastPullTs = mLastPull ? mLastPull.timestamp : null;
+              var mLocalEntries = getManifestEntries(mLastPullTs) || [];
+
+              // Local changes from changeLog
+              var mLocalChanges = [];
+              for (var ml = 0; ml < mLocalEntries.length; ml++) {
+                var mle = mLocalEntries[ml];
+                if (mle.itemKey && mle.field) {
+                  mLocalChanges.push({
+                    itemKey: mle.itemKey,
+                    field: mle.field,
+                    localVal: mle.oldValue,
+                    remoteVal: mle.newValue
+                  });
+                }
+              }
+
+              // Remote changes from manifest
+              var mRemoteChanges = [];
+              var mChanges = manifest.changes || [];
+              for (var mr = 0; mr < mChanges.length; mr++) {
+                var mc = mChanges[mr];
+                if (mc.type === 'edit' && mc.fields) {
+                  for (var mf = 0; mf < mc.fields.length; mf++) {
+                    mRemoteChanges.push({
+                      itemKey: mc.itemKey,
+                      field: mc.fields[mf].field,
+                      localVal: mc.fields[mf].oldValue,
+                      remoteVal: mc.fields[mf].newValue
+                    });
+                  }
+                }
+              }
+
+              if (mLocalChanges.length > 0 && mRemoteChanges.length > 0) {
+                manifestConflicts = DiffEngine.detectConflicts(mLocalChanges, mRemoteChanges);
+                if (manifestConflicts && manifestConflicts.conflicts && manifestConflicts.conflicts.length === 0) {
+                  manifestConflicts = null;
+                }
+              }
+            }
+          } catch (mcErr) {
+            debugLog('[CloudSync] Manifest conflict detection failed (non-blocking):', mcErr.message);
+            manifestConflicts = null;
+          }
+
+          // Show DiffModal with manifest preview — vault download deferred to onApply
+          DiffModal.show({
+            source: { type: 'sync', label: _syncProvider || 'Cloud' },
+            diff: manifestDiff,
+            conflicts: manifestConflicts || null,
+            meta: {
+              deviceId: manifest.deviceId || (remoteMeta ? remoteMeta.deviceId : null),
+              timestamp: remoteMeta ? remoteMeta.timestamp : null,
+              itemCount: remoteMeta ? remoteMeta.itemCount : null,
+              appVersion: remoteMeta ? remoteMeta.appVersion : null,
+            },
+            onApply: function (selectedChanges) {
+              // Deferred: download full vault, decrypt, selective apply
+              _deferredVaultRestore(token, password, remoteMeta, selectedChanges);
+            },
+            onCancel: function () {
+              debugLog('[CloudSync] Manifest preview cancelled — no vault download');
+            }
+          });
+          updateSyncStatusIndicator('idle', 'just now');
+          return; // manifest path succeeded — skip vault-first path
+        }
+      }
+    } catch (manifestErr) {
+      debugLog('[CloudSync] Manifest-first pull failed, falling back to vault-first:', manifestErr.message);
+    }
+
+    // ── Vault-first fallback (existing path) ──
+    var apiArg = JSON.stringify({ path: SYNC_FILE_PATH });
+    var resp = await fetch('https://content.dropboxapi.com/2/files/download', {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer ' + token,
+        'Dropbox-API-Arg': apiArg,
+      },
+    });
+
+    if (!resp.ok) throw new Error('Vault download failed: ' + resp.status);
+
+    var bytes = new Uint8Array(await resp.arrayBuffer());
+
+    // Attempt to decrypt and preview
+    try {
+      var remotePayload = await vaultDecryptToData(bytes, password);
+      var remoteItems = remotePayload.data || [];
+      var localItems = typeof inventory !== 'undefined' ? inventory : [];
+
+      var diffResult = typeof DiffEngine !== 'undefined'
+        ? DiffEngine.compareItems(localItems, remoteItems)
+        : { added: [], deleted: [], modified: [], unchanged: [] };
+
+      // Compare settings
+      var localSettings = {};
+      var remoteSettings = remotePayload.settings || {};
+      if (typeof SYNC_SCOPE_KEYS !== 'undefined') {
+        for (var i = 0; i < SYNC_SCOPE_KEYS.length; i++) {
+          if (SYNC_SCOPE_KEYS[i] === 'metalInventory') continue;
+          var v = loadData(SYNC_SCOPE_KEYS[i]);
+          if (v !== null && v !== undefined) localSettings[SYNC_SCOPE_KEYS[i]] = v;
+        }
+      }
+      var settingsDiff = typeof DiffEngine !== 'undefined'
+        ? DiffEngine.compareSettings(localSettings, remoteSettings)
+        : { changed: [], unchanged: [] };
+
+      // Stash pull metadata for deferred recording (applied by preview modal or fallback)
+      _previewPullMeta = {
+        syncId: remoteMeta ? remoteMeta.syncId : null,
+        timestamp: remoteMeta ? remoteMeta.timestamp : Date.now(),
+        rev: remoteMeta ? remoteMeta.rev : null,
+      };
+
+      // Detect bidirectional conflicts (vault-first path)
+      var conflicts = null;
+      try {
+        if (typeof DiffEngine !== 'undefined' && DiffEngine.detectConflicts && typeof getManifestEntries === 'function') {
+          var lastPull = syncGetLastPull();
+          var lastPullTimestamp = lastPull ? lastPull.timestamp : null;
+          var localEntries = getManifestEntries(lastPullTimestamp) || [];
+
+          // Transform local changeLog entries into detectConflicts format
+          var localChanges = [];
+          for (var lc = 0; lc < localEntries.length; lc++) {
+            var le = localEntries[lc];
+            if (le.itemKey && le.field) {
+              localChanges.push({
+                itemKey: le.itemKey,
+                field: le.field,
+                localVal: le.oldValue,
+                remoteVal: le.newValue
+              });
+            }
+          }
+
+          // Transform modified items from diffResult into remoteChanges format
+          var remoteChanges = [];
+          var modifiedItems = diffResult.modified || [];
+          for (var rc = 0; rc < modifiedItems.length; rc++) {
+            var mod = modifiedItems[rc];
+            var itemKey = (typeof DiffEngine !== 'undefined' && DiffEngine.computeItemKey)
+              ? DiffEngine.computeItemKey(mod.item) : (mod.item.serial || mod.item.name || '');
+            for (var fc = 0; fc < mod.changes.length; fc++) {
+              var ch = mod.changes[fc];
+              remoteChanges.push({
+                itemKey: itemKey,
+                field: ch.field,
+                localVal: ch.localVal,
+                remoteVal: ch.remoteVal
+              });
+            }
+          }
+
+          if (localChanges.length > 0 && remoteChanges.length > 0) {
+            conflicts = DiffEngine.detectConflicts(localChanges, remoteChanges);
+            if (conflicts && conflicts.conflicts && conflicts.conflicts.length === 0) {
+              conflicts = null;
+            }
+          }
+        }
+      } catch (conflictErr) {
+        debugLog('[CloudSync] Conflict detection failed (non-blocking):', conflictErr.message);
+        conflicts = null;
+      }
+
+      var shown = showRestorePreviewModal(diffResult, settingsDiff, remotePayload, remoteMeta, conflicts);
+      if (!shown) {
+        // Modal not in DOM — fall back to direct restore
+        debugLog('[CloudSync] Preview modal unavailable — falling back to direct restore');
+        syncSaveOverrideBackup();
+        await vaultDecryptAndRestore(bytes, password);
+        syncSetLastPull(_previewPullMeta);
+        _previewPullMeta = null;
+      }
+
+    } catch (decryptErr) {
+      // Decryption or diff failed — offer fallback
+      debugLog('[CloudSync] Preview decryption failed:', decryptErr.message);
+      var errorEl = safeGetElement('restorePreviewError');
+      var modal = safeGetElement('restorePreviewModal');
+      if (modal && errorEl) {
+        errorEl.textContent = 'Could not decrypt vault for preview: ' + decryptErr.message;
+        errorEl.style.display = '';
+        var diffListEl = safeGetElement('restorePreviewDiffList');
+        if (diffListEl) diffListEl.innerHTML = '';
+        var summaryEl = safeGetElement('restorePreviewSummary');
+        if (summaryEl) summaryEl.textContent = '';
+
+        // Show modal with just error + fallback restore button
+        var applyBtn = safeGetElement('restorePreviewApplyBtn');
+        if (applyBtn) {
+          applyBtn.textContent = 'Restore without preview';
+          applyBtn.onclick = function () {
+            modal.style.display = 'none';
+            if (typeof closeModalById === 'function') closeModalById('restorePreviewModal');
+            applyBtn.textContent = 'Apply Changes';
+            pullSyncVault(remoteMeta).catch(function (err) {
+              debugLog('[CloudSync] Fallback restore failed:', err);
+              updateSyncStatusIndicator('error', 'Restore failed');
+            });
+          };
+        }
+
+        if (typeof openModalById === 'function') {
+          openModalById('restorePreviewModal');
+        } else {
+          modal.style.display = 'flex';
+        }
+      } else {
+        // No modal at all — direct restore
+        await pullSyncVault(remoteMeta);
+      }
+    }
+
+    updateSyncStatusIndicator('idle', 'just now');
+
+  } catch (err) {
+    var errMsg = String(err.message || err);
+    debugLog('[CloudSync] Pull preview failed:', errMsg);
+    updateSyncStatusIndicator('error', errMsg.slice(0, 60));
+    // Fall back to direct pull
+    await pullSyncVault(remoteMeta);
   }
 }
 
@@ -1113,6 +2318,9 @@ function disableCloudSync() {
  * Creates the debounced push function and starts the poller if sync was enabled.
  */
 function initCloudSync() {
+  // Initialize multi-tab coordination (Layer 7)
+  initSyncTabCoordination();
+
   // Build the debounced push wrapper
   if (typeof debounce === 'function') {
     scheduleSyncPush = debounce(pushSyncVault, SYNC_PUSH_DEBOUNCE);
@@ -1191,6 +2399,12 @@ window.pullSyncVault = pullSyncVault;
 window.pollForRemoteChanges = pollForRemoteChanges;
 window.showSyncConflictModal = showSyncConflictModal;
 window.showSyncUpdateModal = showSyncUpdateModal;
+window.showRestorePreviewModal = showRestorePreviewModal;
+window.pullWithPreview = pullWithPreview;
+window.computeInventoryHash = computeInventoryHash;
+window.summarizeMetals = summarizeMetals;
+window.computeTotalWeight = computeTotalWeight;
+window.computeSettingsHash = computeSettingsHash;
 window.refreshSyncUI = refreshSyncUI;
 window.updateSyncStatusIndicator = updateSyncStatusIndicator;
 window.updateCloudSyncHeaderBtn = updateCloudSyncHeaderBtn;

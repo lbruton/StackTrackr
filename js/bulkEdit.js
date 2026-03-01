@@ -659,14 +659,14 @@ const renderBulkToolbar = () => {
 
   const selectAllBtn = document.createElement('button');
   selectAllBtn.type = 'button';
-  selectAllBtn.className = 'btn btn-secondary';
+  selectAllBtn.className = 'btn secondary';
   selectAllBtn.textContent = 'Select All';
   selectAllBtn.addEventListener('click', () => selectAllItems(true));
   toolbar.appendChild(selectAllBtn);
 
   const selectNoneBtn = document.createElement('button');
   selectNoneBtn.type = 'button';
-  selectNoneBtn.className = 'btn btn-secondary';
+  selectNoneBtn.className = 'btn secondary';
   selectNoneBtn.textContent = 'Select None';
   selectNoneBtn.addEventListener('click', () => selectAllItems(false));
   toolbar.appendChild(selectNoneBtn);
@@ -934,7 +934,7 @@ const renderBulkFooter = () => {
   // Apply Changes button
   const applyBtn = document.createElement('button');
   applyBtn.type = 'button';
-  applyBtn.className = 'btn btn-primary';
+  applyBtn.className = 'btn premium';
   applyBtn.textContent = 'Apply Changes' + (count ? ' (' + count + ')' : '');
   applyBtn.disabled = count === 0 || enabledCount === 0;
   applyBtn.title = count === 0 ? 'Select items first' : enabledCount === 0 ? 'Enable at least one field' : '';
@@ -944,7 +944,7 @@ const renderBulkFooter = () => {
   // Copy Selected button
   const copyBtn = document.createElement('button');
   copyBtn.type = 'button';
-  copyBtn.className = 'btn btn-secondary';
+  copyBtn.className = 'btn secondary';
   copyBtn.textContent = 'Copy Selected' + (count ? ' (' + count + ')' : '');
   copyBtn.disabled = count === 0;
   copyBtn.addEventListener('click', copySelectedItems);

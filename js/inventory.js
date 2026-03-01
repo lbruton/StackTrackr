@@ -1661,7 +1661,7 @@ const renderTable = () => {
       const gainLossPrefix = gainLoss > 0 ? '+' : gainLoss < 0 ? '-' : '';
 
   rows.push(`
-      <tr data-idx="${originalIdx}">
+      <tr data-idx="${originalIdx}"${isDisposed(item) ? ' class="disposed-row"' : ''}>
   <td class="shrink" data-column="date" data-label="Date">${filterLink('date', item.date, 'var(--text-primary)', item.date ? formatDisplayDate(item.date) : '—')}</td>
       <td class="shrink" data-column="metal" data-label="Metal" data-metal="${escapeAttribute(item.composition || item.metal || '')}">${filterLink('metal', item.composition || item.metal || 'Silver', METAL_COLORS[item.metal] || 'var(--primary)', getDisplayComposition(item.composition || item.metal || 'Silver'))}</td>
       <td class="shrink" data-column="type" data-label="Type">${filterLink('type', item.type, getTypeColor(item.type))}</td>
@@ -1670,7 +1670,7 @@ const renderTable = () => {
         <div class="name-cell-content">
         ${featureFlags.isEnabled('COIN_IMAGES')
           ? `<span class="filter-text" style="color: var(--text-primary); cursor: pointer;" onclick="showViewModal(${originalIdx})" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' ')showViewModal(${originalIdx})" title="View ${escapeAttribute(item.name)}">${sanitizeHtml(item.name)}</span>`
-          : filterLink('name', item.name, 'var(--text-primary)', undefined, item.name)}${orderedChips}
+          : filterLink('name', item.name, 'var(--text-primary)', undefined, item.name)}${isDisposed(item) ? `<span class="disposition-badge disposition-badge--${item.disposition.type}">${DISPOSITION_TYPES[item.disposition.type]?.label || item.disposition.type}</span>` : ''}${orderedChips}
         </div>
       </td>
       <td class="shrink" data-column="qty" data-label="Qty">${filterLink('qty', item.qty, 'var(--text-primary)')}</td>
@@ -1691,15 +1691,24 @@ const renderTable = () => {
         ${formatPurchaseLocation(item.purchaseLocation)}
       </td>
       <td class="icon-col actions-cell" data-column="actions" data-label=""><div class="actions-row">
+  ${isDisposed(item) ? `
+        <button class="icon-btn action-icon" role="button" tabindex="0" onclick="undoDisposition(${originalIdx})" aria-label="Undo disposition" title="Undo disposition">
+          <svg class="icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg>
+        </button>
+        <button class="icon-btn action-icon danger" role="button" tabindex="0" onclick="deleteItem(${originalIdx})" aria-label="Delete item" title="Delete item">
+          <svg class="icon-svg delete-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 7h12v13a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V7zm3-4h6l1 1h4v2H3V4h4l1-1z"/></svg>
+        </button>
+  ` : `
         <button class="icon-btn action-icon edit-icon" role="button" tabindex="0" onclick="editItem(${originalIdx})" aria-label="Edit ${sanitizeHtml(item.name)}" title="Edit item">
           <svg class="icon-svg edit-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.22,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.67 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"/></svg>
         </button>
-        <button class="icon-btn action-icon" role="button" tabindex="0" onclick="duplicateItem(${originalIdx})" aria-label="Duplicate ${sanitizeHtml(item.name)}" title="Duplicate item">
+        <button class="icon-btn action-icon" role="button" tabindex="0" onclick="cloneItem(${originalIdx})" aria-label="Clone ${sanitizeHtml(item.name)}" title="Clone item">
           <svg class="icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/></svg>
         </button>
         <button class="icon-btn action-icon danger" role="button" tabindex="0" onclick="deleteItem(${originalIdx})" aria-label="Delete item" title="Delete item">
           <svg class="icon-svg delete-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 7h12v13a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V7zm3-4h6l1 1h4v2H3V4h4l1-1z"/></svg>
         </button>
+  `}
       </div></td>
       </tr>
       `);
@@ -1836,7 +1845,10 @@ const updateSummary = () => {
       totalMeltValue: 0,
       totalPurchased: 0,
       totalRetailValue: 0,
-      totalGainLoss: 0
+      totalGainLoss: 0,
+      disposedItems: 0,
+      realizedGainLoss: 0,
+      totalDisposedCost: 0
     };
     metalNameMap[metalConfig.name] = metalConfig.key;
   });
@@ -1847,6 +1859,15 @@ const updateSummary = () => {
     // Skip items with unknown metal types
     if (metalKey && metalTotals[metalKey]) {
       const totals = metalTotals[metalKey];
+
+      // Skip disposed items from active totals, accumulate realized G/L (STAK-72)
+      if (isDisposed(item)) {
+        const qty = Number(item.qty) || 0;
+        totals.disposedItems += qty;
+        totals.realizedGainLoss += (item.disposition?.realizedGainLoss || 0);
+        totals.totalDisposedCost += (parseFloat(item.price) || 0) * (Number(item.qty) || 0);
+        continue;
+      }
 
       const qty = Number(item.qty) || 0;
       const weight = parseFloat(item.weight) || 0;
@@ -1908,6 +1929,15 @@ const updateSummary = () => {
       const avgCost = totals.totalWeight > 0 ? totals.totalPurchased / totals.totalWeight : 0;
       els.avgCostPerOz.textContent = formatCurrency(avgCost);
     }
+
+    // Realized G/L — always visible on every card (STAK-72)
+    const realizedGlEl = document.getElementById(`realizedGainLoss${metalConfig.name}`);
+    if (realizedGlEl) {
+      const rgl = totals.realizedGainLoss || 0;
+      const rglPct = totals.totalDisposedCost > 0 ? (rgl / totals.totalDisposedCost) * 100 : 0;
+      // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml
+      realizedGlEl.innerHTML = rgl === 0 ? '$0.00' : formatLossProfit(rgl, rglPct);
+    }
   });
 
   // Calculate combined totals for all metals
@@ -1917,7 +1947,10 @@ const updateSummary = () => {
     totalMeltValue: 0,
     totalPurchased: 0,
     totalRetailValue: 0,
-    totalGainLoss: 0
+    totalGainLoss: 0,
+    disposedItems: 0,
+    realizedGainLoss: 0,
+    totalDisposedCost: 0
   };
 
   Object.values(metalTotals).forEach(totals => {
@@ -1927,6 +1960,9 @@ const updateSummary = () => {
     allTotals.totalPurchased += totals.totalPurchased;
     allTotals.totalRetailValue += totals.totalRetailValue;
     allTotals.totalGainLoss += totals.totalGainLoss;
+    allTotals.disposedItems += totals.disposedItems;
+    allTotals.realizedGainLoss += totals.realizedGainLoss;
+    allTotals.totalDisposedCost += totals.totalDisposedCost;
   });
 
   // Update "All" totals display if elements exist
@@ -1953,25 +1989,132 @@ const updateSummary = () => {
       elements.totals.all.avgCostPerOz.textContent = formatCurrency(avgCost);
     }
   }
+
+  // Realized G/L — always visible on "All" card (STAK-72)
+  const allRealizedGl = document.getElementById('realizedGainLossAll');
+  if (allRealizedGl) {
+    const rgl = allTotals.realizedGainLoss || 0;
+    const rglPct = allTotals.totalDisposedCost > 0 ? (rgl / allTotals.totalDisposedCost) * 100 : 0;
+    // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml
+    allRealizedGl.innerHTML = rgl === 0 ? '$0.00' : formatLossProfit(rgl, rglPct);
+  }
+
+  // Respect show/hide realized setting (STAK-72)
+  const showRealized = loadDataSync(SHOW_REALIZED_KEY, 'true') !== 'false';
+  applyRealizedVisibility(showRealized);
 };
 
 /**
- * Deletes inventory item at specified index after confirmation
- * 
- * @param {number} idx - Index of item to delete
+ * Opens the combined Remove Item modal (STAK-72).
+ * Handles both delete and dispose flows via checkbox toggle.
+ *
+ * @param {number} idx - Index of item to remove
+ * @param {boolean} [preDispose=false] - Pre-check the dispose checkbox
  */
-const deleteItem = async (idx) => {
+const openRemoveItemModal = (idx, preDispose = false) => {
   const item = inventory[idx];
-  const itemLabel = item ? item.name : 'this item';
-  const confirmed = typeof showAppConfirm === 'function'
-    ? await showAppConfirm(`Delete ${itemLabel}?\n\nThis can be undone from the Activity Log.`, 'Delete Item')
-    : false;
-  if (confirmed) {
+  if (!item) return;
+
+  const idxInput = document.getElementById('removeItemIdx');
+  if (idxInput) idxInput.value = idx;
+
+  const nameEl = document.getElementById('removeItemName');
+  if (nameEl) nameEl.textContent = item.name || 'Unnamed item';
+
+  const checkbox = document.getElementById('removeItemDisposeCheck');
+  const fieldsWrap = document.getElementById('removeItemDisposeFields');
+  const deleteBtn = document.getElementById('removeItemDeleteBtn');
+  const disposeBtn = document.getElementById('removeItemDisposeBtn');
+
+  // Reset disposition fields
+  const typeSelect = document.getElementById('dispositionType');
+  if (typeSelect) typeSelect.value = 'sold';
+  const dateInput = document.getElementById('dispositionDate');
+  if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+  const amountInput = document.getElementById('dispositionAmount');
+  if (amountInput) amountInput.value = '';
+  const recipientInput = document.getElementById('dispositionRecipient');
+  if (recipientInput) recipientInput.value = '';
+  const notesInput = document.getElementById('dispositionNotes');
+  if (notesInput) notesInput.value = '';
+  const amountGroup = document.getElementById('dispositionAmountGroup');
+  if (amountGroup) amountGroup.style.display = '';
+
+  // Set checkbox state and toggle fields/buttons
+  if (checkbox) checkbox.checked = preDispose;
+  if (fieldsWrap) fieldsWrap.style.display = preDispose ? '' : 'none';
+  if (deleteBtn) deleteBtn.style.display = preDispose ? 'none' : '';
+  if (disposeBtn) disposeBtn.style.display = preDispose ? '' : 'none';
+
+  openModalById('removeItemModal');
+};
+
+const deleteItem = (idx) => {
+  openRemoveItemModal(idx, false);
+};
+
+const disposeItem = (idx) => {
+  const item = inventory[idx];
+  if (!item || isDisposed(item)) return;
+  openRemoveItemModal(idx, true);
+};
+
+/**
+ * Confirms removal from the combined Remove Item modal (STAK-72).
+ * Reads checkbox state to decide between plain delete and disposition.
+ */
+const confirmRemoveItem = () => {
+  const idxInput = document.getElementById('removeItemIdx');
+  const idx = parseInt(idxInput?.value, 10);
+  if (isNaN(idx) || !inventory[idx]) return;
+
+  const item = inventory[idx];
+  const checkbox = document.getElementById('removeItemDisposeCheck');
+  const isDispose = checkbox?.checked;
+
+  if (isDispose) {
+    // Disposition flow — validate fields
+    const type = document.getElementById('dispositionType')?.value;
+    const date = document.getElementById('dispositionDate')?.value;
+    const amount = parseFloat(document.getElementById('dispositionAmount')?.value) || 0;
+    const recipient = document.getElementById('dispositionRecipient')?.value?.trim() || '';
+    const notes = document.getElementById('dispositionNotes')?.value?.trim() || '';
+
+    if (!type || !DISPOSITION_TYPES[type]) {
+      showToast('Please select a disposition type.');
+      return;
+    }
+    if (DISPOSITION_TYPES[type].requiresAmount && amount <= 0) {
+      showToast('Please enter a sale/trade/refund amount.');
+      return;
+    }
+    if (!date) {
+      showToast('Please enter a disposition date.');
+      return;
+    }
+
+    const purchaseTotal = (parseFloat(item.price) || 0) * (Number(item.qty) || 1);
+    const realizedGainLoss = amount - purchaseTotal;
+
+    const disposition = {
+      type, date, amount,
+      currency: (typeof displayCurrency !== 'undefined' ? displayCurrency : 'USD'),
+      recipient, notes,
+      realizedGainLoss,
+      disposedAt: new Date().toISOString()
+    };
+
+    inventory[idx].disposition = disposition;
+    saveInventory();
+    closeModalById('removeItemModal');
+    logChange(item.name, 'Disposed', '', JSON.stringify(disposition), idx);
+    showToast(`${item.name} marked as ${DISPOSITION_TYPES[type].label.toLowerCase()}.`);
+  } else {
+    // Plain delete flow
     inventory.splice(idx, 1);
     saveInventory();
-    renderTable();
-    renderActiveFilters();
-    if (item) logChange(item.name, 'Deleted', JSON.stringify(item), '', idx);
+    closeModalById('removeItemModal');
+    logChange(item.name, 'Deleted', JSON.stringify(item), '', idx);
 
     // Clean up user images from IndexedDB (STAK-120)
     if (item?.uuid && window.imageCache?.isAvailable()) {
@@ -1984,6 +2127,34 @@ const deleteItem = async (idx) => {
     if (item?.uuid && typeof deleteItemTags === 'function') {
       deleteItemTags(item.uuid);
     }
+  }
+
+  renderTable();
+  renderActiveFilters();
+  updateSummary();
+};
+
+/**
+ * Restores a disposed item back to active inventory after
+ * user confirmation (STAK-72).
+ *
+ * @param {number} idx - Index of item to restore
+ */
+const undoDisposition = async (idx) => {
+  const item = inventory[idx];
+  if (!item || !isDisposed(item)) return;
+  const confirmed = typeof showAppConfirm === 'function'
+    ? await showAppConfirm(`Restore "${item.name}" to active inventory?`, 'Undo Disposition')
+    : false;
+  if (confirmed) {
+    const oldDisposition = JSON.stringify(item.disposition);
+    inventory[idx].disposition = null;
+    saveInventory();
+    logChange(item.name, 'Disposition Undone', oldDisposition, '', idx);
+    showToast(`${item.name} restored to active inventory.`);
+    renderTable();
+    renderActiveFilters();
+    updateSummary();
   }
 };
 
@@ -2170,11 +2341,12 @@ const editItem = (idx, logIdx = null) => {
   if (elements.itemSerialNumber) elements.itemSerialNumber.value = item.serialNumber || '';
   if (elements.itemNotes) elements.itemNotes.value = item.notes || '';
   elements.itemDate.value = item.date || '';
-  // Set date N/A checkbox based on whether item has a date
-  const editDateNA = document.getElementById('itemDateNA');
-  if (editDateNA) {
-    editDateNA.checked = !item.date;
-    elements.itemDate.disabled = !item.date;
+  // Set date N/A button state based on whether item has a date
+  if (elements.itemDateNABtn) {
+    const noDate = !item.date;
+    elements.itemDateNABtn.classList.toggle('active', noDate);
+    elements.itemDateNABtn.setAttribute('aria-pressed', noDate);
+    elements.itemDate.disabled = noDate;
   }
   // Reset spot lookup state for edit mode (STACK-49)
   if (elements.itemSpotPrice) elements.itemSpotPrice.value = '';
@@ -2307,9 +2479,11 @@ const editItem = (idx, logIdx = null) => {
     else if (urlInputWrap) urlInputWrap.style.display = 'none';
   });
 
-  // Show clone/view buttons in edit mode (STAK-173)
+  // Show clone/view/remove buttons in edit mode (STAK-173, STAK-72)
   if (elements.cloneItemBtn) elements.cloneItemBtn.style.display = '';
   if (elements.viewItemFromEditBtn) elements.viewItemFromEditBtn.style.display = '';
+  const deleteFromEditBtn = document.getElementById('deleteFromEditBtn');
+  if (deleteFromEditBtn) deleteFromEditBtn.style.display = '';
 
   // Populate Numista Data fields: item data first, API cache as fallback (STAK-173)
   populateNumistaDataFields(item.numistaId || item.catalog || '', item.numistaData);
@@ -2402,15 +2576,23 @@ const editItem = (idx, logIdx = null) => {
       elements.newTagInput.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); addHandler(); } };
     }
 
-    // Open the tags section if item has tags
-    if (itemTagsList.length > 0 && elements.tagsSection) {
-      elements.tagsSection.open = true;
-    }
+    // Tags section is always visible (non-collapsible)
   }
 
   // Open unified modal
   if (window.openModalById) openModalById('itemModal');
   else if (elements.itemModal) elements.itemModal.style.display = 'flex';
+};
+
+/**
+ * Opens the edit modal in clone mode for a given inventory item.
+ * Called from the table row copy button. (STAK-375)
+ *
+ * @param {number} idx - Index of item to clone
+ */
+const cloneItem = (idx) => {
+  editItem(idx);
+  if (typeof enterCloneMode === 'function') enterCloneMode(idx);
 };
 
 /**
@@ -2553,8 +2735,148 @@ const endImportProgress = () => {
 };
 
 /**
+ * Post-import cleanup — registers names, syncs catalog, saves, and re-renders.
+ * @param {Array} newItems - Items that were added during import
+ * @param {Map|null} pendingTagsByUuid - Optional map of uuid -> tag[] for deferred tag application
+ */
+const _postImportCleanup = (newItems, pendingTagsByUuid) => {
+  // Apply deferred tags if needed
+  if (pendingTagsByUuid && typeof addItemTag === 'function') {
+    for (const item of newItems) {
+      const tags = pendingTagsByUuid.get(item.uuid);
+      if (tags && tags.length) {
+        tags.forEach(tag => addItemTag(item.uuid, tag, false));
+      }
+    }
+    if (typeof saveItemTags === 'function') saveItemTags();
+  }
+
+  // Register names
+  for (const item of newItems) {
+    if (typeof registerName === 'function') registerName(item.name);
+  }
+
+  // Catalog sync, save, render
+  if (typeof catalogManager !== 'undefined' && catalogManager.syncInventory) {
+    inventory = catalogManager.syncInventory(inventory);
+  }
+  saveInventory();
+  renderTable();
+  if (typeof renderActiveFilters === 'function') renderActiveFilters();
+  if (typeof updateStorageStats === 'function') updateStorageStats();
+};
+
+/**
+ * Shared import review helper — DiffEngine + DiffModal pattern.
+ * Used by importCsv, importJson, and importNumistaCsv to deduplicate
+ * the diff-review workflow.
+ *
+ * @param {Array} parsedItems - Parsed items to import
+ * @param {object} sourceInfo - { type: 'csv'|'json', label: string }
+ * @param {object} [options] - Optional: { settingsDiff, pendingTagsByUuid }
+ * @param {function} onComplete - Called after apply with summary { added, modified, deleted }
+ */
+const showImportDiffReview = (parsedItems, sourceInfo, options, onComplete) => {
+  options = options || {};
+
+  // Guard: if DiffEngine or DiffModal unavailable, fall back to concat-all
+  if (typeof DiffEngine === 'undefined' || typeof DiffModal === 'undefined') {
+    debugLog('showImportDiffReview fallback', 'DiffEngine/DiffModal unavailable');
+    inventory = inventory.concat(parsedItems);
+    _postImportCleanup(parsedItems, options.pendingTagsByUuid);
+    if (onComplete) onComplete({ added: parsedItems.length, modified: 0, deleted: 0 });
+    return;
+  }
+
+  // STAK-380: Backward-compat for CSVs without UUID column.
+  // Local items have UUIDs (assigned by loadInventory), but old exports don't.
+  // Enrich imported items: copy local UUID when serials match, so DiffEngine
+  // can match them by the same key tier.
+  const localUuidBySerial = new Map();
+  for (const item of inventory) {
+    if (item.serial && item.uuid) localUuidBySerial.set(String(item.serial), item.uuid);
+  }
+  for (const item of parsedItems) {
+    if (!item.uuid && item.serial) {
+      const localUuid = localUuidBySerial.get(String(item.serial));
+      if (localUuid) item.uuid = localUuid;
+    }
+  }
+
+  const diffResult = DiffEngine.compareItems(inventory, parsedItems);
+
+  // Build settings diff if provided via options (JSON imports only)
+  const settingsDiff = options.settingsDiff || null;
+
+  // No changes? Inform user
+  const totalChanges = diffResult.added.length + diffResult.modified.length + diffResult.deleted.length;
+  if (totalChanges === 0 && !settingsDiff) {
+    if (typeof showToast === 'function') showToast('No changes detected \u2014 inventory is up to date');
+    return;
+  }
+
+  DiffModal.show({
+    source: sourceInfo,
+    diff: diffResult,
+    settingsDiff: settingsDiff,
+    onApply: function(selectedChanges) {
+      if (!selectedChanges || selectedChanges.length === 0) return;
+
+      inventory = DiffEngine.applySelectedChanges(inventory, selectedChanges);
+
+      // Apply tags for added items if pendingTagsByUuid provided
+      if (options.pendingTagsByUuid && typeof addItemTag === 'function') {
+        const addedItems = selectedChanges.filter(function(c) { return c.type === 'add'; });
+        for (const change of addedItems) {
+          if (change.item) {
+            const tags = options.pendingTagsByUuid.get(change.item.uuid);
+            if (tags && tags.length) {
+              tags.forEach(function(tag) { addItemTag(change.item.uuid, tag, false); });
+            }
+          }
+        }
+        if (typeof saveItemTags === 'function') saveItemTags();
+      }
+
+      // Apply settings changes if present
+      if (settingsDiff && settingsDiff.changed && settingsDiff.changed.length > 0) {
+        for (const sc of settingsDiff.changed) {
+          saveDataSync(sc.key, sc.remoteVal);
+        }
+      }
+
+      _postImportCleanup(
+        selectedChanges.filter(function(c) { return c.type === 'add'; }).map(function(c) { return c.item; }).filter(Boolean),
+        null  // tags already handled above
+      );
+
+      // Toast summary
+      const addCount = selectedChanges.filter(function(c) { return c.type === 'add'; }).length;
+      const modCount = selectedChanges.filter(function(c) { return c.type === 'modify'; }).length;
+      const delCount = selectedChanges.filter(function(c) { return c.type === 'delete'; }).length;
+      const parts = [];
+      if (addCount > 0) parts.push(addCount + ' added');
+      if (modCount > 0) parts.push(modCount + ' updated');
+      if (delCount > 0) parts.push(delCount + ' removed');
+      if (typeof showToast === 'function') {
+        showToast('Import complete: ' + (parts.length > 0 ? parts.join(', ') : 'no changes applied'));
+      }
+
+      if (onComplete) onComplete({ added: addCount, modified: modCount, deleted: delCount });
+
+      if (localStorage.getItem('staktrakr.debug') && typeof window.showDebugModal === 'function') {
+        showDebugModal();
+      }
+    },
+    onCancel: function() {
+      debugLog('Import cancelled by user');
+    }
+  });
+};
+
+/**
  * Imports inventory data from CSV file with comprehensive validation and error handling
- * 
+ *
  * @param {File} file - CSV file selected by user through file input
  * @param {boolean} [override=false] - Replace existing inventory instead of merging
  */
@@ -2639,7 +2961,7 @@ const importCsv = (file, override = false) => {
           const purity = parseFloat(purityRaw) || 1.0;
           const serialNumber = row['Serial Number'] || row['serialNumber'] || '';
           const serial = row['Serial'] || row['serial'] || getNextSerial();
-          const uuid = row['UUID'] || row['uuid'] || generateUUID();
+          const uuid = row['UUID'] || row['uuid'] || '';
           const csvTags = (row['Tags'] || row['tags'] || '').trim();
           const obverseImageUrl = row['Obverse Image URL'] || row['obverseImageUrl'] || '';
           const reverseImageUrl = row['Reverse Image URL'] || row['reverseImageUrl'] || '';
@@ -2710,62 +3032,40 @@ const importCsv = (file, override = false) => {
           return;
         }
 
-        const existingSerials = new Set(override ? [] : inventory.map(item => item.serial));
-        const existingKeys = new Set(
-          (override ? [] : inventory)
-            .filter(item => item.numistaId)
-            .map(item => `${item.numistaId}|${item.name}|${item.date}`)
-        );
-        const deduped = [];
-        let duplicateCount = 0;
+        // --- Override path: skip DiffEngine, import all items directly ---
+        if (override) {
+          inventory = imported;
 
-        for (const item of imported) {
-          const key = item.numistaId ? `${item.numistaId}|${item.name}|${item.date}` : null;
-          if (existingSerials.has(item.serial) || (key && existingKeys.has(key))) {
-            duplicateCount++;
-            continue;
+          // Synchronize all items with catalog manager
+          if (typeof catalogManager !== 'undefined' && catalogManager.syncInventory) {
+            inventory = catalogManager.syncInventory(inventory);
           }
-          existingSerials.add(item.serial);
-          if (key) existingKeys.add(key);
-          deduped.push(item);
-        }
 
-        if (duplicateCount > 0) {
-          console.info(`${duplicateCount} duplicate items skipped during import.`);
-        }
+          for (const item of imported) {
+            if (typeof registerName === 'function') {
+              registerName(item.name);
+            }
+          }
 
-        if (deduped.length === 0) {
-          if (typeof showAppAlert === 'function') showAppAlert('No items to import.', 'CSV Import');
+          saveInventory();
+          renderTable();
+          if (typeof renderActiveFilters === 'function') {
+            renderActiveFilters();
+          }
+          if (typeof updateStorageStats === 'function') {
+            updateStorageStats();
+          }
+          debugLog('importCsv override complete', imported.length, 'items replaced');
+          if (localStorage.getItem('staktrakr.debug') && typeof window.showDebugModal === 'function') {
+            showDebugModal();
+          }
           return;
         }
 
-        for (const item of deduped) {
-          if (typeof registerName === "function") {
-            registerName(item.name);
-          }
-        }
-
-        if (override) {
-          inventory = deduped;
-        } else {
-          inventory = inventory.concat(deduped);
-        }
-
-        // Synchronize all items with catalog manager
-        inventory = catalogManager.syncInventory(inventory);
-
-        saveInventory();
-        renderTable();
-        if (typeof renderActiveFilters === 'function') {
-          renderActiveFilters();
-        }
-        if (typeof updateStorageStats === 'function') {
-          updateStorageStats();
-        }
-        debugLog('importCsv complete', deduped.length, 'items added');
-        if (localStorage.getItem('staktrakr.debug') && typeof window.showDebugModal === 'function') {
-          showDebugModal();
-        }
+        // --- Merge path: use shared DiffEngine + DiffModal helper ---
+        showImportDiffReview(imported, { type: 'csv', label: file.name }, {}, function(summary) {
+          debugLog('importCsv DiffEngine complete', summary.added, 'added', summary.modified, 'modified', summary.deleted, 'deleted');
+        });
       },
       error: function(error) {
         endImportProgress();
@@ -2972,58 +3272,29 @@ const importNumistaCsv = (file, override = false) => {
           return;
         }
 
-        const existingSerials = new Set(override ? [] : inventory.map(item => item.serial));
-        const existingKeys = new Set(
-          (override ? [] : inventory)
-            .filter(item => item.numistaId)
-            .map(item => `${item.numistaId}|${item.name}|${item.date}`)
-        );
-        const deduped = [];
-        let duplicateCount = 0;
+        // --- Override path: skip DiffEngine, import all items directly ---
+        if (override) {
+          inventory = imported;
 
-        for (const item of imported) {
-          const key = item.numistaId ? `${item.numistaId}|${item.name}|${item.date}` : null;
-          if (existingSerials.has(item.serial) || (key && existingKeys.has(key))) {
-            duplicateCount++;
-            continue;
+          for (const item of imported) {
+            if (typeof registerName === 'function') registerName(item.name);
           }
-          existingSerials.add(item.serial);
-          if (key) existingKeys.add(key);
-          deduped.push(item);
-        }
 
-        if (duplicateCount > 0) {
-          console.info(`${duplicateCount} duplicate items skipped during import.`);
-        }
-
-        if (deduped.length === 0) {
-          if (typeof showAppAlert === 'function') showAppAlert('No items to import.', 'Numista Import');
+          if (typeof catalogManager !== 'undefined' && catalogManager.syncInventory) {
+            inventory = catalogManager.syncInventory(inventory);
+          }
+          saveInventory();
+          renderTable();
+          if (typeof renderActiveFilters === 'function') renderActiveFilters();
+          if (typeof updateStorageStats === 'function') updateStorageStats();
+          debugLog('importNumistaCsv override complete', imported.length, 'items replaced');
           return;
         }
 
-        for (const item of deduped) {
-          if (typeof registerName === "function") {
-            registerName(item.name);
-          }
-        }
-
-        if (override) {
-          inventory = deduped;
-        } else {
-          inventory = inventory.concat(deduped);
-        }
-
-        // Synchronize all items with catalog manager
-        inventory = catalogManager.syncInventory(inventory);
-
-        saveInventory();
-        renderTable();
-        if (typeof renderActiveFilters === 'function') {
-          renderActiveFilters();
-        }
-        if (typeof updateStorageStats === 'function') {
-          updateStorageStats();
-        }
+        // --- Merge path: use shared DiffEngine + DiffModal helper ---
+        showImportDiffReview(imported, { type: 'csv', label: file.name }, {}, function(summary) {
+          debugLog('importNumistaCsv DiffEngine complete', summary.added, 'added', summary.modified, 'modified', summary.deleted, 'deleted');
+        });
       } catch (error) {
         endImportProgress();
         handleError(error, 'Numista CSV import');
@@ -3144,7 +3415,8 @@ const exportCsv = () => {
     "Date","Metal","Type","Name","Year","Qty","Weight(oz)","Weight Unit","Purity",
     "Purchase Price","Melt Value","Retail Price","Gain/Loss",
     "Purchase Location","N#","PCGS #","Grade","Grading Authority","Cert #","Serial Number","Notes","UUID",
-    "Obverse Image URL","Reverse Image URL"
+    "Obverse Image URL","Reverse Image URL",
+    "Disposition Type","Disposition Date","Disposition Amount","Realized Gain/Loss"
   ];
 
   const sortedInventory = sortInventoryByDateNewestFirst();
@@ -3183,7 +3455,11 @@ const exportCsv = () => {
       i.notes || '',
       i.uuid || '',
       i.obverseImageUrl || '',
-      i.reverseImageUrl || ''
+      i.reverseImageUrl || '',
+      i.disposition ? (DISPOSITION_TYPES[i.disposition.type]?.label || i.disposition.type) : '',
+      i.disposition?.date || '',
+      i.disposition ? (i.disposition.amount || 0) : '',
+      i.disposition ? (i.disposition.realizedGainLoss || 0) : ''
     ]);
   }
 
@@ -3213,12 +3489,19 @@ const importJson = (file, override = false) => {
 
   reader.onload = function(e) {
     try {
-      const data = JSON.parse(e.target.result);
+      const rawParsed = JSON.parse(e.target.result);
 
-      // Validate data structure
-      if (!Array.isArray(data)) {
+      // Support both plain array and { items: [], settings: {} } object formats
+      let data;
+      let parsedSettings = null;
+      if (Array.isArray(rawParsed)) {
+        data = rawParsed;
+      } else if (rawParsed && typeof rawParsed === 'object' && Array.isArray(rawParsed.items)) {
+        data = rawParsed.items;
+        parsedSettings = rawParsed.settings || null;
+      } else {
         if (typeof showAppAlert === 'function') {
-          showAppAlert('Invalid JSON format. Expected an array of inventory items.', 'JSON Import');
+          showAppAlert('Invalid JSON format. Expected an array of inventory items or { items: [], settings: {} }.', 'JSON Import');
         }
         return;
       }
@@ -3297,6 +3580,8 @@ const importJson = (file, override = false) => {
         const uuid = raw.uuid || generateUUID();
         const obverseImageUrl = raw.obverseImageUrl || raw['Obverse Image URL'] || '';
         const reverseImageUrl = raw.reverseImageUrl || raw['Reverse Image URL'] || '';
+        const numistaData = raw.numistaData || undefined;
+        const fieldMeta = raw.fieldMeta || undefined;
 
         const processedItem = sanitizeImportedItem({
           metal,
@@ -3327,7 +3612,9 @@ const importJson = (file, override = false) => {
           serial,
           uuid,
           obverseImageUrl,
-          reverseImageUrl
+          reverseImageUrl,
+          ...(numistaData ? { numistaData } : {}),
+          ...(fieldMeta ? { fieldMeta } : {})
         });
 
         const validation = validateInventoryItem(processedItem);
@@ -3383,72 +3670,68 @@ const importJson = (file, override = false) => {
         return;
       }
 
-      const existingSerials = new Set(override ? [] : inventory.map(item => item.serial));
-      const existingKeys = new Set(
-        (override ? [] : inventory)
-          .filter(item => item.numistaId)
-          .map(item => `${item.numistaId}|${item.name}|${item.date}`)
-      );
-      const deduped = [];
-      let duplicateCount = 0;
-
-      for (const item of imported) {
-        const key = item.numistaId ? `${item.numistaId}|${item.name}|${item.date}` : null;
-        if (existingSerials.has(item.serial) || (key && existingKeys.has(key))) {
-          duplicateCount++;
-          continue;
+      // ── Override path: skip DiffEngine, import all directly ──
+      if (override) {
+        if (typeof addItemTag === 'function') {
+          for (const item of imported) {
+            const pendingTags = pendingTagsByUuid.get(item.uuid);
+            if (pendingTags && pendingTags.length) {
+              pendingTags.forEach(tag => addItemTag(item.uuid, tag, false));
+            }
+          }
+          if (typeof saveItemTags === 'function') saveItemTags();
         }
-        existingSerials.add(item.serial);
-        if (key) existingKeys.add(key);
-        deduped.push(item);
-      }
 
-      if (duplicateCount > 0) {
-        console.info(`${duplicateCount} duplicate items skipped during import.`);
-      }
+        for (const item of imported) {
+          if (typeof registerName === 'function') registerName(item.name);
+        }
 
-      if (deduped.length === 0) {
-        if (typeof showAppAlert === 'function') showAppAlert('No items to import.', 'JSON Import');
+        inventory = imported;
+        if (typeof catalogManager !== 'undefined' && catalogManager.syncInventory) {
+          inventory = catalogManager.syncInventory(inventory);
+        }
+        saveInventory();
+        renderTable();
+        if (typeof renderActiveFilters === 'function') renderActiveFilters();
+        if (typeof updateStorageStats === 'function') updateStorageStats();
+        debugLog('importJson override complete', imported.length, 'items replaced');
+        if (localStorage.getItem('staktrakr.debug') && typeof window.showDebugModal === 'function') {
+          showDebugModal();
+        }
         return;
       }
 
-      if (typeof addItemTag === 'function') {
-        for (const item of deduped) {
-          const pendingTags = pendingTagsByUuid.get(item.uuid);
-          if (pendingTags && pendingTags.length) {
-            pendingTags.forEach(tag => addItemTag(item.uuid, tag, false));
-          }
+      // ── DiffEngine + DiffModal path (via shared helper) ──
+      // Build settings diff if the parsed JSON contains a settings object
+      let settingsDiff = null;
+      if (parsedSettings && typeof parsedSettings === 'object' &&
+          typeof DiffEngine !== 'undefined' && typeof DiffEngine.compareSettings === 'function') {
+        const settingsKeys = (typeof SYNC_SCOPE_KEYS !== 'undefined' && Array.isArray(SYNC_SCOPE_KEYS))
+          ? SYNC_SCOPE_KEYS.filter(k => k !== 'metalInventory' && k !== 'itemTags')
+          : ['displayCurrency', 'appTheme', 'inlineChipConfig', 'filterChipCategoryConfig', 'viewModalSectionConfig', 'chipMinCount'];
+        const localSettings = {};
+        for (const key of settingsKeys) {
+          const val = loadDataSync(key, null);
+          if (val !== null) localSettings[key] = val;
         }
-        if (typeof saveItemTags === 'function') saveItemTags();
-      }
-
-      for (const item of deduped) {
-        if (typeof registerName === "function") {
-          registerName(item.name);
+        const filteredRemote = {};
+        for (const key of settingsKeys) {
+          if (key in parsedSettings) filteredRemote[key] = parsedSettings[key];
+        }
+        if (Object.keys(filteredRemote).length > 0) {
+          settingsDiff = DiffEngine.compareSettings(localSettings, filteredRemote);
+          // Omit if no changes
+          if (settingsDiff.changed.length === 0) settingsDiff = null;
         }
       }
 
-      if (override) {
-        inventory = deduped;
-      } else {
-        inventory = inventory.concat(deduped);
-      }
-
-      // Synchronize all items with catalog manager
-      inventory = catalogManager.syncInventory(inventory);
-
-      saveInventory();
-      renderTable();
-      if (typeof renderActiveFilters === 'function') {
-        renderActiveFilters();
-      }
-      if (typeof updateStorageStats === "function") {
-        updateStorageStats();
-      }
-      debugLog('importJson complete', deduped.length, 'items added');
-      if (localStorage.getItem('staktrakr.debug') && typeof window.showDebugModal === 'function') {
-        showDebugModal();
-      }
+      // Use shared helper for diff review — handles DiffEngine fallback internally
+      showImportDiffReview(imported, { type: 'json', label: file.name }, {
+        settingsDiff: settingsDiff,
+        pendingTagsByUuid: pendingTagsByUuid,
+      }, function(summary) {
+        debugLog('importJson DiffEngine complete', summary.added, 'added', summary.modified, 'modified', summary.deleted, 'deleted');
+      });
     } catch (error) {
       endImportProgress();
       if (typeof showAppAlert === 'function') {
@@ -3497,7 +3780,9 @@ const exportJson = () => {
     reverseImageUrl: item.reverseImageUrl || '',
     // Legacy fields preserved for backward compatibility
     spotPriceAtPurchase: item.spotPriceAtPurchase,
-    composition: item.composition
+    composition: item.composition,
+    numistaData: item.numistaData || null,
+    fieldMeta: item.fieldMeta || null
   }));
 
   const json = JSON.stringify(exportData, null, 2);
@@ -3631,6 +3916,18 @@ const exportPdf = () => {
   // Save PDF
   doc.save(`metal_inventory_${new Date().toISOString().slice(0,10).replace(/-/g,'')}.pdf`);
 };
+/**
+ * Show or hide the "Realized:" row on all summary cards (STAK-72).
+ * Called from settings toggle and on page load.
+ */
+const applyRealizedVisibility = (show) => {
+  const metals = ['Silver', 'Gold', 'Platinum', 'Palladium', 'All'];
+  metals.forEach(m => {
+    const el = document.getElementById(`realizedGainLoss${m}`);
+    if (el && el.parentElement) el.parentElement.style.display = show ? '' : 'none';
+  });
+};
+
 // =============================================================================
 // Expose inventory actions globally for inline event handlers
 window.importCsv = importCsv;
@@ -3639,11 +3936,17 @@ window.importJson = importJson;
 window.exportJson = exportJson;
 window.exportPdf = exportPdf;
 window.updateSummary = updateSummary;
+window.applyRealizedVisibility = applyRealizedVisibility;
 window.toggleGlobalPriceView = toggleGlobalPriceView;
 window.editItem = editItem;
 window.duplicateItem = duplicateItem;
+window.cloneItem = cloneItem;
 window.populateNumistaDataFields = populateNumistaDataFields;
 window.deleteItem = deleteItem;
+window.disposeItem = disposeItem;
+window.openRemoveItemModal = openRemoveItemModal;
+window.confirmRemoveItem = confirmRemoveItem;
+window.undoDisposition = undoDisposition;
 window.showNotes = showNotes;
 
 /**
@@ -3882,7 +4185,7 @@ function _openThumbPopover(cell, item) {
 
   pop.innerHTML = `
     <div class="bulk-img-popover-header">
-      <span class="bulk-img-popover-title">${item.name ? item.name.slice(0, 28) + (item.name.length > 28 ? '…' : '') : 'Photos'}</span>
+      <span class="bulk-img-popover-title">${item.name ? sanitizeHtml(item.name.slice(0, 28) + (item.name.length > 28 ? '…' : '')) : 'Photos'}</span>
       <button class="bulk-img-popover-close" type="button" aria-label="Close">×</button>
     </div>
     <div class="bulk-img-popover-sides">

@@ -85,22 +85,22 @@ const purgeSpotHistory = (days = 180) => {
  * @param {string|null} provider - Provider name if available
  * @param {string} timestamp - ISO timestamp of the event
  */
-const updateLastTimestamps = async (source, provider, timestamp) => {
+const updateLastTimestamps = (source, provider, timestamp) => {
   const apiEntry = {
     provider: provider || "API",
     timestamp,
   };
 
   if (source === "api") {
-    await saveData(LAST_API_SYNC_KEY, apiEntry);
-    await saveData(LAST_CACHE_REFRESH_KEY, apiEntry);
+    saveDataSync(LAST_API_SYNC_KEY, apiEntry);
+    saveDataSync(LAST_CACHE_REFRESH_KEY, apiEntry);
     if (typeof window.updateSpotSyncHealthDot === 'function') window.updateSpotSyncHealthDot();
   } else if (source === "cached") {
     const cacheEntry = {
       provider: provider ? `${provider} (cached)` : "Cached",
       timestamp,
     };
-    await saveData(LAST_CACHE_REFRESH_KEY, cacheEntry);
+    saveDataSync(LAST_CACHE_REFRESH_KEY, cacheEntry);
   }
 };
 
