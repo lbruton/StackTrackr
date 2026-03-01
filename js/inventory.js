@@ -2892,62 +2892,129 @@ const importCsv = (file, override = false) => {
           return;
         }
 
-        const existingSerials = new Set(override ? [] : inventory.map(item => item.serial));
-        const existingKeys = new Set(
-          (override ? [] : inventory)
-            .filter(item => item.numistaId)
-            .map(item => `${item.numistaId}|${item.name}|${item.date}`)
-        );
-        const deduped = [];
-        let duplicateCount = 0;
+        // --- Override path: skip DiffEngine, import all items directly ---
+        if (override) {
+          inventory = imported;
 
-        for (const item of imported) {
-          const key = item.numistaId ? `${item.numistaId}|${item.name}|${item.date}` : null;
-          if (existingSerials.has(item.serial) || (key && existingKeys.has(key))) {
-            duplicateCount++;
-            continue;
+          // Synchronize all items with catalog manager
+          if (typeof catalogManager !== 'undefined' && catalogManager.syncInventory) {
+            inventory = catalogManager.syncInventory(inventory);
           }
-          existingSerials.add(item.serial);
-          if (key) existingKeys.add(key);
-          deduped.push(item);
-        }
 
-        if (duplicateCount > 0) {
-          console.info(`${duplicateCount} duplicate items skipped during import.`);
-        }
+          for (const item of imported) {
+            if (typeof registerName === 'function') {
+              registerName(item.name);
+            }
+          }
 
-        if (deduped.length === 0) {
-          if (typeof showAppAlert === 'function') showAppAlert('No items to import.', 'CSV Import');
+          saveInventory();
+          renderTable();
+          if (typeof renderActiveFilters === 'function') {
+            renderActiveFilters();
+          }
+          if (typeof updateStorageStats === 'function') {
+            updateStorageStats();
+          }
+          debugLog('importCsv override complete', imported.length, 'items replaced');
+          if (localStorage.getItem('staktrakr.debug') && typeof window.showDebugModal === 'function') {
+            showDebugModal();
+          }
           return;
         }
 
-        for (const item of deduped) {
-          if (typeof registerName === "function") {
-            registerName(item.name);
+        // --- Merge path: use DiffEngine + DiffModal for reviewed import ---
+        // Guard: if DiffEngine or DiffModal are unavailable, fall back to
+        // legacy behaviour (add all parsed items without review)
+        if (typeof DiffEngine === 'undefined' || typeof DiffModal === 'undefined') {
+          debugLog('importCsv fallback', 'DiffEngine/DiffModal unavailable — adding all items');
+          inventory = inventory.concat(imported);
+
+          if (typeof catalogManager !== 'undefined' && catalogManager.syncInventory) {
+            inventory = catalogManager.syncInventory(inventory);
           }
+
+          for (const item of imported) {
+            if (typeof registerName === 'function') {
+              registerName(item.name);
+            }
+          }
+
+          saveInventory();
+          renderTable();
+          if (typeof renderActiveFilters === 'function') {
+            renderActiveFilters();
+          }
+          if (typeof updateStorageStats === 'function') {
+            updateStorageStats();
+          }
+          debugLog('importCsv fallback complete', imported.length, 'items added');
+          return;
         }
 
-        if (override) {
-          inventory = deduped;
-        } else {
-          inventory = inventory.concat(deduped);
+        // Compute diff between current inventory and parsed CSV items
+        const diffResult = DiffEngine.compareItems(inventory, imported);
+
+        // If there are no changes at all, inform the user and bail
+        if (diffResult.added.length === 0 && diffResult.modified.length === 0 && diffResult.deleted.length === 0) {
+          if (typeof showAppAlert === 'function') {
+            showAppAlert('No new or changed items found in CSV.', 'CSV Import');
+          }
+          return;
         }
 
-        // Synchronize all items with catalog manager
-        inventory = catalogManager.syncInventory(inventory);
+        // Show the diff review modal — user selects which changes to apply
+        DiffModal.show({
+          source: { type: 'csv', label: file.name },
+          diff: diffResult,
+          onApply: function(selectedChanges) {
+            if (!selectedChanges || selectedChanges.length === 0) return;
 
-        saveInventory();
-        renderTable();
-        if (typeof renderActiveFilters === 'function') {
-          renderActiveFilters();
-        }
-        if (typeof updateStorageStats === 'function') {
-          updateStorageStats();
-        }
-        debugLog('importCsv complete', deduped.length, 'items added');
-        if (localStorage.getItem('staktrakr.debug') && typeof window.showDebugModal === 'function') {
-          showDebugModal();
-        }
+            // Apply user-selected changes via DiffEngine
+            inventory = DiffEngine.applySelectedChanges(inventory, selectedChanges);
+
+            // Synchronize with catalog manager
+            if (typeof catalogManager !== 'undefined' && catalogManager.syncInventory) {
+              inventory = catalogManager.syncInventory(inventory);
+            }
+
+            // Register names for newly added items
+            const addedChanges = selectedChanges.filter(function(c) { return c.type === 'add'; });
+            for (const change of addedChanges) {
+              if (change.item && typeof registerName === 'function') {
+                registerName(change.item.name);
+              }
+            }
+
+            saveInventory();
+            renderTable();
+            if (typeof renderActiveFilters === 'function') {
+              renderActiveFilters();
+            }
+            if (typeof updateStorageStats === 'function') {
+              updateStorageStats();
+            }
+
+            // Show summary toast
+            const addCount = addedChanges.length;
+            const modCount = selectedChanges.filter(function(c) { return c.type === 'modify'; }).length;
+            const delCount = selectedChanges.filter(function(c) { return c.type === 'delete'; }).length;
+            const parts = [];
+            if (addCount > 0) parts.push(addCount + ' added');
+            if (modCount > 0) parts.push(modCount + ' updated');
+            if (delCount > 0) parts.push(delCount + ' removed');
+            if (typeof showToast === 'function') {
+              showToast('Import complete: ' + parts.join(', '));
+            }
+
+            debugLog('importCsv DiffEngine complete', addCount, 'added', modCount, 'modified', delCount, 'deleted');
+            if (localStorage.getItem('staktrakr.debug') && typeof window.showDebugModal === 'function') {
+              showDebugModal();
+            }
+          },
+          onCancel: function() {
+            debugLog('importCsv cancelled by user');
+          }
+        });
       },
       error: function(error) {
         endImportProgress();
@@ -3400,12 +3467,19 @@ const importJson = (file, override = false) => {
 
   reader.onload = function(e) {
     try {
-      const data = JSON.parse(e.target.result);
+      const rawParsed = JSON.parse(e.target.result);
 
-      // Validate data structure
-      if (!Array.isArray(data)) {
+      // Support both plain array and { items: [], settings: {} } object formats
+      let data;
+      let parsedSettings = null;
+      if (Array.isArray(rawParsed)) {
+        data = rawParsed;
+      } else if (rawParsed && typeof rawParsed === 'object' && Array.isArray(rawParsed.items)) {
+        data = rawParsed.items;
+        parsedSettings = rawParsed.settings || null;
+      } else {
         if (typeof showAppAlert === 'function') {
-          showAppAlert('Invalid JSON format. Expected an array of inventory items.', 'JSON Import');
+          showAppAlert('Invalid JSON format. Expected an array of inventory items or { items: [], settings: {} }.', 'JSON Import');
         }
         return;
       }
@@ -3574,9 +3648,146 @@ const importJson = (file, override = false) => {
         return;
       }
 
-      const existingSerials = new Set(override ? [] : inventory.map(item => item.serial));
+      // ── Override path: skip DiffEngine, import all directly ──
+      if (override) {
+        if (typeof addItemTag === 'function') {
+          for (const item of imported) {
+            const pendingTags = pendingTagsByUuid.get(item.uuid);
+            if (pendingTags && pendingTags.length) {
+              pendingTags.forEach(tag => addItemTag(item.uuid, tag, false));
+            }
+          }
+          if (typeof saveItemTags === 'function') saveItemTags();
+        }
+
+        for (const item of imported) {
+          if (typeof registerName === 'function') registerName(item.name);
+        }
+
+        inventory = imported;
+        if (typeof catalogManager !== 'undefined' && catalogManager.syncInventory) {
+          inventory = catalogManager.syncInventory(inventory);
+        }
+        saveInventory();
+        renderTable();
+        if (typeof renderActiveFilters === 'function') renderActiveFilters();
+        if (typeof updateStorageStats === 'function') updateStorageStats();
+        debugLog('importJson override complete', imported.length, 'items replaced');
+        if (localStorage.getItem('staktrakr.debug') && typeof window.showDebugModal === 'function') {
+          showDebugModal();
+        }
+        return;
+      }
+
+      // ── DiffEngine + DiffModal path ──
+      if (typeof DiffEngine !== 'undefined' && typeof DiffModal !== 'undefined') {
+        const diffResult = DiffEngine.compareItems(inventory, imported);
+
+        // Build settings diff if the parsed JSON contains a settings object
+        let settingsDiff = null;
+        if (parsedSettings && typeof parsedSettings === 'object') {
+          const settingsKeys = (typeof SYNC_SCOPE_KEYS !== 'undefined' && Array.isArray(SYNC_SCOPE_KEYS))
+            ? SYNC_SCOPE_KEYS.filter(k => k !== 'metalInventory' && k !== 'itemTags')
+            : ['displayCurrency', 'appTheme', 'inlineChipConfig', 'filterChipCategoryConfig', 'viewModalSectionConfig', 'chipMinCount'];
+          const localSettings = {};
+          for (const key of settingsKeys) {
+            const val = loadDataSync(key, null);
+            if (val !== null) localSettings[key] = val;
+          }
+          const filteredRemote = {};
+          for (const key of settingsKeys) {
+            if (key in parsedSettings) filteredRemote[key] = parsedSettings[key];
+          }
+          if (Object.keys(filteredRemote).length > 0) {
+            settingsDiff = DiffEngine.compareSettings(localSettings, filteredRemote);
+            // Omit if no changes
+            if (settingsDiff.changed.length === 0) settingsDiff = null;
+          }
+        }
+
+        // If no changes at all, inform user and bail
+        const totalChanges = diffResult.added.length + diffResult.modified.length + diffResult.deleted.length;
+        if (totalChanges === 0 && !settingsDiff) {
+          if (typeof showToast === 'function') showToast('No changes detected \u2014 inventory is up to date');
+          return;
+        }
+
+        DiffModal.show({
+          source: { type: 'json', label: file.name },
+          diff: diffResult,
+          settingsDiff: settingsDiff,
+          onApply: function(selectedChanges) {
+            // Apply item changes via DiffEngine
+            inventory = DiffEngine.applySelectedChanges(inventory, selectedChanges);
+
+            // Apply tags for newly added items
+            if (typeof addItemTag === 'function') {
+              const addedItems = selectedChanges.filter(function(c) { return c.type === 'add'; });
+              for (const change of addedItems) {
+                if (change.item) {
+                  const tags = pendingTagsByUuid.get(change.item.uuid);
+                  if (tags && tags.length) {
+                    tags.forEach(function(tag) { addItemTag(change.item.uuid, tag, false); });
+                  }
+                }
+              }
+              if (typeof saveItemTags === 'function') saveItemTags();
+            }
+
+            // Register names for added items
+            const addedForNames = selectedChanges.filter(function(c) { return c.type === 'add'; });
+            for (const change of addedForNames) {
+              if (change.item && typeof registerName === 'function') {
+                registerName(change.item.name);
+              }
+            }
+
+            // Apply settings changes if present
+            if (settingsDiff && settingsDiff.changed && settingsDiff.changed.length > 0) {
+              for (const sc of settingsDiff.changed) {
+                saveDataSync(sc.key, sc.remoteVal);
+              }
+            }
+
+            // Post-import synchronization
+            if (typeof catalogManager !== 'undefined' && catalogManager.syncInventory) {
+              inventory = catalogManager.syncInventory(inventory);
+            }
+
+            saveInventory();
+            renderTable();
+            if (typeof renderActiveFilters === 'function') renderActiveFilters();
+            if (typeof updateStorageStats === 'function') updateStorageStats();
+
+            // Show toast summary
+            const addCount = selectedChanges.filter(function(c) { return c.type === 'add'; }).length;
+            const modCount = selectedChanges.filter(function(c) { return c.type === 'modify'; }).length;
+            const delCount = selectedChanges.filter(function(c) { return c.type === 'delete'; }).length;
+            const parts = [];
+            if (addCount > 0) parts.push(addCount + ' added');
+            if (modCount > 0) parts.push(modCount + ' updated');
+            if (delCount > 0) parts.push(delCount + ' removed');
+            if (typeof showToast === 'function') {
+              showToast('Import complete: ' + (parts.length > 0 ? parts.join(', ') : 'no changes applied'));
+            }
+
+            debugLog('importJson DiffEngine complete', addCount, 'added', modCount, 'modified', delCount, 'deleted');
+            if (localStorage.getItem('staktrakr.debug') && typeof window.showDebugModal === 'function') {
+              showDebugModal();
+            }
+          },
+          onCancel: function() {
+            debugLog('importJson cancelled by user via DiffModal');
+          }
+        });
+
+        return;
+      }
+
+      // ── Fallback: legacy dedup when DiffEngine/DiffModal unavailable ──
+      const existingSerials = new Set(inventory.map(item => item.serial));
       const existingKeys = new Set(
-        (override ? [] : inventory)
+        inventory
           .filter(item => item.numistaId)
           .map(item => `${item.numistaId}|${item.name}|${item.date}`)
       );
@@ -3614,28 +3825,17 @@ const importJson = (file, override = false) => {
       }
 
       for (const item of deduped) {
-        if (typeof registerName === "function") {
-          registerName(item.name);
-        }
+        if (typeof registerName === 'function') registerName(item.name);
       }
 
-      if (override) {
-        inventory = deduped;
-      } else {
-        inventory = inventory.concat(deduped);
+      inventory = inventory.concat(deduped);
+      if (typeof catalogManager !== 'undefined' && catalogManager.syncInventory) {
+        inventory = catalogManager.syncInventory(inventory);
       }
-
-      // Synchronize all items with catalog manager
-      inventory = catalogManager.syncInventory(inventory);
-
       saveInventory();
       renderTable();
-      if (typeof renderActiveFilters === 'function') {
-        renderActiveFilters();
-      }
-      if (typeof updateStorageStats === "function") {
-        updateStorageStats();
-      }
+      if (typeof renderActiveFilters === 'function') renderActiveFilters();
+      if (typeof updateStorageStats === 'function') updateStorageStats();
       debugLog('importJson complete', deduped.length, 'items added');
       if (localStorage.getItem('staktrakr.debug') && typeof window.showDebugModal === 'function') {
         showDebugModal();
