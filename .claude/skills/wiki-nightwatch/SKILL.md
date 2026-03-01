@@ -22,9 +22,10 @@ over ~26 runs so every page gets checked regularly.
 | **Frontend** (`owner: staktrakr`) | 11 pages | Read source files from `sourceFiles` frontmatter |
 | **Infrastructure** (`owner: staktrakr-api`) | 15 pages | MCP tools: SSH, curl endpoints, read StakTrakrApi repo |
 
-Frontend pages can also be checked by Jules via the nightly GHA workflow
-(`.github/workflows/wiki-nightwatch.yml`). Infrastructure pages require
-Claude Code with MCP access.
+Frontend pages are also checked by the nightly GHA workflow
+(`.github/workflows/wiki-nightwatch.yml`) which follows the Sentinel pattern:
+find an inaccuracy → fix it → open a draft PR with justification. Infrastructure
+pages require Claude Code with MCP access (SSH, curl, StakTrakrApi repo reads).
 
 ---
 
