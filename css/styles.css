@@ -4946,17 +4946,6 @@ td input:checked + .slider:before {
   background: rgba(255, 255, 255, 0.2);
 }
 
-.view-header-actions .view-edit-btn {
-  background: rgba(255, 255, 255, 0.9);
-  color: #1e293b;
-  border-color: transparent;
-  font-weight: 600;
-}
-
-.view-header-actions .view-edit-btn:hover {
-  background: #fff;
-}
-
 .view-header-actions .view-ebay-btn {
   background: transparent;
   border-color: rgba(255, 255, 255, 0.2);
@@ -5450,7 +5439,50 @@ td input:checked + .slider:before {
   word-break: break-word;
 }
 
-/* (Footer removed — action buttons now live in .view-header-actions) */
+/* --- View modal sticky footer --- */
+.view-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.75rem var(--spacing-xl);
+  border-top: 1px solid var(--border);
+  background: var(--bg-secondary);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  flex-shrink: 0;
+}
+
+.view-modal-footer .view-footer-btn {
+  border-radius: 999px;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.view-modal-footer .view-footer-btn.secondary {
+  background: var(--glass-input-bg, rgba(0, 0, 0, 0.04));
+  border: 1px solid var(--glass-input-border, var(--border));
+  color: var(--text-primary);
+}
+
+.view-modal-footer .view-footer-btn.secondary:hover {
+  background: var(--glass-input-focus-bg, rgba(0, 0, 0, 0.07));
+  border-color: var(--primary);
+}
+
+.view-modal-footer .view-footer-btn.primary {
+  background: var(--accent, #f59e0b);
+  color: #fff;
+  border: 1px solid transparent;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25);
+}
+
+.view-modal-footer .view-footer-btn.primary:hover {
+  filter: brightness(1.1);
+}
 
 /* Clickable N# badge */
 .view-modal-catalog-id[style*="cursor: pointer"]:hover {
@@ -5545,6 +5577,10 @@ td input:checked + .slider:before {
 
   .view-numista-section {
     padding: var(--spacing-sm) var(--spacing);
+  }
+
+  .view-modal-footer {
+    border-radius: 0;
   }
 
 }
@@ -8618,7 +8654,7 @@ th {
   margin: 0.85rem calc(-1 * var(--spacing)) calc(-1 * var(--spacing));
   padding: 0.75rem var(--spacing) 0.65rem;
   border-top: 1px solid var(--border);
-  background: var(--bg-primary);
+  background: var(--bg-secondary);
   border-radius: 0 0 var(--radius-lg) var(--radius-lg);
   gap: 0.4rem;
   justify-content: flex-end;
