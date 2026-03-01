@@ -460,9 +460,7 @@ const generateLookupTable = (inventory, options = {}) => {
       console.warn('generateLookupTable: No valid inventory data provided');
       return createEmptyLookupTable();
     }
-    
-    console.log(`🔍 Generating lookup table from ${data.length} inventory items...`);
-    
+    debugLog(`🔍 Generating lookup table from ${data.length} inventory items...`);
     // Extract unique values for each field from inventory
     const inventoryNames = extractUniqueValues(data, 'name');
     const inventoryPurchaseLocations = extractUniqueValues(data, 'purchase_location');
