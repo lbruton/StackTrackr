@@ -208,7 +208,7 @@ test.describe('Diff/Merge Import Flows', () => {
 
   test.afterAll(() => {
     // Clean up any temp files created during tests
-    const patterns = ['_temp_import.csv', '_temp_import.json', '_temp_exact.csv', '_temp_override.csv', '_temp_override.json'];
+    const patterns = ['_temp_import.csv', '_temp_import.json', '_temp_exact.csv', '_temp_override.csv', '_temp_override.json', '_temp_legacy.csv'];
     for (const p of patterns) {
       const fp = path.join(__dirname, p);
       if (fs.existsSync(fp)) fs.unlinkSync(fp);
@@ -468,7 +468,7 @@ test.describe('Diff/Merge Import Flows', () => {
   });
 
   // -----------------------------------------------------------------------
-  // Test 6: Empty diff (no changes) — toast appears, no DiffModal
+  // Test 6: CSV with matching items — DiffModal shows modified only (no added/deleted)
   // -----------------------------------------------------------------------
 
   test('CSV with matching items shows only modified (no added or deleted)', async ({ page }) => {
