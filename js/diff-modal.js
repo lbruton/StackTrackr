@@ -156,8 +156,8 @@
           cHtml += '<div style="font-weight:600">' + _esc(cf.itemName || cf.itemKey || 'Item') + '</div>';
           cHtml += '<div style="font-size:0.73rem;opacity:0.6;margin-bottom:0.35rem">' + _esc(cf.field) + '</div>';
           cHtml += '<div style="display:flex;gap:0.75rem">';
-          cHtml += '<label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;font-size:0.8rem"><input type="radio" name="diffConflict' + ci + '" value="local" ' + (res === 'local' ? 'checked' : '') + ' data-conflict="' + ci + '" style="accent-color:var(--primary,#3b82f6)"> Local: <strong>' + _esc(String(cf.localVal != null ? cf.localVal : '\u2014')) + '</strong></label>';
-          cHtml += '<label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;font-size:0.8rem"><input type="radio" name="diffConflict' + ci + '" value="remote" ' + (res === 'remote' ? 'checked' : '') + ' data-conflict="' + ci + '" style="accent-color:var(--primary,#3b82f6)"> Remote: <strong>' + _esc(String(cf.remoteVal != null ? cf.remoteVal : '\u2014')) + '</strong></label>';
+          cHtml += '<label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;font-size:0.8rem"><input type="radio" name="diffConflict' + ci + '" value="local" ' + (res === 'local' ? 'checked' : '') + ' data-conflict="' + ci + '" style="width:16px;height:16px;padding:0;border:none;accent-color:var(--primary,#3b82f6)"> Local: <strong>' + _esc(String(cf.localVal != null ? cf.localVal : '\u2014')) + '</strong></label>';
+          cHtml += '<label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;font-size:0.8rem"><input type="radio" name="diffConflict' + ci + '" value="remote" ' + (res === 'remote' ? 'checked' : '') + ' data-conflict="' + ci + '" style="width:16px;height:16px;padding:0;border:none;accent-color:var(--primary,#3b82f6)"> Remote: <strong>' + _esc(String(cf.remoteVal != null ? cf.remoteVal : '\u2014')) + '</strong></label>';
           cHtml += '</div></div>';
         }
         cHtml += '</div>';
@@ -260,7 +260,7 @@
       var name = _esc(item.name || 'Unnamed item');
 
       html += '<div style="display:flex;align-items:flex-start;gap:0.5rem;padding:0.45rem 0.65rem;font-size:0.85rem">';
-      html += '<input type="checkbox" data-check="' + key + '" ' + (checked ? 'checked' : '') + ' style="accent-color:var(--primary,#3b82f6);margin-top:2px;flex-shrink:0">';
+      html += '<input type="checkbox" data-check="' + key + '" ' + (checked ? 'checked' : '') + ' style="width:16px;height:16px;min-width:16px;padding:0;border:none;accent-color:var(--primary,#3b82f6);margin-top:2px;flex-shrink:0;cursor:pointer">';
       html += '<div style="flex-shrink:0;width:20px;height:20px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;margin-top:1px;background:' + cc.bg + ';color:' + cc.color + '">' + icon + '</div>';
 
       html += '<div style="flex:1;min-width:0">';
