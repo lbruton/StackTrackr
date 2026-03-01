@@ -318,12 +318,11 @@ The project uses `ruleset.xml` at the project root. PMD analyzes JavaScript for 
 
 ## Documentation Policy
 
-StakTrakrWiki (`lbruton/StakTrakrWiki`) is the single source of truth for all
-architecture, operational runbooks, and pattern documentation. Do not create
-new markdown documentation in this repo (except `docs/plans/` for planning artifacts).
+The `wiki/` subfolder is the single source of truth for all
+architecture, operational runbooks, and pattern documentation.
+New documentation goes in `wiki/` (or `docs/plans/` for planning artifacts).
 
-After any commit that changes behavior, update the relevant wiki page via `gh api`.
-Use `claude-context` to search the wiki: index path `/Volumes/DATA/GitHub/StakTrakrWiki`.
+After any commit that changes behavior, update the relevant wiki page directly.
 
 ---
 
