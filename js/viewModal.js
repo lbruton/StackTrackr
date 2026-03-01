@@ -69,6 +69,7 @@ async function showViewModal(index) {
   }
 
   modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
 
   // Load images and Numista data asynchronously after modal is visible
   // Share a single API result to avoid duplicate calls
@@ -121,6 +122,7 @@ async function showViewModal(index) {
 function closeViewModal() {
   const modal = document.getElementById('viewItemModal');
   if (modal) modal.style.display = 'none';
+  document.body.style.overflow = '';
 
   // Destroy price history chart to free canvas resources
   if (_viewModalChartInstance) {
@@ -678,20 +680,26 @@ function _renderHeaderActions(item, index) {
     if (typeof openEbayBuySearch === 'function') openEbayBuySearch(searchTerm);
     else if (typeof openEbaySoldSearch === 'function') openEbaySoldSearch(searchTerm);
   });
+  headerActions.appendChild(ebayBtn);
+}
+
+function _renderFooterActions(item, index) {
+  const footer = document.getElementById('viewModalFooter');
+  if (!footer) return;
+  footer.textContent = '';
   const editBtn = document.createElement('button');
-  editBtn.className = 'view-edit-btn';
+  editBtn.className = 'view-footer-btn primary';
   editBtn.textContent = 'Edit';
   editBtn.addEventListener('click', () => {
     closeViewModal();
     if (typeof editItem === 'function') editItem(index);
   });
   const closeBtn = document.createElement('button');
-  closeBtn.className = 'view-close-btn';
+  closeBtn.className = 'view-footer-btn secondary';
   closeBtn.textContent = 'Close';
   closeBtn.addEventListener('click', closeViewModal);
-  headerActions.appendChild(ebayBtn);
-  headerActions.appendChild(editBtn);
-  headerActions.appendChild(closeBtn);
+  footer.appendChild(closeBtn);
+  footer.appendChild(editBtn);
 }
 
 /**
@@ -729,6 +737,7 @@ function buildViewContent(item, index) {
   }
 
   _renderHeaderActions(item, index);
+  _renderFooterActions(item, index);
   return frag;
 }
 
@@ -831,7 +840,7 @@ async function loadViewNumistaData(item, container, apiResult) {
   const section = _el('div', 'view-numista-section');
 
   const badge = _el('span', 'view-numista-badge');
-  badge.textContent = 'Numista Data';
+  badge.textContent = 'Catalog Data';
   section.appendChild(badge);
 
   const grid = _el('div', 'view-detail-grid');
