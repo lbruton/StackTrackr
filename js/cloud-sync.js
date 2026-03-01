@@ -673,6 +673,128 @@ function logCloudSyncActivity(action, result, detail, duration) {
 }
 
 // ---------------------------------------------------------------------------
+// Manifest generation (diff-merge architecture — STAK-184 Task 4)
+// ---------------------------------------------------------------------------
+
+/**
+ * Build a sync manifest from the changeLog and upload it encrypted to Dropbox.
+ * The manifest captures field-level changes since the last push so that
+ * diff-merge can resolve conflicts without downloading the full vault.
+ *
+ * Failure here is non-blocking — the caller wraps this in try/catch so that
+ * a manifest error never prevents the vault push from completing.
+ *
+ * @param {string} token   - Dropbox OAuth bearer token
+ * @param {string} password - Vault encryption password (composite key)
+ * @param {string} syncId  - The syncId generated for this push
+ * @returns {Promise<void>}
+ */
+async function buildAndUploadManifest(token, password, syncId) {
+  // 1. Determine the cutoff timestamp from the last successful push
+  var lastPush = syncGetLastPush();
+  var lastSyncTimestamp = lastPush ? lastPush.timestamp : null;
+
+  // 2. Collect changeLog entries since the last push
+  var entries = [];
+  if (typeof getManifestEntries === 'function') {
+    entries = getManifestEntries(lastSyncTimestamp) || [];
+  } else {
+    debugLog('[CloudSync] getManifestEntries not available — manifest will have empty changes');
+  }
+
+  // 3. Transform entries: group by itemKey, collect field-level changes
+  var changesByKey = {};
+  var summary = { itemsAdded: 0, itemsEdited: 0, itemsDeleted: 0, settingsChanged: 0 };
+  var countedKeys = { add: {}, edit: {}, delete: {}, setting: {} };
+
+  for (var i = 0; i < entries.length; i++) {
+    var entry = entries[i];
+    var key = entry.itemKey || '_settings';
+
+    if (!changesByKey[key]) {
+      changesByKey[key] = {
+        itemKey: key,
+        itemName: entry.itemName || null,
+        type: entry.type,
+        fields: [],
+      };
+    }
+
+    changesByKey[key].fields.push({
+      field: entry.field || null,
+      oldValue: entry.oldValue != null ? entry.oldValue : null,
+      newValue: entry.newValue != null ? entry.newValue : null,
+      timestamp: entry.timestamp,
+    });
+
+    // Count unique items per type for the summary
+    var entryType = entry.type;
+    if (entryType === 'add' && !countedKeys.add[key]) {
+      countedKeys.add[key] = true;
+      summary.itemsAdded++;
+    } else if (entryType === 'edit' && !countedKeys.edit[key]) {
+      countedKeys.edit[key] = true;
+      summary.itemsEdited++;
+    } else if (entryType === 'delete' && !countedKeys.delete[key]) {
+      countedKeys.delete[key] = true;
+      summary.itemsDeleted++;
+    } else if (entryType === 'setting' && !countedKeys.setting[key]) {
+      countedKeys.setting[key] = true;
+      summary.settingsChanged++;
+    }
+  }
+
+  // Convert grouped changes object to array
+  var transformedEntries = [];
+  var keys = Object.keys(changesByKey);
+  for (var k = 0; k < keys.length; k++) {
+    transformedEntries.push(changesByKey[keys[k]]);
+  }
+
+  // 4. Build manifest JSON (schema v1)
+  var manifestPayload = {
+    version: 1,
+    generatedAt: new Date().toISOString(),
+    deviceId: getSyncDeviceId(),
+    syncId: syncId,
+    previousSyncId: lastPush ? lastPush.syncId : null,
+    changes: transformedEntries,
+    summary: summary,
+  };
+
+  // 5. Encrypt the manifest
+  if (typeof encryptManifest !== 'function') {
+    throw new Error('encryptManifest not available — cannot build manifest');
+  }
+  var manifestBytes = await encryptManifest(manifestPayload, password);
+
+  // 6. Upload encrypted manifest to Dropbox
+  debugLog('[CloudSync] Uploading manifest to', SYNC_MANIFEST_PATH, '…');
+  var manifestArg = JSON.stringify({
+    path: SYNC_MANIFEST_PATH,
+    mode: 'overwrite',
+    autorename: false,
+    mute: true,
+  });
+  var manifestResp = await fetch('https://content.dropboxapi.com/2/files/upload', {
+    method: 'POST',
+    headers: {
+      Authorization: 'Bearer ' + token,
+      'Content-Type': 'application/octet-stream',
+      'Dropbox-API-Arg': manifestArg,
+    },
+    body: manifestBytes,
+  });
+
+  if (!manifestResp.ok) {
+    var respBody = await manifestResp.text().catch(function () { return ''; });
+    throw new Error('Manifest upload failed: ' + manifestResp.status + ' ' + respBody);
+  }
+
+  debugLog('[CloudSync] Manifest uploaded:', transformedEntries.length, 'change groups,', entries.length, 'total entries');
+}
+
+// ---------------------------------------------------------------------------
 // Push (upload encrypted vault to Dropbox)
 // ---------------------------------------------------------------------------
 
@@ -950,6 +1072,13 @@ async function pushSyncVault() {
       body: metaBytes,
     });
     if (!metaResp.ok) throw new Error('Metadata upload failed: ' + metaResp.status);
+
+    // Upload manifest (non-blocking — failure must NOT prevent push completion)
+    try {
+      await buildAndUploadManifest(token, password, syncId);
+    } catch (manifestErr) {
+      debugLog('[CloudSync] Manifest upload failed (non-blocking):', manifestErr.message);
+    }
 
     // Persist push state
     var pushMeta = { syncId: syncId, timestamp: now, rev: rev, itemCount: itemCount };
