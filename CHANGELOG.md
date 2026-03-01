@@ -9,6 +9,213 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.19] - 2026-03-01
+
+### Added — DiffMerge Integration: Selective Apply for Cloud Sync and Vault Restore (STAK-190)
+
+- **Added**: `_applyAndFinalize()` shared post-apply helper consolidating backup, inventory assignment, settings apply, save/render, pull metadata, toast summary, status indicator, and tab broadcast
+- **Changed**: Cloud sync vault-first pull uses DiffModal for selective apply instead of full overwrite via `restoreVaultData()`
+- **Changed**: Cloud sync manifest-first pull passes user selections through `_deferredVaultRestore()` for selective apply after vault download
+- **Changed**: Encrypted vault restore (.stvault) shows DiffModal preview with item and settings diffs — users choose which changes to accept
+- **Added**: E2E Playwright tests for selective apply paths covering CSV import deselection, vault restore preview, and DiffModal callback structure
+
+---
+
+## [3.33.18] - 2026-03-01
+
+### Added — Diff/Merge Architecture Foundation (STAK-184)
+
+- **Added**: `SYNC_MANIFEST_PATH` and `SYNC_MANIFEST_PATH_LEGACY` constants for encrypted change manifest storage
+- **Added**: `manifestPruningThreshold` storage key for configurable manifest entry retention
+- **Added**: `diffReviewModal` HTML scaffold — reusable change-review modal for sync, CSV import, and JSON import
+- **Added**: `diff-modal.js` script load order and service worker cache registration
+
+---
+
+## [3.33.17] - 2026-02-28
+
+### Added — Realized Gains/Losses — Item Disposition (STAK-72)
+
+- **Added**: Disposition workflow — mark items as Sold, Traded, Lost, Gifted, or Returned via glassmorphic modal
+- **Added**: Realized gain/loss calculation based on disposition amount vs purchase cost
+- **Added**: Disposition badge on table rows and card views with type-specific color coding
+- **Added**: Disposed items shown with reduced opacity and strikethrough styling
+- **Added**: Show/Hide Disposed toggle in filter controls (hidden by default)
+- **Added**: Disposition details section in View Item modal with full transaction history
+- **Added**: Undo Disposition action to restore items to active inventory
+- **Added**: Portfolio summary cards show disposed item count and realized gain/loss per metal
+- **Added**: CSV export includes Disposition Type, Disposition Date, Disposition Amount, and Realized G/L columns
+
+---
+
+## [3.33.16] - 2026-02-28
+
+### Added — Clone Mode Redesign + Edit Modal UX (STAK-375)
+
+- **Changed**: Clone button now activates clone mode on the edit modal with field-level checkboxes instead of opening a separate modal
+- **Changed**: Edit modal sections are now always visible (non-collapsible) for easier scrolling
+- **Changed**: Purchase Date N/A is now a toggle button matching the spot lookup button style
+- **Removed**: Numista image refresh button (unused, cluttered UI)
+- **Added**: Save & Clone Another button for creating multiple clones in one session
+
+---
+
+## [3.33.15] - 2026-02-28
+
+### Added — Beta Domain Toast (STAK-376)
+
+- **Added**: Environment badge (BETA / PREVIEW / LOCAL) next to app logo on non-production domains
+- **Added**: One-time session toast explaining data isolation between origins (e.g. beta vs production)
+- **Added**: Domain detection for `beta.staktrakr.com`, `*.pages.dev`, `localhost`, and `file://` protocol
+
+---
+
+## [3.33.14] - 2026-02-28
+
+### Fixed — Goldback G½ Slug Resolution (STAK-373)
+
+- **Fixed**: Goldback G½ slugs (`ghalf`) now resolved correctly on market page — regex and weight map accept both `ghalf` and `g0.5` formats (STAK-373)
+
+---
+
+## [3.33.13] - 2026-02-28
+
+### Added — Market Page Phase 2: Manifest-Driven Coins & Goldback Vendor (STAK-371)
+
+- **Added**: Manifest-driven coin discovery — API can add new coins without frontend code changes (STAK-371)
+- **Added**: 3-tier metadata resolution chain: manifest → hardcoded → goldback slug parser → default
+- **Added**: Goldback vendor chip on market cards showing goldback.com reference price with staleness indicator
+- **Added**: `GOLDBACK_WEIGHTS` table and `_parseGoldbackSlug()` for auto-deriving metadata from any goldback slug
+- **Added**: `getActiveRetailSlugs()`, `getRetailCoinMeta()`, `getVendorDisplay()` resolver functions
+- **Changed**: All rendering functions use resolver layer instead of direct constant lookups
+
+---
+
+## [3.33.12] - 2026-02-28
+
+### Fixed — Version Drift Correction
+
+- **Fixed**: Version number corrected to v3.33.12 — PR #591 (v3.33.11) merged before PR #590 (v3.33.10), reverting the version number
+
+---
+
+## [3.33.10] - 2026-02-28
+
+### Added — Mobile Long-Press Spot Price Entry (STAK-285)
+
+- **Added**: Long-press (600ms) on spot price card opens inline manual input on mobile/touch devices, mirroring desktop Shift+click behavior (STAK-285)
+- **Changed**: Hint text updated from "Shift+click" to "Shift+click or long-press" for discoverability
+
+---
+
+## [3.33.11] - 2026-02-28
+
+### Fixed — Spot Price Card Label Root Cause (STAK-274)
+
+- **Fixed**: Spot timestamp label now compares raw storage data (provider+timestamp) instead of rendered HTML to detect when cache and API are identical, correctly showing "Last API Sync" when cache is disabled
+
+---
+
+## [3.33.09] - 2026-02-28
+
+### Fixed — Spot Price Card Cache Label (STAK-274)
+
+- **Fixed**: Spot price card shows "Last API Sync" directly when cache is disabled (duration=0) or when cache and API timestamps are identical, instead of misleading "Last Cache Refresh" label
+
+---
+
+## [3.33.08] - 2026-02-28
+
+### Fixed — Vendor Medal Ranking
+
+- **Fixed**: Vendor medals now awarded to all in-stock vendors with a price, not just those with confidence >= 60 (STAK-370)
+
+---
+
+## [3.33.07] - 2026-02-28
+
+### Added — Oklahoma Goldback G1 on Market Page
+
+- **Added**: Oklahoma Goldback G1 (`goldback-oklahoma-g1`) on market prices page with APMEX and Hero Bullion vendor tracking (STAK-370)
+- **Added**: Goldback vendor display name, brand color, and homepage URL in retail vendor config (STAK-370)
+
+---
+
+## [3.33.06] - 2026-02-27
+
+### Added — Market Page Redesign Phase 1
+
+- **Added**: Market list view with full-width card layout — CSS Grid responsive at desktop/tablet/mobile breakpoints, metal accent border, image placeholders (STAK-369)
+- **Added**: Inline 7-day trend charts per card with Chart.js — spike detection (two-pass temporal + cross-vendor median), dashed interpolation for gaps, OOS carry-forward pricing (STAK-369)
+- **Added**: Vendor price chips with color-coded brand labels, medal rankings for best prices, OOS strikethrough styling (STAK-369)
+- **Added**: Computed MED/LOW/AVG stats row with live vendor + history fallback (STAK-369)
+- **Added**: Card click-to-expand chart interaction, functional search filtering, sort by name/metal/price/trend (STAK-369)
+- **Added**: Enabled by default — disable with `?market_list_view=false` URL parameter (STAK-369)
+- **Added**: Sponsor badge with GitHub Sponsors link in market footer (STAK-369)
+- **Fixed**: Reverse tabnabbing protection on vendor links — `popup.opener = null` + `noopener,noreferrer` (STAK-369)
+- **Fixed**: Chart.js canvas color rendering — hex value instead of CSS `var()` (STAK-369)
+- **Fixed**: Chart.js `maxTicksLimit` option (was silently ignored `maxTicksToShow`) (STAK-369)
+- **Fixed**: Accessibility — `aria-label` on market search input (STAK-369)
+- **Fixed**: Mobile breakpoint — stats column spans full width at 767px (STAK-369)
+
+---
+
+## [3.33.05] - 2026-02-27
+
+### Fixed — Daily Maintenance: Search Cache, Dead Code Cleanup
+
+- **Fixed**: Search cache upgraded from string to object — caches formatted date to avoid re-parsing on every keystroke. Formatted date now included in multi-word search text (STAK-368)
+- **Removed**: Dead `downloadStorageReport()` function (62 lines, zero callers) from utils.js (STAK-368)
+- **Removed**: Duplicate `window.MAX_LOCAL_FILE_SIZE` export from utils.js — already exported from constants.js (STAK-368)
+
+---
+
+## [3.33.04] - 2026-02-27
+
+### Fixed — Quick-Fix Batch (NGC Lookup, Fractional Oz, Cloud Sync Reorder)
+
+- **Fixed**: NGC cert lookup link now extracts numeric grade only — e.g. "65" instead of "MS 65 CAM" (STAK-357)
+- **Fixed**: Fractional troy ounce weights display as "0.25 oz" instead of auto-converting to grams (STAK-361)
+- **Added**: Cloud Sync button registered in reorderable header system — toggle and reorder via Settings (STAK-365)
+
+---
+
+## [3.33.03] - 2026-02-27
+
+### Fixed — Announcements Cleanup
+
+- **Fixed**: Removed stale v3.32.44/v3.32.45 entries from What's New — these were pre-release patches already rolled into v3.33.00
+- **Fixed**: Removed completed "Numista Field Origin Tracking" from roadmap — shipped in v3.33.01
+- **Fixed**: Restored "Cloud Backup Conflict Detection (STAK-150)" to roadmap as next priority
+
+---
+
+## [3.33.02] - 2026-02-27
+
+### Added — Cloud Sync Safety Overhaul
+
+- **Added**: Empty-vault push guard — blocks syncing 0-item vault over populated cloud data, offers pull instead (STAK-295)
+- **Added**: Cloud-side backup-before-overwrite — copies existing vault to /backups/ before every sync push
+- **Added**: Dropbox folder restructuring — /sync/ and /backups/ subfolders with automatic migration from flat layout
+- **Added**: Enhanced manifest schema v2 — inventory hash, metals summary, vault size for efficient change detection
+- **Added**: DiffEngine restore preview modal — full field-level diff before applying remote sync updates (STAK-190)
+- **Added**: Configurable backup history depth — Settings dropdown (3/5/10/20, default 5) with auto-prune
+- **Added**: Multi-tab sync guard — BroadcastChannel leader election prevents concurrent sync from multiple tabs (STAK-360)
+
+---
+
+## [3.33.01] - 2026-02-27
+
+### Added — Numista Search Overhaul
+
+- **Added**: Per-field origin tracking (fieldMeta) — tracks whether each field came from Numista, PCGS, CSV import, or manual entry (STAK-363)
+- **Added**: Two-tier re-sync picker modal with diff hints and smart pre-check defaults based on field origin (STAK-345)
+- **Added**: Independent tag blacklist with Settings UI management, separate from chip grouping blacklist (STAK-354)
+- **Added**: Auto-apply Numista tags toggle — global setting with per-action override in re-sync picker (STAK-346)
+- **Added**: Backup export/import now includes numistaData and fieldMeta for complete round-trip preservation (STAK-362)
+
+---
+
 ## [3.33.00] - 2026-02-26
 
 ### Added — Cloud Sync Overhaul, Image Pipeline, Numista Integrity, Menu UX, Retail Charts

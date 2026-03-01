@@ -777,6 +777,12 @@ const getChipColors = (field, value, index) => {
 const filterInventoryAdvanced = () => {
   let result = inventory;
 
+  // Filter out disposed items unless toggle is active (STAK-72)
+  const showDisposed = document.getElementById('showDisposedToggle')?.checked || false;
+  if (!showDisposed) {
+    result = result.filter(item => !item.disposition);
+  }
+
   // Apply advanced filters
   Object.entries(activeFilters).forEach(([field, criteria]) => {
     if (criteria && typeof criteria === 'object' && Array.isArray(criteria.values)) {
@@ -867,13 +873,43 @@ const filterInventoryAdvanced = () => {
   return result.filter(item => {
     if (!terms.length) return true;
 
-    const formattedDate = formatDisplayDate(item.date).toLowerCase();
-    
+    // Retrieve or compute cached search data
+    let cached = searchCache.get(item);
+
+    // Upgrade legacy cache (string) to object or handle cache miss
+    if (!cached || typeof cached === 'string') {
+      const _searchTags = typeof getItemTags === 'function' ? getItemTags(item.uuid).join(' ') : '';
+      const _formattedDate = formatDisplayDate(item.date).toLowerCase();
+
+      const itemText = [
+        item.metal,
+        item.composition || '',
+        item.name,
+        item.type,
+        item.purchaseLocation,
+        item.storageLocation || '',
+        item.notes || '',
+        String(item.year || ''),
+        item.grade || '',
+        item.gradingAuthority || '',
+        String(item.certNumber || ''),
+        String(item.numistaId || ''),
+        item.serialNumber || '',
+        _searchTags,
+        _formattedDate
+      ].join(' ').toLowerCase();
+
+      cached = { text: itemText, formattedDate: _formattedDate };
+      searchCache.set(item, cached);
+    }
+
+    const { text: itemText, formattedDate } = cached;
+
     // Handle comma-separated terms (OR logic between comma terms)
     return terms.some(q => {
       // Split each comma term into individual words for AND logic
       const words = q.split(/\s+/).filter(w => w.length > 0);
-      
+
       // Special handling for multi-word searches to prevent partial matches
       // If searching for "American Eagle", it should only match items that have both words
       // but NOT match "American Gold Eagle" (which has an extra word in between)
@@ -886,28 +922,6 @@ const filterInventoryAdvanced = () => {
         // For multi-word searches, check if the exact phrase exists or
         // if all words exist as separate word boundaries without conflicting words
         const exactPhrase = q.toLowerCase();
-        // STAK-126: include tags in searchable text
-        let itemText = searchCache.get(item);
-        if (itemText === undefined) {
-          const _searchTags = typeof getItemTags === 'function' ? getItemTags(item.uuid).join(' ') : '';
-          itemText = [
-            item.metal,
-            item.composition || '',
-            item.name,
-            item.type,
-            item.purchaseLocation,
-            item.storageLocation || '',
-            item.notes || '',
-            String(item.year || ''),
-            item.grade || '',
-            item.gradingAuthority || '',
-            String(item.certNumber || ''),
-            String(item.numistaId || ''),
-            item.serialNumber || '',
-            _searchTags
-          ].join(' ').toLowerCase();
-          searchCache.set(item, itemText);
-        }
 
         // Check for exact phrase match first
         if (itemText.includes(exactPhrase)) {

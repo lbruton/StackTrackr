@@ -290,7 +290,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-12 - STACK-38/STACK-31: Responsive card view + mobile layout
  */
 
-const APP_VERSION = "3.33.00";
+const APP_VERSION = "3.33.19";
 
 /**
  * Numista metadata cache TTL: 30 days in milliseconds.
@@ -466,6 +466,43 @@ const BRANDING_DOMAIN_OVERRIDE =
         return BRANDING_DOMAIN_OPTIONS.domainMap[host] || null;
       })()
     : null;
+
+/** @constant {Object} ENV_LABELS - Environment badge configuration for non-production domains (STAK-376) */
+const ENV_LABELS = {
+  beta: { label: 'BETA', className: 'env-badge--beta' },
+  preview: { label: 'PREVIEW', className: 'env-badge--preview' },
+  local: { label: 'LOCAL', className: 'env-badge--local' },
+};
+
+/** Detect non-production environment from hostname/protocol (STAK-376) */
+function getEnvironmentLabel() {
+  if (typeof window === 'undefined' || !window.location) return null;
+  const host = window.location.hostname.toLowerCase();
+  const proto = window.location.protocol;
+  if (host === 'beta.staktrakr.com') return ENV_LABELS.beta;
+  if (host.endsWith('.pages.dev')) return ENV_LABELS.preview;
+  if (host === 'localhost' || host === '127.0.0.1') return ENV_LABELS.local;
+  if (proto === 'file:') return ENV_LABELS.local;
+  return null;
+}
+
+/** @constant {Object} DISPOSITION_TYPES - Disposition types for realized gains tracking (STAK-72) */
+const DISPOSITION_TYPES = Object.freeze({
+  sold: { label: "Sold", requiresAmount: true },
+  traded: { label: "Traded", requiresAmount: true },
+  lost: { label: "Lost", requiresAmount: false },
+  gifted: { label: "Gifted", requiresAmount: false },
+  returned: { label: "Returned", requiresAmount: true },
+});
+
+/**
+ * Check whether an inventory item has been disposed
+ * @param {Object} item - Inventory item object
+ * @returns {boolean} True if the item has a disposition record
+ */
+function isDisposed(item) {
+  return !!item?.disposition;
+}
 
 /** @constant {string} LS_KEY - LocalStorage key for inventory data */
 const LS_KEY = "metalInventory";
@@ -657,6 +694,9 @@ const DEFAULT_SORT_COL_KEY = "defaultSortColumn";
 /** @constant {string} DEFAULT_SORT_DIR_KEY - LocalStorage key for default inventory sort direction */
 const DEFAULT_SORT_DIR_KEY = "defaultSortDir";
 
+/** @constant {string} SHOW_REALIZED_KEY - LocalStorage key for showing realized G/L in summary cards (STAK-72) */
+const SHOW_REALIZED_KEY = "showRealizedGainLoss";
+
 /** @constant {string} METAL_ORDER_KEY - LocalStorage key for metal order/visibility config */
 const METAL_ORDER_KEY = "metalOrderConfig";
 
@@ -678,11 +718,17 @@ const HEADER_VAULT_BTN_KEY = "headerVaultBtnVisible";
 /** @constant {string} HEADER_RESTORE_BTN_KEY - LocalStorage key for header restore button visibility */
 const HEADER_RESTORE_BTN_KEY = "headerRestoreBtnVisible";
 
+/** @constant {string} HEADER_CLOUD_SYNC_BTN_KEY - LocalStorage key for header cloud sync button visibility */
+const HEADER_CLOUD_SYNC_BTN_KEY = "headerCloudSyncBtnVisible";
+
 /** @constant {string} HEADER_BTN_SHOW_TEXT_KEY - LocalStorage key for show-text-under-icons toggle */
 const HEADER_BTN_SHOW_TEXT_KEY = "headerBtnShowText";
 
 /** @constant {string} RETAIL_MANIFEST_TS_KEY - LocalStorage key for market manifest generated_at timestamp */
 const RETAIL_MANIFEST_TS_KEY = "retailManifestGeneratedAt";
+
+/** @constant {string} RETAIL_MANIFEST_SLUGS_KEY - LocalStorage key for cached manifest coin slug list */
+const RETAIL_MANIFEST_SLUGS_KEY = "retailManifestSlugs";
 
 // =============================================================================
 // IMAGE PROCESSOR DEFAULTS (STACK-95)
@@ -716,14 +762,33 @@ const SYNC_POLL_INTERVAL = 600000;
 /** Debounce delay before pushing after a saveInventory() call (2 seconds) */
 const SYNC_PUSH_DEBOUNCE = 2000;
 
-/** Dropbox path for the rolling sync vault file */
-const SYNC_FILE_PATH = '/StakTrakr/staktrakr-sync.stvault';
+/** Legacy Dropbox paths (pre-v2 flat layout — used for migration detection only) */
+const SYNC_FILE_PATH_LEGACY = '/StakTrakr/staktrakr-sync.stvault';
+const SYNC_META_PATH_LEGACY = '/StakTrakr/staktrakr-sync.json';
+const SYNC_IMAGES_PATH_LEGACY = '/StakTrakr/staktrakr-images.stvault';
 
-/** Dropbox path for the lightweight sync metadata pointer */
-const SYNC_META_PATH = '/StakTrakr/staktrakr-sync.json';
+/** Dropbox path for the rolling sync vault file (v2 — /sync/ subfolder) */
+const SYNC_FILE_PATH = '/StakTrakr/sync/staktrakr-sync.stvault';
 
-/** Dropbox path for the encrypted user-image vault (IndexedDB photos) */
-const SYNC_IMAGES_PATH = '/StakTrakr/staktrakr-images.stvault';
+/** Dropbox path for the lightweight sync metadata pointer (v2 — /sync/ subfolder) */
+const SYNC_META_PATH = '/StakTrakr/sync/staktrakr-sync.json';
+
+/** Dropbox path for the encrypted user-image vault (v2 — /sync/ subfolder) */
+const SYNC_IMAGES_PATH = '/StakTrakr/sync/staktrakr-images.stvault';
+
+/** Dropbox path for the encrypted change manifest (v2 — /sync/ subfolder) */
+const SYNC_MANIFEST_PATH = '/StakTrakr/sync/staktrakr-sync.stmanifest';
+
+/** Legacy Dropbox path for the encrypted change manifest (flat root) */
+const SYNC_MANIFEST_PATH_LEGACY = '/StakTrakr/staktrakr-sync.stmanifest';
+
+/** Dropbox folder for cloud-side backups */
+const SYNC_BACKUP_FOLDER = '/StakTrakr/backups';
+
+/** Cloud backup history depth — how many backups to retain */
+const CLOUD_BACKUP_HISTORY_KEY = 'cloud_backup_history_depth';
+const CLOUD_BACKUP_HISTORY_DEFAULT = 5;
+const CLOUD_BACKUP_HISTORY_OPTIONS = [3, 5, 10, 20];
 
 /**
  * Keys included in a sync vault (excludes API keys, tokens, spot history).
@@ -802,8 +867,10 @@ const ALLOWED_STORAGE_KEYS = [
   HEADER_MARKET_BTN_KEY,      // boolean string: "true"/"false" — header market button visibility
   HEADER_VAULT_BTN_KEY,       // boolean string: null=show, "false"=hide, "true"=show — vault button visibility
   HEADER_RESTORE_BTN_KEY,     // boolean string: "true"/"false" — restore button visibility
+  HEADER_CLOUD_SYNC_BTN_KEY,  // boolean string: "true"/"false" — cloud sync button visibility
   HEADER_BTN_SHOW_TEXT_KEY,   // boolean string: "true"/"false" — show text labels under header icons
   RETAIL_MANIFEST_TS_KEY,     // string ISO timestamp — market manifest generated_at cache
+  RETAIL_MANIFEST_SLUGS_KEY,  // JSON array: cached manifest coin slug list
   "layoutVisibility",         // JSON object: { spotPrices, totals, search, table } (STACK-54) — legacy, migrated to layoutSectionConfig
   "layoutSectionConfig",      // JSON array: ordered section config [{ id, label, enabled }] (STACK-54)
   LAST_VERSION_CHECK_KEY,     // timestamp: last remote version check (STACK-67)
@@ -811,7 +878,6 @@ const ALLOWED_STORAGE_KEYS = [
   LATEST_REMOTE_URL_KEY,      // string: cached latest remote release URL (STACK-67)
   "ff_migration_fuzzy_autocomplete", // one-time migration flag (v3.26.01)
   "migration_hourlySource",          // one-time migration flag: re-tag StakTrakr hourly entries
-  "migration_seedHistoryMerge",      // one-time migration flag: backfill full historical seed data (v3.32.01)
   "numistaLookupRules",              // custom Numista search lookup rules (JSON array)
   "numistaViewFields",               // view modal Numista field visibility config (JSON object)
   TIMEZONE_KEY,                        // string: "auto" | "UTC" | IANA zone (STACK-63)
@@ -822,6 +888,7 @@ const ALLOWED_STORAGE_KEYS = [
   DESKTOP_CARD_VIEW_KEY,                 // boolean string: "true"/"false" — desktop card view (STAK-118)
   DEFAULT_SORT_COL_KEY,                  // number string: default sort column index
   DEFAULT_SORT_DIR_KEY,                  // string: "asc"|"desc" — default sort direction
+  SHOW_REALIZED_KEY,                     // boolean string: "true"/"false" — show realized G/L in summary cards (STAK-72)
   METAL_ORDER_KEY,                       // JSON array: metal order/visibility config
   ITEM_TAGS_KEY,                           // JSON object: per-item tags keyed by UUID (STAK-126)
   "enabledSeedRules",                        // JSON array: enabled built-in Numista lookup rule IDs
@@ -847,6 +914,11 @@ const ALLOWED_STORAGE_KEYS = [
   STORAGE_PERSIST_GRANTED_KEY,                         // boolean string: "true"/"false" — storage persistence grant flag
   "headerBtnOrder",                                    // JSON array: header button card order (STAK-320)
   "headerAboutBtnVisible",                             // boolean string: "true"/"false" — about button visibility (STAK-320)
+  "tagBlacklist",                                      // JSON array: tags excluded from auto-tagging
+  "numista_tags_auto",                                 // boolean string: "true"/"false" — auto-tag from Numista data
+  "cloud_sync_migrated",                               // string: "v2" — cloud folder migration flag (flat → /sync/ + /backups/)
+  "cloud_backup_history_depth",                        // string: "3"|"5"|"10"|"20" — max cloud backups to retain
+  "manifestPruningThreshold",                          // number string: max sync cycles to retain in manifest before pruning older entries (STAK-184)
 ];
 
 // =============================================================================
@@ -1238,6 +1310,27 @@ const FEATURE_FLAGS = {
     urlOverride: true,
     userToggle: true,
     description: "Coin image caching and item view modal",
+    phase: "beta"
+  },
+  MARKET_LIST_VIEW: {
+    enabled: true,
+    urlOverride: true,
+    userToggle: true,
+    description: "New single-row market card layout with search, sort, and inline charts",
+    phase: "beta"
+  },
+  MARKET_DASHBOARD_ITEMS: {
+    enabled: false,
+    urlOverride: true,
+    userToggle: true,
+    description: "Show goldback and dashboard items in the market list",
+    phase: "beta"
+  },
+  MARKET_AUTO_RETAIL: {
+    enabled: false,
+    urlOverride: true,
+    userToggle: true,
+    description: "Auto-update inventory retail prices from linked market data",
     phase: "beta"
   }
 };
@@ -1632,6 +1725,15 @@ if (typeof window !== "undefined") {
   window.SYNC_FILE_PATH = SYNC_FILE_PATH;
   window.SYNC_META_PATH = SYNC_META_PATH;
   window.SYNC_IMAGES_PATH = SYNC_IMAGES_PATH;
+  window.SYNC_FILE_PATH_LEGACY = SYNC_FILE_PATH_LEGACY;
+  window.SYNC_META_PATH_LEGACY = SYNC_META_PATH_LEGACY;
+  window.SYNC_IMAGES_PATH_LEGACY = SYNC_IMAGES_PATH_LEGACY;
+  window.SYNC_MANIFEST_PATH = SYNC_MANIFEST_PATH;
+  window.SYNC_MANIFEST_PATH_LEGACY = SYNC_MANIFEST_PATH_LEGACY;
+  window.SYNC_BACKUP_FOLDER = SYNC_BACKUP_FOLDER;
+  window.CLOUD_BACKUP_HISTORY_KEY = CLOUD_BACKUP_HISTORY_KEY;
+  window.CLOUD_BACKUP_HISTORY_DEFAULT = CLOUD_BACKUP_HISTORY_DEFAULT;
+  window.CLOUD_BACKUP_HISTORY_OPTIONS = CLOUD_BACKUP_HISTORY_OPTIONS;
   window.SYNC_SCOPE_KEYS = SYNC_SCOPE_KEYS;
   window.CERT_LOOKUP_URLS = CERT_LOOKUP_URLS;
   // Inline chip config
@@ -1694,10 +1796,15 @@ if (typeof window !== "undefined") {
   // Header button visibility keys (STAK-314)
   window.HEADER_VAULT_BTN_KEY = HEADER_VAULT_BTN_KEY;
   window.HEADER_RESTORE_BTN_KEY = HEADER_RESTORE_BTN_KEY;
+  window.HEADER_CLOUD_SYNC_BTN_KEY = HEADER_CLOUD_SYNC_BTN_KEY;
   window.HEADER_BTN_SHOW_TEXT_KEY = HEADER_BTN_SHOW_TEXT_KEY;
   window.RETAIL_MANIFEST_TS_KEY = RETAIL_MANIFEST_TS_KEY;
+  window.RETAIL_MANIFEST_SLUGS_KEY = RETAIL_MANIFEST_SLUGS_KEY;
   window.RETAIL_ANOMALY_THRESHOLD = RETAIL_ANOMALY_THRESHOLD;
   window.RETAIL_SPIKE_NEIGHBOR_TOLERANCE = RETAIL_SPIKE_NEIGHBOR_TOLERANCE;
+  // Disposition types for realized gains (STAK-72)
+  window.DISPOSITION_TYPES = DISPOSITION_TYPES;
+  window.isDisposed = isDisposed;
 }
 
 // Expose APP_VERSION globally for non-module usage
