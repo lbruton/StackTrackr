@@ -112,7 +112,7 @@ One file per 15-minute UTC slot. Used by `fetchStaktrakr15minRange()`. Entry `so
 | URL | `https://api.staktrakr.com/data/api/goldback-spot.json` |
 | Freshness field | `scraped_at` (ISO 8601 UTC) |
 | Stale threshold | 25 hours |
-| Poller | Fly.io goldback cron in `StakTrakrApi` (daily scrape) |
+| Poller | Fly.io `run-goldback.sh` cron in `StakTrakrApi` (hourly :01, skips if today's price exists) |
 
 Goldback is an informational feed. The Health modal shows its age but does not include it in the primary/backup verdict.
 
