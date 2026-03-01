@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.17] - 2026-02-28
+
+### Added — Realized Gains/Losses — Item Disposition (STAK-72)
+
+- **Added**: Disposition workflow — mark items as Sold, Traded, Lost, Gifted, or Returned via glassmorphic modal
+- **Added**: Realized gain/loss calculation based on disposition amount vs purchase cost
+- **Added**: Disposition badge on table rows and card views with type-specific color coding
+- **Added**: Disposed items shown with reduced opacity and strikethrough styling
+- **Added**: Show/Hide Disposed toggle in filter controls (hidden by default)
+- **Added**: Disposition details section in View Item modal with full transaction history
+- **Added**: Undo Disposition action to restore items to active inventory
+- **Added**: Portfolio summary cards show disposed item count and realized gain/loss per metal
+- **Added**: CSV export includes Disposition Type, Disposition Date, Disposition Amount, and Realized G/L columns
+
+---
+
 ## [3.33.16] - 2026-02-28
 
 ### Added — Clone Mode Redesign + Edit Modal UX (STAK-375)

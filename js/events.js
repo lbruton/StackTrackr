@@ -687,6 +687,15 @@ const setupSearchAndChipListeners = () => {
   if (typeof wireChipSortToggle === 'function') {
     wireChipSortToggle('chipSortOrder', 'settingsChipSortOrder');
   }
+
+  // Show Disposed toggle (STAK-72)
+  const showDisposedToggle = document.getElementById('showDisposedToggle');
+  if (showDisposedToggle) {
+    showDisposedToggle.addEventListener('change', () => {
+      if (typeof renderTable === 'function') renderTable();
+      if (typeof renderActiveFilters === 'function') renderActiveFilters();
+    });
+  }
 };
 
 /**
@@ -3190,6 +3199,96 @@ function handleAdvancedSavePassword() {
   }
 }
 window.handleAdvancedSavePassword = handleAdvancedSavePassword;
+
+// =============================================================================
+// Remove Item modal event listeners (STAK-72)
+// =============================================================================
+
+// Checkbox toggles disposition fields + footer buttons
+const removeItemDisposeCheck = document.getElementById('removeItemDisposeCheck');
+if (removeItemDisposeCheck) {
+  removeItemDisposeCheck.addEventListener('change', () => {
+    const checked = removeItemDisposeCheck.checked;
+    const fields = document.getElementById('removeItemDisposeFields');
+    const deleteBtn = document.getElementById('removeItemDeleteBtn');
+    const disposeBtn = document.getElementById('removeItemDisposeBtn');
+    if (fields) fields.style.display = checked ? '' : 'none';
+    if (deleteBtn) deleteBtn.style.display = checked ? 'none' : '';
+    if (disposeBtn) disposeBtn.style.display = checked ? '' : 'none';
+  });
+}
+
+// Delete button (plain delete, no disposition)
+const removeItemDeleteBtn = document.getElementById('removeItemDeleteBtn');
+if (removeItemDeleteBtn) {
+  removeItemDeleteBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (typeof confirmRemoveItem === 'function') confirmRemoveItem();
+  });
+}
+
+// Dispose button (disposition flow)
+const removeItemDisposeBtn = document.getElementById('removeItemDisposeBtn');
+if (removeItemDisposeBtn) {
+  removeItemDisposeBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (typeof confirmRemoveItem === 'function') confirmRemoveItem();
+  });
+}
+
+// Disposition type changes show/hide amount field
+const dispositionTypeSelect = document.getElementById('dispositionType');
+if (dispositionTypeSelect) {
+  dispositionTypeSelect.addEventListener('change', () => {
+    const typeInfo = DISPOSITION_TYPES[dispositionTypeSelect.value];
+    const amountGroup = document.getElementById('dispositionAmountGroup');
+    if (amountGroup) amountGroup.style.display = typeInfo?.requiresAmount ? '' : 'none';
+    if (!typeInfo || !typeInfo.requiresAmount) {
+      const amountInput = document.getElementById('dispositionAmount');
+      if (amountInput) amountInput.value = '';
+    }
+  });
+}
+
+// Delete/dispose from edit modal — close edit modal, open remove item modal
+const deleteFromEditBtn = document.getElementById('deleteFromEditBtn');
+if (deleteFromEditBtn) {
+  deleteFromEditBtn.addEventListener('click', () => {
+    const idx = typeof editingIndex !== 'undefined' ? editingIndex : null;
+    if (idx === null || idx === undefined) return;
+    closeModalById('itemModal');
+    if (typeof openRemoveItemModal === 'function') openRemoveItemModal(idx, false);
+  });
+}
+
+// Activity Log link inside remove-item modal
+const removeItemOpenLog = document.getElementById('removeItemOpenLog');
+if (removeItemOpenLog) {
+  removeItemOpenLog.addEventListener('click', (e) => {
+    e.preventDefault();
+    closeModalById('removeItemModal');
+    if (typeof openModalById === 'function') openModalById('changeLogModal');
+  });
+}
+
+// =============================================================================
+// Summary Totals — show/hide realized G/L row (STAK-72)
+// =============================================================================
+
+const settingsShowRealized = document.getElementById('settingsShowRealized');
+if (settingsShowRealized) {
+  // Initialize from stored preference (default: true — show realized)
+  const stored = loadDataSync(SHOW_REALIZED_KEY, 'true');
+  const showRealized = stored !== 'false';
+  settingsShowRealized.checked = showRealized;
+  applyRealizedVisibility(showRealized);
+
+  settingsShowRealized.addEventListener('change', () => {
+    const show = settingsShowRealized.checked;
+    saveData(SHOW_REALIZED_KEY, show ? 'true' : 'false');
+    applyRealizedVisibility(show);
+  });
+}
 
 // =============================================================================
 

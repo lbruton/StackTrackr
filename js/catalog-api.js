@@ -1462,7 +1462,7 @@ const showNumistaResults = (results, directLookup = false, originalQuery = '') =
         <div class="numista-retry-row">
           <input type="text" id="numistaRetryInput" class="numista-retry-input"
                  placeholder="Refine your search..." value="${escapeHtmlCatalog(originalQuery)}">
-          <button type="button" id="numistaRetryBtn" class="btn btn-primary numista-retry-btn">Search</button>
+          <button type="button" id="numistaRetryBtn" class="btn premium numista-retry-btn">Search</button>
         </div>
       </div>
       ${quickPicksHtml}
@@ -1537,7 +1537,7 @@ const showNumistaResults = (results, directLookup = false, originalQuery = '') =
   const searchBarHtml = `<div class="numista-refine-search">
     <input type="text" id="numistaRefineInput" class="numista-refine-input"
            placeholder="Refine search..." value="${escapeHtmlCatalog(originalQuery)}">
-    <button type="button" id="numistaRefineBtn" class="btn btn-primary numista-refine-btn">Search</button>
+    <button type="button" id="numistaRefineBtn" class="btn premium numista-refine-btn">Search</button>
   </div>`;
   const cardsHtml = results.slice(0, 20).map((r, i) => renderNumistaResultCard(r, i)).join('');
   // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml, javascript.browser.security.insecure-document-method.insecure-document-method
