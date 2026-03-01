@@ -1742,6 +1742,14 @@
                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
                   </svg>View
                 </button>
+                <button class="btn danger" id="deleteFromEditBtn" type="button" style="display:none"
+                        title="Delete or dispose this item">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                       stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                       style="vertical-align: -2px; margin-right: 0.2rem;">
+                    <path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+                  </svg>Remove
+                </button>
               </div>
               <div class="item-modal-actions-right">
                 <span id="clonePickerCount" class="clone-picker-count" style="display:none"></span>
@@ -2033,7 +2041,7 @@
             </div>
           </div>
           <div class="alert-actions">
-            <button class="btn btn-primary about-accept-btn" id="ackAcceptBtn">
+            <button class="btn premium about-accept-btn" id="ackAcceptBtn">
               ✅ I Understand - Continue to Application
             </button>
           </div>
@@ -2156,7 +2164,7 @@
           </div>
 
           <div class="alert-actions">
-            <button class="btn btn-primary" id="versionAcceptBtn">Accept and continue</button>
+            <button class="btn premium" id="versionAcceptBtn">Accept and continue</button>
           </div>
         </div>
       </div>
@@ -3626,7 +3634,7 @@
               <div class="settings-group">
                 <label>Refresh from API</label>
                 <p class="settings-subtext">Fetch today's official Goldback exchange rate from the StakTrakr API and populate all denomination prices automatically.</p>
-                <button class="btn btn-primary" id="goldbackEstimateRefreshBtn" type="button" style="display:none;">Refresh from API</button>
+                <button class="btn premium" id="goldbackEstimateRefreshBtn" type="button" style="display:none;">Refresh from API</button>
               </div>
 
               <div class="settings-group">
@@ -3635,7 +3643,7 @@
                 <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.75rem;">
                   <span id="gbQuickFillSymbol" style="color:var(--text-secondary);">$</span>
                   <input type="number" id="goldbackQuickFillInput" min="0" step="0.01" placeholder="1 GB rate" style="width:100px;" />
-                  <button class="btn btn-primary" id="goldbackQuickFillBtn" type="button">Set All</button>
+                  <button class="btn premium" id="goldbackQuickFillBtn" type="button">Set All</button>
                 </div>
               </div>
 
@@ -3654,7 +3662,7 @@
                     <!-- Rows rendered dynamically by syncGoldbackSettingsUI() -->
                   </tbody>
                 </table>
-                <button class="btn btn-primary" id="goldbackSavePricesBtn" type="button" style="margin-top: 0.5rem;">Save Prices</button>
+                <button class="btn premium" id="goldbackSavePricesBtn" type="button" style="margin-top: 0.5rem;">Save Prices</button>
                 <button class="btn" id="goldbackHistoryBtn" type="button" style="margin-top: 0.5rem;">Goldback History</button>
               </div>
             </div>
@@ -3742,7 +3750,7 @@
               <div class="settings-log-panel" id="logPanel_changelog">
                 <p class="settings-subtext">Recent inventory changes. Click a row to edit the item, or undo/redo individual changes.</p>
                 <div class="settings-changelog-actions">
-                  <button class="btn btn-secondary" id="settingsChangeLogClearBtn" type="button">Clear Log</button>
+                  <button class="btn secondary" id="settingsChangeLogClearBtn" type="button">Clear Log</button>
                 </div>
                 <div class="settings-changelog-wrap">
                   <table id="settingsChangeLogTable">
@@ -3765,7 +3773,7 @@
               <div class="settings-log-panel" id="logPanel_metals" style="display: none">
                 <p class="settings-subtext">Spot price updates recorded from API syncs and manual edits.</p>
                 <div class="settings-changelog-actions">
-                  <button class="btn btn-secondary" id="settingsSpotHistoryClearBtn" type="button">Clear Spot History</button>
+                  <button class="btn secondary" id="settingsSpotHistoryClearBtn" type="button">Clear Spot History</button>
                 </div>
                 <div class="settings-changelog-wrap">
                   <table id="settingsSpotHistoryTable">
@@ -3796,7 +3804,7 @@
                   </select>
                   <input class="settings-filter-input" id="settingsLbmaStartDate" type="date">
                   <input class="settings-filter-input" id="settingsLbmaEndDate" type="date">
-                  <button class="btn btn-secondary" id="settingsLbmaResetBtn" type="button">Reset</button>
+                  <button class="btn secondary" id="settingsLbmaResetBtn" type="button">Reset</button>
                   <span class="settings-subtext" id="settingsLbmaResultCount" style="margin-left:auto;"></span>
                 </div>
                 <div class="settings-changelog-wrap">
@@ -3818,7 +3826,7 @@
               <div class="settings-log-panel" id="logPanel_catalogs" style="display: none">
                 <p class="settings-subtext">Catalog API call history. Failed lookups are highlighted in red.</p>
                 <div class="settings-changelog-actions">
-                  <button class="btn btn-secondary" id="settingsCatalogHistoryClearBtn" type="button">Clear Catalog History</button>
+                  <button class="btn secondary" id="settingsCatalogHistoryClearBtn" type="button">Clear Catalog History</button>
                 </div>
                 <div class="settings-changelog-wrap">
                   <table id="settingsCatalogHistoryTable">
@@ -3843,7 +3851,7 @@
                 <p class="settings-subtext">Per-item price snapshots recorded on add, edit, and spot price sync.</p>
                 <div class="settings-pricehistory-controls">
                   <input class="settings-filter-input" id="priceHistoryFilterInput" placeholder="Filter by item name..." type="text">
-                  <button class="btn btn-secondary" id="settingsPriceHistoryClearBtn" type="button">Clear Price History</button>
+                  <button class="btn secondary" id="settingsPriceHistoryClearBtn" type="button">Clear Price History</button>
                 </div>
                 <div class="settings-changelog-wrap">
                   <table id="settingsPriceHistoryTable">
@@ -3866,7 +3874,7 @@
               <div class="settings-log-panel" id="logPanel_cloud" style="display: none">
                 <p class="settings-subtext">Cloud sync activity — backups, restores, connections, and token refreshes.</p>
                 <div class="settings-changelog-actions">
-                  <button class="btn btn-secondary" id="settingsCloudActivityClearBtn" type="button">Clear Cloud Log</button>
+                  <button class="btn secondary" id="settingsCloudActivityClearBtn" type="button">Clear Cloud Log</button>
                 </div>
                 <div class="settings-changelog-wrap">
                   <table id="settingsCloudActivityTable">
@@ -4564,7 +4572,7 @@
         <div class="modal-footer api-history-footer">
           <button type="button" class="btn" id="exportSpotHistoryBtn">Export History</button>
           <button type="button" class="btn" id="importSpotHistoryBtn">Import History</button>
-          <button type="button" class="btn btn-secondary" id="restoreHistoricalDataBtn">Restore Historical Data</button>
+          <button type="button" class="btn secondary" id="restoreHistoricalDataBtn">Restore Historical Data</button>
           <input type="file" id="importSpotHistoryFile" accept=".csv,.json" style="display:none">
         </div>
       </div>
@@ -4994,22 +5002,31 @@
     </div>
 
     <!-- =============================================================================
-       DISPOSITION MODAL
+       REMOVE ITEM MODAL
 
-       Records how an inventory item was disposed of (sold, traded, lost, gifted,
-       returned). Captures disposition type, date, amount, recipient, and notes.
-       Opened from the view-item context menu via openDispositionModal().
+       Combined delete + dispose flow. Checkbox toggles between simple delete
+       (unchecked) and disposition tracking (checked). Replaces the separate
+       #dispositionModal and showAppConfirm() delete confirmation (STAK-72).
        ============================================================================= -->
-    <div class="modal" id="dispositionModal" style="display: none">
-      <div class="modal-content">
+    <div class="modal" id="removeItemModal" style="display: none">
+      <div class="modal-content" style="max-width: 440px">
         <div class="modal-header">
-          <h2>Dispose Item</h2>
-          <button aria-label="Close modal" class="modal-close" onclick="closeModalById('dispositionModal')">&times;</button>
+          <h2>Remove Item</h2>
+          <button aria-label="Close modal" class="modal-close" onclick="closeModalById('removeItemModal')">&times;</button>
         </div>
         <div class="modal-body">
-          <form id="dispositionForm">
-            <input type="hidden" id="dispositionItemIdx">
+          <input type="hidden" id="removeItemIdx">
+          <p id="removeItemName" style="margin:0 0 0.75rem; font-weight:600"></p>
+          <p style="margin:0 0 1rem; color:var(--text-secondary); font-size:0.9rem">
+            This can be undone from the Activity Log.
+          </p>
 
+          <label class="toggle-row" style="display:flex; align-items:center; gap:0.5rem; cursor:pointer; margin-bottom:0.75rem">
+            <input type="checkbox" id="removeItemDisposeCheck">
+            <span>Track this item as disposed</span>
+          </label>
+
+          <div id="removeItemDisposeFields" style="display:none">
             <div class="form-group">
               <label for="dispositionType">Type</label>
               <select id="dispositionType">
@@ -5040,11 +5057,12 @@
               <label for="dispositionNotes">Notes</label>
               <textarea id="dispositionNotes" rows="3" placeholder="Optional notes..."></textarea>
             </div>
-          </form>
+          </div>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-secondary" type="button" onclick="closeModalById('dispositionModal')">Cancel</button>
-          <button class="btn btn-primary" type="button" id="dispositionSubmitBtn">Confirm Disposition</button>
+          <button class="btn secondary" type="button" onclick="closeModalById('removeItemModal')">Cancel</button>
+          <button class="btn danger" type="button" id="removeItemDeleteBtn">Delete</button>
+          <button class="btn premium" type="button" id="removeItemDisposeBtn" style="display:none">Confirm Disposition</button>
         </div>
       </div>
     </div>

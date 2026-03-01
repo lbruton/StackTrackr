@@ -633,20 +633,22 @@ section {
   color: hsla(30, 80%, 70%, 1);
 }
 
-/* --- Disposition modal form layout --------------------------------------- */
-#dispositionModal .modal-body {
+/* --- Remove Item / Disposition modal form layout ------------------------- */
+#removeItemModal .modal-body {
   padding: var(--spacing-lg, 1.25rem);
 }
-#dispositionModal label {
+#removeItemModal label {
   display: block;
   font-size: 0.82rem;
   font-weight: 600;
   color: var(--text-secondary);
   margin-bottom: 0.3rem;
 }
-#dispositionModal select,
-#dispositionModal input,
-#dispositionModal textarea {
+#removeItemModal select,
+#removeItemModal input[type="date"],
+#removeItemModal input[type="number"],
+#removeItemModal input[type="text"],
+#removeItemModal textarea {
   width: 100%;
   background: var(--glass-input-bg, rgba(0, 0, 0, 0.03));
   border: 1.5px solid var(--glass-input-border, var(--border));
@@ -656,17 +658,14 @@ section {
   color: var(--text-primary);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
-#dispositionModal select:focus,
-#dispositionModal input:focus,
-#dispositionModal textarea:focus {
+#removeItemModal select:focus,
+#removeItemModal input:focus,
+#removeItemModal textarea:focus {
   border-color: var(--accent, #3b82f6);
   outline: none;
   box-shadow: 0 0 0 2px hsla(217, 91%, 60%, 0.15);
 }
-#dispositionModal .disposition-form-group {
-  margin-bottom: 0.85rem;
-}
-#dispositionModal textarea {
+#removeItemModal textarea {
   resize: vertical;
   min-height: 3.5rem;
 }

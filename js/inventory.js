@@ -1705,9 +1705,6 @@ const renderTable = () => {
         <button class="icon-btn action-icon" role="button" tabindex="0" onclick="cloneItem(${originalIdx})" aria-label="Clone ${sanitizeHtml(item.name)}" title="Clone item">
           <svg class="icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/></svg>
         </button>
-        <button class="icon-btn action-icon" role="button" tabindex="0" onclick="disposeItem(${originalIdx})" aria-label="Dispose ${sanitizeHtml(item.name)}" title="Dispose item">
-          <svg class="icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M17.63 5.84C17.27 5.33 16.67 5 16 5L5 5.01C3.9 5.01 3 5.9 3 7v10c0 1.1.9 1.99 2 1.99L16 19c.67 0 1.27-.33 1.63-.84L22 12l-4.37-6.16z"/></svg>
-        </button>
         <button class="icon-btn action-icon danger" role="button" tabindex="0" onclick="deleteItem(${originalIdx})" aria-label="Delete item" title="Delete item">
           <svg class="icon-svg delete-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 7h12v13a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V7zm3-4h6l1 1h4v2H3V4h4l1-1z"/></svg>
         </button>
@@ -2024,18 +2021,117 @@ const updateSummary = () => {
  * 
  * @param {number} idx - Index of item to delete
  */
-const deleteItem = async (idx) => {
+/**
+ * Opens the combined Remove Item modal (STAK-72).
+ * Handles both delete and dispose flows via checkbox toggle.
+ *
+ * @param {number} idx - Index of item to remove
+ * @param {boolean} [preDispose=false] - Pre-check the dispose checkbox
+ */
+const openRemoveItemModal = (idx, preDispose = false) => {
   const item = inventory[idx];
-  const itemLabel = item ? item.name : 'this item';
-  const confirmed = typeof showAppConfirm === 'function'
-    ? await showAppConfirm(`Delete ${itemLabel}?\n\nThis can be undone from the Activity Log.`, 'Delete Item')
-    : false;
-  if (confirmed) {
+  if (!item) return;
+
+  const idxInput = document.getElementById('removeItemIdx');
+  if (idxInput) idxInput.value = idx;
+
+  const nameEl = document.getElementById('removeItemName');
+  if (nameEl) nameEl.textContent = item.name || 'Unnamed item';
+
+  const checkbox = document.getElementById('removeItemDisposeCheck');
+  const fieldsWrap = document.getElementById('removeItemDisposeFields');
+  const deleteBtn = document.getElementById('removeItemDeleteBtn');
+  const disposeBtn = document.getElementById('removeItemDisposeBtn');
+
+  // Reset disposition fields
+  const typeSelect = document.getElementById('dispositionType');
+  if (typeSelect) typeSelect.value = 'sold';
+  const dateInput = document.getElementById('dispositionDate');
+  if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+  const amountInput = document.getElementById('dispositionAmount');
+  if (amountInput) amountInput.value = '';
+  const recipientInput = document.getElementById('dispositionRecipient');
+  if (recipientInput) recipientInput.value = '';
+  const notesInput = document.getElementById('dispositionNotes');
+  if (notesInput) notesInput.value = '';
+  const amountGroup = document.getElementById('dispositionAmountGroup');
+  if (amountGroup) amountGroup.style.display = '';
+
+  // Set checkbox state and toggle fields/buttons
+  if (checkbox) checkbox.checked = preDispose;
+  if (fieldsWrap) fieldsWrap.style.display = preDispose ? '' : 'none';
+  if (deleteBtn) deleteBtn.style.display = preDispose ? 'none' : '';
+  if (disposeBtn) disposeBtn.style.display = preDispose ? '' : 'none';
+
+  openModalById('removeItemModal');
+};
+
+const deleteItem = (idx) => {
+  openRemoveItemModal(idx, false);
+};
+
+const disposeItem = (idx) => {
+  const item = inventory[idx];
+  if (!item || isDisposed(item)) return;
+  openRemoveItemModal(idx, true);
+};
+
+/**
+ * Confirms removal from the combined Remove Item modal (STAK-72).
+ * Reads checkbox state to decide between plain delete and disposition.
+ */
+const confirmRemoveItem = () => {
+  const idxInput = document.getElementById('removeItemIdx');
+  const idx = parseInt(idxInput?.value, 10);
+  if (isNaN(idx) || !inventory[idx]) return;
+
+  const item = inventory[idx];
+  const checkbox = document.getElementById('removeItemDisposeCheck');
+  const isDispose = checkbox?.checked;
+
+  if (isDispose) {
+    // Disposition flow — validate fields
+    const type = document.getElementById('dispositionType')?.value;
+    const date = document.getElementById('dispositionDate')?.value;
+    const amount = parseFloat(document.getElementById('dispositionAmount')?.value) || 0;
+    const recipient = document.getElementById('dispositionRecipient')?.value?.trim() || '';
+    const notes = document.getElementById('dispositionNotes')?.value?.trim() || '';
+
+    if (!type || !DISPOSITION_TYPES[type]) {
+      showToast('Please select a disposition type.');
+      return;
+    }
+    if (DISPOSITION_TYPES[type].requiresAmount && amount <= 0) {
+      showToast('Please enter a sale/trade/refund amount.');
+      return;
+    }
+    if (!date) {
+      showToast('Please enter a disposition date.');
+      return;
+    }
+
+    const purchaseTotal = (item.price || 0) * (item.qty || 1);
+    const realizedGainLoss = amount - purchaseTotal;
+
+    const disposition = {
+      type, date, amount,
+      currency: 'USD',
+      recipient, notes,
+      realizedGainLoss,
+      disposedAt: new Date().toISOString()
+    };
+
+    inventory[idx].disposition = disposition;
+    saveInventory();
+    closeModalById('removeItemModal');
+    logChange(item.name, 'Disposed', '', JSON.stringify(disposition), idx);
+    showToast(`${item.name} marked as ${DISPOSITION_TYPES[type].label.toLowerCase()}.`);
+  } else {
+    // Plain delete flow
     inventory.splice(idx, 1);
     saveInventory();
-    renderTable();
-    renderActiveFilters();
-    if (item) logChange(item.name, 'Deleted', JSON.stringify(item), '', idx);
+    closeModalById('removeItemModal');
+    logChange(item.name, 'Deleted', JSON.stringify(item), '', idx);
 
     // Clean up user images from IndexedDB (STAK-120)
     if (item?.uuid && window.imageCache?.isAvailable()) {
@@ -2049,84 +2145,7 @@ const deleteItem = async (idx) => {
       deleteItemTags(item.uuid);
     }
   }
-};
 
-/**
- * Opens disposition modal for an inventory item (STAK-72).
- * Populates the form with defaults and shows the modal.
- *
- * @param {number} idx - Index of item to dispose
- */
-const disposeItem = (idx) => {
-  const item = inventory[idx];
-  if (!item || isDisposed(item)) return;
-  const idxInput = document.getElementById('dispositionItemIdx');
-  if (idxInput) idxInput.value = idx;
-  // Reset form
-  const form = document.getElementById('dispositionForm');
-  if (form) form.reset();
-  // Default date to today
-  const dateInput = document.getElementById('dispositionDate');
-  if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
-  // Show/hide amount based on default type
-  const typeSelect = document.getElementById('dispositionType');
-  if (typeSelect) {
-    const typeInfo = DISPOSITION_TYPES[typeSelect.value];
-    const amountGroup = document.getElementById('dispositionAmountGroup');
-    if (amountGroup) amountGroup.style.display = typeInfo?.requiresAmount ? '' : 'none';
-  }
-  openModalById('dispositionModal');
-};
-
-/**
- * Validates and confirms the disposition form, writing the disposition
- * object to the inventory item and persisting to storage (STAK-72).
- */
-const confirmDisposition = () => {
-  const idxInput = document.getElementById('dispositionItemIdx');
-  const idx = parseInt(idxInput?.value, 10);
-  if (isNaN(idx) || !inventory[idx]) return;
-
-  const item = inventory[idx];
-  const type = document.getElementById('dispositionType')?.value;
-  const date = document.getElementById('dispositionDate')?.value;
-  const amount = parseFloat(document.getElementById('dispositionAmount')?.value) || 0;
-  const recipient = document.getElementById('dispositionRecipient')?.value?.trim() || '';
-  const notes = document.getElementById('dispositionNotes')?.value?.trim() || '';
-
-  if (!type || !DISPOSITION_TYPES[type]) {
-    showToast('Please select a disposition type.');
-    return;
-  }
-  if (DISPOSITION_TYPES[type].requiresAmount && amount <= 0) {
-    showToast('Please enter a sale/trade/refund amount.');
-    return;
-  }
-  if (!date) {
-    showToast('Please enter a disposition date.');
-    return;
-  }
-
-  // Compute realized gain/loss: amount - (purchase price * qty)
-  const purchaseTotal = (item.price || 0) * (item.qty || 1);
-  const realizedGainLoss = amount - purchaseTotal;
-
-  const disposition = {
-    type,
-    date,
-    amount,
-    currency: 'USD',
-    recipient,
-    notes,
-    realizedGainLoss,
-    disposedAt: new Date().toISOString()
-  };
-
-  inventory[idx].disposition = disposition;
-  saveInventory();
-  closeModalById('dispositionModal');
-  logChange(item.name, 'Disposed', '', JSON.stringify(disposition), idx);
-  showToast(`${item.name} marked as ${DISPOSITION_TYPES[type].label.toLowerCase()}.`);
   renderTable();
   renderActiveFilters();
   updateSummary();
@@ -2477,9 +2496,11 @@ const editItem = (idx, logIdx = null) => {
     else if (urlInputWrap) urlInputWrap.style.display = 'none';
   });
 
-  // Show clone/view buttons in edit mode (STAK-173)
+  // Show clone/view/remove buttons in edit mode (STAK-173, STAK-72)
   if (elements.cloneItemBtn) elements.cloneItemBtn.style.display = '';
   if (elements.viewItemFromEditBtn) elements.viewItemFromEditBtn.style.display = '';
+  const deleteFromEditBtn = document.getElementById('deleteFromEditBtn');
+  if (deleteFromEditBtn) deleteFromEditBtn.style.display = '';
 
   // Populate Numista Data fields: item data first, API cache as fallback (STAK-173)
   populateNumistaDataFields(item.numistaId || item.catalog || '', item.numistaData);
@@ -3835,7 +3856,8 @@ window.cloneItem = cloneItem;
 window.populateNumistaDataFields = populateNumistaDataFields;
 window.deleteItem = deleteItem;
 window.disposeItem = disposeItem;
-window.confirmDisposition = confirmDisposition;
+window.openRemoveItemModal = openRemoveItemModal;
+window.confirmRemoveItem = confirmRemoveItem;
 window.undoDisposition = undoDisposition;
 window.showNotes = showNotes;
 
