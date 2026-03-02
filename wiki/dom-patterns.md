@@ -2,7 +2,7 @@
 title: DOM Patterns
 category: frontend
 owner: staktrakr
-lastUpdated: v3.33.19
+lastUpdated: v3.33.23
 date: 2026-03-01
 sourceFiles:
   - js/utils.js
@@ -14,7 +14,7 @@ relatedPages:
 ---
 # DOM Patterns
 
-> **Last updated:** v3.33.19 — 2026-03-01
+> **Last updated:** v3.33.23 — 2026-03-01
 > **Source files:** `js/utils.js`, `js/init.js`, `js/about.js`
 
 ## Overview

@@ -143,22 +143,29 @@ number collisions; worktrees prevent filesystem conflicts.
 
 **Full 9-step protocol** is in `devops/version-lock-protocol.md`. Summary:
 
-1. Check `devops/version.lock` — if present and not expired, **stop and report the conflict**
-2. If unlocked (or expired): compute next version, write the lock file immediately
-3. Create worktree + branch: `git worktree add .claude/worktrees/patch-VERSION -b patch/VERSION`
-4. Do all work inside `.claude/worktrees/patch-VERSION/`
-5. Push branch → open draft PR `patch/VERSION → dev` (Cloudflare generates preview)
-6. QA preview → merge to dev
-7. Cleanup: `git worktree remove .claude/worktrees/patch-VERSION --force && git branch -d patch/VERSION && rm devops/version.lock`
+1. Read `devops/version.lock` — parse the `claims` array (empty if no active claims)
+2. Prune expired entries (where `expires_at` < now). Write back if any were removed.
+3. Compute next version: take highest `version` in remaining active claims, or read `APP_VERSION` from `js/constants.js`. Increment PATCH by 1.
+4. Append your claim to the array and write the full `claims` array back to `devops/version.lock`.
+5. Create worktree + branch: `git worktree add .claude/worktrees/patch-VERSION -b patch/VERSION`
+6. Do all work inside `.claude/worktrees/patch-VERSION/`
+7. Push branch → open draft PR `patch/VERSION → dev` (Cloudflare generates preview)
+8. QA preview → merge to dev
+9. Cleanup: `git worktree remove .claude/worktrees/patch-VERSION --force && git branch -d patch/VERSION` — then remove **only your claim entry** from `devops/version.lock` (leave other active claims intact)
 
-Lock format (JSON):
+Lock format (JSON, claims array — multiple agents can hold concurrent claims):
 
 ```json
 {
-  "locked": "3.32.09",
-  "locked_by": "codex / STAK-XX description",
-  "locked_at": "2026-02-22T19:00:00Z",
-  "expires_at": "2026-02-22T19:30:00Z"
+  "claims": [
+    {
+      "version": "3.32.09",
+      "claimed_by": "codex / STAK-XX description",
+      "issue": "STAK-XX",
+      "claimed_at": "2026-02-22T19:00:00Z",
+      "expires_at": "2026-02-22T19:30:00Z"
+    }
+  ]
 }
 ```
 
@@ -262,9 +269,19 @@ No compile step is required.
 
 Validate both launch paths (`file://` and localhost). Smoke test core flows: add/edit/delete inventory, import/export, settings persistence, and spot-price sync.
 
-### Playwright Testing (Browserless)
+### NL E2E Testing (Browserbase Runbook) — Primary
 
-Browser tests run via Playwright connected to a self-hosted **browserless** Docker container. No cloud browser account required.
+The primary E2E test suite is `tests/runbook/*.md` — 75+ natural-language tests across 8 section files. Tests are executed via Stagehand/Browserbase against the PR preview URL.
+
+- Runbook sections: `01-page-load`, `02-crud`, `03-spot`, `04-import-export`, `05-settings`, `06-ui-ux`, `07-activity-log`, `08-api`
+- Each test block has 7 required fields: Test name, Added (version/STAK), Preconditions, Steps, Pass criteria, Tags, Section
+- Step types: `navigate:`, `act:`, `extract: → expect:`, `screenshot:`
+- **Browserbase requires explicit user approval** before use — it costs real money
+- After shipping a spec, use `/browserbase-test-maintenance` to add test steps for new behavior
+
+### Playwright Testing (Browserless) — Scripted Suite
+
+Complementary scripted test suite via Playwright connected to a self-hosted **browserless** Docker container. No cloud browser account required.
 
 - Test files: `tests/*.spec.js` (`.spec.js` extension, NOT `.test.js`)
 - `npm test` -- run full spec suite via browserless

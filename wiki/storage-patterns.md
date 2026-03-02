@@ -2,7 +2,7 @@
 title: Storage Patterns
 category: frontend
 owner: staktrakr
-lastUpdated: v3.33.19
+lastUpdated: v3.33.23
 date: 2026-03-01
 sourceFiles:
   - js/utils.js
@@ -13,7 +13,7 @@ relatedPages:
 ---
 # Storage Patterns
 
-> **Last updated:** v3.33.19 — 2026-03-01
+> **Last updated:** v3.33.23 — 2026-03-01
 > **Source files:** `js/utils.js`, `js/constants.js`
 
 ## Overview
@@ -184,9 +184,10 @@ that enforces the allowlist contract.
 
 Defined in `js/constants.js`. Contains every key StakTrakr is permitted to
 store. Mix of constant references (e.g. `LS_KEY`, `THEME_KEY`) and raw string
-literals for legacy or one-off keys. As of v3.32.23 the list contains ~70+
-entries covering inventory, spot prices, retail prices, UI preferences, cloud
-sync, feature flags, and one-time migration markers.
+literals for legacy or one-off keys. The list covers inventory, spot prices,
+retail prices, UI preferences, cloud sync, feature flags, and one-time
+migration markers. Recent additions include `chipMaxCount` (v3.33.23), which
+caps the number of category filter chips displayed in the toolbar.
 
 ---
 

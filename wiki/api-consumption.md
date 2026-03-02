@@ -2,7 +2,7 @@
 title: API Consumption
 category: frontend
 owner: staktrakr
-lastUpdated: v3.33.19
+lastUpdated: v3.33.23
 date: 2026-03-01
 sourceFiles:
   - js/api.js
@@ -14,7 +14,7 @@ relatedPages:
 ---
 # API Consumption
 
-> **Last updated:** v3.33.19 — 2026-03-01
+> **Last updated:** v3.33.23 — 2026-03-01
 > **Source files:** `js/api.js`, `js/api-health.js`, `js/constants.js`
 
 ## Overview
