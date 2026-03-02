@@ -26,7 +26,7 @@ StakTrakr tracks precious metals inventory using three value dimensions per item
 
 1. **`meltValue` is never stored.** It is always computed at render time: `meltValue = weightOz * item.qty * spotPrice * purity` (where `weightOz` converts Goldback `gb` units via `weight * GB_TO_OZT`, and `purity` defaults to `1.0`). Storing it would produce stale values.
 2. **Every localStorage key must be registered in `ALLOWED_STORAGE_KEYS`** (`js/constants.js`) before use. `ALLOWED_STORAGE_KEYS` is a cleanup/restore allowlist enforced by `cleanupStorage()` at startup — it is not a write-time guard inside `saveData()` or `saveDataSync()`. Unregistered keys are silently deleted on the next app startup.
-3. **`saveData` / `loadData` are the only permitted localStorage accessors.** Never call `localStorage.setItem` / `getItem` directly in application code.
+3. **`saveData` / `loadData` are the standard localStorage accessors for JSON-serialized data.** Raw `localStorage.getItem` / `setItem` is intentional for plain scalar string preferences (e.g., `cloud_kraken_seen`, `CLOUD_VAULT_IDLE_TIMEOUT_KEY`) where async JSON serialization is inappropriate.
 4. **`spotPrices` is runtime state, not stored state.** It is fetched from the API and held in the `spotPrices` variable (defined in `js/state.js`, one property per metal). It is not written to the inventory object.
 5. **`disposition` is stored on the item record.** When an item is disposed (sold/traded/lost/gifted/returned), a `disposition` object is written to the item. The `realizedGainLoss` is computed once at disposition time and stored — it is not re-derived at render.
 
