@@ -2,7 +2,7 @@
 title: "Vendor Scraping Quirks"
 category: infrastructure
 owner: staktrakr-api
-lastUpdated: v3.33.18
+lastUpdated: v3.33.19
 date: 2026-03-01
 sourceFiles: []
 relatedPages: []
@@ -176,7 +176,7 @@ Per-vendor scraping behavior, known issues, and workarounds. This is the runbook
 
 **Known issues:**
 
-1. **Single URL for all denominations**: All goldback coins (G1, G2, G5, G10, G25, G50) use the same URL (`/exchange-rate/`). Price extraction must parse the correct denomination row.
+1. **Single URL for all denominations**: All goldback coins (G1, G2, G5, G10, G25, G50) use the same URL (`/exchange-rates/`). Price extraction must parse the correct denomination row.
 
 2. **Separate pipeline**: Goldback prices are handled by the dedicated goldback pipeline, not the retail poller. Failures here are separate from the main failure queue.
 

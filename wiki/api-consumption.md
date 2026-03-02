@@ -2,8 +2,8 @@
 title: API Consumption
 category: frontend
 owner: staktrakr
-lastUpdated: v3.32.25
-date: 2026-02-23
+lastUpdated: v3.33.19
+date: 2026-03-01
 sourceFiles:
   - js/api.js
   - js/api-health.js
@@ -14,7 +14,7 @@ relatedPages:
 ---
 # API Consumption
 
-> **Last updated:** v3.32.25 — 2026-02-23
+> **Last updated:** v3.33.19 — 2026-03-01
 > **Source files:** `js/api.js`, `js/api-health.js`, `js/constants.js`
 
 ## Overview
@@ -28,7 +28,7 @@ Requests use an automatic dual-endpoint fallback: if the primary endpoint does n
 ## Key Rules (read before touching this area)
 
 - **StakTrakr = consumer only.** Never add poller scripts, Fly.io config, or data-pipeline workflows to this repo. Those belong in `lbruton/StakTrakrApi`.
-- **`spot-history-YYYY.json` is a seed file**, not live data. It is a noon-UTC daily snapshot. `api-health.js` currently checks it for spot freshness, so it always shows ~10 h stale even when the poller is healthy. This is a known issue (STAK-265 follow-up).
+- **`spot-history-YYYY.json` is a seed file**, not live data. It is a noon-UTC daily snapshot used for historical chart backfill. A previous version of `api-health.js` checked this file for spot freshness, which always showed ~10 h stale even when the poller was healthy (STAK-265). This was fixed — `api-health.js` now reads the live hourly feed files (`data/hourly/YYYY/MM/DD/HH.json`) for spot freshness.
 - **Fallback is automatic.** Do not add manual endpoint-switching logic — `_staktrakrFetch()` already handles it via `AbortController` with a 5 000 ms timeout.
 - **Stale thresholds are defined as constants** in `api-health.js` (`API_HEALTH_MARKET_STALE_MIN`, `API_HEALTH_SPOT_STALE_MIN`, `API_HEALTH_GOLDBACK_STALE_MIN`). Update those constants — never hardcode values elsewhere.
 
@@ -76,7 +76,7 @@ const _staktrakrFetch = async (baseUrls, path) => {
 | Stale threshold | 30 minutes |
 | Poller | Fly.io retail cron in `StakTrakrApi` (hourly at :00, home poller at :30) |
 
-Contains retail and market prices for all tracked metals. Consumed via `API_PROVIDERS.STAKTRAKR.parseBatchResponse()`.
+Contains retail and market prices for all tracked metals. Consumed by the retail sync pipeline (`retail.js`) and the health check module (`api-health.js`). Note: `API_PROVIDERS.STAKTRAKR.parseBatchResponse()` is for parsing spot batch payloads from hourly/15-minute feeds, not the retail manifest.
 
 ### 2. Hourly spot prices
 

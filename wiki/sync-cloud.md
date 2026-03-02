@@ -2,8 +2,8 @@
 title: Cloud Sync
 category: frontend
 owner: staktrakr
-lastUpdated: v3.32.41
-date: 2026-02-25
+lastUpdated: v3.33.19
+date: 2026-03-01
 sourceFiles:
   - js/cloud-sync.js
   - js/cloud-storage.js
@@ -15,7 +15,7 @@ relatedPages:
 ---
 # Cloud Sync
 
-> **Last updated:** v3.32.41 — 2026-02-25
+> **Last updated:** v3.33.19 — 2026-03-01
 > **Source files:** `js/cloud-sync.js`, `js/cloud-storage.js`
 
 ---
@@ -24,12 +24,14 @@ relatedPages:
 
 StakTrakr supports Dropbox-based cloud sync that automatically pushes an encrypted vault snapshot whenever inventory changes, and polls for remote updates on other devices.
 
-Two files live in Dropbox under `/StakTrakr/`:
+Two files live in Dropbox under `/StakTrakr/sync/`:
 
 | File | Purpose |
 |---|---|
 | `staktrakr-sync.stvault` | Full encrypted inventory snapshot |
 | `staktrakr-sync.json` | Lightweight metadata pointer, polled for change detection |
+
+> **Legacy paths:** Flat-root paths (`/StakTrakr/staktrakr-sync.*`) are retained as `*_LEGACY` constants in `js/constants.js` for migration only. Active sync uses `/StakTrakr/sync/`; backups go to `/StakTrakr/backups/`.
 
 The poller compares the remote `staktrakr-sync.json` revision against the last-seen cursor. When it detects a change it calls `handleRemoteChange()`, which decides between a clean pull or a conflict modal.
 
@@ -38,7 +40,7 @@ The poller compares the remote `staktrakr-sync.json` revision against the last-s
 ## Key Rules (read before touching this area)
 
 1. **Never bypass `getSyncPasswordSilent()`** — do not add your own `localStorage.getItem('cloud_vault_password')` reads inline. All key derivation logic (Simple mode migration, Unified mode construction) is encapsulated there.
-2. **All `pushSyncVault()` and `pullSyncVault()` call sites must have `.catch()` handlers** — bare calls cause silent unhandled rejections on token failures. This was the root cause of the v3.32.24 regression.
+2. **`.catch()` on `pushSyncVault()` is optional** — it catches internally and all guard conditions return silently. **`.catch()` on `pullSyncVault()` is required** — the token check at the top (`if (!token) throw new Error('Not connected...')`) fires before the internal try/catch, so callers must handle rejection.
 3. **Cancel the debounced push before pulling** — `handleRemoteChange()` calls `scheduleSyncPush.cancel()` before opening any modal. If you add new pull paths, replicate this cancel guard.
 4. **Do not duplicate `getSyncPassword()` logic** — the fast-path check at the top of that function delegates to `getSyncPasswordSilent()`, which handles both modes. Adding a second localStorage read before it breaks Simple-mode migration.
 
@@ -88,28 +90,32 @@ getSyncPassword()
 
 1. Guards: `syncIsEnabled()`, token present, no push already in-flight, `getSyncPasswordSilent()` returns a key.
 2. Encrypts the sync-scoped inventory with `vaultEncryptToBytesScoped()` (falls back to `vaultEncryptToBytes()`).
-3. Uploads the encrypted bytes to `/StakTrakr/staktrakr-sync.stvault` (overwrite mode).
-4. Writes the metadata pointer to `/StakTrakr/staktrakr-sync.json`.
+3. Uploads the encrypted bytes to `/StakTrakr/sync/staktrakr-sync.stvault` (overwrite mode).
+4. Writes the metadata pointer to `/StakTrakr/sync/staktrakr-sync.json`.
 5. Persists the push meta (timestamp, syncId, itemCount) via `syncSetLastPush()`.
 6. Handles 429 rate-limit with exponential backoff (caps at 5 minutes).
 
-**All call sites must have `.catch()` handlers.** Example:
-
-```js
-pushSyncVault().catch(function (err) {
-  debugLog('[CloudSync] pushSyncVault failed:', err);
-});
-```
+`.catch()` is optional — `pushSyncVault()` catches internally and all guard failures return silently.
 
 ### `pullSyncVault()`
 
-1. Tries `getSyncPasswordSilent()` first; falls back to interactive `getSyncPassword()` if null.
-2. Calls `syncSaveOverrideBackup()` (snapshots current localStorage state before overwriting).
-3. Downloads `staktrakr-sync.stvault` from Dropbox.
-4. Decrypts and restores via `vaultDecryptAndRestore()`.
-5. Persists pull meta via `syncSetLastPull()`.
+1. **Token guard (throws before try/catch)** — `if (!token) throw new Error('Not connected to cloud provider')`. Callers MUST attach `.catch()` or wrap in try/catch.
+2. Tries `getSyncPasswordSilent()` first; falls back to interactive `getSyncPassword()` if null.
+3. Calls `syncSaveOverrideBackup()` (snapshots current localStorage state before overwriting).
+4. Downloads `staktrakr-sync.stvault` from Dropbox.
+5. Decrypts and restores via `vaultDecryptAndRestore()`.
+6. Persists pull meta via `syncSetLastPull()`.
 
-**All call sites must have `.catch()` handlers.**
+`pullSyncVault()` is the lower-level restore call. The primary remote-pull path for both "no local changes" and "Keep Theirs" flows is `pullWithPreview()`, which wraps `pullSyncVault()` with a manifest-first diff preview.
+
+### `pullWithPreview()`
+
+The primary entry point for remote pulls. Attempts a manifest-first path (lightweight diff preview without full vault download). Falls back to vault-first path if the manifest is unavailable or fails.
+
+1. Downloads the lightweight `.stmanifest` file and decrypts it.
+2. Builds a diff preview via `DiffModal` showing added/removed/edited items.
+3. If manifest is unavailable (404, decrypt failure, `DiffModal` missing), falls through to vault-first: downloads the full `.stvault`, decrypts, and shows a summary modal.
+4. On user confirm, calls `pullSyncVault(remoteMeta)` to apply the restore.
 
 ### `handleRemoteChange()`
 
@@ -120,10 +126,10 @@ handleRemoteChange(remoteMeta)
   ├─ If password prompt is active → defer (return, retry next poll)
   ├─ scheduleSyncPush.cancel()           ← CRITICAL: cancels any queued push
   ├─ syncHasLocalChanges()?
-  │    No  → showSyncUpdateModal() → pullSyncVault()
+  │    No  → showSyncUpdateModal() → pullWithPreview()
   │    Yes → showSyncConflictModal()
   │             ├─ Keep Mine  → pushSyncVault()
-  │             └─ Keep Theirs → pullSyncVault().catch(...)
+  │             └─ Keep Theirs → pullWithPreview().catch(...)
 ```
 
 **The `scheduleSyncPush.cancel()` call is mandatory.** Without it:
@@ -203,7 +209,7 @@ When both sides have unsaved changes, the conflict modal shows:
 
 Choices:
 - **Keep Mine** → `pushSyncVault()` (overwrites remote with local)
-- **Keep Theirs** → `pullSyncVault(remoteMeta).catch(...)` (overwrites local with remote)
+- **Keep Theirs** → `pullWithPreview(remoteMeta).catch(...)` (shows diff preview, then overwrites local with remote)
 
 The override backup (`syncSaveOverrideBackup`) is always written before any pull, enabling the "Restore Override Backup" button in the sync history section.
 
@@ -219,7 +225,7 @@ SYNC_PUSH_DEBOUNCE = 2000 ms
 
 Any inventory change fires `scheduleSyncPush()`. If another change arrives within 2 seconds, the timer resets. The actual `pushSyncVault()` only fires after 2 seconds of quiet.
 
-If the `debounce` utility is not available at init time, a plain `setTimeout` fallback is used (no deduplication in that case).
+If the `debounce` utility is not available at init time, a `clearTimeout`/`setTimeout` fallback is used. This fallback still coalesces rapid calls (clears the prior timer before rescheduling), but lacks the helper's `.cancel()` method.
 
 ---
 
@@ -257,18 +263,6 @@ var pw = localStorage.getItem('cloud_vault_password');
 
 // CORRECT — handles all modes and migration
 var pw = getSyncPasswordSilent();
-```
-
-### Bare push/pull calls without `.catch()`
-
-```js
-// WRONG — silent unhandled rejection if token is missing
-pullSyncVault(remoteMeta);
-
-// CORRECT
-pullSyncVault(remoteMeta).catch(function (err) {
-  debugLog('[CloudSync] pull failed:', err);
-});
 ```
 
 ### Adding a new pull path without cancelling the debounced push

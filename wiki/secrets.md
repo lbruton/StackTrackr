@@ -2,8 +2,8 @@
 title: "Secrets & Keys"
 category: infrastructure
 owner: staktrakr-api
-lastUpdated: v3.33.18
-date: 2026-02-24
+lastUpdated: v3.33.19
+date: 2026-03-01
 sourceFiles: []
 relatedPages: []
 ---
@@ -36,9 +36,10 @@ Set with `fly secrets set KEY=VALUE --app staktrakr`.
 | `TURSO_AUTH_TOKEN` | Turso auth | Rotate in Turso dashboard |
 | `GEMINI_API_KEY` | Vision pipeline (Gemini API) | Google AI Studio |
 | `METAL_PRICE_API_KEY` | Spot price API | MetalPriceAPI dashboard |
-| `WEBSHARE_PROXY_USER` | Playwright service proxy | Webshare dashboard |
-| `WEBSHARE_PROXY_PASS` | Playwright service proxy | Webshare dashboard |
-| `CRON_SCHEDULE` | Override retail poller cron frequency | Currently set to `0` (once per hour at :00) |
+| `WEBSHARE_PROXY_USER` | Webshare credentials for Playwright fallback / `run-retry.sh` | Webshare dashboard |
+| `WEBSHARE_PROXY_PASS` | Webshare credentials for Playwright fallback / `run-retry.sh` | Webshare dashboard |
+| `HOME_PROXY_URL_2` | Playwright service proxy input (home residential IP via Tailscale) | Set in `fly.toml` env or as Fly secret |
+| `CRON_SCHEDULE` | Override retail poller cron frequency | Default is `15,45` (twice per hour at :15 and :45) |
 
 ---
 

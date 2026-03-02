@@ -2,7 +2,7 @@
 title: Data Model
 category: frontend
 owner: staktrakr
-lastUpdated: v3.33.18
+lastUpdated: v3.33.19
 date: 2026-03-01
 sourceFiles:
   - js/constants.js
@@ -15,7 +15,7 @@ relatedPages:
 ---
 # Data Model
 
-> **Last updated:** v3.33.18 — 2026-03-01
+> **Last updated:** v3.33.19 — 2026-03-01
 > **Source files:** `js/constants.js`, `js/utils.js`
 
 ## Overview
@@ -24,10 +24,10 @@ StakTrakr tracks precious metals inventory using three value dimensions per item
 
 ## Key Rules (read before touching this area)
 
-1. **`meltValue` is never stored.** It is always computed at render time: `meltValue = item.weight * item.qty * spotPrice`. Storing it would produce stale values.
-2. **Every localStorage key must be registered in `ALLOWED_STORAGE_KEYS`** (`js/constants.js`) before use. `saveData()` and `saveDataSync()` silently no-op on unregistered keys — no error is thrown, data is simply discarded.
-3. **`saveData` / `loadData` are the only permitted localStorage accessors.** Never call `localStorage.setItem` / `getItem` directly in application code.
-4. **`spotPrice` is runtime state, not stored state.** It is fetched from the API and exposed as `window.spotPrice` (one property per metal). It is not written to the inventory object.
+1. **`meltValue` is never stored.** It is always computed at render time: `meltValue = weightOz * item.qty * spotPrice * purity` (where `weightOz` converts Goldback `gb` units via `weight * GB_TO_OZT`, and `purity` defaults to `1.0`). Storing it would produce stale values.
+2. **Every localStorage key must be registered in `ALLOWED_STORAGE_KEYS`** (`js/constants.js`) before use. `ALLOWED_STORAGE_KEYS` is a cleanup/restore allowlist enforced by `cleanupStorage()` at startup — it is not a write-time guard inside `saveData()` or `saveDataSync()`. Unregistered keys are silently deleted on the next app startup.
+3. **`saveData` / `loadData` are the standard localStorage accessors for JSON-serialized data.** Raw `localStorage.getItem` / `setItem` is intentional for plain scalar string preferences (e.g., `cloud_kraken_seen`, `CLOUD_VAULT_IDLE_TIMEOUT_KEY`) where async JSON serialization is inappropriate.
+4. **`spotPrices` is runtime state, not stored state.** It is fetched from the API and held in the `spotPrices` variable (defined in `js/state.js`, one property per metal). It is not written to the inventory object.
 5. **`disposition` is stored on the item record.** When an item is disposed (sold/traded/lost/gifted/returned), a `disposition` object is written to the item. The `realizedGainLoss` is computed once at disposition time and stored — it is not re-derived at render.
 
 ## Architecture
@@ -37,7 +37,7 @@ StakTrakr tracks precious metals inventory using three value dimensions per item
 | Dimension | Source | Stored? |
 |---|---|---|
 | `purchasePrice` | User entry | Yes (in item record) |
-| `meltValue` | `item.weight * item.qty * spotPrice` | **No — computed at render** |
+| `meltValue` | `weightOz * item.qty * spotPrice * purity` | **No — computed at render** |
 | `retailPrice` | Live market ask from API | No (cached separately in `retailPrices`) |
 
 `purchasePrice` is the historical cost basis — what the user actually paid. It never changes after entry.
@@ -50,19 +50,22 @@ StakTrakr tracks precious metals inventory using three value dimensions per item
 
 ```js
 {
-  id:            String,   // UUID v4 — primary key
+  uuid:          String,   // UUID v4 — primary key
   name:          String,   // display name, e.g. "2024 American Gold Eagle 1 oz"
   type:          String,   // "coin" | "bar" | "round"
   metal:         String,   // "gold" | "silver" | "platinum" | "palladium"
-  weight:        Number,   // fine troy ounces per unit
+  weight:        Number,   // fine troy ounces per unit (or Goldback denomination when weightUnit is 'gb')
+  weightUnit:    String,   // "oz" (default) | "gb" (Goldback denomination)
+  purity:        Number,   // metal purity factor (default 1.0)
   qty:           Number,   // integer quantity held
-  purchasePrice: Number,   // total cost basis in USD (all units combined)
+  price:         Number,   // total cost basis in USD (all units combined)
   purchaseDate:  String,   // ISO date string "YYYY-MM-DD"
   mintmark:      String,   // optional mint or issuer label
-  tags:          String[], // arbitrary user-defined labels
   disposition:   Object|null // disposition record (v3.33.17) — null for active items
 }
 ```
+
+> **Note:** Per-item tags are stored separately under the `itemTags` localStorage key (keyed by UUID), not on the inventory item object itself.
 
 `weight` is always in **fine troy ounces** (the pure metal content, not the gross weight). For a 1 oz Gold Eagle, `weight = 1.0`. For a 90% silver dime, `weight ≈ 0.07234`.
 
@@ -109,11 +112,11 @@ Types where `requiresAmount` is `false` do not require a monetary amount — the
 
 ```js
 // Reading spot at render time — never from a stored field:
-const spotPrice = window.spotPrice?.[item.metal] ?? 0;
-const meltValue = item.weight * item.qty * spotPrice;
+const spot = spotPrices?.[item.metal] ?? 0;
+const meltValue = computeMeltValue(item, spot);
 ```
 
-`window.spotPrice` is populated by the spot-price fetch in `api.js` and is not written to `localStorage` under the inventory key. Individual per-metal spot values are cached under `spotGold`, `spotSilver`, `spotPlatinum`, and `spotPalladium` (see key list below).
+`spotPrices` is defined in `js/state.js` and populated by the spot-price fetch in `js/api.js`. It is not written to `localStorage` under the inventory key. Individual per-metal spot values are cached under `spotGold`, `spotSilver`, `spotPlatinum`, and `spotPalladium` (see key list below).
 
 ### Storage Layer
 
@@ -170,6 +173,8 @@ All keys currently registered in `js/constants.js`. Keys are grouped by domain b
 | `retailIntradayData` | JSON object | Intraday retail price data |
 | `retailSyncLog` | JSON array | Retail sync event log |
 | `retailAvailability` | JSON object | Per-item availability data |
+| `retailManifestGeneratedAt` | String | ISO timestamp — cached market manifest `generated_at` |
+| `retailManifestSlugs` | JSON array | Cached manifest coin slug list |
 
 **Goldback:**
 
@@ -202,6 +207,7 @@ All keys currently registered in `js/constants.js`. Keys are grouped by domain b
 | `numistaOverridePersonal` | Boolean string | Numista API overrides user pattern images |
 | `enabledSeedRules` | JSON array | Enabled built-in Numista lookup rule IDs |
 | `seedImagesVer` | String | Seed images version for cache invalidation |
+| `numista_tags_auto` | Boolean string | Auto-tag items from Numista data |
 
 **UI / display preferences:**
 
@@ -227,6 +233,14 @@ All keys currently registered in `js/constants.js`. Keys are grouped by domain b
 | `headerTrendBtnVisible` | Boolean string | Header trend button visibility |
 | `headerSyncBtnVisible` | Boolean string | Header sync button visibility |
 | `headerMarketBtnVisible` | Boolean string | Header market button visibility |
+| `headerVaultBtnVisible` | Boolean string | Header vault button visibility |
+| `headerRestoreBtnVisible` | Boolean string | Header restore button visibility |
+| `headerCloudSyncBtnVisible` | Boolean string | Header cloud sync button visibility |
+| `headerBtnShowText` | Boolean string | Show text labels under header icons |
+| `headerBtnOrder` | JSON array | Header button card order (STAK-320) |
+| `headerAboutBtnVisible` | Boolean string | About button visibility (STAK-320) |
+| `showRealizedGainLoss` | Boolean string | Show realized G/L in summary cards (STAK-72) |
+| `tagBlacklist` | JSON array | Tags excluded from auto-tagging |
 | `chipMinCount` | Number string | Minimum item count for chip display |
 | `chipCustomGroups` | JSON array | Custom chip grouping definitions |
 | `chipBlacklist` | JSON array | Hidden chip values |
@@ -278,7 +292,9 @@ All keys currently registered in `js/constants.js`. Keys are grouped by domain b
 | `cloud_vault_password` | String | Vault password for persistent unlock |
 | `cloud_dropbox_account_id` | String | Dropbox account_id for key derivation |
 | `cloud_sync_mode` | String | DEPRECATED — kept for migration only |
-| `manifestPruningThreshold` | Number string | Days to keep manifest entries before pruning (STAK-184 diff/merge architecture) |
+| `cloud_sync_migrated` | String | Cloud folder migration flag — `"v2"` indicates flat-to-subfolder migration complete |
+| `cloud_backup_history_depth` | String | Max cloud backups to retain (`"3"`, `"5"`, `"10"`, or `"20"`) |
+| `manifestPruningThreshold` | Number string | Max sync cycles retained in manifest before pruning older entries (STAK-184 diff/merge architecture) |
 
 **One-time migrations:**
 
@@ -290,32 +306,32 @@ All keys currently registered in `js/constants.js`. Keys are grouped by domain b
 
 ### Feature Flags (added to FEATURE_FLAGS in v3.33.06)
 
-Three new feature flags were added to `js/constants.js` for the Market Page Redesign:
+Three market-related feature flags were added to `js/constants.js` for the Market Page Redesign:
 
 | Flag | Default | Description |
 |---|---|---|
-| `MARKET_LIST_VIEW` | `false` | Gates the new full-width market card layout with search, sort, inline 7-day trend charts, spike detection, vendor price chips, computed stats, and card click-to-expand |
+| `MARKET_LIST_VIEW` | `true` | Gates the new full-width market card layout with search, sort, inline 7-day trend charts, spike detection, vendor price chips, computed stats, and card click-to-expand |
 | `MARKET_DASHBOARD_ITEMS` | `false` | Gates goldback and dashboard items in the market list |
 | `MARKET_AUTO_RETAIL` | `false` | Auto-update inventory retail prices from linked market data |
 
-All three use `urlOverride: true` (enable via `?market_list_view=true` etc.) and `userToggle: true` (Settings UI toggle). Phase: `"beta"`.
+All three use `urlOverride: true` (enable via `?market_list_view=true` etc.) and `userToggle: true` (Settings UI toggle). Phase: `"beta"`. See [frontend-overview.md](frontend-overview.md) for the complete feature flags table (10 flags total).
 
 ## Common Mistakes
 
 **Storing `meltValue` in the item record.**
-Never do this. Spot moves constantly; a stored `meltValue` is wrong the moment spot changes. Always derive it at render: `item.weight * item.qty * window.spotPrice[item.metal]`.
+Never do this. Spot moves constantly; a stored `meltValue` is wrong the moment spot changes. Always derive it at render via `computeMeltValue(item, spotPrices[item.metal])`.
 
 **Adding a new localStorage key without registering it.**
-`saveData` and `saveDataSync` check the key against `ALLOWED_STORAGE_KEYS` and silently discard writes if the key is missing. There is no error. The symptom is settings that appear to save but reset on reload. Fix: add the key to the array in `js/constants.js` first.
+`ALLOWED_STORAGE_KEYS` is enforced by `cleanupStorage()` at startup — not by `saveData`/`saveDataSync` at write time. The write succeeds, but the key is silently deleted on the next startup. The symptom is settings that appear to save but reset on reload. Fix: add the key to the array in `js/constants.js` first.
 
 **Calling `localStorage.setItem` / `getItem` directly.**
-Only `saveData` / `saveDataSync` and `loadData` / `loadDataSync` are permitted. Direct calls bypass compression, bypass the allowlist guard, and are not portable to future storage backends.
+Only `saveData` / `saveDataSync` and `loadData` / `loadDataSync` are permitted for structured JSON app data. Direct calls bypass compression and are not portable to future storage backends. (`cleanupStorage()` enforces the allowlist separately at startup.)
 
 **Assuming `loadData` returns the same type as written.**
 `loadData` returns the `defaultValue` argument (default: `[]`) when the key is absent or parse fails. Always pass an explicit default that matches the expected type (e.g., pass `{}` for objects, `[]` for arrays, `null` for nullable scalars).
 
 **Reading spot from the item record.**
-There is no `spotPrice` field on the item. Always read from `window.spotPrice[item.metal]` or the per-metal keys (`spotGold`, `spotSilver`, etc.) via `loadDataSync`.
+There is no `spotPrice` field on the item. Always read from `spotPrices[item.metal]` (defined in `js/state.js`) or the per-metal keys (`spotGold`, `spotSilver`, etc.) via `loadDataSync`.
 
 **Hardcoding a storage quota.**
 Do not use a fixed byte limit like `50 * 1024 * 1024`. As of v3.32.27, quota is derived dynamically from `navigator.storage.estimate()` in `js/image-cache.js`. Use the runtime estimate so the limit scales with the device's actual available storage.
@@ -330,5 +346,5 @@ Active portfolio calculations (totals, weight, melt value) must skip disposed it
 
 - [storage-patterns.md](storage-patterns.md) — `saveData` / `loadData` usage patterns, compression, and the allowlist guard implementation
 - [frontend-overview.md](frontend-overview.md) — module load order, `index.html` script sequence, and `sw.js` asset list
-- [api-consumption.md](api-consumption.md) — spot price fetch, retail price feed, and how `window.spotPrice` is populated
+- [api-consumption.md](api-consumption.md) — spot price fetch, retail price feed, and how `spotPrices` is populated
 - [retail-modal.md](retail-modal.md) — retail view modal and market list view architecture

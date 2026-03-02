@@ -2,7 +2,7 @@
 title: Architecture Overview
 category: infrastructure
 owner: staktrakr-api
-lastUpdated: v3.33.18
+lastUpdated: v3.33.19
 date: 2026-02-25
 sourceFiles: []
 relatedPages: []
@@ -10,8 +10,7 @@ relatedPages: []
 
 # Architecture Overview
 
-> **Last verified:** 2026-02-25 — full audit from live Fly.io container source code. Dual poller, Turso shared DB, 17 coins, 7 vendors.
-> ⚠️ **Known gaps:** Spot poller not writing to Turso. See STAK-331.
+> **Last verified:** 2026-03-01 — full audit from live Fly.io container source code. Dual poller, Turso shared DB, 11 coins, 7 vendors.
 
 ---
 
@@ -23,9 +22,9 @@ relatedPages: []
 │                                                             │
 │  ┌─────────────┐  ┌──────────────┐                          │
 │  │ run-local.sh│  │ run-spot.sh  │                          │
-│  │ 0 * * * *   │  │ 5,20,35,50   │                          │
+│  │ 15,45 * * * │  │ 0,30 * * * * │                          │
 │  └──────┬──────┘  └──────┬───────┘                          │
-│         │                │ ⚠️ writes files directly          │
+│         │                │ → Turso spot_prices + JSON files  │
 │  ┌──────▼──────────────────────────────────────────────┐   │
 │  │  Self-hosted Firecrawl (port 3002)                   │   │
 │  │  Playwright Service (port 3003)                      │   │
@@ -34,7 +33,7 @@ relatedPages: []
 │                                                             │
 │  ┌──────────────┐                                           │
 │  │run-publish.sh│  8,23,38,53 * * * *                      │
-│  │api-export.js │◄── Turso (price_snapshots + goldback-g1)  │
+│  │api-export.js │◄── Turso (price_snapshots + spot_prices)  │
 │  └──────┬───────┘                                           │
 │         │ force-push HEAD:api                               │
 └─────────┼───────────────────────────────────────────────────┘
@@ -53,16 +52,12 @@ relatedPages: []
           ▼
   Turso (libSQL cloud)
   price_snapshots  — retail prices (both pollers)
+  spot_prices      — spot prices (Fly.io spot poller)
   poller_runs      — run metadata (both pollers)
   provider_failures — per-URL failure log (both pollers)
-  ⚠️ spot_prices NOT yet in Turso (pending STAK-331)
           │
           ▼ (via run-publish.sh)
   StakTrakrApi  api  branch
-          │
-          │  Merge Poller Branches GHA (*/15 min)
-          ▼
-  StakTrakrApi  main  branch
           │
           ▼
   GitHub Pages → api.staktrakr.com
@@ -80,7 +75,7 @@ relatedPages: []
 | `lbruton/StakTrakrApi` | All API backend: poller code (`devops/`), GHA workflows, data files served via GitHub Pages |
 | `lbruton/StakTrakr` | Frontend app code, Cloudflare Pages deployment, local dev tools |
 | `lbruton/stakscrapr` | Home VM full stack — identical Firecrawl+Playwright+scraper core PLUS dashboard.js, tinyproxy/Cox residential proxy, Tailscale exit node config |
-| `lbruton/StakTrakrWiki` | This wiki — shared infrastructure documentation |
+| `StakTrakr/wiki/` | This wiki — in-repo Docsify documentation (shared infrastructure + frontend) |
 
 ---
 
@@ -88,9 +83,9 @@ relatedPages: []
 
 | Feed | File | Writer | Cadence | Status |
 |------|------|--------|---------|--------|
-| Market prices | `data/api/manifest.json` | Fly.io `run-local.sh` + `run-publish.sh` via Turso | `0 * * * *` | ✅ Live |
-| Spot prices | `data/hourly/YYYY/MM/DD/HH.json` | Fly.io `run-spot.sh` → **direct file write** | `5,20,35,50 * * * *` | ⚠️ Not via Turso — see STAK-331 |
-| Goldback | `data/api/goldback-spot.json` | Fly.io `run-local.sh` (via `goldback-g1` in providers.json) + `api-export.js` generates denominations (G1–G50) from Turso | `0 * * * *` (same as retail) | ✅ Live |
+| Market prices | `data/api/manifest.json` | Fly.io `run-local.sh` + `run-publish.sh` via Turso | `15,45 * * * *` | ✅ Live |
+| Spot prices | `data/hourly/YYYY/MM/DD/HH.json` | Fly.io `run-spot.sh` → `spot-extract.js` → Turso `spot_prices` + JSON files | `0,30 * * * *` | ✅ Live |
+| Goldback | `data/api/goldback-spot.json` | Fly.io `run-goldback.sh` → `goldback-scraper.js` → direct commit to `api` branch | `1 * * * *` (hourly, skips if today's rate captured) | ✅ Live |
 
 ---
 
@@ -98,11 +93,11 @@ relatedPages: []
 
 | Branch | Purpose | Writer |
 |--------|---------|--------|
-| `api` | Live data + providers.json config | Fly.io `run-publish.sh` (force-push) |
-| `main` | Merged source of truth; served by GitHub Pages | `Merge Poller Branches` GHA workflow |
+| `api` | Live data + providers.json config; served by GitHub Pages | Fly.io `run-publish.sh` (force-push) |
+| `main` | Devops code, poller source, GHA workflows | Manual pushes + PRs |
 | `api1` | (Reserved for second Fly.io poller if needed) | Not currently active |
 
-GitHub Pages is configured to serve the **`main` branch** (not `api`). The merge workflow runs every 15 minutes to pull `api` data into `main`.
+GitHub Pages is configured to serve the **`api` branch**. The `Merge Poller Branches` GHA workflow is retired/manual-only.
 
 ---
 
@@ -111,7 +106,7 @@ GitHub Pages is configured to serve the **`main` branch** (not `api`). The merge
 | Component | What it is | Where |
 |-----------|-----------|-------|
 | Fly.io `staktrakr` app | All-in-one container: Firecrawl + pollers + serve.js | cloud |
-| Turso `staktrakrapi` DB | libSQL cloud — dual-poller write-through store (retail only currently) | cloud |
+| Turso `staktrakrapi` DB | libSQL cloud — dual-poller write-through store (retail + spot) | cloud |
 | Home VM | Secondary poller + monitoring stack (Grafana, Prometheus) | 192.168.1.81 |
 | tinyproxy | Residential HTTP proxy on home VM for Fly.io scraper traffic | 192.168.1.81:8888 |
 | MetalPriceAPI | Spot price data source | cloud |
@@ -125,19 +120,18 @@ GitHub Pages is configured to serve the **`main` branch** (not `api`). The merge
 | Change type | Action needed |
 |-------------|--------------|
 | Poller code change | `git push origin main` + `fly deploy` from `devops/fly-poller/` |
-| providers.json URL fix | Push to `api` branch — auto-synced next cycle, no redeploy |
+| Provider URL fix | Update directly in Turso via `provider-db.js` or the dashboard — auto-synced next cycle, no redeploy |
 | Home poller code update | curl files from `raw.githubusercontent.com/lbruton/StakTrakrApi/main/devops/fly-poller/` |
 | New Fly.io secret | `fly secrets set KEY=value --app staktrakr` |
 | GHA workflow change | Push to `main` branch — GHA reads from main |
 
 ---
 
-## Open Architecture Gaps (STAK-331 — Urgent)
+## Resolved Architecture Gaps
 
-| Gap | Impact |
-|-----|--------|
-| Spot poller writes files, not Turso | Turso not single source of truth for spot data |
-| Turso missing weeks of historical data | Backfill script needed before charts/trends are usable |
+| Gap | Resolution |
+|-----|------------|
+| ~~Spot poller writes files, not Turso~~ (STAK-331) | Resolved — `spot-extract.js` now writes to Turso `spot_prices` table and JSON files |
 
 ---
 
