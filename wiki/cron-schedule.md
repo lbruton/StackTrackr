@@ -45,16 +45,16 @@ Written dynamically by `docker-entrypoint.sh` at container start. The `CRON_SCHE
 
 ```
 :00  Fly.io retail scrape (run-local.sh — Firecrawl + Vision → Turso)
-:00  Fly.io spot poll #1 (run-spot.sh — MetalPriceAPI → Turso + hourly files)
+:00  Fly.io spot poll #1 (run-spot.sh — MetalPriceAPI → Turso + hourly & 15-min snapshot files)
 :01  Goldback rate scrape (run-goldback.sh — skips if today's price already captured)
 :08  Publisher #1 (run-publish.sh — Turso → JSON → git push api branch)
-:15  Home spot poll #1 (run-spot-home.sh — MetalPriceAPI → Turso + hourly files)
+:15  Home spot poll #1 (run-spot-home.sh — MetalPriceAPI → Turso + hourly & 15-min snapshot files)
 :15  T3 Retry (run-retry.sh — re-scrape failures with Webshare proxy)
 :23  Publisher #2 ← picks up :00 retail data
-:30  Fly.io spot poll #2 (run-spot.sh — MetalPriceAPI → Turso + hourly files)
+:30  Fly.io spot poll #2 (run-spot.sh — MetalPriceAPI → Turso + hourly & 15-min snapshot files)
 :30  Home retail scrape (run-home.sh — Firecrawl → Turso)
 :38  Publisher #3 ← picks up :30 home retail data
-:45  Home spot poll #2 (run-spot-home.sh — MetalPriceAPI → Turso + hourly files)
+:45  Home spot poll #2 (run-spot-home.sh — MetalPriceAPI → Turso + hourly & 15-min snapshot files)
 :53  Publisher #4
 :00  ──────────────────────────────────────────────
 ```
