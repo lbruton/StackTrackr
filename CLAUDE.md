@@ -64,10 +64,18 @@ gh run list --repo lbruton/StakTrakrApi --workflow "Merge Poller Branches" --lim
 - **DOM**: `safeGetElement(id)` — never raw `document.getElementById()` (except startup in `about.js` / `init.js`)
 - **Storage**: `saveData()`/`loadData()` from `js/utils.js` — never direct `localStorage`
 - **Storage keys**: must be in `ALLOWED_STORAGE_KEYS` in `js/constants.js`
-- **New JS files**: add to `sw.js` CORE_ASSETS AND script load order in `index.html` (56 scripts, strict order)
+- **New JS files**: add to `sw.js` CORE_ASSETS AND script load order in `index.html` (67 scripts, strict order)
 - **innerHTML**: always `sanitizeHtml()` on user content
 - **sw.js CACHE_NAME**: auto-stamped by pre-commit hook — see `sw-cache` skill
 - **Duplicate check**: when editing frontend code, check `events.js` AND `api.js` for duplicate function definitions before making changes — edits to the wrong file are a recurring source of lost time
+
+## Testing
+
+**Primary NL E2E suite** (`/bb-test` skill): `tests/runbook/*.md` — 75+ tests across 8 section files. Run via Stagehand/Browserbase against PR preview URLs. Sections: `01-page-load`, `02-crud`, `03-spot`, `04-import-export`, `05-settings`, `06-ui-ux`, `07-activity-log`, `08-api`.
+
+**Scripted suite** (`/smoke-test` skill): `tests/*.spec.js` — Playwright specs via self-hosted browserless Docker. Run with `npm test` or `npm run test:smoke`.
+
+After shipping a spec, use `/browserbase-test-maintenance` to add runbook test steps for new behavior.
 
 ## Linear
 

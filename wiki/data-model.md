@@ -2,7 +2,7 @@
 title: Data Model
 category: frontend
 owner: staktrakr
-lastUpdated: v3.33.19
+lastUpdated: v3.33.23
 date: 2026-03-01
 sourceFiles:
   - js/constants.js
@@ -15,7 +15,7 @@ relatedPages:
 ---
 # Data Model
 
-> **Last updated:** v3.33.19 — 2026-03-01
+> **Last updated:** v3.33.23 — 2026-03-01
 > **Source files:** `js/constants.js`, `js/utils.js`
 
 ## Overview
@@ -92,7 +92,7 @@ When an item is disposed, a `disposition` object is written to the item record:
 - Disposed items are excluded from active portfolio totals (melt value, purchase total, weight, item count). They are tracked in a separate `disposedItems` counter and `realizedGainLoss` accumulator per metal in `updateSummary()`.
 - `realizedGainLoss` is computed once at disposition time (`confirmDisposition()` in `js/inventory.js`): `amount - (item.price * item.qty)`. It is stored, not re-derived.
 - `undoDisposition(idx)` sets `item.disposition = null`, restoring the item to active inventory.
-- The filter system (`js/filters.js`) strips disposed items by default; a toggle (`#showDisposedToggle`) reveals them.
+- The filter system (`js/filters.js`) strips disposed items by default. A three-state chip-sort-toggle (`#disposedFilterGroup`) in the filter bar controls the disposed filter mode: **Hide** (default — disposed items excluded), **Show All** (active + disposed), and **Disposed Only**. The selected mode is persisted under the `disposedFilterMode` storage key.
 
 ### Disposition Types
 
@@ -242,10 +242,12 @@ All keys currently registered in `js/constants.js`. Keys are grouped by domain b
 | `showRealizedGainLoss` | Boolean string | Show realized G/L in summary cards (STAK-72) |
 | `tagBlacklist` | JSON array | Tags excluded from auto-tagging |
 | `chipMinCount` | Number string | Minimum item count for chip display |
+| `chipMaxCount` | Number string | Maximum number of category chips to display (`'0'` = no cap) |
 | `chipCustomGroups` | JSON array | Custom chip grouping definitions |
 | `chipBlacklist` | JSON array | Hidden chip values |
 | `inlineChipConfig` | JSON object | Inline chip display configuration |
 | `chipSortOrder` | String | Chip sort order preference |
+| `disposedFilterMode` | String | Disposed filter state: `'hide'` \| `'show-all'` \| `'show-only'` (v3.33.21) |
 | `apiProviderOrder` | JSON array | API provider display order |
 | `providerPriority` | JSON object | API provider priority map |
 | `filterChipCategoryConfig` | JSON object | Filter chip category configuration |
