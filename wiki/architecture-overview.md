@@ -75,7 +75,7 @@ relatedPages: []
 | `lbruton/StakTrakrApi` | All API backend: poller code (`devops/`), GHA workflows, data files served via GitHub Pages |
 | `lbruton/StakTrakr` | Frontend app code, Cloudflare Pages deployment, local dev tools |
 | `lbruton/stakscrapr` | Home VM full stack — identical Firecrawl+Playwright+scraper core PLUS dashboard.js, tinyproxy/Cox residential proxy, Tailscale exit node config |
-| `lbruton/StakTrakrWiki` | This wiki — shared infrastructure documentation |
+| `StakTrakr/wiki/` | This wiki — in-repo Docsify documentation (shared infrastructure + frontend) |
 
 ---
 
