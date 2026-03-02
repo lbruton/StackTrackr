@@ -19,7 +19,7 @@ relatedPages:
 
 ## Fly.io Container Cron
 
-Written dynamically by `docker-entrypoint.sh` at container start. `CRON_SCHEDULE` env var controls retail poller cadence (default: `15,45`; production: `0`).
+Written dynamically by `docker-entrypoint.sh` at container start. The `CRON_SCHEDULE` env var controls the retail poller minute field: by default containers use `15,45` (twice-hourly), but production Fly.io apps override this to `0` via `fly secrets set CRON_SCHEDULE=0`. Any references in other docs to `:15/:45` describe the default, not the production override.
 
 | Minute | Script | Purpose | Log file |
 |--------|--------|---------|----------|
