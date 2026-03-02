@@ -337,7 +337,14 @@ const renderActiveFilters = () => {
   if (searchQuery && searchQuery.trim()) {
     chips.push({ field: 'search', value: searchQuery });
   }
-  
+
+  // Add disposed-only mode chip (STAK-388)
+  var activeDisposedBtnChip = document.querySelector('#disposedFilterGroup .chip-sort-btn.active');
+  var disposedModeChip = (activeDisposedBtnChip && activeDisposedBtnChip.dataset && activeDisposedBtnChip.dataset.disposedMode) || 'hide';
+  if (disposedModeChip === 'show-only') {
+    chips.push({ field: 'disposed-mode', value: 'show-only' });
+  }
+
   // Generate category summary chips from filtered inventory
   const categorySummary = generateCategorySummary(filteredInventory);
   
@@ -440,6 +447,21 @@ const renderActiveFilters = () => {
     }
   }
 
+  // Apply chipMaxCount cap to category chips only — search chips and active/excluded chips are always appended after this
+  const chipMaxCountEl = safeGetElement('chipMaxCount');
+  const maxCount = chipMaxCountEl
+    ? parseInt(chipMaxCountEl.value, 10)
+    : parseInt(localStorage.getItem('chipMaxCount') || '0', 10);
+  if (maxCount > 0) {
+    const uncappedChips = chips.filter(c => c && c.field === 'search');
+    const cappedCandidates = chips.filter(c => !c || c.field !== 'search');
+    if (cappedCandidates.length > maxCount) {
+      cappedCandidates.splice(maxCount);
+    }
+    chips.length = 0;
+    chips.push(...uncappedChips, ...cappedCandidates);
+  }
+
   // Add any explicitly applied filter chips (but not if they duplicate category chips)
   Object.entries(activeFilters).forEach(([field, criteria]) => {
     // Skip fields already rendered as category summary chips to avoid duplicates
@@ -523,7 +545,9 @@ const renderActiveFilters = () => {
       : simplifyChipValue(f.value, f.field);
     let label;
 
-    if (f.field === 'search') {
+    if (f.field === 'disposed-mode') {
+      label = 'Showing: Disposed Items';
+    } else if (f.field === 'search') {
       label = displayValue;
     } else if (f.count !== undefined && f.total !== undefined) {
       // For category summary chips, show count badge if enabled
@@ -572,6 +596,18 @@ const renderActiveFilters = () => {
         }
         applyQuickFilter(f.field, f.value, f.isGrouped || f.isCustomGroup || f.isDynamic || false);
       });
+    } else if (f.field === 'disposed-mode') {
+      // Disposed-mode chip — clicking resets disposed filter back to 'hide'
+      chip.title = 'Showing disposed items only (click to hide disposed)';
+      chip.addEventListener('click', function() {
+        const dfg = safeGetElement('disposedFilterGroup');
+        dfg.querySelectorAll('.chip-sort-btn').forEach(function(b) {
+          b.classList.toggle('active', b.dataset.disposedMode === 'hide');
+        });
+        if (typeof saveData === 'function') saveData('disposedFilterMode', 'hide');
+        if (typeof renderTable === 'function') renderTable();
+        renderActiveFilters();
+      });
     } else {
       // Active filter chips - clicking removes filter
       chip.title = f.field === 'search'
@@ -586,9 +622,21 @@ const renderActiveFilters = () => {
     close.setAttribute('role', 'button');
     close.setAttribute('tabindex', '0');
     close.setAttribute('aria-label', `Remove filter ${displayValue}`);
+    // Helper to reset disposed filter to 'hide' (for chip × button)
+    const _resetDisposedFilter = function() {
+      const dfg = safeGetElement('disposedFilterGroup');
+      dfg.querySelectorAll('.chip-sort-btn').forEach(function(b) {
+        b.classList.toggle('active', b.dataset.disposedMode === 'hide');
+      });
+      if (typeof saveData === 'function') saveData('disposedFilterMode', 'hide');
+      if (typeof renderTable === 'function') renderTable();
+      renderActiveFilters();
+    };
     close.onclick = (e) => {
       e.stopPropagation();
-      if (isActiveFilter) {
+      if (f.field === 'disposed-mode') {
+        _resetDisposedFilter();
+      } else if (isActiveFilter) {
         // Active filter chip × — always removes the filter (de-activate, not exclude)
         removeFilter(f.field, f.value);
         renderActiveFilters();
@@ -604,7 +652,9 @@ const renderActiveFilters = () => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
         e.stopPropagation();
-        if (isActiveFilter) {
+        if (f.field === 'disposed-mode') {
+          _resetDisposedFilter();
+        } else if (isActiveFilter) {
           removeFilter(f.field, f.value);
           renderActiveFilters();
         } else if (f.count !== undefined && f.total !== undefined && f.field !== 'search') {
@@ -777,6 +827,16 @@ const getChipColors = (field, value, index) => {
 const filterInventoryAdvanced = () => {
   let result = inventory;
 
+  // Three-state disposed filter (STAK-388)
+  var activeDisposedBtn = document.querySelector('#disposedFilterGroup .chip-sort-btn.active');
+  var disposedMode = (activeDisposedBtn && activeDisposedBtn.dataset && activeDisposedBtn.dataset.disposedMode) || 'hide';
+  if (disposedMode === 'hide') {
+    result = result.filter(function(item) { return !item.disposition; });
+  } else if (disposedMode === 'show-only') {
+    result = result.filter(function(item) { return isDisposed(item); });
+  }
+  // 'show-all' → no filter applied
+
   // Apply advanced filters
   Object.entries(activeFilters).forEach(([field, criteria]) => {
     if (criteria && typeof criteria === 'object' && Array.isArray(criteria.values)) {
@@ -867,13 +927,43 @@ const filterInventoryAdvanced = () => {
   return result.filter(item => {
     if (!terms.length) return true;
 
-    const formattedDate = formatDisplayDate(item.date).toLowerCase();
-    
+    // Retrieve or compute cached search data
+    let cached = searchCache.get(item);
+
+    // Upgrade legacy cache (string) to object or handle cache miss
+    if (!cached || typeof cached === 'string') {
+      const _searchTags = typeof getItemTags === 'function' ? getItemTags(item.uuid).join(' ') : '';
+      const _formattedDate = formatDisplayDate(item.date).toLowerCase();
+
+      const itemText = [
+        item.metal,
+        item.composition || '',
+        item.name,
+        item.type,
+        item.purchaseLocation,
+        item.storageLocation || '',
+        item.notes || '',
+        String(item.year || ''),
+        item.grade || '',
+        item.gradingAuthority || '',
+        String(item.certNumber || ''),
+        String(item.numistaId || ''),
+        item.serialNumber || '',
+        _searchTags,
+        _formattedDate
+      ].join(' ').toLowerCase();
+
+      cached = { text: itemText, formattedDate: _formattedDate };
+      searchCache.set(item, cached);
+    }
+
+    const { text: itemText, formattedDate } = cached;
+
     // Handle comma-separated terms (OR logic between comma terms)
     return terms.some(q => {
       // Split each comma term into individual words for AND logic
       const words = q.split(/\s+/).filter(w => w.length > 0);
-      
+
       // Special handling for multi-word searches to prevent partial matches
       // If searching for "American Eagle", it should only match items that have both words
       // but NOT match "American Gold Eagle" (which has an extra word in between)
@@ -886,28 +976,6 @@ const filterInventoryAdvanced = () => {
         // For multi-word searches, check if the exact phrase exists or
         // if all words exist as separate word boundaries without conflicting words
         const exactPhrase = q.toLowerCase();
-        // STAK-126: include tags in searchable text
-        let itemText = searchCache.get(item);
-        if (itemText === undefined) {
-          const _searchTags = typeof getItemTags === 'function' ? getItemTags(item.uuid).join(' ') : '';
-          itemText = [
-            item.metal,
-            item.composition || '',
-            item.name,
-            item.type,
-            item.purchaseLocation,
-            item.storageLocation || '',
-            item.notes || '',
-            String(item.year || ''),
-            item.grade || '',
-            item.gradingAuthority || '',
-            String(item.certNumber || ''),
-            String(item.numistaId || ''),
-            item.serialNumber || '',
-            _searchTags
-          ].join(' ').toLowerCase();
-          searchCache.set(item, itemText);
-        }
 
         // Check for exact phrase match first
         if (itemText.includes(exactPhrase)) {

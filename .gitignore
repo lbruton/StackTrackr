@@ -3,7 +3,7 @@
 .AppleDouble
 .LSOverride
 
-# Claude Code — project-specific skills tracked in git;
+# Claude Code — all project skills tracked in git automatically;
 # user-level skills live in ~/.claude/skills/ (outside repo)
 .claude/*
 !.claude/skills/
@@ -19,12 +19,23 @@
 !.claude/skills/wiki-audit/
 !.claude/skills/wiki-sweep/
 !.claude/skills/wiki-search/
+!.claude/skills/wiki-nightwatch/
 !.claude/skills/ship/
 !.claude/skills/brainstorming/
 !.claude/skills/retail-poller/
 !.claude/skills/retail-provider-fix/
 !.claude/skills/repo-boundaries/
 !.claude/skills/homepoller-ssh/
+!.claude/skills/bb-test/
+!.claude/skills/browserbase-test-maintenance/
+!.claude/skills/devops-dashboard/
+!.claude/skills/frontend-design/
+!.claude/skills/jules-review/
+!.claude/skills/jules-suppress/
+!.claude/skills/scan-mentions/
+!.claude/skills/smoke-test/
+!.claude/skills/sync-poller/
+!.claude/skills/ui-mockup/
 .claude/commands/
 .mcp.json
 SPRINT.md
@@ -98,3 +109,14 @@ devops/hub/
 
 # Git worktrees for isolated agent work — content dirs are transient, not project history
 .claude/worktrees/
+# Ignore spec-workflow transient data (specs, logs, approvals) but track user-templates, steering, and templates
+.spec-workflow/*
+!.spec-workflow/user-templates/
+!.spec-workflow/user-templates/**
+!.spec-workflow/steering/
+!.spec-workflow/steering/**
+!.spec-workflow/templates/
+!.spec-workflow/templates/**
+
+# Wiki nightwatch — local rotation state, not project history
+wiki/.nightwatch-log.json

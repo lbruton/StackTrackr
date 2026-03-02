@@ -71,6 +71,28 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (aboutSiteLink) aboutSiteLink.href = `https://www.${siteDomain}`;
     if (aboutSiteDomain) aboutSiteDomain.textContent = siteDomain;
 
+    // Phase 0b: Environment badge + toast for non-production origins (STAK-376)
+    const envLabel = typeof getEnvironmentLabel === 'function' ? getEnvironmentLabel() : null;
+    if (envLabel) {
+      const envBadge = document.getElementById('envBadge');
+      if (envBadge) {
+        envBadge.textContent = envLabel.label;
+        envBadge.className = 'env-badge ' + envLabel.className;
+        envBadge.style.display = '';
+      }
+      // One-time toast per session explaining data isolation
+      const toastKey = 'envToastShown';
+      if (!sessionStorage.getItem(toastKey)) {
+        sessionStorage.setItem(toastKey, '1');
+        const msg = envLabel.label === 'BETA'
+          ? 'You are on the BETA site. Your data here is separate from the main site.'
+          : envLabel.label === 'PREVIEW'
+            ? 'Preview deployment — data is separate from the main site.'
+            : 'Running locally — data is stored on this device only.';
+        setTimeout(() => { if (typeof showToast === 'function') showToast(msg, 5000); }, 1500);
+      }
+    }
+
     // Phase 1: Initialize Core DOM Elements
     debugLog("Phase 1: Initializing core DOM elements...");
 
@@ -115,6 +137,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     elements.searchNumistaNameBtn = safeGetElement("searchNumistaNameBtn");
     elements.cloneItemBtn = safeGetElement("cloneItemBtn");
     elements.viewItemFromEditBtn = safeGetElement("viewItemFromEditBtn");
+    elements.cloneItemSaveAnotherBtn = safeGetElement("cloneItemSaveAnotherBtn");
+    elements.clonePickerCount = safeGetElement("clonePickerCount");
+    elements.itemDateNABtn = safeGetElement("itemDateNABtn");
     elements.estimateRetailFromSpot = safeGetElement("estimateRetailFromSpot");
     elements.retailSpotModifier = safeGetElement("retailSpotModifier");
     elements.numistaDataSection = safeGetElement("numistaDataSection");
@@ -266,6 +291,20 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
       if (chipMinEl) {
         chipMinEl.value = localStorage.getItem('chipMinCount') || '3';
+      }
+    } catch (e) {
+      // ignore storage errors
+    }
+
+    // Ensure chipMaxCount has a sensible default for new installs
+    try {
+      const chipMaxEl = document.getElementById('chipMaxCount');
+      const savedMax = localStorage.getItem('chipMaxCount');
+      if (!savedMax) {
+        localStorage.setItem('chipMaxCount', '0');
+      }
+      if (chipMaxEl) {
+        chipMaxEl.value = localStorage.getItem('chipMaxCount') || '0';
       }
     } catch (e) {
       // ignore storage errors
