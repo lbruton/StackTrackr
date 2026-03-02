@@ -2,13 +2,13 @@
 title: "Changelog"
 category: meta
 owner: shared
-lastUpdated: v3.33.18
+lastUpdated: v3.33.19
 date: 2026-03-01
 sourceFiles: []
 relatedPages: []
 ---
 
-# StakTrakrWiki Changelog
+# Wiki Changelog
 
 Running log of structural wiki updates. Not a code changelog — tracks when wiki content was added, reorganized, or policy was updated.
 
