@@ -3,7 +3,7 @@ title: Home Poller (Ubuntu VM)
 category: infrastructure
 owner: staktrakr-api
 lastUpdated: v3.33.19
-date: 2026-03-01
+date: 2026-03-02
 sourceFiles: []
 relatedPages: []
 ---
@@ -59,8 +59,10 @@ See `homepoller-ssh` skill in the StakTrakr repo for full diagnostic commands an
 | Install path | `/opt/poller/` |
 | Config repo | `github.com/lbruton/stakscrapr` (Claude config, CLAUDE.md) |
 | Poller source | `github.com/lbruton/StakTrakrApi` → `devops/fly-poller/` (source of truth) |
-| Log | `/var/log/retail-poller.log` |
-| Cron | `30 * * * *` (`:30` every hour, runs as `root`) |
+| Retail log | `/var/log/retail-poller.log` |
+| Spot log | `/var/log/spot-poller.log` |
+| Retail cron | `30 * * * *` — `/etc/cron.d/retail-poller` (runs as `root`) |
+| Spot cron | `15,45 * * * *` — `/etc/cron.d/spot-poller` (runs as `root`) |
 
 ---
 
@@ -195,12 +197,14 @@ cd /opt/poller && sudo npm install playwright && sudo npx playwright install --w
 | `/opt/playwright-service/` | Playwright microservice |
 | `/usr/local/share/playwright/` | Chromium for Playwright |
 | `/etc/supervisor/conf.d/staktrakr.conf` | Supervisord config |
-| `/etc/cron.d/retail-poller` | Cron schedule |
+| `/etc/cron.d/retail-poller` | Retail poller cron (`30 * * * *`) |
+| `/etc/cron.d/spot-poller` | Spot poller cron (`15,45 * * * *`) |
 | `/etc/cron.d/flyio-health` | Fly.io health check cron (every 5 min) |
 | `/etc/tinyproxy/tinyproxy.conf` | tinyproxy config |
 | `/etc/grafana/provisioning/` | Grafana datasource + dashboard provisioning |
 | `/etc/prometheus/prometheus.yml` | Prometheus scrape config |
-| `/var/log/retail-poller.log` | Poller output (written by root) |
+| `/var/log/retail-poller.log` | Retail poller output (written by root) |
+| `/var/log/spot-poller.log` | Spot poller output (written by root) |
 | `/var/log/supervisor/` | Firecrawl/Playwright/dashboard/metrics service logs |
 | `/tmp/flyio-health.json` | Fly.io health check result (read by dashboard) |
 
