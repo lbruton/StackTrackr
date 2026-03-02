@@ -2,15 +2,11 @@
 title: Frontend Overview
 category: frontend
 owner: staktrakr
-lastUpdated: v3.33.24
+lastUpdated: v3.33.25
 date: 2026-03-02
 sourceFiles:
   - index.html
   - js/constants.js
-  - js/filters.js
-  - js/events.js
-  - js/changeLog.js
-  - js/viewModal.js
   - sw.js
   - js/file-protocol-fix.js
 relatedPages:
@@ -18,209 +14,178 @@ relatedPages:
   - storage-patterns.md
   - dom-patterns.md
   - service-worker.md
-  - release-workflow.md
-  - retail-modal.md
 ---
 # Frontend Overview
 
-> **Last updated:** v3.33.24 — 2026-03-02
-> **Source files:** `index.html`, `js/constants.js`, `js/filters.js`, `js/events.js`, `js/changeLog.js`, `js/viewModal.js`, `sw.js`, `js/file-protocol-fix.js`
+> **Last updated:** v3.33.25 — 2026-03-02
+> **Source files:** `index.html`, `js/constants.js`, `sw.js`, `js/file-protocol-fix.js`
 
 ## Overview
 
-StakTrakr is a single-page precious metals inventory tracker built with pure HTML and vanilla JavaScript — zero build step, zero install, zero dependencies. It works on both `file://` and HTTP without any configuration changes. Most scalar application state persists in `localStorage`; persistent image and metadata caches live in IndexedDB. There is no server, no database, and no backend beyond a static API feed.
+StakTrakr is a single-page precious metals inventory tracker built with pure HTML and vanilla JavaScript. It has **zero build step, zero install, and zero server-side dependencies**. The application runs identically under both `file://` (local ZIP extraction) and HTTP (web hosting or local server). All user data is persisted in `localStorage`; image and metadata caches use IndexedDB. There is no backend beyond static API feeds served from `api.staktrakr.com`.
 
-## Key Rules (read before touching this area)
+**Portfolio value model:** `meltValue = weightOz × qty × spotPrice × purity`. Three price columns are tracked per holding: Purchase Price, Melt Value, and Retail Price.
 
-- **New JS files must be registered in TWO places:** add a `<script>` tag to `index.html` in strict load order AND add the path to `CORE_ASSETS` in `sw.js`. Missing either means the file never loads or the service worker silently skips it on offline fetch.
-- **Never use `document.getElementById()` directly** (except in `about.js` and `init.js` startup code) — always use `safeGetElement(id)`.
+**Supported metals:** Silver, Gold, Platinum, Palladium, and Goldback.
+
+---
+
+## Key Rules
+
+Read these before touching any frontend file:
+
+- **New JS files must be registered in two places.** Add a `<script defer>` tag to `index.html` in the correct load order AND add the file path to `CORE_ASSETS` in `sw.js`. Missing either registration means the file silently fails to load or the service worker skips it on offline fetch.
+- **Never use `document.getElementById()` directly** outside of `about.js` and `init.js` startup code — always call `safeGetElement(id)`.
 - **Never write to `localStorage` directly** — always use `saveData()` / `loadData()` from `js/utils.js`.
 - **All localStorage keys must be declared** in `ALLOWED_STORAGE_KEYS` in `js/constants.js`.
-- **Always call `sanitizeHtml()`** before assigning user content to `innerHTML`.
-- The `sw.js` `CACHE_NAME` is auto-stamped by the `devops/hooks/stamp-sw-cache.sh` pre-commit hook — do not edit it manually.
-- Script load order in `index.html` is strict; dependencies must appear before dependents. There are currently **70 `<script>` tags** in `index.html`.
-- **Feature-flagged views must respect both code paths.** When a feature flag like `MARKET_LIST_VIEW` gates an alternative rendering path, the original grid view must remain fully functional when the flag is off. Always restore the original DOM state (headers, class names) in the default path.
+- **Always call `sanitizeHtml()`** before assigning user-controlled content to `innerHTML`.
+- **Never edit `sw.js` `CACHE_NAME` manually.** The `devops/hooks/stamp-sw-cache.sh` pre-commit hook auto-stamps it on every commit. Manual edits will be overwritten.
+- **Script load order in `index.html` is strict.** Dependencies must appear before dependents. There are currently **70 `<script>` tags** in `index.html` (including inline, vendor, and application scripts).
+
+---
 
 ## Architecture
 
 ### Runtime model
 
 ```
-index.html  (single page, all UI panels)
-  └── 70 <script> tags (strict load order)
-        ├── js/file-protocol-fix.js   — detects file:// vs HTTP, patches fetch
+index.html  (single-page app — all UI panels, modals, and sections)
+  ├── <head> scripts (synchronous, load first)
+  │     └── js/file-protocol-fix.js   — localStorage fallback for file:// protocol
+  │
+  └── <body> deferred scripts (58 files, strict load order)
+        ├── js/debug-log.js           — debug logging utility
         ├── js/constants.js           — APP_VERSION, all constants, ALLOWED_STORAGE_KEYS
-        ├── js/state.js               — shared mutable state
-        ├── js/utils.js               — saveData(), loadData(), computeMeltValue()
-        ├── ... (feature modules)
+        ├── js/field-meta.js          — field metadata definitions
+        ├── js/state.js               — shared mutable application state
+        ├── js/utils.js               — saveData(), loadData(), sanitizeHtml(), etc.
+        ├── js/dialogs.js             — modal dialog helpers
+        ├── ... (feature modules in dependency order)
+        ├── js/events.js              — global event bindings
+        ├── js/test-loader.js         — test harness loader (dev only)
         └── js/init.js                — bootstraps the app after all scripts load
 ```
 
 ### Versioning
 
-`APP_VERSION` in `js/constants.js` follows `BRANCH.RELEASE.PATCH` format (e.g. `3.33.17`).
-Optional state suffix: `a` = alpha, `b` = beta, `rc` = release candidate.
-Run `/release patch` after every meaningful committed change — one change, one patch tag.
+`APP_VERSION` in `js/constants.js` follows the `BRANCH.RELEASE.PATCH` format:
 
-### Feature flags (FEATURE_FLAGS in js/constants.js)
+```
+3   .   33   .   25
+^       ^        ^
+Branch  Release  Patch
+```
 
-Feature flags gate beta/experimental UI paths. Each flag has:
+Current version: **3.33.25**
 
-| Property | Type | Description |
+Optional state suffixes: `a` = alpha, `b` = beta, `rc` = release candidate.
+
+Run `/release patch` after every meaningful committed change — one change, one patch tag. The version appears in seven files when bumped; always use the `/release` skill rather than editing manually.
+
+### Key entry points
+
+| File | Role |
+|---|---|
+| `index.html` | Single-page shell — all panels, modals, and UI sections live here |
+| `js/constants.js` | Global constants, `APP_VERSION`, `ALLOWED_STORAGE_KEYS`, `FEATURE_FLAGS` |
+| `js/state.js` | Shared mutable state (spot prices, inventory cache, filter state) |
+| `js/utils.js` | Core utilities: `saveData()`, `loadData()`, `safeGetElement()`, `sanitizeHtml()` |
+| `js/init.js` | App bootstrap — runs last, wires everything together after all scripts are deferred-loaded |
+
+### Script load order
+
+The 58 deferred application scripts in `index.html` load in this sequence (abridged):
+
+| Position | File | Why here |
 |---|---|---|
-| `enabled` | boolean | Default state (most beta flags default `false`) |
-| `urlOverride` | boolean | If `true`, `?flag_name=true` in the URL enables it |
-| `userToggle` | boolean | If `true`, the user can toggle it in Settings |
-| `description` | string | Human-readable description |
-| `phase` | string | `"beta"` / `"stable"` / `"deprecated"` |
+| 1 (sync, `<head>`) | `js/file-protocol-fix.js` | Must run before any other script to patch `localStorage` for `file://` |
+| 2 | `js/debug-log.js` | Logging utility needed by all subsequent scripts |
+| 3 | `js/constants.js` | Global constants consumed by every other module |
+| 4 | `js/field-meta.js` | Field definitions used by state and utils |
+| 5 | `js/state.js` | Mutable state object; must precede all readers/writers |
+| 6 | `js/utils.js` | Core helpers; must precede all callers |
+| 7–54 | Feature modules | Roughly: dialog/image → search/filter → sort/paginate → modals → spot/retail/catalog → inventory → cloud |
+| 55 | `js/events.js` | Global event bindings — all modules must be loaded first |
+| 56 | `js/test-loader.js` | Test harness (dev only; loads conditionally) |
+| 57 | `js/init.js` | Bootstrap — must be last |
 
-Active feature flags as of v3.33.19:
+Full order is canonical in `sw.js` `CORE_ASSETS` and reflected in `index.html`.
 
-| Flag | Default | Phase | User toggle | Description |
-|---|---|---|---|---|
-| `FUZZY_AUTOCOMPLETE` | `true` | stable | Yes | Fuzzy search autocomplete for item names and locations |
-| `DEBUG_UI` | `false` | dev | No | Debug UI indicators and development tools |
-| `GROUPED_NAME_CHIPS` | `true` | beta | Yes | Group item names by base name (e.g., "American Silver Eagle (3)") |
-| `DYNAMIC_NAME_CHIPS` | `false` | beta | Yes | Auto-extract text from parentheses and quotes in item names as additional filter chips |
-| `CHIP_QTY_BADGE` | `true` | stable | Yes | Show item count badge on filter chips |
-| `NUMISTA_SEARCH_LOOKUP` | `false` | beta | Yes | Pattern-based Numista search improvement |
-| `COIN_IMAGES` | `true` | beta | Yes | Coin image caching and item view modal |
-| `MARKET_LIST_VIEW` | `true` | beta | Yes | New single-row market card layout with search, sort, and inline charts |
-| `MARKET_DASHBOARD_ITEMS` | `false` | beta | Yes | Show goldback and dashboard items in the market list |
-| `MARKET_AUTO_RETAIL` | `false` | beta | Yes | Auto-update inventory retail prices from linked market data |
+### Service worker
 
-### Key globals exposed on `window`
+`sw.js` provides offline support and PWA installability. Key behaviors:
 
-| Global | Source file | Purpose |
-|---|---|---|
-| `APP_VERSION` | `js/constants.js` | Current version string |
-| `saveData(key, value)` | `js/utils.js` | Write to localStorage (validated key) |
-| `loadData(key)` | `js/utils.js` | Read from localStorage |
-| `saveDataSync(key, value)` | `js/utils.js` | Synchronous write to localStorage |
-| `loadDataSync(key, default)` | `js/utils.js` | Synchronous read from localStorage |
-| `safeGetElement(id)` | `js/init.js` | Safe `getElementById` wrapper |
-| `retailAvailability` | `js/retail.js` | Availability flags per item |
-| `spotPrices` | `js/state.js` | Current spot price object (one property per metal) |
-| `STORAGE_PERSIST_GRANTED_KEY` | `js/constants.js` | localStorage key for storage persistence grant flag |
-| `IMAGE_ZIP_MANIFEST_VERSION` | `js/constants.js` | Version string for image ZIP export manifest format (currently `'1.0'`) |
-| `_renderMarketListView` | `js/retail.js` | Re-render market list view (added v3.33.06) |
-| `_buildMarketListCard` | `js/retail.js` | Build a single market list card (added v3.33.06) |
-| `_getFilteredSortedSlugs` | `js/retail.js` | Filter + sort slugs for market list (added v3.33.06) |
-| `DISPOSITION_TYPES` | `js/constants.js` | Frozen map of disposition types (`sold`, `traded`, `lost`, `gifted`, `returned`) with labels and amount requirements |
-| `isDisposed(item)` | `js/constants.js` | Helper predicate — returns `true` if an item has a `disposition` record |
-| `SYNC_MANIFEST_PATH` | `js/constants.js` | Dropbox path for encrypted change manifest (`/StakTrakr/sync/staktrakr-sync.stmanifest`) |
-| `SYNC_MANIFEST_PATH_LEGACY` | `js/constants.js` | Legacy Dropbox path for change manifest (flat root) |
-| `buildImportValidationResult(items, skippedNonPM)` | `js/utils.js` | Batch-validates sanitized import items; returns `{ valid, invalid, skippedNonPM, skippedCount }` (added v3.33.24) |
-| `showImportSummaryBanner(result)` | `js/utils.js` | Renders a persistent post-import summary banner above the inventory table (added v3.33.24) |
-
-### Key subsystems
-
-| Subsystem | Entry point(s) | Notes |
-|---|---|---|
-| Inventory | `js/inventory.js` | CRUD for precious metals holdings |
-| Disposition (v3.33.17) | `js/inventory.js`, `js/constants.js` | Realized gains/losses workflow — dispose items as sold/traded/lost/gifted/returned; undo disposition; portfolio summary breakdown |
-| Retail pricing | `js/retail.js`, `js/api.js` | Polls `api.staktrakr.com/data/api/manifest.json` |
-| Market list view | `js/retail.js` | Full-width card layout with search/sort/charts (feature-flagged, v3.33.06) |
-| Spot prices | `js/spot.js`, `js/priceHistory.js` | Polls hourly and 15-min feeds from `api.staktrakr.com` |
-| Cloud sync | `js/cloud-sync.js`, `js/cloud-storage.js` | Backup/restore via encrypted cloud vault |
-| Diff/Merge | `js/diff-engine.js`, `js/diff-modal.js` | Change-set diffing and interactive merge review UI (STAK-184). DiffModal accepts optional `backupCount`/`localCount` fields to render a live count header (Backup / Current / After import) with projected-count updates and a Select All toggle (STAK-374). |
-| Catalog | `js/catalog-manager.js`, `js/seed-images.js` | Coin/bar catalog with image cache |
-| Image cache | `js/image-cache.js` | Per-item user photo storage; dynamic quota; byte tracking per store |
-| Service worker | `sw.js` | Offline support, PWA installability, cache versioning |
+- **Install phase:** pre-caches all files listed in `CORE_ASSETS` (57 paths: JS, CSS, images, vendor libs, seed data).
+- **Activate phase:** purges any old caches whose name starts with `staktrakr-` but does not match the current `CACHE_NAME`.
+- **Fetch routing strategies:**
+  - `file://` or OAuth callback: bypassed (no caching).
+  - `/wiki/` paths: bypassed (Docsify handles its own routing).
+  - `api.metalpriceapi.com`, `metals-api.com`, `api.gold-api.com`, `en.numista.com`: **network-first**.
+  - CDN hosts (`cdnjs.cloudflare.com`, `cdn.jsdelivr.net`, `unpkg.com`): **stale-while-revalidate**.
+  - `api.staktrakr.com` / `api2.staktrakr.com`: **stale-while-revalidate**.
+  - `/data/spot-history*`: **stale-while-revalidate** (seed files updated between releases).
+  - Local `.js` / `.css` files: **network-first** (always serve fresh code when online).
+  - Navigation requests (PWA launch): served from cached app shell.
+  - All other local assets: **stale-while-revalidate**.
+- **`CACHE_NAME`** format: `staktrakr-v{VERSION}-b{BUILD_HASH}` — auto-stamped by the `stamp-sw-cache.sh` pre-commit hook.
+- **`DEV_MODE`** flag: set `true` during active development to bypass all caching and go straight to network.
 
 ### `file://` protocol support
 
-`js/file-protocol-fix.js` detects whether the app is running under `file://` and patches `fetch` calls accordingly so that API polling and local JSON reads work in both environments.
+`js/file-protocol-fix.js` is loaded **synchronously in `<head>` before all other scripts**. It detects when the app is running under `file://` (e.g., opened from an extracted ZIP) and applies a lightweight `localStorage` fallback:
 
-### Portfolio value model
+- Wraps `localStorage.setItem`, `getItem`, and `removeItem` in try/catch blocks.
+- On failure, falls back to `window.tempStorage` (an in-memory object).
+- This ensures inventory reads and writes work even in environments where `file://` origins block `localStorage`.
 
-```
-meltValue  = weightOz x qty x spotPrice x purity
-```
+On `http://` or `https://` origins the wrapping is still installed but never triggered — native `localStorage` calls succeed normally.
 
-For Goldback items (`weightUnit === 'gb'`), `weightOz` is first converted via `weight * GB_TO_OZT`. For all other items, `weightOz` equals `weight`. `purity` defaults to `1.0` if not set.
+### Vendor libraries
 
-Three price columns tracked per holding: **Purchase Price**, **Melt Value**, **Retail Price**.
+Seven vendor libraries are bundled locally in `./vendor/` for offline and `file://` compatibility:
 
-### Market section dual-header layout (v3.33.06)
+| Library | Global | Purpose |
+|---|---|---|
+| `papaparse.min.js` | `Papa` | CSV parsing |
+| `jspdf.umd.min.js` | `jspdf` | PDF generation |
+| `jspdf.plugin.autotable.min.js` | (extends jsPDF) | PDF table layout |
+| `chart.min.js` | `Chart` | Portfolio charts |
+| `chartjs-plugin-datalabels.min.js` | `ChartDataLabels` | Chart data labels |
+| `jszip.min.js` | `JSZip` | ZIP backup import/export |
+| `forge.min.js` | `forge` | Encryption (vault/cloud sync) |
 
-The Market Prices section in `index.html` now has **two mutually exclusive headers**:
+CDN fallbacks with SRI hashes fire automatically on `DOMContentLoaded` if any local copy failed to define its global.
 
-- `#marketListHeader` — shown when `MARKET_LIST_VIEW` feature flag is active. Contains search bar, sort dropdown, Expand All button, and a dedicated sync button/timestamp.
-- `#marketGridHeader` — the original grid header. Shown when the feature flag is off.
+### PWA support
 
-`renderRetailCards()` in `js/retail.js` checks the feature flag at entry and either delegates to `_renderMarketListView()` or falls through to the original grid renderer. The grid path explicitly hides `#marketListHeader` and removes `.market-list-mode` from the grid container to ensure a clean state.
+- `manifest.json` enables installability on mobile and desktop.
+- Theme color: `#1a1a2e`.
+- Icons: `images/icon-192.png`, `images/icon-512.png`.
+- Apple mobile meta tags present for iOS home-screen install.
 
-### Filter chip max count (v3.33.23 — STAK-169)
+### Content Security Policy
 
-The search toolbar (`#searchSectionEl` in `index.html`) includes an inline `#chipMaxCount` `<select>` control beside the existing `#chipMinCount` control. Selecting a value caps the number of category chips rendered by `renderActiveFilters()` in `js/filters.js`.
+The CSP is intentionally permissive (`default-src * 'unsafe-inline' 'unsafe-eval' data: blob:`). This is required because:
 
-**How it works:**
+- `file://` origin requires `unsafe-inline` for inline event handlers and styles.
+- Vendor libraries (JSZip, Forge) require `unsafe-eval`.
 
-- The inline toolbar select (`id="chipMaxCount"`) and the Settings modal mirror select (`id="settingsChipMaxCount"`) both write to `localStorage.chipMaxCount`.
-- `renderActiveFilters()` reads the element value first (preferred, always reflects the current DOM state) and falls back to `localStorage.getItem('chipMaxCount')` if the element is absent.
-- The cap is applied **only to category chips** — after Phase A grouping and before Phase B explicit-filter chips are appended. Active-filter chips (e.g. an applied text filter) are always shown regardless of the cap.
-- `maxCount === 0` means no cap (the "All" option, default for new installs).
-- The chip cap is clamped via `Array.prototype.splice(maxCount)` when `chips.length > maxCount`.
-
-**Storage:** `chipMaxCount` is a scalar string stored directly in `localStorage` (not via `saveData`). It is registered in both `ALLOWED_STORAGE_KEYS` and `SYNC_SCOPE_KEYS` in `js/constants.js`, so it survives `cleanupStorage()` and is included in cloud sync vaults.
-
-**Inline toolbar options:** `25` | `50` | `100` | `500` | `0 (All, default)`
-
-**Settings modal:** `settingsChipMaxCount` in Settings → Filters mirrors the inline control. Changes in either location are immediately reflected in the other and re-render the filter bar.
-
-**Backup/restore:** `chipMaxCount` is exported in `settings.json` inside the ZIP backup and restored by `restoreBackupZip()` in `js/inventory.js`.
-
-**Default:** `'0'` (no cap) written on first install by `js/init.js`.
+Runtime mitigations compensate: all user-controlled HTML is escaped via `sanitizeHtml()`, OAuth tokens are scoped to `localStorage`, and vault passwords are cached in `sessionStorage` with XOR obfuscation and an auto-clear idle timer.
 
 ---
 
-### Disposition workflow (v3.33.17 — STAK-72)
-
-Items can be marked as disposed via the remove-item modal (`#removeItemModal` in `index.html`), which combines delete and disposition tracking with a checkbox toggle. Disposition types are defined in `DISPOSITION_TYPES` in `js/constants.js`:
-
-| Type | Label | Requires Amount |
-|---|---|---|
-| `sold` | Sold | Yes |
-| `traded` | Traded | Yes |
-| `lost` | Lost | No |
-| `gifted` | Gifted | No |
-| `returned` | Returned | Yes |
-
-**Realized gain/loss** is computed at disposition time: `amount - (purchasePrice * qty)`. The result is stored in `item.disposition.realizedGainLoss`.
-
-**Visual indicators:** Disposed items show a colored badge (`.disposition-badge--{type}`) in both table rows and card views. Disposed table rows receive `.disposed-row` (opacity + strikethrough); disposed cards receive `.disposed-card`. Badge colors are theme-aware (light and dark variants in `css/styles.css`).
-
-**Filter toggle:** A three-state chip-sort-toggle (`#disposedFilterGroup`) in the filter bar controls disposed item visibility. Three modes cycle on click: **Hide** (default — `js/filters.js` strips all disposed items), **Show All** (active + disposed items rendered together), and **Disposed Only** (only disposed items shown). The selected mode is persisted as `disposedFilterMode` (`'hide'` | `'show-all'` | `'show-only'`) in localStorage. An active filter chip is rendered in the filter bar when the mode is not `'hide'`.
-
-**Portfolio summary:** Each metal's summary card and the "All" summary card include a disposed-items breakdown with realized G/L when disposed items exist (`#disposedWrap{Metal}`, `#disposedWrapAll`).
-
-**Undo:** `undoDisposition(idx)` restores a disposed item to active inventory after user confirmation, clearing the `disposition` property and logging the change. The `toggleChange()` function in `js/changeLog.js` has a dedicated `'Disposed'` branch that correctly clears `item.disposition` when an undo change-log entry is replayed.
-
-**Restore from view modal:** The item view modal (`js/viewModal.js`) renders a **Restore to Inventory** button in its footer actions when the viewed item is disposed. Clicking it calls `undoDisposition()` directly, allowing a one-click restore without navigating to the inventory table.
-
-**CSV export:** Four disposition columns are appended to the export: Disposition Type, Disposition Date, Disposition Amount, Realized G/L.
-
-### Storage gauge (v3.32.27)
-
-The Settings storage section now renders a **split storage gauge** with two independently tracked bars:
-
-- **Your Photos** — bytes used by user-uploaded images (tracked via `js/image-cache.js`)
-- **Numista Cache** — bytes used by Numista API response cache
-
-A persistence status line (`#gaugePersistLine`) shows whether the browser has granted persistent storage. The persistence request is triggered by `js/settings.js` and the grant is recorded under `storagePersistGranted` in localStorage. Quota is computed dynamically from the `navigator.storage.estimate()` API rather than the previous hardcoded 50 MB cap.
-
 ## Common Mistakes
 
-- Adding a new JS file to `index.html` but forgetting `sw.js` CORE_ASSETS (or vice versa) — the app works in dev but breaks for users with a cached service worker.
-- Calling `document.getElementById()` outside of `about.js` / `init.js` — the safe wrapper provides error logging and avoids silent null-ref failures.
-- Writing directly to `localStorage` instead of `saveData()` — bypasses key validation and breaks the data audit trail.
-- Editing `sw.js` `CACHE_NAME` manually — the pre-commit hook will overwrite it; always let the hook stamp the value.
-- Placing a new `<script>` tag in the wrong position in `index.html` — scripts that reference globals from later files will throw at load time.
-- Assuming `spot-history-YYYY.json` is live data — it is a seed file (noon UTC daily snapshot) and will always appear ~10 h stale in health checks.
-- Hardcoding a storage quota (e.g. `50 * 1024 * 1024`) — quota is now derived dynamically from `navigator.storage.estimate()` in `js/image-cache.js`.
-- Forgetting to restore the default header/class state in the non-flagged code path when a feature flag gates an alternative UI. Both `#marketListHeader` visibility and `.market-list-mode` must be explicitly reset in `renderRetailCards` when the flag is off.
-- Storing `meltValue` or `realizedGainLoss` at render time — `meltValue` is always computed from current spot; `realizedGainLoss` is computed once at disposition time and stored in the `disposition` object, not re-derived.
+- **Adding a new JS file to `index.html` but forgetting `sw.js` CORE_ASSETS (or vice versa).** The app works in dev but breaks for users with a cached service worker on the next visit.
+- **Calling `document.getElementById()` outside of `about.js` / `init.js`.** The safe wrapper `safeGetElement()` provides error logging and avoids silent null-reference failures.
+- **Writing directly to `localStorage` instead of `saveData()`.** This bypasses key validation and `ALLOWED_STORAGE_KEYS` enforcement.
+- **Editing `sw.js` `CACHE_NAME` manually.** The pre-commit hook will overwrite it on the next commit; always let the hook stamp the value.
+- **Placing a new `<script>` tag in the wrong position in `index.html`.** Scripts that reference globals from a file that loads later will throw at page load time.
+- **Assuming `spot-history-YYYY.json` is live data.** It is a seed file (noon UTC daily snapshot) and always appears approximately 10 hours stale in health checks, even when the poller is healthy.
+- **Hardcoding a storage quota.** Storage quota is derived dynamically from `navigator.storage.estimate()` in `js/image-cache.js`; do not hardcode values like `50 * 1024 * 1024`.
+- **Bumping the version manually.** The version string appears in 7 files; always run `/release patch` via the skill to keep all occurrences in sync.
+
+---
 
 ## Related Pages
 
@@ -228,5 +193,3 @@ A persistence status line (`#gaugePersistLine`) shows whether the browser has gr
 - [Storage Patterns](storage-patterns.md)
 - [DOM Patterns](dom-patterns.md)
 - [Service Worker](service-worker.md)
-- [Release Workflow](release-workflow.md)
-- [Retail View Modal](retail-modal.md)

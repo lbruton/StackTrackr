@@ -2,13 +2,15 @@
 title: "StakTrakr Wiki"
 category: meta
 owner: shared
-lastUpdated: v3.33.18
-date: 2026-03-01
+lastUpdated: v3.33.25
+date: 2026-03-02
 sourceFiles: []
 relatedPages: []
 ---
 
 # StakTrakr Wiki
+
+> Full wiki sweep — v3.33.25 — 2026-03-02
 
 Private wiki for StakTrakr. Covers the full system: API infrastructure and data pipelines (maintained by StakTrakrApi agents) and the frontend app (maintained by Claude Code / StakTrakr agents).
 
@@ -23,7 +25,25 @@ This wiki is the **shared source of truth** between two independent Claude agent
 
 Both agents can read and write this wiki. When behavior diverges between Fly.io and the home poller (intentionally or by drift), it should be documented here so either agent can identify it, reconcile it, or propose it upstream.
 
-**Status:** In progress — being audited for accuracy before making public.
+---
+
+## Frontend
+
+Pages covering the StakTrakr single-page app — architecture, patterns, and workflows. Maintained by **Claude Code** in the StakTrakr repo context.
+
+| Page | Contents | Last Updated |
+|------|----------|--------------|
+| [Frontend Overview](frontend-overview.md) | Zero-build SPA architecture, 70-script load order, service worker, PWA, file-protocol support | v3.33.25 |
+| [Data Model](data-model.md) | Full 30+ field InventoryItem schema, portfolio model (Purchase/Melt/Retail), `computeMeltValue()` formula, feature flags | v3.33.25 |
+| [Storage Patterns](storage-patterns.md) | `saveData`/`loadData` wrappers, LZString compression, full ~90-key `ALLOWED_STORAGE_KEYS` registry, cloud sync integration | v3.33.25 |
+| [DOM Patterns](dom-patterns.md) | `safeGetElement`, `sanitizeHtml`, `escapeHtml`, `safeAttachListener`, startup exception in init.js/about.js | v3.33.25 |
+| [Cloud Sync](sync-cloud.md) | Dropbox OAuth, AES-256-GCM vault, push/pull/manifest flow, multi-tab BroadcastChannel leader election | v3.33.25 |
+| [Image Pipeline](image-pipeline.md) | IndexedDB image storage, `image-processor.js` resize/WebP/quality pipeline, bulk caching, seed images | v3.33.25 |
+| [Backup & Restore](backup-restore.md) | Manual vs auto-sync comparison, export envelope format, import validation, manifest-based change log | v3.33.25 |
+| [Retail Modal](retail-modal.md) | Per-coin detail panel, 24h intraday chart (`_bucketWindows`, `_forwardFillVendors`, `_flagAnomalies`), 30-day history tab | v3.33.25 |
+| [API Consumption](api-consumption.md) | Three feeds (market/spot/goldback), stale thresholds, health badge logic, duplicate-function warning | v3.33.25 |
+| [Release Workflow](release-workflow.md) | `/release patch` worktree cycle, 7 files touched per bump, `/ship` dev→main, version.lock protocol | v3.33.25 |
+| [Service Worker](service-worker.md) | CORE_ASSETS (76 entries), CACHE_NAME auto-stamp, DEV_MODE bypass, cache strategies per route type | v3.33.25 |
 
 ---
 
@@ -31,43 +51,23 @@ Both agents can read and write this wiki. When behavior diverges between Fly.io 
 
 Pages covering the API backend, data pipelines, and operational runbooks. Maintained by the **StakTrakrApi** agent context.
 
-| Page | Contents |
-|------|----------|
-| [Architecture Overview](architecture-overview.md) | System diagram, repo boundaries, data feeds |
-| [Retail Market Price Pipeline](retail-pipeline.md) | Dual-poller, Turso, providers.json, OOS detection |
-| [Fly.io Container](fly-container.md) | Services, cron, env vars, proxy config, deployment |
-| [Home Poller (LXC)](home-poller.md) | Proxmox LXC setup, cron, sync process |
-| [Spot Price Pipeline](spot-pipeline.md) | MetalPriceAPI, hourly/15min files, backfill logic |
-| [Goldback Pipeline](goldback-pipeline.md) | Denomination generation, retail pipeline integration |
-| [REST API Reference](rest-api-reference.md) | Complete endpoint map, schemas, confidence tiers |
-| [Turso Schema](turso-schema.md) | Database tables, indexes, key query patterns |
-| [Cron Schedule](cron-schedule.md) | Full timeline view, design rationale |
-| [providers.json](providers.md) | URL strategy, year-start patterns, update process |
-| [Secrets & Keys](secrets.md) | Where every secret lives, how to rotate |
-| [Provider Database](provider-database.md) | Turso provider tables, vendor management, coverage stats |
-| [Health & Diagnostics](health.md) | Quick health checks, stale thresholds, diagnosis commands |
-| [Poller Parity](poller-parity.md) | Fly vs home poller comparison, schedule differences, drift tracking |
-| [Vendor Quirks](vendor-quirks.md) | Per-vendor scraping workarounds, selector overrides, known issues |
-
----
-
-## Frontend
-
-Pages covering the StakTrakr single-page app — architecture, patterns, and workflows. Maintained by **Claude Code** in the StakTrakr repo context.
-
-| Page | Contents |
-|------|----------|
-| [Frontend Overview](frontend-overview.md) | File structure, script load order, service worker, PWA |
-| [Data Model](data-model.md) | Portfolio model, storage keys, coin/entry schema |
-| [Storage Patterns](storage-patterns.md) | saveData/loadData wrappers, sync variants, key validation |
-| [DOM Patterns](dom-patterns.md) | safeGetElement, sanitizeHtml, event delegation |
-| [Cloud Sync](sync-cloud.md) | Dropbox backup/restore, vault encryption, sync flow |
-| [Image Pipeline](image-pipeline.md) | Image IDB stores, resolution cascade, upload flow, pattern rules, rendering |
-| [Backup & Restore](backup-restore.md) | ZIP backup, encrypted vault, image vault, cloud sync coverage matrix |
-| [Retail Modal](retail-modal.md) | Coin detail modal, vendor legend, OOS detection, price carry-forward |
-| [API Consumption](api-consumption.md) | Spot feed, market price feed, goldback feed, health checks |
-| [Release Workflow](release-workflow.md) | Patch cycle, version bump, worktree pattern, ship to main |
-| [Service Worker](service-worker.md) | CORE_ASSETS, cache strategy, pre-commit stamp hook |
+| Page | Contents | Owner | Last Updated |
+|------|----------|-------|--------------|
+| [Architecture Overview](architecture-overview.md) | System diagram, repo boundaries, three data feeds, branch strategy | staktrakr / staktrakr-api | v3.33.25 |
+| [REST API Reference](rest-api-reference.md) | Complete endpoint map for all static JSON feeds, schemas, update cadence | staktrakr-api | v3.33.25 |
+| [Turso Database Schema](turso-schema.md) | Database tables, indexes, key query patterns for shared Turso (libSQL) DB | staktrakr-api | v3.33.25 |
+| [Cron Schedule](cron-schedule.md) | Full cron timeline for both pollers: retail, spot, publish, retry, goldback | staktrakr-api | v3.33.25 |
+| [Retail Market Price Pipeline](retail-pipeline.md) | Dual-poller scrape, Turso write path, latest-per-vendor merge, OOS detection | staktrakr-api | v3.33.25 |
+| [Fly.io Container](fly-container.md) | supervisord services, app config, 4-tier scraper fallback, Tailscale exit node | staktrakr-api | v3.33.25 |
+| [Home Poller (Ubuntu VM)](home-poller.md) | Ubuntu 24.04 LXC at 192.168.1.81, retail + spot crons, monitoring, SSH access | staktrakr-api | v3.33.25 |
+| [Spot Price Pipeline](spot-pipeline.md) | MetalPriceAPI 4×/hr cron, Turso spot_prices, hourly/15-min JSON output | staktrakr-api | v3.33.25 |
+| [Goldback Pipeline](goldback-pipeline.md) | Per-state slugs (8 states × 7 denominations), hourly G1 rate scrape | staktrakr-api | v3.33.25 |
+| [providers.json](providers.md) | Turso-backed provider registry, vendor/coin URL matrix, dashboard management | staktrakr-api | v3.33.25 |
+| [Secrets & Keys](secrets.md) | Fly.io secrets, Infisical, home LXC .env — locations and rotation procedures | staktrakr-api | v3.33.25 |
+| [Health & Diagnostics](health.md) | Quick health check commands, stale thresholds per feed, diagnosis procedures | staktrakr-api | v3.33.25 |
+| [Vendor Quirks](vendor-quirks.md) | Frontend display per vendor: brand colors, URL resolution, OOS rendering, anomaly detection | staktrakr | v3.33.25 |
+| [Provider Database (Turso)](provider-database.md) | Turso provider table schema, `provider-db.js` query module, dashboard CRUD | staktrakr-api | v3.33.25 |
+| [Poller Parity — Fly.io vs Home Poller](poller-parity.md) | Infrastructure comparison, schedule offsets, file parity checks, drift tracking | staktrakr-api | v3.33.25 |
 
 ---
 
