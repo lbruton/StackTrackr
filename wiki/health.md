@@ -125,7 +125,7 @@ Expected: rows from both `api` (Fly.io) and `home` (LXC) pollers within the last
 | Goldback > 25h stale | `run-goldback.sh` failed | `fly logs --app staktrakr \| grep goldback` |
 | Only 1–2 vendors per coin | Home or Fly poller down, or OOS | Check both pollers; verify Turso has recent rows |
 | Vendor missing multiple cycles | URL changed or bot-blocked | Update vendor URL via [dashboard](home-poller.md) at `192.168.1.81:3010/providers` or `provider-db.js` — see [Provider Database](provider-database.md) |
-| OOM on Fly.io | Concurrent api-export.js invocations | Verify `run-local.sh` does NOT call `api-export.js` |
+| OOM on Fly.io | Concurrent api-export.js invocations or VM mis-sized | Verify `run-local.sh` does NOT call `api-export.js`; `fly scale show` — expect 8 shared CPUs / 4096 MB |
 | Monument Metals missing at year-start | Random-year SKU on pre-order | Switch to year-specific SKU in providers.json |
 | JMBullion presale coins show OOS | Pre-order pattern matching | Verify `PREORDER_TOLERANT_PROVIDERS` includes `jmbullion` |
 | Merge workflow failing | Branch conflict or jq parse error | Retired/manual-only — `api` branch is now served directly by GitHub Pages |
