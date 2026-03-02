@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.20] - 2026-03-02
+
+### Fixed — Market Panel Bug Fixes (STAK-389)
+
+- **Fixed**: API-driven item names — all rendering paths now use `getRetailCoinMeta()` with manifest as source of truth, fallback parser corrected to denomination-first format (STAK-389)
+- **Fixed**: Grid/list view sync status shows "just now" after sync, time-ago when lingering, "Sync error — prices may be stale" on API failure (STAK-389)
+- **Fixed**: Activity log dropdown dynamically populated from API manifest instead of hardcoded HTML (STAK-389)
+
+---
+
 ## [3.33.19] - 2026-03-01
 
 ### Added — DiffMerge Integration: Selective Apply for Cloud Sync and Vault Restore (STAK-190)

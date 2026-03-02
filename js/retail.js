@@ -22,7 +22,7 @@ const RETAIL_COIN_META = {
   "maple-gold":              { name: "Gold Maple Leaf",          weight: 1.0,  metal: "gold"     },
   "krugerrand-gold":         { name: "Gold Krugerrand",          weight: 1.0,  metal: "gold"     },
   "ape":                     { name: "American Platinum Eagle",   weight: 1.0, metal: "platinum" },
-  "goldback-oklahoma-g1":    { name: "Oklahoma Goldback (G1)",   weight: 0.001, metal: "goldback" },
+  "goldback-oklahoma-g1":    { name: "G1 Oklahoma Goldback",     weight: 0.001, metal: "goldback" },
 };
 
 /** Goldback denomination weights (troy oz) */
@@ -43,7 +43,7 @@ const _parseGoldbackSlug = (slug) => {
   if (weight == null) return null;
   const state = m[1].replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
   const denom = m[2] === "ghalf" ? "G\u00BD" : m[2].toUpperCase();
-  return { name: `${state} Goldback (${denom})`, weight, metal: "goldback" };
+  return { name: `${denom} ${state} Goldback`, weight, metal: "goldback" };
 };
 
 /** Vendor display names */
@@ -160,6 +160,9 @@ let retailLastAvailableDates = {};
 
 /** True while syncRetailPrices() is running — triggers skeleton render */
 let _retailSyncInProgress = false;
+
+/** True when the last sync attempt failed — drives error display in grid/list views */
+let _retailSyncError = false;
 
 /** Active sparkline Chart instances keyed by slug — destroyed before re-render to prevent Canvas reuse errors */
 const _retailSparklines = new Map();
@@ -416,6 +419,7 @@ const syncRetailPrices = async ({ ui = true } = {}) => {
     syncStatus.textContent = "";
   }
   _retailSyncInProgress = true;
+  _retailSyncError = false;
   renderRetailCards();
 
   try {
@@ -525,6 +529,7 @@ const syncRetailPrices = async ({ ui = true } = {}) => {
         window_start: manifest.latest_window || null,
         prices: newPrices,
       };
+      _retailSyncError = false;
     }
 
     // Check if all fetches failed
@@ -533,6 +538,7 @@ const syncRetailPrices = async ({ ui = true } = {}) => {
       debugLog(`[retail] ${errorMsg}`, "error");
       if (ui) syncStatus.textContent = errorMsg;
       _appendSyncLogEntry({ success: false, coins: 0, window: null, error: errorMsg });
+      _retailSyncError = true;
       return;
     }
 
@@ -549,6 +555,7 @@ const syncRetailPrices = async ({ ui = true } = {}) => {
     _appendSyncLogEntry({ success: true, coins: successCount, window: manifest.latest_window || null, error: null });
     if (typeof updateMarketHealthDot === 'function') updateMarketHealthDot();
   } catch (err) {
+    _retailSyncError = true;
     debugLog(`[retail] Sync error: ${err.message}`, "warn");
     if (ui) syncStatus.textContent = `Sync failed: ${err.message}`;
     _appendSyncLogEntry({ success: false, coins: 0, window: null, error: err.message });
@@ -634,6 +641,21 @@ const _renderRetailSparkline = (slug) => {
   _retailSparklines.set(slug, chart);
 };
 
+/** Updates the sync timestamp element based on current sync state. Shared by grid and list views. */
+const _updateLastSyncEl = (el) => {
+  if (_retailSyncError) {
+    el.textContent = "Sync error \u2014 prices may be stale";
+  } else if (retailPrices && retailPrices.lastSync) {
+    const d = new Date(retailPrices.lastSync);
+    const diffMin = Math.floor((Date.now() - d) / 60000);
+    if (diffMin < 1) el.textContent = "Last synced: just now";
+    else if (diffMin < 60) el.textContent = `Last synced: ${diffMin} min ago`;
+    else el.textContent = `Last synced: ${d.toLocaleDateString()} ${d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+  } else {
+    el.textContent = "Never synced";
+  }
+};
+
 /** Called on market section open and after each sync. */
 const renderRetailCards = () => {
   // Market list view branch (feature flag)
@@ -653,12 +675,7 @@ const renderRetailCards = () => {
   if (gridHeader) gridHeader.style.display = "";
   grid.classList.remove("market-list-mode");
 
-  if (retailPrices && retailPrices.lastSync) {
-    const d = new Date(retailPrices.lastSync);
-    lastSyncEl.textContent = `Last synced: ${d.toLocaleDateString()} ${d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
-  } else {
-    lastSyncEl.textContent = "Never synced";
-  }
+  _updateLastSyncEl(lastSyncEl);
 
   grid.innerHTML = "";
   if (_retailSyncInProgress) {
@@ -1612,16 +1629,7 @@ const _renderMarketListView = () => {
   gridHeader.style.display = "none";
 
   // Update sync timestamp
-  if (retailPrices && retailPrices.lastSync) {
-    const d = new Date(retailPrices.lastSync);
-    const now = new Date();
-    const diffMin = Math.floor((now - d) / 60000);
-    if (diffMin < 1) lastSyncEl.textContent = "Last sync: just now";
-    else if (diffMin < 60) lastSyncEl.textContent = `Last sync: ${diffMin} min ago`;
-    else lastSyncEl.textContent = `Last sync: ${d.toLocaleDateString()} ${d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
-  } else {
-    lastSyncEl.textContent = "Last sync: never";
-  }
+  _updateLastSyncEl(lastSyncEl);
 
   // Switch grid to list mode
   grid.classList.add("market-list-mode");
@@ -1809,7 +1817,31 @@ const renderRetailHistoryTable = () => {
   const select = safeGetElement("retailHistorySlugSelect");
   const tbody = safeGetElement("retailHistoryTableBody");
 
-  const slug = select.value || RETAIL_SLUGS[0];
+  // Dynamically populate slug dropdown from active slugs (replaces hardcoded HTML options)
+  const activeSlugs = getActiveRetailSlugs();
+  const prevSlug = select.value;
+  select.innerHTML = "";
+
+  if (!activeSlugs.length) {
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.disabled = true;
+    placeholder.selected = true;
+    placeholder.textContent = "No coins with price history yet";
+    select.appendChild(placeholder);
+    tbody.innerHTML = "<tr><td colspan=\"7\" class=\"settings-subtext\" style=\"text-align:center\">No history yet \u2014 sync from the Market Prices section.</td></tr>";
+    return;
+  }
+
+  activeSlugs.forEach((s) => {
+    const opt = document.createElement("option");
+    opt.value = s;
+    opt.textContent = getRetailCoinMeta(s).name;
+    select.appendChild(opt);
+  });
+  if (prevSlug && activeSlugs.includes(prevSlug)) select.value = prevSlug;
+
+  const slug = select.value || activeSlugs[0];
   const allHistory = getRetailHistoryForSlug(slug);
 
   const tfBtn = document.querySelector("#logPanel_market [data-retail-timeframe].active");
