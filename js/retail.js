@@ -641,6 +641,21 @@ const _renderRetailSparkline = (slug) => {
   _retailSparklines.set(slug, chart);
 };
 
+/** Updates the sync timestamp element based on current sync state. Shared by grid and list views. */
+const _updateLastSyncEl = (el) => {
+  if (_retailSyncError) {
+    el.textContent = "Sync error \u2014 prices may be stale";
+  } else if (retailPrices && retailPrices.lastSync) {
+    const d = new Date(retailPrices.lastSync);
+    const diffMin = Math.floor((Date.now() - d) / 60000);
+    if (diffMin < 1) el.textContent = "Last synced: just now";
+    else if (diffMin < 60) el.textContent = `Last synced: ${diffMin} min ago`;
+    else el.textContent = `Last synced: ${d.toLocaleDateString()} ${d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+  } else {
+    el.textContent = "Never synced";
+  }
+};
+
 /** Called on market section open and after each sync. */
 const renderRetailCards = () => {
   // Market list view branch (feature flag)
@@ -660,18 +675,7 @@ const renderRetailCards = () => {
   if (gridHeader) gridHeader.style.display = "";
   grid.classList.remove("market-list-mode");
 
-  if (_retailSyncError) {
-    lastSyncEl.textContent = "Sync error \u2014 prices may be stale";
-  } else if (retailPrices && retailPrices.lastSync) {
-    const d = new Date(retailPrices.lastSync);
-    const now = new Date();
-    const diffMin = Math.floor((now - d) / 60000);
-    if (diffMin < 1) lastSyncEl.textContent = "Last synced: just now";
-    else if (diffMin < 60) lastSyncEl.textContent = `Last synced: ${diffMin} min ago`;
-    else lastSyncEl.textContent = `Last synced: ${d.toLocaleDateString()} ${d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
-  } else {
-    lastSyncEl.textContent = "Never synced";
-  }
+  _updateLastSyncEl(lastSyncEl);
 
   grid.innerHTML = "";
   if (_retailSyncInProgress) {
@@ -1625,18 +1629,7 @@ const _renderMarketListView = () => {
   gridHeader.style.display = "none";
 
   // Update sync timestamp
-  if (_retailSyncError) {
-    lastSyncEl.textContent = "Sync error \u2014 prices may be stale";
-  } else if (retailPrices && retailPrices.lastSync) {
-    const d = new Date(retailPrices.lastSync);
-    const now = new Date();
-    const diffMin = Math.floor((now - d) / 60000);
-    if (diffMin < 1) lastSyncEl.textContent = "Last sync: just now";
-    else if (diffMin < 60) lastSyncEl.textContent = `Last sync: ${diffMin} min ago`;
-    else lastSyncEl.textContent = `Last sync: ${d.toLocaleDateString()} ${d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
-  } else {
-    lastSyncEl.textContent = "Last sync: never";
-  }
+  _updateLastSyncEl(lastSyncEl);
 
   // Switch grid to list mode
   grid.classList.add("market-list-mode");
@@ -1828,6 +1821,18 @@ const renderRetailHistoryTable = () => {
   const activeSlugs = getActiveRetailSlugs();
   const prevSlug = select.value;
   select.innerHTML = "";
+
+  if (!activeSlugs.length) {
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.disabled = true;
+    placeholder.selected = true;
+    placeholder.textContent = "No coins with price history yet";
+    select.appendChild(placeholder);
+    tbody.innerHTML = "<tr><td colspan=\"7\" class=\"settings-subtext\" style=\"text-align:center\">No history yet \u2014 sync from the Market Prices section.</td></tr>";
+    return;
+  }
+
   activeSlugs.forEach((s) => {
     const opt = document.createElement("option");
     opt.value = s;
@@ -1836,7 +1841,7 @@ const renderRetailHistoryTable = () => {
   });
   if (prevSlug && activeSlugs.includes(prevSlug)) select.value = prevSlug;
 
-  const slug = select.value || RETAIL_SLUGS[0];
+  const slug = select.value || activeSlugs[0];
   const allHistory = getRetailHistoryForSlug(slug);
 
   const tfBtn = document.querySelector("#logPanel_market [data-retail-timeframe].active");
