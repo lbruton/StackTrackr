@@ -3,7 +3,7 @@ title: Retail Market Price Pipeline
 category: infrastructure
 owner: staktrakr-api
 lastUpdated: v3.33.19
-date: 2026-02-25
+date: 2026-03-02
 sourceFiles: []
 relatedPages:
   - rest-api-reference.md
@@ -34,7 +34,7 @@ Two independent pollers write to the **same Turso database**. A single publisher
 
 | Poller | Location | Cron | Script | POLLER_ID |
 |--------|----------|------|--------|-----------|
-| **Fly.io** (primary) | `staktrakr` app, `dfw` region | `15,45 * * * *` | `run-local.sh` | `api` |
+| **Fly.io** (primary) | `staktrakr` app, `dfw` region | `0 * * * *` (1×/hr) | `run-local.sh` | `api` |
 | **Home LXC** (secondary) | Proxmox Ubuntu @ 192.168.1.81 | `30 * * * *` (1×/hr) | `run-home.sh` | `home` |
 
 **Why two pollers?**
@@ -71,7 +71,7 @@ Two independent pollers write to the **same Turso database**. A single publisher
 
 ```
 Fly.io run-local.sh  ──┐
-(15,45 * * * *)        ├──► Turso (price_snapshots) ──► api-export.js ──► data/api/ JSON
+(0 * * * *)            ├──► Turso (price_snapshots) ──► api-export.js ──► data/api/ JSON
 Home LXC run-home.sh ──┘    readLatestPerVendor()        (run-publish.sh, 8,23,38,53)
 (30 * * * *)
                                                               │
@@ -228,7 +228,7 @@ Requires `GEMINI_API_KEY`. Non-fatal — failure is logged and scrape continues.
 
 | Script | Cron | Purpose |
 |--------|------|---------|
-| `run-local.sh` | `15,45 * * * *` | Retail scrape (2x/hr) |
+| `run-local.sh` | `0 * * * *` | Retail scrape (1x/hr, `CRON_SCHEDULE=0`) |
 | `run-spot.sh` | `0,30 * * * *` | Spot price poll (MetalPriceAPI → Turso + JSON) |
 | `run-publish.sh` | `8,23,38,53 * * * *` | Export Turso → JSON, push to `api` branch |
 | `run-retry.sh` | `15 * * * *` | T3 proxy retry of failed SKUs |
