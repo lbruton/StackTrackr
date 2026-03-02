@@ -31,7 +31,7 @@ These rules exist because the app runs on `file://` (no server-side sanitization
 ## Key Rules (read before touching this area)
 
 - **Prefer `safeGetElement(id)`** for DOM lookups in application code.
-- **Raw `document.getElementById()` is expected in `js/about.js` and `js/init.js`** (boot files that run before the wrapper is reliably available) and also exists in pre-init and legacy paths such as `js/card-view.js` and `js/inventory.js`.
+- **Raw `document.getElementById()` is expected in `js/about.js`** (runs before `init.js` loads, so `safeGetElement` is not yet defined) and also exists in pre-init and legacy paths such as `js/card-view.js` and `js/inventory.js`. Note: `js/init.js` defines `safeGetElement` at line 31, so code within `init.js` itself CAN use it after that point.
 - **Always call `sanitizeHtml(str)` before assigning user-supplied text to `innerHTML`.**
 - Never assign an unescaped user string directly to `innerHTML`, even for "display-only" fields.
 
@@ -109,12 +109,12 @@ row.innerHTML = `<td>${sanitizeHtml(item.name)}</td>`;
 
 ---
 
-### Mistake 3 — Using `safeGetElement` in `about.js` or `init.js` before it is defined
+### Mistake 3 — Using `safeGetElement` in `about.js` before it is defined
 
-`safeGetElement` is defined inside `js/init.js`. The `DOMContentLoaded` handler in `init.js` and the top-level code in `about.js` both run as part of early boot, before the function is reliably available to all callers in those two files. This is why those files use raw `document.getElementById()`. Some other files (e.g., `card-view.js`, `inventory.js`) also use raw lookups in pre-init or legacy paths — these are acceptable but new code should prefer `safeGetElement`.
+`safeGetElement` is defined at `js/init.js:31`. Code in `js/about.js` runs before `init.js` loads in the script order, so `safeGetElement` is not yet available — `about.js` must use raw `document.getElementById()`. Code within `init.js` itself CAN use `safeGetElement` after line 31. Some other files (e.g., `card-view.js`, `inventory.js`) also use raw lookups in pre-init or legacy paths — these are acceptable but new code should prefer `safeGetElement`.
 
 ```js
-// EXPECTED — inside js/about.js, js/init.js, or legacy paths
+// EXPECTED — inside js/about.js (loads before init.js defines safeGetElement)
 const el = document.getElementById('aboutVersion');
 ```
 
