@@ -2,8 +2,8 @@
 title: "Changelog"
 category: meta
 owner: shared
-lastUpdated: v3.33.19
-date: 2026-03-01
+lastUpdated: v3.33.25
+date: 2026-03-02
 sourceFiles: []
 relatedPages: []
 ---
@@ -11,6 +11,21 @@ relatedPages: []
 # Wiki Changelog
 
 Running log of structural wiki updates. Not a code changelog — tracks when wiki content was added, reorganized, or policy was updated.
+
+---
+
+## 2026-03-02 — Full sweep (v3.33.25)
+
+- Rewrote all 11 frontend pages from current codebase
+- Updated frontmatter on all 15 infrastructure pages (StakTrakrApi-owned content preserved)
+- Regenerated README index and navigation sidebar
+- Notable fixes found during sweep:
+  - `architecture-overview.md`: flagged stale spot cron (was `0,30 * * * *`, actual is `5,20,35,50 * * * *`)
+  - `rest-api-reference.md`: corrected spot update cadence to 4×/hr; flagged unused `history-7d.json` endpoint
+  - `api-consumption.md`: corrected spot stale threshold to 20 min per `api-health.js`; added duplicate-function warning
+  - `storage-patterns.md`: expanded with full ~90-key `ALLOWED_STORAGE_KEYS` registry and compression internals
+  - `data-model.md`: expanded to full 30+ field schema from `js/types.js` with `computeMeltValue()` formula
+  - `vendor-quirks.md`: rewritten from StakTrakrApi scraping-pipeline to StakTrakr frontend JS ownership
 
 ---
 

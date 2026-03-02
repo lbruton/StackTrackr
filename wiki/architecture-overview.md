@@ -1,9 +1,9 @@
 ---
 title: Architecture Overview
 category: infrastructure
-owner: staktrakr-api
-lastUpdated: v3.33.19
-date: 2026-02-25
+owner: staktrakr, staktrakr-api
+lastUpdated: v3.33.25
+date: 2026-03-02
 sourceFiles: []
 relatedPages: []
 ---
@@ -22,7 +22,7 @@ relatedPages: []
 │                                                             │
 │  ┌─────────────┐  ┌──────────────┐                          │
 │  │ run-local.sh│  │ run-spot.sh  │                          │
-│  │ 15,45 * * * │  │ 0,30 * * * * │                          │
+│  │ 15,45 * * * │  │ 0,30 * * * * │<!-- STALE: CLAUDE.md documents run-spot.sh at 5,20,35,50 * * * * — verify actual cron schedule in StakTrakrApi -->                          │
 │  └──────┬──────┘  └──────┬───────┘                          │
 │         │                │ → Turso spot_prices + JSON files  │
 │  ┌──────▼──────────────────────────────────────────────┐   │
@@ -84,7 +84,7 @@ relatedPages: []
 | Feed | File | Writer | Cadence | Status |
 |------|------|--------|---------|--------|
 | Market prices | `data/api/manifest.json` | Fly.io `run-local.sh` + `run-publish.sh` via Turso | `15,45 * * * *` | ✅ Live |
-| Spot prices | `data/hourly/YYYY/MM/DD/HH.json` | Fly.io `run-spot.sh` → `spot-extract.js` → Turso `spot_prices` + JSON files | `0,30 * * * *` | ✅ Live |
+| Spot prices | `data/hourly/YYYY/MM/DD/HH.json` | Fly.io `run-spot.sh` → `spot-extract.js` → Turso `spot_prices` + JSON files | `0,30 * * * *` <!-- STALE: CLAUDE.md documents cadence as 5,20,35,50 * * * * — verify actual cron schedule in StakTrakrApi --> | ✅ Live |
 | Goldback | `data/api/goldback-spot.json` | Fly.io `run-goldback.sh` → `goldback-scraper.js` → direct commit to `api` branch | `1 * * * *` (hourly, skips if today's rate captured) | ✅ Live |
 
 ---

@@ -32,7 +32,7 @@ Event-driven single-page application with imperative DOM manipulation:
 - **Primary storage**: `localStorage` via `saveData(key, value)` / `loadData(key)` utilities in `js/utils.js`
 - **Storage key registry**: All keys must be declared in `ALLOWED_STORAGE_KEYS` in `js/constants.js`
 - **Cloud sync**: AES-encrypted ZIP archive (JSZip + Forge) uploaded/downloaded to user-controlled cloud storage
-- **Image cache**: Base64-encoded images stored in localStorage with LRU eviction in `image-cache.js`
+- **Image cache**: IndexedDB-backed image storage API exposed as `window.imageCache` in `js/image-cache.js`
 - **Data formats**: JSON throughout (localStorage values, API responses, import/export)
 
 ### External Integrations
@@ -61,7 +61,7 @@ Event-driven single-page application with imperative DOM manipulation:
 - **Static Analysis**: ESLint 9.21.0 with custom rules; Codacy automated PR quality gates
 - **Formatting**: ESLint-enforced style (no Prettier)
 - **Testing Framework**: Playwright 1.50.0 for E2E browser tests (16 spec files)
-- **Documentation**: JSDoc comments; auto-generated HTML docs in `docs/api/`
+- **Documentation**: JSDoc comments; in-repo wiki under `wiki/`
 
 ### Version Control & Collaboration
 - **VCS**: Git (GitHub)

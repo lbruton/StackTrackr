@@ -3,7 +3,7 @@
 .AppleDouble
 .LSOverride
 
-# Claude Code — project-specific skills tracked in git;
+# Claude Code — all project skills tracked in git automatically;
 # user-level skills live in ~/.claude/skills/ (outside repo)
 .claude/*
 !.claude/skills/

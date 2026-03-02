@@ -17,10 +17,48 @@ Works on `file://` and HTTP. Runtime artifact: zero build step, zero install. Se
 
 **Patch versioning habit**: Run `/release patch` after every meaningful committed change — bug fix, UX tweak, feature addition. Each patch tag (`v3.32.03`) is a breadcrumb that lets us reconstruct a clean changelog at release time. Don't batch multiple changes under one version bump. The rule: **one meaningful change = one patch tag**.
 
+## Wiki — Project Technical Documentation
+
+`wiki/` (in-repo) is the **only** technical documentation for this project. There are no other doc sources. **After every code change, update the relevant wiki page(s) in the same PR.** Use `/wiki-update` to auto-detect affected pages via frontmatter `sourceFiles`. For widespread changes, use `/wiki-sweep`.
+
+If a wiki page would become inaccurate after your change, updating it is not optional — treat it as part of the PR diff.
+
+### Source File → Wiki Page Matrix
+
+When you change a file, update every wiki page listed in its row.
+
+| Source File | Wiki Pages to Update |
+|---|---|
+| `index.html` | [frontend-overview](wiki/frontend-overview.md) |
+| `sw.js` | [frontend-overview](wiki/frontend-overview.md), [service-worker](wiki/service-worker.md) |
+| `devops/hooks/stamp-sw-cache.sh` | [service-worker](wiki/service-worker.md) |
+| `devops/version.lock` | [release-workflow](wiki/release-workflow.md) |
+| `.claude/skills/release/SKILL.md` | [release-workflow](wiki/release-workflow.md) |
+| `.claude/skills/ship/SKILL.md` | [release-workflow](wiki/release-workflow.md) |
+| `js/constants.js` | [frontend-overview](wiki/frontend-overview.md), [data-model](wiki/data-model.md), [storage-patterns](wiki/storage-patterns.md), [release-workflow](wiki/release-workflow.md) |
+| `js/types.js` | [data-model](wiki/data-model.md) |
+| `js/utils.js` | [data-model](wiki/data-model.md), [storage-patterns](wiki/storage-patterns.md), [dom-patterns](wiki/dom-patterns.md), [backup-restore](wiki/backup-restore.md) |
+| `js/about.js` | [dom-patterns](wiki/dom-patterns.md) |
+| `js/init.js` | [dom-patterns](wiki/dom-patterns.md) |
+| `js/file-protocol-fix.js` | [frontend-overview](wiki/frontend-overview.md) |
+| `js/api.js` | [api-consumption](wiki/api-consumption.md), [vendor-quirks](wiki/vendor-quirks.md) |
+| `js/api-health.js` | [api-consumption](wiki/api-consumption.md) |
+| `js/cloud-sync.js` | [sync-cloud](wiki/sync-cloud.md), [backup-restore](wiki/backup-restore.md) |
+| `js/cloud-storage.js` | [sync-cloud](wiki/sync-cloud.md), [backup-restore](wiki/backup-restore.md) |
+| `js/retail.js` | [retail-modal](wiki/retail-modal.md), [vendor-quirks](wiki/vendor-quirks.md) |
+| `js/retail-view-modal.js` | [retail-modal](wiki/retail-modal.md), [vendor-quirks](wiki/vendor-quirks.md) |
+| `js/image-cache.js` | [image-pipeline](wiki/image-pipeline.md) |
+| `js/image-processor.js` | [image-pipeline](wiki/image-pipeline.md) |
+| `js/image-cache-modal.js` | [image-pipeline](wiki/image-pipeline.md) |
+| `js/bulk-image-cache.js` | [image-pipeline](wiki/image-pipeline.md) |
+| `js/seed-images.js` | [image-pipeline](wiki/image-pipeline.md) |
+
+**Infrastructure pages** (`owner: staktrakr-api`) are maintained by StakTrakrApi agents — only update their frontmatter, never rewrite technical content from this repo.
+
 ## Code Search Paths
 
 - `mcp__claude-context__search_code` path: `/Volumes/DATA/GitHub/StakTrakr`
-- Wiki docs path: `wiki/` (in-repo) — e.g. "find wiki pages about spot pipeline stale thresholds"
+- Wiki search: `mcp__claude-context__search_code` with path `/Volumes/DATA/GitHub/StakTrakr/wiki`
 - **CGC setup**: `cd devops/cgc && docker compose up -d`
 
 ## API Infrastructure
