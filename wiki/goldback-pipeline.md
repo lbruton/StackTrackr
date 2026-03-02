@@ -2,8 +2,8 @@
 title: Goldback Pipeline
 category: infrastructure
 owner: staktrakr-api
-lastUpdated: v3.33.18
-date: 2026-02-25
+lastUpdated: v3.33.19
+date: 2026-03-01
 sourceFiles: []
 relatedPages:
   - rest-api-reference.md
@@ -119,9 +119,9 @@ Vendors that previously mixed states under the old slugs:
 
 ---
 
-## Denomination Spot JSON (api-export.js)
+## Denomination Spot JSON (goldback-scraper.js)
 
-At publish time (`8,23,38,53 * * * *`), `api-export.js` reads the latest `goldback-g1` (deprecated slug) rows from Turso via `readLatestPerVendor()` and writes `data/api/goldback-spot.json`:
+The standalone `goldback-scraper.js` (invoked hourly at :01 by `run-goldback.sh`) scrapes the G1 USD rate from `goldback.com/exchange-rates/` via Firecrawl and writes `data/api/goldback-spot.json` directly. `api-export.js` does not produce this file:
 
 ```json
 {
@@ -146,16 +146,25 @@ All denomination prices are computed as `G1 × multiplier`, rounded to 2 decimal
 
 ## API Endpoints
 
-### Legacy (still active via deprecated slugs)
+### Currently Published
 
 | Endpoint | Description | Updated |
 |----------|-------------|---------|
-| `data/api/goldback-spot.json` | G1 USD rate + denomination multipliers | Every 15 min |
-| `data/api/goldback-g1/latest.json` | Legacy G1 mixed-state vendor prices | Every 15 min |
-| `data/api/goldback-g{N}/latest.json` | Legacy denomination endpoints (deprecated) | Every 15 min |
-| `data/goldback-YYYY.json` | Rolling annual history log (legacy scraper) | Not active |
+| `data/api/goldback-spot.json` | G1 USD rate + denomination multipliers | Hourly at :01 (once daily, skips if captured) |
+| `data/goldback-YYYY.json` | Rolling annual history log (appended daily by `run-goldback.sh`) | Hourly at :01 |
 
-### Per-State (new — populated as vendors are enabled)
+`goldback-spot.json` is the **only** currently published Goldback endpoint. The committed API manifest (`manifest.json`) contains 11 non-Goldback coin slugs and no Goldback slugs.
+
+### Planned / Future
+
+**Legacy per-denomination endpoints** (not yet in committed manifest):
+
+| Endpoint | Description |
+|----------|-------------|
+| `data/api/goldback-g1/latest.json` | Legacy G1 mixed-state vendor prices |
+| `data/api/goldback-g{N}/latest.json` | Legacy denomination endpoints (deprecated) |
+
+**Per-state endpoints** (not yet in committed manifest — populated as vendors are enabled):
 
 | Endpoint Pattern | Example | Description |
 |------------------|---------|-------------|
@@ -163,7 +172,7 @@ All denomination prices are computed as `G1 × multiplier`, rounded to 2 decimal
 | `data/api/goldback-{state}-g{denom}/history-7d.json` | `goldback-utah-g5/history-7d.json` | Daily aggregates, last 7 days |
 | `data/api/goldback-{state}-g{denom}/history-30d.json` | `goldback-dc-g50/history-30d.json` | Daily aggregates, last 30 days |
 
-**Note:** Per-state endpoints only populate once a vendor URL is enabled in `providers.json`. Until then, they return empty/no data.
+**Note:** Per-state endpoints will populate once vendor URLs are enabled in `providers.json` and the slugs are added to the manifest.
 
 See [rest-api-reference.md](rest-api-reference.md) for full endpoint schemas.
 
@@ -179,9 +188,9 @@ See [rest-api-reference.md](rest-api-reference.md) for full endpoint schemas.
 
 | Symptom | Likely cause | Fix |
 |---------|-------------|-----|
-| `goldback-spot.json` > 25h stale | `goldback-g1` scrape failing or goldback.com down | Check `fly logs --app staktrakr \| grep goldback` |
+| `goldback-spot.json` > 25h stale | `run-goldback.sh` failing or goldback.com down | Check `fly logs --app staktrakr \| grep goldback` |
 | G1 price null in manifest | Firecrawl timeout on JS-rendered page | goldback.com is in `SLOW_PROVIDERS` — verify `waitFor` is sufficient |
-| Denomination prices wrong | G1 base rate incorrect | Check Turso `goldback-g1` rows; compare to goldback.com/exchange-rates/ |
+| Denomination prices wrong | G1 base rate incorrect | Check `goldback-spot.json` G1 value; compare to goldback.com/exchange-rates/ |
 | Per-denomination retail prices differ from computed spot | Normal — retail vendor prices ≠ official exchange rate | `goldback-spot.json` uses vendor G1 rate × multiplier; individual `goldback-gN` endpoints track actual retail prices |
 
 ---

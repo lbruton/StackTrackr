@@ -2,8 +2,8 @@
 title: DOM Patterns
 category: frontend
 owner: staktrakr
-lastUpdated: v3.32.25
-date: 2026-02-23
+lastUpdated: v3.33.19
+date: 2026-03-01
 sourceFiles:
   - js/utils.js
   - js/init.js
@@ -14,14 +14,14 @@ relatedPages:
 ---
 # DOM Patterns
 
-> **Last updated:** v3.32.25 — 2026-02-23
+> **Last updated:** v3.33.19 — 2026-03-01
 > **Source files:** `js/utils.js`, `js/init.js`, `js/about.js`
 
 ## Overview
 
 StakTrakr enforces two strict DOM safety rules:
 
-1. All element lookups must go through `safeGetElement()` — never raw `document.getElementById()` except in two designated boot files.
+1. Element lookups should go through `safeGetElement()` as the preferred pattern. Raw `document.getElementById()` is acceptable in designated boot files (`about.js`, `init.js`) and exists in some pre-init and legacy paths (e.g., `card-view.js`, `inventory.js`).
 2. All user-controlled content written to `innerHTML` must pass through `sanitizeHtml()` first to prevent XSS.
 
 These rules exist because the app runs on `file://` (no server-side sanitization) and handles user-entered text that is later rendered as HTML. Violations are a recurring source of both runtime null-reference crashes and security bugs.
@@ -30,8 +30,8 @@ These rules exist because the app runs on `file://` (no server-side sanitization
 
 ## Key Rules (read before touching this area)
 
-- **Use `safeGetElement(id)`** for every DOM lookup in application code.
-- **Raw `document.getElementById()` is only allowed in `js/about.js` and `js/init.js`** — these are the two boot files that run before the `safeGetElement` wrapper is available.
+- **Prefer `safeGetElement(id)`** for DOM lookups in application code.
+- **Raw `document.getElementById()` is expected in `js/about.js`** (runs before `init.js` loads, so `safeGetElement` is not yet defined) and also exists in pre-init and legacy paths such as `js/card-view.js` and `js/inventory.js`. Note: `js/init.js` defines `safeGetElement` at line 31, so code within `init.js` itself CAN use it after that point.
 - **Always call `sanitizeHtml(str)` before assigning user-supplied text to `innerHTML`.**
 - Never assign an unescaped user string directly to `innerHTML`, even for "display-only" fields.
 
@@ -109,18 +109,18 @@ row.innerHTML = `<td>${sanitizeHtml(item.name)}</td>`;
 
 ---
 
-### Mistake 3 — Using `safeGetElement` in `about.js` or `init.js` before it is defined
+### Mistake 3 — Using `safeGetElement` in `about.js` before it is defined
 
-`safeGetElement` is defined inside `js/init.js`. The `DOMContentLoaded` handler in `init.js` and the top-level code in `about.js` both run as part of early boot, before the function is reliably available to all callers in those two files. This is why those two files are the **only** permitted users of raw `document.getElementById()`.
+`safeGetElement` is defined at `js/init.js:31`. Code in `js/about.js` runs before `init.js` loads in the script order, so `safeGetElement` is not yet available — `about.js` must use raw `document.getElementById()`. Code within `init.js` itself CAN use `safeGetElement` after line 31. Some other files (e.g., `card-view.js`, `inventory.js`) also use raw lookups in pre-init or legacy paths — these are acceptable but new code should prefer `safeGetElement`.
 
 ```js
-// ALLOWED — inside js/about.js or js/init.js only
+// EXPECTED — inside js/about.js (loads before init.js defines safeGetElement)
 const el = document.getElementById('aboutVersion');
 ```
 
 ```js
-// WRONG — do not use raw getElementById anywhere else
-const el = document.getElementById('settingsPanel'); // in settings.js — use safeGetElement instead
+// PREFERRED for new code — use safeGetElement
+const el = safeGetElement('settingsPanel');
 ```
 
 ---

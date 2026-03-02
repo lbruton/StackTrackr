@@ -2,8 +2,8 @@
 title: Storage Patterns
 category: frontend
 owner: staktrakr
-lastUpdated: v3.32.23
-date: 2026-02-23
+lastUpdated: v3.33.19
+date: 2026-03-01
 sourceFiles:
   - js/utils.js
   - js/constants.js
@@ -13,15 +13,12 @@ relatedPages:
 ---
 # Storage Patterns
 
-> **Last updated:** v3.32.23 — 2026-02-23
+> **Last updated:** v3.33.19 — 2026-03-01
 > **Source files:** `js/utils.js`, `js/constants.js`
 
 ## Overview
 
-StakTrakr persists all application state in `localStorage`. Direct calls to
-`localStorage.setItem` / `localStorage.getItem` are **forbidden**. All reads
-and writes must go through the wrapper functions `saveData` / `loadData` (async)
-or `saveDataSync` / `loadDataSync` (sync), defined in `js/utils.js`.
+StakTrakr persists all application state in `localStorage`. For structured JSON app data, direct calls to `localStorage.setItem` / `localStorage.getItem` are **forbidden** — all reads and writes must go through the wrapper functions `saveData` / `loadData` (async) or `saveDataSync` / `loadDataSync` (sync), defined in `js/utils.js`. Direct `localStorage` access is permitted for intentional scalar string cases (e.g., cloud sync cursor, idle timeout keys) where the overhead of JSON serialization and compression is unnecessary.
 
 The wrappers exist for three reasons:
 
@@ -42,7 +39,7 @@ The wrappers exist for three reasons:
 
 ## Key Rules (read before touching this area)
 
-- **Never** call `localStorage.setItem()` or `localStorage.getItem()` directly.
+- **Never** call `localStorage.setItem()` or `localStorage.getItem()` directly for structured JSON app data. Direct localStorage is allowed for intentional scalar string cases (cloud sync cursor, idle timeout keys, etc.).
 - **Never** introduce a new storage key without first adding it to
   `ALLOWED_STORAGE_KEYS` in `js/constants.js`.
 - New keys written outside the allowlist will be deleted by `cleanupStorage()`.
@@ -78,8 +75,7 @@ propagated to the caller. A `console.error` is emitted on failure (e.g.
 
 If `key` is **not** in `ALLOWED_STORAGE_KEYS`, the write still succeeds at the
 `localStorage` level — there is no runtime guard inside `saveData` itself. The
-key is removed the next time `cleanupStorage()` runs (called during startup and
-after imports). Always add the key to the allowlist first.
+key is removed the next time `cleanupStorage()` runs (called during startup). Always add the key to the allowlist first.
 
 ---
 
@@ -178,7 +174,7 @@ const cleanupStorage = () => {
 };
 ```
 
-Called automatically during app startup. Any key not present in
+Called automatically during app startup (`DOMContentLoaded`). Any key not present in
 `ALLOWED_STORAGE_KEYS` is permanently deleted. This is the primary mechanism
 that enforces the allowlist contract.
 

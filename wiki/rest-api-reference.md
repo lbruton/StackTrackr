@@ -2,7 +2,7 @@
 title: REST API Reference
 category: infrastructure
 owner: staktrakr-api
-lastUpdated: v3.33.18
+lastUpdated: v3.33.19
 date: 2026-02-25
 sourceFiles: []
 relatedPages:
@@ -46,7 +46,7 @@ All endpoints are static JSON files served via GitHub Pages from the `api` branc
   "generated_at": "2026-02-25T19:08:01.756Z",
   "latest_window": "2026-02-25T19:00:00Z",
   "window_count": 96,
-  "coin_count": 17,
+  "coin_count": 11,
   "coins": ["age", "ape", "ase", "..."],
   "endpoints": {
     "latest": "api/latest.json",
@@ -64,7 +64,7 @@ All endpoints are static JSON files served via GitHub Pages from the `api` branc
 {
   "window_start": "2026-02-25T19:00:00Z",
   "generated_at": "2026-02-25T19:08:01.756Z",
-  "coin_count": 17,
+  "coin_count": 11,
   "coins": {
     "ase": {
       "window_start": "2026-02-25T19:00:00Z",
@@ -99,7 +99,7 @@ All endpoints are static JSON files served via GitHub Pages from the `api` branc
 
 ## Per-Coin Endpoints
 
-**17 bullion coins + 56 per-state Goldback slugs + 6 deprecated Goldback slugs** as of 2026-02-25 (STAK-335). Per-state Goldback endpoints populate only when vendors are enabled in `providers.json`. Each coin has three endpoint files:
+**11 committed bullion coin slugs** as of 2026-03-01 (per `data/api/manifest.json`). Each coin has three endpoint files:
 
 | Endpoint Pattern | Description | Updated |
 |------------------|-------------|---------|
@@ -107,13 +107,19 @@ All endpoints are static JSON files served via GitHub Pages from the `api` branc
 | `data/api/{slug}/history-7d.json` | Daily aggregates, last 7 days | Every 15 min |
 | `data/api/{slug}/history-30d.json` | Daily aggregates, last 30 days | Every 15 min |
 
-### Coin Slugs
+### Committed Coin Slugs (11)
 
 **Silver (1 oz):** `ase`, `maple-silver`, `britannia-silver`, `krugerrand-silver`, `generic-silver-round`
 **Silver (10 oz):** `generic-silver-bar-10oz`
-**Gold (1 oz):** `age`, `ape`, `buffalo`, `maple-gold`, `krugerrand-gold`
+**Gold (1 oz):** `age`, `buffalo`, `maple-gold`, `krugerrand-gold`
+**Platinum (1 oz):** `ape`
+
+### Planned/Future: Goldback Per-State Matrix
+
+The following Goldback slugs are scaffolded but **not yet in the committed manifest**:
+
 **Goldback (deprecated — backward compat):** `goldback-g1`, `goldback-g2`, `goldback-g5`, `goldback-g10`, `goldback-g25`, `goldback-g50`
-**Goldback (per-state — STAK-335):** `goldback-{state}-g{denom}` where state is one of `utah`, `nevada`, `wyoming`, `new-hampshire`, `south-dakota`, `arizona`, `oklahoma`, `dc` and denom is `ghalf`, `g1`, `g2`, `g5`, `g10`, `g25`, `g50` (56 slugs total). See [goldback-pipeline.md](goldback-pipeline.md) for the full matrix.
+**Goldback (per-state — STAK-335):** `goldback-{state}-g{denom}` where state is one of `utah`, `nevada`, `wyoming`, `new-hampshire`, `south-dakota`, `arizona`, `oklahoma`, `dc` and denom is `ghalf`, `g1`, `g2`, `g5`, `g10`, `g25`, `g50` (56 slugs total). See [goldback-pipeline.md](goldback-pipeline.md) for the full matrix. These endpoints will populate as vendors are enabled in Turso.
 
 ### Per-Coin latest.json Schema
 
@@ -178,9 +184,9 @@ All endpoints are static JSON files served via GitHub Pages from the `api` branc
 
 | Endpoint Pattern | Description | Updated |
 |------------------|-------------|---------|
-| `data/hourly/YYYY/MM/DD/HH.json` | Hourly spot prices (4 metals) — overwritten each poll | Every 15 min |
+| `data/hourly/YYYY/MM/DD/HH.json` | Hourly spot prices (4 metals) — overwritten each poll | 2x/hr (`:00` and `:30`) |
 | `data/15min/YYYY/MM/DD/HHMM.json` | Immutable 15-min spot snapshots | Per poll (immutable) |
-| `data/spot-history-YYYY.json` | Annual daily spot history (noon UTC seed) | Once daily |
+| `data/spot-history-YYYY.json` | Annual daily spot history (legacy seed — no longer actively written by `spot-extract.js`) | Legacy |
 
 ### Hourly File Schema
 
@@ -205,37 +211,34 @@ All endpoints are static JSON files served via GitHub Pages from the `api` branc
 
 **Metals:** Gold (XAU), Silver (XAG), Platinum (XPT), Palladium (XPD)
 **Data source:** MetalPriceAPI (`metalpriceapi.com`)
-**Rate conversion:** `1 / rate` = USD per troy oz (API returns units-of-metal-per-USD)
+**Rate conversion:** Conditional — `rate >= 1` uses value directly; `rate < 1` inverts (`1 / rate`) to get USD per troy oz
 
 ---
 
 ## Goldback-Specific Endpoints
 
-### Global
+### Active
 
 | Endpoint | Description | Updated |
 |----------|-------------|---------|
-| `data/api/goldback-spot.json` | G1 USD rate + all denomination multipliers | Hourly :01 (skips if today's entry exists) |
-| `data/goldback-YYYY.json` | Rolling annual history log (newest first) | Hourly :01 (skips if today's entry exists) |
+| `data/api/goldback-spot.json` | G1 USD rate + all denomination multipliers | Hourly :01 via standalone `run-goldback.sh` → `goldback-scraper.js` (skips if today's entry exists) |
+| `data/goldback-YYYY.json` | Rolling annual history log (newest first) | Hourly :01 (same scraper, skips if today's entry exists) |
 
-### Legacy (deprecated — backward compat)
+> **Note:** The active Goldback data is produced by the standalone `run-goldback.sh` scraper path until `goldback-g1` exists in the committed manifest. The scraper commits directly to the `api` branch.
 
-| Endpoint | Description | Updated |
-|----------|-------------|---------|
-| `data/api/goldback-g1/latest.json` | Mixed-state G1 vendor prices | Every 15 min |
-| `data/api/goldback-g{N}/latest.json` | Mixed-state denomination prices | Every 15 min |
+### Planned/Future: Per-State Goldback Endpoints
 
-### Per-State (STAK-335 — populates as vendors are enabled)
+The following endpoint families are scaffolded but **not yet populated** — `goldback-g1` is not in the committed manifest, and per-state slugs have no enabled vendors:
 
-| Endpoint Pattern | Example | Description |
-|------------------|---------|-------------|
-| `data/api/goldback-{state}-g{denom}/latest.json` | `goldback-oklahoma-g1/latest.json` | Per-vendor prices for a specific state + denomination |
-| `data/api/goldback-{state}-g{denom}/history-7d.json` | `goldback-utah-ghalf/history-7d.json` | 7-day daily aggregates |
-| `data/api/goldback-{state}-g{denom}/history-30d.json` | `goldback-dc-g50/history-30d.json` | 30-day daily aggregates |
+| Endpoint | Description |
+|----------|-------------|
+| `data/api/goldback-g1/latest.json` | Mixed-state G1 vendor prices (legacy, backward compat) |
+| `data/api/goldback-g{N}/latest.json` | Mixed-state denomination prices (legacy) |
+| `data/api/goldback-{state}-g{denom}/latest.json` | Per-vendor prices for a specific state + denomination |
+| `data/api/goldback-{state}-g{denom}/history-7d.json` | 7-day daily aggregates |
+| `data/api/goldback-{state}-g{denom}/history-30d.json` | 30-day daily aggregates |
 
-**8 states × 7 denominations = 56 per-state slugs**, each with 3 endpoint files = **168 potential endpoint files** (only populated when vendors are enabled).
-
-**Note:** `goldback-spot.json` denominations are computed from the deprecated `goldback-g1` vendor rate (`G1 × multiplier`). Per-state endpoints track actual retail vendor prices for physical Goldback notes from specific states — these may differ from the computed denomination prices and from each other across states.
+**8 states x 7 denominations = 56 per-state slugs**, each with 3 endpoint files = **168 potential endpoint files** (only populated when vendors are enabled in Turso).
 
 ---
 

@@ -2,7 +2,7 @@
 title: Fly.io Container
 category: infrastructure
 owner: staktrakr-api
-lastUpdated: v3.33.18
+lastUpdated: v3.33.19
 date: 2026-02-25
 sourceFiles: []
 relatedPages: []
@@ -10,7 +10,7 @@ relatedPages: []
 
 # Fly.io Container
 
-> **Last verified:** 2026-02-25 — app `staktrakr`, region `dfw`, 4GB RAM / 4 shared CPUs
+> **Last verified:** 2026-03-01 — app `staktrakr`, region `dfw`, 8 GB RAM / 4 shared CPUs
 
 ---
 
@@ -30,7 +30,7 @@ Goldback retail prices are scraped as `goldback-{state}-g{denom}` coins via `pro
 |-----|-------|
 | App name | `staktrakr` |
 | Region | `dfw` (fly.toml says `iad` but deployed to `dfw`) |
-| Memory | 4096 MB |
+| Memory | 8192 MB (8 GB) |
 | CPUs | 4 shared |
 | Volume | `staktrakr_data` mounted at `/data` |
 | HTTP port | 8080 (proxied by Fly, force HTTPS) |
@@ -43,10 +43,12 @@ Goldback retail prices are scraped as `goldback-{state}-g{denom}` coins via `pro
 
 | Service | Command | Priority | Notes |
 |---------|---------|----------|-------|
+| `tailscaled` | `tailscaled --state=/data/tailscale/...` | 4 | Tailscale daemon — provides home exit-node routing |
+| `tailscale-up` | `tailscale up --authkey=...` | 5 | One-shot Tailscale auth on startup |
 | `redis` | `redis-server` on `127.0.0.1:6379` | 10 | Firecrawl queue backing |
 | `rabbitmq` | `rabbitmq-server` | 10 | Firecrawl job queue |
 | `postgres` | PostgreSQL 17 on `localhost:5432` | 10 | Firecrawl NUQ state |
-| `playwright-service` | Node.js on port 3003 | 15 | Playwright CDP; `BLOCK_MEDIA=True`; no proxy |
+| `playwright-service` | Node.js on port 3003 | 15 | Playwright CDP; `PROXY_SERVER="%(ENV_HOME_PROXY_URL_2)s"` |
 | `firecrawl-api` | Node.js on port 3002 | 20 | Firecrawl HTTP API |
 | `firecrawl-worker` | Node.js queue worker | 20 | Processes scrape jobs |
 | `firecrawl-extract-worker` | Node.js extract worker | 20 | LLM extraction jobs |
@@ -61,14 +63,13 @@ Written dynamically by `docker-entrypoint.sh` at container start. `CRON_SCHEDULE
 
 | Schedule | Script | Log |
 |----------|--------|-----|
-| `0 * * * *` (default) | `/app/run-local.sh` | `/var/log/retail-poller.log` |
-| `5,20,35,50 * * * *` | `/app/run-spot.sh` | `/var/log/spot-poller.log` |
+| `15,45 * * * *` (default) | `/app/run-local.sh` | `/var/log/retail-poller.log` |
+| `0,30 * * * *` | `/app/run-spot.sh` | `/var/log/spot-poller.log` |
 | `8,23,38,53 * * * *` | `/app/run-publish.sh` | `/var/log/publish.log` |
 | `15 * * * *` | `/app/run-retry.sh` | `/var/log/retail-retry.log` |
-| `0 20 * * *` | `/app/run-fbp.sh` | `/var/log/retail-poller.log` |
 | `1 * * * *` | `/app/run-goldback.sh` | `/var/log/goldback-poller.log` |
 
-> **Staggered dual-poller cadence.** Fly.io runs at `:00`, home poller at `:30` — fresh data every 30 minutes. The `CRON_SCHEDULE` env var in `docker-entrypoint.sh` defaults to `0`. Override with a Fly secret only if needed. The goldback cron runs hourly at :01 but skips if today's G1 rate is already captured — effectively a once-daily scrape with automatic retry on failure.
+> **Staggered dual-poller cadence.** Fly.io retail runs at `:15/:45`, home poller at `:30`. The `CRON_SCHEDULE` env var in `docker-entrypoint.sh` defaults to `15,45`. Override with a Fly secret only if needed. The goldback cron runs hourly at :01 but skips if today's G1 rate is already captured — effectively a once-daily scrape with automatic retry on failure.
 
 ---
 
@@ -78,7 +79,7 @@ As of 2026-02-24, the retail poller uses a fully automated 4-tier fallback to re
 
 | Tier | Method | When | Status |
 |------|--------|------|--------|
-| T1 | **Tailscale exit node** (`100.112.198.50`) | Normal — residential IP every cycle | Configured (inactive — tailscaled not in supervisord) |
+| T1 | **Tailscale exit node** (`100.112.198.50`) | Normal — residential IP every cycle | Active (supervisord manages `tailscaled` + `tailscale-up`) |
 | T2 | **Fly.io datacenter IP** | Tailscale socket absent — automatic via socket-check in `run-local.sh` | Live (current active egress) |
 | T3 | **Webshare proxy + `:15` cron retry** | ≥1 SKU still failed after T1/T2 | Live |
 | T4 | **Turso last-known-good price** | T3 also failed for a vendor | Live |
@@ -103,7 +104,7 @@ After the retail scrape, `price-extract.js` writes `/tmp/retail-failures.json` l
 - Re-scrapes only the failed coin slugs with `PROXY_DISABLED=""` (Webshare enabled for Playwright fallback)
 - Clears the queue file on exit regardless of outcome (via `trap`) — T4 covers any remainder
 
-Webshare credentials are in Fly secrets (`WEBSHARE_PROXY_USER`, `WEBSHARE_PROXY_PASS`). The main scrape sets `PROXY_DISABLED=1`; T3 explicitly unsets it — no `fly deploy` needed to activate proxy.
+Webshare credentials are in Fly secrets (`WEBSHARE_PROXY_USER`, `WEBSHARE_PROXY_PASS`). `PROXY_DISABLED` is a retry-path override: T3 sets `PROXY_DISABLED=""` to re-enable Webshare for the Playwright fallback path — no `fly deploy` needed to activate proxy.
 
 Log: `/var/log/retail-retry.log`
 
@@ -136,7 +137,7 @@ The `stale` flag is available for future frontend UI use. Vendor is kept in the 
 | `FIRECRAWL_BASE_URL` | `fly.toml` (`http://localhost:3002`) | Self-hosted Firecrawl endpoint |
 | `BROWSER_MODE` | `fly.toml` (`local`) | Playwright launch mode |
 | `PLAYWRIGHT_LAUNCH` | `fly.toml` (`1`) | Enable local Chromium for fallback |
-| `PROXY_DISABLED` | `fly.toml` (`1`) | Disables Webshare proxy in `price-extract.js` |
+| `PROXY_DISABLED` | Fly secret (optional) | Retry-path override — `run-retry.sh` sets to `""` to re-enable Webshare proxy |
 | `TS_EXIT_NODE` | `fly.toml` (`100.112.198.50`) | Tailscale exit node IP (home VM) |
 | `GITHUB_TOKEN` | Fly secret | Push to `api` branch via run-publish.sh |
 | `TURSO_DATABASE_URL` | Fly secret | Turso libSQL cloud |
@@ -144,9 +145,9 @@ The `stale` flag is available for future frontend UI use. Vendor is kept in the 
 | `GEMINI_API_KEY` | Fly secret | Vision pipeline (Gemini) |
 | `METAL_PRICE_API_KEY` | Fly secret | Spot price API (MetalPriceAPI) |
 | `TS_AUTHKEY` | Fly secret | Tailscale reusable ephemeral auth key (also in Infisical as `FLY_TAILSCALE_AUTHKEY`) |
-| `WEBSHARE_PROXY_USER` | Fly secret | Webshare credentials — retained but inactive |
-| `WEBSHARE_PROXY_PASS` | Fly secret | Webshare credentials — retained but inactive |
-| `CRON_SCHEDULE` | Fly secret (optional) | Override retail poller cron; default `0` |
+| `WEBSHARE_PROXY_USER` | Fly secret | Webshare credentials — active for T3 retry path |
+| `WEBSHARE_PROXY_PASS` | Fly secret | Webshare credentials — active for T3 retry path |
+| `CRON_SCHEDULE` | Fly secret (optional) | Override retail poller cron; default `15,45` |
 
 ---
 
@@ -180,7 +181,7 @@ fly ssh console --app staktrakr -C "curl -s https://ifconfig.me"
 
 ## Volume and Git Repo
 
-The persistent volume at `/data/staktrakr-api-export` is a clone of `StakTrakrApi`. It is seeded on first run by `run-local.sh` (if missing `.git`). After that it persists across deploys.
+The persistent volume at `/data/staktrakr-api-export` is a clone of `StakTrakrApi`. `run-local.sh` expects a pre-existing git repo on the mounted volume — it exits with an error if `.git` is missing. The repo must be seeded manually on first deploy. After that it persists across deploys.
 
 `run-publish.sh` commits from this directory and force-pushes `HEAD:api`. This is the **sole Git writer** for the `api` branch data files.
 

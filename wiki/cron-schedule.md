@@ -2,7 +2,7 @@
 title: Cron Schedule
 category: infrastructure
 owner: staktrakr-api
-lastUpdated: v3.33.18
+lastUpdated: v3.33.19
 date: 2026-02-26
 sourceFiles: []
 relatedPages:
@@ -19,24 +19,24 @@ relatedPages:
 
 ## Fly.io Container Cron
 
-Written dynamically by `docker-entrypoint.sh` at container start. `CRON_SCHEDULE` env var controls retail poller cadence (default: `0`).
+Written dynamically by `docker-entrypoint.sh` at container start. `CRON_SCHEDULE` env var controls retail poller cadence (default: `15,45`).
 
 | Minute | Script | Purpose | Log file |
 |--------|--------|---------|----------|
-| `0` | `run-local.sh` | Retail price scrape (Firecrawl + Vision) | `/var/log/retail-poller.log` |
-| `5,20,35,50` | `run-spot.sh` | Spot price poll (MetalPriceAPI) | `/var/log/spot-poller.log` |
+| `15,45` | `run-local.sh` | Retail price scrape (Firecrawl + Vision) | `/var/log/retail-poller.log` |
+| `0,30` | `run-spot.sh` | Spot price poll (MetalPriceAPI → Turso + JSON) | `/var/log/spot-poller.log` |
 | `8,23,38,53` | `run-publish.sh` | Export Turso → JSON, git push to `api` branch | `/var/log/publish.log` |
 | `15` (hourly) | `run-retry.sh` | T3 retry of failed retail SKUs with Webshare proxy | `/var/log/retail-retry.log` |
-| `0 20` (daily) | `run-fbp.sh` | FindBullionPrices gap-fill for remaining failures | `/var/log/retail-poller.log` |
+| `1` (hourly) | `run-goldback.sh` | Goldback G1 rate scrape (skips if today's price captured) | `/var/log/goldback-poller.log` |
 
 ### Raw crontab (`/etc/cron.d/retail-poller`)
 
 ```
-0 * * * * root . /etc/environment; /app/run-local.sh >> /var/log/retail-poller.log 2>&1
-5,20,35,50 * * * * root . /etc/environment; /app/run-spot.sh >> /var/log/spot-poller.log 2>&1
+15,45 * * * * root . /etc/environment; /app/run-local.sh >> /var/log/retail-poller.log 2>&1
+0,30 * * * * root . /etc/environment; /app/run-spot.sh >> /var/log/spot-poller.log 2>&1
 8,23,38,53 * * * * root . /etc/environment; /app/run-publish.sh >> /var/log/publish.log 2>&1
 15 * * * * root . /etc/environment; /app/run-retry.sh >> /var/log/retail-retry.log 2>&1
-0 20 * * * root . /etc/environment; /app/run-fbp.sh >> /var/log/retail-poller.log 2>&1
+1 * * * * root . /etc/environment; /app/run-goldback.sh >> /var/log/goldback-poller.log 2>&1
 ```
 
 ---
@@ -44,21 +44,21 @@ Written dynamically by `docker-entrypoint.sh` at container start. `CRON_SCHEDULE
 ## Timeline View (one hour)
 
 ```
-:00  Fly.io retail scrape (Firecrawl + Vision → Turso)
-:05  Spot poll #1 (MetalPriceAPI → hourly + 15min files)
-:08  Publisher #1 (Turso → JSON → git push api branch) ← picks up :00 retail data
-:15  T3 Retry (re-scrape failures with proxy)
-:20  Spot poll #2
-:23  Publisher #2
+:00  Spot poll #1 (MetalPriceAPI → Turso + hourly/15min files)
+:01  Goldback rate scrape (skips if today's price already captured)
+:08  Publisher #1 (Turso → JSON → git push api branch)
+:15  Fly.io retail scrape #1 (Firecrawl + Vision → Turso)
+:15  T3 Retry (re-scrape failures with Webshare proxy)
+:23  Publisher #2 ← picks up :15 retail data
+:30  Spot poll #2 (MetalPriceAPI → Turso + hourly/15min files)
 :30  Home poller retail scrape (Firecrawl → Turso)
-:35  Spot poll #3
 :38  Publisher #3 ← picks up :30 home poller data
-:50  Spot poll #4
-:53  Publisher #4
+:45  Fly.io retail scrape #2 (Firecrawl + Vision → Turso)
+:53  Publisher #4 ← picks up :45 retail data
 :00  ──────────────────────────────────────────────
 ```
 
-**Design rationale:** The schedule was relaxed from 2-3x/hr per poller to 1x/hr per poller (as of 2026-02-26) to reduce vendor rate-limiting risk and eliminate overlap between the two pollers. With a 30-minute offset (Fly.io at `:00`, home at `:30`), fresh data still arrives every 30 minutes. The publish cycle at `:08/:23/:38/:53` picks up whichever poller ran most recently. Spot polling remains at 4x/hr (every 15 min) since it uses a paid API with its own rate limits.
+**Design rationale:** Fly.io retail runs 2×/hr at `:15/:45`, offset from the home poller at `:30`. The publish cycle at `:08/:23/:38/:53` picks up whichever poller ran most recently. Spot polling runs 2×/hr at `:00/:30` since MetalPriceAPI provides the same price within a 30-min window. Goldback runs hourly at `:01` but is effectively once-daily (skips if today's rate is already captured).
 
 ---
 
@@ -66,9 +66,9 @@ Written dynamically by `docker-entrypoint.sh` at container start. `CRON_SCHEDULE
 
 | Minute | Script | Purpose |
 |--------|--------|---------|
-| `30` | `run-home.sh` | Retail scrape (Firecrawl only, no Vision) → Turso |
+| `30` | `run-home.sh` | Retail scrape (Vision optional when `GEMINI_API_KEY` is available) → Turso |
 
-The home poller runs at `:30`, offset from Fly.io's `:00`. Both write to the same Turso database. `readLatestPerVendor()` merges their data at publish time. Each poller fires once per hour; with the 30-minute offset, fresh data arrives every 30 minutes.
+The home poller runs at `:30`, offset from Fly.io's `:15/:45`. Both write to the same Turso database. `readLatestPerVendor()` merges their data at publish time.
 
 ---
 
@@ -85,7 +85,7 @@ fly ssh console --app staktrakr -C "grep CRON_SCHEDULE /etc/environment"
 ssh stakpoller@192.168.1.81 "cat /etc/cron.d/retail-poller"
 ```
 
-**Known issue (2026-02-25 incident):** If `CRON_SCHEDULE` is set to `*/15` instead of `0`, the Fly.io poller fires at `:00/:15/:30/:45` — colliding with the home poller at `:30`. See [health.md](health.md) incident log.
+**Known issue (2026-02-25 incident):** If `CRON_SCHEDULE` is set to `*/15` instead of `15,45`, the Fly.io poller fires at `:00/:15/:30/:45` — colliding with the home poller at `:30`. See [health.md](health.md) incident log.
 
 ---
 

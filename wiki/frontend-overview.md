@@ -2,7 +2,7 @@
 title: Frontend Overview
 category: frontend
 owner: staktrakr
-lastUpdated: v3.33.18
+lastUpdated: v3.33.19
 date: 2026-03-01
 sourceFiles:
   - index.html
@@ -19,12 +19,12 @@ relatedPages:
 ---
 # Frontend Overview
 
-> **Last updated:** v3.33.18 — 2026-03-01
+> **Last updated:** v3.33.19 — 2026-03-01
 > **Source files:** `index.html`, `js/constants.js`, `sw.js`, `js/file-protocol-fix.js`
 
 ## Overview
 
-StakTrakr is a single-page precious metals inventory tracker built with pure HTML and vanilla JavaScript — zero build step, zero install, zero dependencies. It works on both `file://` and HTTP without any configuration changes. All application state persists in `localStorage`; there is no server, no database, and no backend beyond a static API feed.
+StakTrakr is a single-page precious metals inventory tracker built with pure HTML and vanilla JavaScript — zero build step, zero install, zero dependencies. It works on both `file://` and HTTP without any configuration changes. Most scalar application state persists in `localStorage`; persistent image and metadata caches live in IndexedDB. There is no server, no database, and no backend beyond a static API feed.
 
 ## Key Rules (read before touching this area)
 
@@ -47,7 +47,7 @@ index.html  (single page, all UI panels)
         ├── js/file-protocol-fix.js   — detects file:// vs HTTP, patches fetch
         ├── js/constants.js           — APP_VERSION, all constants, ALLOWED_STORAGE_KEYS
         ├── js/state.js               — shared mutable state
-        ├── js/utils.js               — saveData(), loadData(), safeGetElement()
+        ├── js/utils.js               — saveData(), loadData(), computeMeltValue()
         ├── ... (feature modules)
         └── js/init.js                — bootstraps the app after all scripts load
 ```
@@ -70,13 +70,20 @@ Feature flags gate beta/experimental UI paths. Each flag has:
 | `description` | string | Human-readable description |
 | `phase` | string | `"beta"` / `"stable"` / `"deprecated"` |
 
-Active feature flags as of v3.33.06:
+Active feature flags as of v3.33.19:
 
-| Flag | Default | Description |
-|---|---|---|
-| `MARKET_LIST_VIEW` | `true` | New single-row market card layout with search, sort, and inline charts |
-| `MARKET_DASHBOARD_ITEMS` | `false` | Show goldback and dashboard items in the market list |
-| `MARKET_AUTO_RETAIL` | `false` | Auto-update inventory retail prices from linked market data |
+| Flag | Default | Phase | User toggle | Description |
+|---|---|---|---|---|
+| `FUZZY_AUTOCOMPLETE` | `true` | stable | Yes | Fuzzy search autocomplete for item names and locations |
+| `DEBUG_UI` | `false` | dev | No | Debug UI indicators and development tools |
+| `GROUPED_NAME_CHIPS` | `true` | beta | Yes | Group item names by base name (e.g., "American Silver Eagle (3)") |
+| `DYNAMIC_NAME_CHIPS` | `false` | beta | Yes | Auto-extract text from parentheses and quotes in item names as additional filter chips |
+| `CHIP_QTY_BADGE` | `true` | stable | Yes | Show item count badge on filter chips |
+| `NUMISTA_SEARCH_LOOKUP` | `false` | beta | Yes | Pattern-based Numista search improvement |
+| `COIN_IMAGES` | `true` | beta | Yes | Coin image caching and item view modal |
+| `MARKET_LIST_VIEW` | `true` | beta | Yes | New single-row market card layout with search, sort, and inline charts |
+| `MARKET_DASHBOARD_ITEMS` | `false` | beta | Yes | Show goldback and dashboard items in the market list |
+| `MARKET_AUTO_RETAIL` | `false` | beta | Yes | Auto-update inventory retail prices from linked market data |
 
 ### Key globals exposed on `window`
 
@@ -85,10 +92,11 @@ Active feature flags as of v3.33.06:
 | `APP_VERSION` | `js/constants.js` | Current version string |
 | `saveData(key, value)` | `js/utils.js` | Write to localStorage (validated key) |
 | `loadData(key)` | `js/utils.js` | Read from localStorage |
-| `safeGetElement(id)` | `js/utils.js` | Safe `getElementById` wrapper |
-| `retailPrices` | `js/retail-pricing.js` | Latest retail price map |
-| `retailAvailability` | `js/retail-pricing.js` | Availability flags per item |
-| `spotPrice` | `js/spot-price.js` | Current spot price object |
+| `saveDataSync(key, value)` | `js/utils.js` | Synchronous write to localStorage |
+| `loadDataSync(key, default)` | `js/utils.js` | Synchronous read from localStorage |
+| `safeGetElement(id)` | `js/init.js` | Safe `getElementById` wrapper |
+| `retailAvailability` | `js/retail.js` | Availability flags per item |
+| `spotPrices` | `js/state.js` | Current spot price object (one property per metal) |
 | `STORAGE_PERSIST_GRANTED_KEY` | `js/constants.js` | localStorage key for storage persistence grant flag |
 | `IMAGE_ZIP_MANIFEST_VERSION` | `js/constants.js` | Version string for image ZIP export manifest format (currently `'1.0'`) |
 | `_renderMarketListView` | `js/retail.js` | Re-render market list view (added v3.33.06) |
@@ -103,14 +111,14 @@ Active feature flags as of v3.33.06:
 
 | Subsystem | Entry point(s) | Notes |
 |---|---|---|
-| Inventory | `js/inventory.js`, `js/items.js` | CRUD for precious metals holdings |
+| Inventory | `js/inventory.js` | CRUD for precious metals holdings |
 | Disposition (v3.33.17) | `js/inventory.js`, `js/constants.js` | Realized gains/losses workflow — dispose items as sold/traded/lost/gifted/returned; undo disposition; portfolio summary breakdown |
-| Retail pricing | `js/retail-pricing.js`, `js/api.js` | Polls `api.staktrakr.com/data/api/manifest.json` |
+| Retail pricing | `js/retail.js`, `js/api.js` | Polls `api.staktrakr.com/data/api/manifest.json` |
 | Market list view | `js/retail.js` | Full-width card layout with search/sort/charts (feature-flagged, v3.33.06) |
-| Spot prices | `js/spot-price.js`, `js/spot-history.js` | Polls hourly and 15-min feeds from `api.staktrakr.com` |
-| Cloud sync | `js/cloud-sync.js`, `js/cloud-settings.js` | Backup/restore via encrypted cloud vault |
+| Spot prices | `js/spot.js`, `js/priceHistory.js` | Polls hourly and 15-min feeds from `api.staktrakr.com` |
+| Cloud sync | `js/cloud-sync.js`, `js/cloud-storage.js` | Backup/restore via encrypted cloud vault |
 | Diff/Merge | `js/diff-engine.js`, `js/diff-modal.js` | Change-set diffing and interactive merge review UI (STAK-184) |
-| Catalog | `js/catalog.js`, `js/seed-images.js` | Coin/bar catalog with image cache |
+| Catalog | `js/catalog-manager.js`, `js/seed-images.js` | Coin/bar catalog with image cache |
 | Image cache | `js/image-cache.js` | Per-item user photo storage; dynamic quota; byte tracking per store |
 | Service worker | `sw.js` | Offline support, PWA installability, cache versioning |
 
@@ -121,8 +129,10 @@ Active feature flags as of v3.33.06:
 ### Portfolio value model
 
 ```
-meltValue  = weight x qty x spotPrice
+meltValue  = weightOz x qty x spotPrice x purity
 ```
+
+For Goldback items (`weightUnit === 'gb'`), `weightOz` is first converted via `weight * GB_TO_OZT`. For all other items, `weightOz` equals `weight`. `purity` defaults to `1.0` if not set.
 
 Three price columns tracked per holding: **Purchase Price**, **Melt Value**, **Retail Price**.
 
@@ -137,7 +147,7 @@ The Market Prices section in `index.html` now has **two mutually exclusive heade
 
 ### Disposition workflow (v3.33.17 — STAK-72)
 
-Items can be marked as disposed via a modal form (`#dispositionModal` in `index.html`). Disposition types are defined in `DISPOSITION_TYPES` in `js/constants.js`:
+Items can be marked as disposed via the remove-item modal (`#removeItemModal` in `index.html`), which combines delete and disposition tracking with a checkbox toggle. Disposition types are defined in `DISPOSITION_TYPES` in `js/constants.js`:
 
 | Type | Label | Requires Amount |
 |---|---|---|
