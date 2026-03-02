@@ -29,7 +29,8 @@ This file provides foundational mandates and project-specific context for Gemini
   - `npm run lint` (runs `eslint js/*.js sw.js`).
 - **Testing:**
   - Manual smoke testing is mandatory for UI changes.
-  - Automated tests (if any) are located in `devops/`.
+  - **NL E2E tests** (`/bb-test` skill): `tests/runbook/*.md` — 75+ tests across 8 section files, executed via Stagehand/Browserbase against PR preview URLs.
+  - **Scripted tests** (`/smoke-test` skill): `tests/*.spec.js` — Playwright + self-hosted browserless Docker. Run with `npm test`.
 
 ### Deployment
 
@@ -374,12 +375,19 @@ Full protocol: `devops/version-lock-protocol.md`. Summary:
 
 ### Lock file: `devops/version.lock`
 
+Uses a **claims array** — multiple agents can hold concurrent claims on different versions.
+
 ```json
 {
-  "locked": "3.32.09",
-  "locked_by": "gemini / STAK-XX",
-  "locked_at": "2026-02-22T19:00:00Z",
-  "expires_at": "2026-02-22T19:30:00Z"
+  "claims": [
+    {
+      "version": "3.32.09",
+      "claimed_by": "gemini / STAK-XX",
+      "issue": "STAK-XX",
+      "claimed_at": "2026-02-22T19:00:00Z",
+      "expires_at": "2026-02-22T19:30:00Z"
+    }
+  ]
 }
 ```
 
@@ -388,17 +396,19 @@ appear in a commit diff. If you see them in a diff, that is a bug.
 
 ### Protocol
 
-1. **Check:** Read `devops/version.lock`. If locked and not expired, STOP and inform user.
-2. **If expired (> 30 min):** Take it over, save a mem0 note.
-3. **If unlocked:** Compute `next_version` from `js/constants.js`, write the lock file.
-4. **Create worktree + branch:**
+1. **Read:** Parse `devops/version.lock` and the `claims` array (treat as empty if absent).
+2. **Prune:** Remove any entries where `expires_at` < now. Write back if anything was removed.
+3. **Compute version:** Find highest `version` in remaining active claims. If none, read `APP_VERSION` from `js/constants.js`. Increment PATCH by 1.
+4. **Claim:** Append your entry to the array and write the full `claims` array back to `devops/version.lock`.
+5. **Create worktree + branch:**
    `git worktree add .claude/worktrees/patch-VERSION -b patch/VERSION`
-5. **Do all work in the worktree** — file edits, version bump, commit.
-6. **Push + open draft PR** `patch/VERSION → dev`. Cloudflare generates a preview URL.
-7. **QA preview → merge to dev.**
-8. **Cleanup after merge:**
+6. **Do all work in the worktree** — file edits, version bump, commit.
+7. **Push + open draft PR** `patch/VERSION → dev`. Cloudflare generates a preview URL.
+8. **QA preview → merge to dev.**
+9. **Cleanup after merge:**
    `git worktree remove .claude/worktrees/patch-VERSION --force`
-   `git branch -d patch/VERSION && rm devops/version.lock`
+   `git branch -d patch/VERSION`
+   Remove **only your claim entry** from `devops/version.lock` (leave other active claims intact).
 
 The locked version is the **anchor** — all Linear notes, changelog entries, and mem0 handoffs
 reference it.
