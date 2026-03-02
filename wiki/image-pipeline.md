@@ -1,34 +1,36 @@
 ---
-title: "Image Pipeline"
+title: Image Pipeline
 category: frontend
 owner: staktrakr
-lastUpdated: v3.33.19
-date: 2026-03-01
+lastUpdated: v3.33.25
+date: 2026-03-02
 sourceFiles:
   - js/image-cache.js
   - js/image-processor.js
-  - js/events.js
-  - js/viewModal.js
-  - js/inventory.js
-  - js/card-view.js
-  - js/bulk-image-cache.js
   - js/image-cache-modal.js
+  - js/bulk-image-cache.js
+  - js/seed-images.js
 relatedPages:
-  - frontend-overview.md
+  - storage-patterns.md
   - data-model.md
-  - dom-patterns.md
 ---
 
 # Image Pipeline
 
-> **Last updated:** v3.33.19 — 2026-03-01
-> **Source files:** `js/image-cache.js`, `js/image-processor.js`, `js/events.js`, `js/viewModal.js`, `js/inventory.js`, `js/card-view.js`, `js/bulk-image-cache.js`, `js/image-cache-modal.js`
+> **Last updated:** v3.33.25 — 2026-03-02
+> **Source files:** `js/image-cache.js`, `js/image-processor.js`, `js/image-cache-modal.js`, `js/bulk-image-cache.js`, `js/seed-images.js`
 
 ## Overview
 
-StakTrakr stores item images entirely client-side using IndexedDB (database `StakTrakrImages`, version 3). There is no server-side image storage. Each item can have an obverse and a reverse image, sourced from three tiers: user uploads, pattern rule images, and Numista CDN URLs. The resolution cascade resolves each side independently.
+StakTrakr stores item images entirely client-side using **IndexedDB** (database `StakTrakrImages`, version 3). There is no server-side image storage. Each item can have an obverse and a reverse image, sourced from two tiers: user uploads and pattern rule images. Resolution runs per-side independently via `imageCache.resolveImageUrlForItem(item, side)`.
 
-The pipeline was significantly refactored in v3.32.41 (STAK-339): the legacy `coinImages` IDB store was removed, and image resolution became per-side rather than per-item.
+Key design decisions:
+
+- **IndexedDB, not localStorage** — blobs live in IDB; localStorage holds only metadata keys.
+- **No raw uploads** — every image passes through `ImageProcessor` (resize → WebP/JPEG → byte-budget loop) before being stored.
+- **Per-side cascade** — obverse and reverse resolve independently, so a user obverse + pattern reverse is a valid configuration.
+- **Numista CDN URLs** are stored as plain strings on inventory items (`item.obverseImageUrl`, `item.reverseImageUrl`) — no blob is fetched or stored for CDN images.
+- **`coinImages` IDB store** still exists in the schema (schema version 3) but is never read or written. It was deprecated in STAK-339 (v3.32.41). Do not add new code that touches it.
 
 ---
 
@@ -36,128 +38,352 @@ The pipeline was significantly refactored in v3.32.41 (STAK-339): the legacy `co
 
 - **Never** call `document.getElementById` for image elements — always use `safeGetElement()`.
 - **Never** write directly to the `userImages` IDB store — always go through `imageCache.cacheUserImage()`.
-- **Do not** assume obverse is always populated — v3.32.41 allows reverse-only records.
-- `resolveImageForItem()` is the legacy item-level function — use `resolveImageUrlForItem(item, side)` for per-side resolution.
-- Always revoke object URLs after use or you will leak memory.
+- **Do not** assume obverse is always populated — reverse-only records are valid since v3.32.41.
+- `resolveImageForItem()` is the legacy item-level function — use `resolveImageUrlForItem(item, side)` for per-side resolution in all new code.
+- Always **revoke object URLs** after use — uncollected object URLs leak memory.
 - Call `renderTable()` after any IDB write or thumbnails will not update.
+- **Do not touch the `coinImages` store** — it is retained schema-only for migration safety.
+
+---
+
+## Architecture: Each File's Role
+
+| File | Role |
+|---|---|
+| `js/image-cache.js` | IDB lifecycle, CRUD for all four stores, image resolution cascade, resize/compress pipeline |
+| `js/image-processor.js` | Canvas-based resize → WebP/JPEG → iterative byte-budget enforcement |
+| `js/image-cache-modal.js` | Settings UI for Numista bulk metadata sync: stats bar, eligible items table, activity log |
+| `js/bulk-image-cache.js` | Batch metadata sync engine: resolves catalog IDs, calls Numista API, applies tags, sequential with rate-limit delay |
+| `js/seed-images.js` | First-run demo: embeds base64 WebP images for two pattern rules (ASE + CML), loads them into IDB on first launch |
 
 ---
 
 ## IDB Storage Architecture
 
-Database: **`StakTrakrImages`**, version **3**
+Database: **`StakTrakrImages`**, schema version **3**
 
 | Store | Key | Value shape | Status |
 |---|---|---|---|
-| `userImages` | `uuid` (item UUID) | `{ uuid, obverse: Blob, reverse: Blob, cachedAt, size, sharedImageId }` | ACTIVE |
-| `patternImages` | `ruleId` | `{ ruleId, obverse: Blob, reverse: Blob }` | ACTIVE |
-| `coinMetadata` | `catalogId` (Numista N#) | Numista enrichment data | ACTIVE |
-| `coinImages` | `catalogId` | Legacy cached CDN blobs | LEGACY — schema retained, never read or written (removed in STAK-339, v3.32.41) |
+| `userImages` | `uuid` (item UUID string) | `{ uuid, obverse: Blob, reverse: Blob\|null, sharedImageId: string\|null, cachedAt: number, size: number }` | **ACTIVE** |
+| `patternImages` | `ruleId` (pattern rule ID string) | `{ ruleId, obverse: Blob\|null, reverse: Blob\|null, cachedAt: number, size: number }` | **ACTIVE** |
+| `coinMetadata` | `catalogId` (Numista N# string) | Numista enrichment data (title, country, weight, tags, etc.) | **ACTIVE** |
+| `coinImages` | `catalogId` | Legacy CDN blob cache | **LEGACY** — schema retained, never read or written (removed STAK-339, v3.32.41) |
 
-The `coinImages` store still exists in the schema to avoid migration complexity, but no code reads from or writes to it. Do not add new code that touches it.
+### Storage quota
 
----
-
-## Image Resolution Cascade
-
-Each side (obverse and reverse) is resolved **independently** using:
+`ImageCache` dynamically calculates its quota on init:
 
 ```
-imageCache.resolveImageUrlForItem(item, side)   // side = 'obverse' | 'reverse'
+quota = min(60% of available browser storage, 4 GB)
+        with floor of min(available, 500 MB)
 ```
 
-Located in `js/image-cache.js`. Resolution order per side:
+Default (when `navigator.storage.estimate` is unavailable, e.g. `file://`): **500 MB**.
 
-| Priority | Source | Detail |
+The quota is stored in `this._quotaBytes` and is surfaced via `getStorageUsage().limitBytes`. It is advisory — IDB itself enforces the actual browser limit. When the browser's storage limit is hit, `put()` operations throw and `cacheUserImage()` returns `false`.
+
+### Image constants (from `js/constants.js`)
+
+| Constant | Value | Meaning |
 |---|---|---|
-| 1 | User upload | `userImages[uuid][side]` — blob stored in IDB |
-| 2 | Pattern rule image | `patternImages[ruleId][side]` — shared blob for all matching items |
-| 3 | Numista CDN URL | `item.obverseImageUrl` / `item.reverseImageUrl` — string URL on inventory item |
-| 4 | Placeholder | Empty slot — no image shown |
-
-**Important:** Because resolution is per-side, uploading only an obverse leaves the reverse on its own cascade step (pattern or CDN). There is no requirement for both sides to come from the same source.
-
-Prior to v3.32.41 this was a single item-level resolution that returned one source for both sides. The old function `resolveImageForItem()` still exists for backward compatibility but should not be used in new code.
+| `IMAGE_MAX_DIM` | `500` px | Max width or height after resize |
+| `IMAGE_QUALITY` | `0.75` | Initial compression quality (0–1) |
+| `IMAGE_MAX_BYTES` | `512000` (500 KB) | Max output size per image side |
 
 ---
 
-## Upload Flow
+## Image Storage Format
 
-1. **File selection** — User picks an image file in the edit form (obverse or reverse slot).
-2. **Resize/compress** — `js/image-processor.js` resizes and compresses the file to a JPEG blob. No raw uploads are stored.
-3. **Pending blob** — The compressed blob is held in memory as `_pendingObverseBlob` or `_pendingReverseBlob` inside `js/events.js`. Nothing is written to IDB yet.
-4. **Form save** — On save, `saveUserImageForItem(uuid)` in `js/events.js`:
-   - Reads any existing IDB record for this UUID so the other side is preserved (partial upload keeps the untouched side).
-   - Calls `imageCache.cacheUserImage(uuid, obvBlob, revBlob)` — either blob argument may be `null`; v3.32.41 accepts reverse-only records.
-   - Calls `renderTable()` to refresh displayed thumbnails immediately.
-5. **IDB write** — `cacheUserImage()` writes the merged record to `userImages`.
+All images are stored as **Blobs** inside IDB records. No base64 strings are stored in IDB (base64 is only used in `seed-images.js` as an embedded source format, immediately converted to a Blob before being written to IDB).
 
-```
-User selects file
-  → image-processor.js (resize/compress → JPEG blob)
-  → _pendingObverseBlob / _pendingReverseBlob (events.js in-memory)
-  → form save triggers saveUserImageForItem(uuid)
-      → reads existing IDB record (preserve untouched side)
-      → imageCache.cacheUserImage(uuid, obvBlob, revBlob)
-          → writes to userImages IDB store
-      → renderTable()
+**User image record shape:**
+
+```js
+{
+  uuid: "abc123...",          // item UUID — IDB key
+  obverse: Blob,              // WebP or JPEG blob, max 500 KB
+  reverse: Blob | null,       // null if only one side uploaded
+  sharedImageId: string|null, // source UUID if copied from another item
+  cachedAt: 1234567890123,    // Date.now() timestamp
+  size: 102400                // (obverse.size + reverse.size) in bytes
+}
 ```
 
-**Deletion** is also handled in `js/events.js`. Deleting a side calls `imageCache.deleteUserImageSide(uuid, side)`, which merges a null blob into the existing record and writes back. If both sides become null the record is removed entirely.
+**Pattern image record shape:**
+
+```js
+{
+  ruleId: "seed-custom-img-0",  // pattern rule ID — IDB key
+  obverse: Blob | null,
+  reverse: Blob | null,
+  cachedAt: 1234567890123,
+  size: 15360
+}
+```
+
+**Metadata record shape** (in `coinMetadata` store):
+
+```js
+{
+  catalogId: "N12345",         // Numista N# — IDB key
+  title: "...",
+  country: "...",
+  weight: 31.1,
+  tags: [...],
+  // + many more Numista fields
+  cachedAt: 1234567890123
+}
+```
 
 ---
 
-## Pattern Rules
+## image-cache.js: Caching Strategy and Retrieval
 
-Pattern rules let a single image cover many items that share a name pattern.
+`ImageCache` is a singleton (`window.imageCache`) opened lazily on first use. The DB connection is guarded by `_ensureDb()` before every public operation, which probes the connection with a lightweight readonly transaction and reconnects if it is stale (browser can close IDB connections under storage pressure or tab backgrounding).
 
-- Defined in **Settings → Images → Pattern Rules**.
-- Each rule matches by item name keywords or regex and carries a `seedImageId`.
-- `NumistaLookup.matchQuery(item.name)` returns the first matching rule for an item name.
-- Pattern images are stored in `patternImages` IDB by `ruleId` — one blob record shared across all matching items.
-- User uploads **always override pattern** on a per-side basis: uploading an obverse replaces the pattern obverse for that item, while the pattern reverse still shows for that item's reverse slot.
-- Items have an `ignorePatternImages` flag for opting out at the item level. The UI for this flag is hidden in v3.32.41 but the data field is preserved for future per-slot control.
-- Pattern rule UI wiring lives in `js/settings-listeners.js`.
-- **Pattern rule promotion (`imagePatternToggle`)** reads from the existing per-item `userImages` IDB record when no pending blobs are in memory — this supports two-session workflows (upload → save → re-open → promote). After promotion the per-item `userImages` record is deleted so the item falls through to the shared pattern image on future resolution.
+### Image resolution cascade
+
+```
+imageCache.resolveImageUrlForItem(item, side)  // 'obverse' | 'reverse'
+```
+
+Per-side resolution order:
+
+| Priority | Source | Lookup |
+|---|---|---|
+| 1 | User upload | `userImages[item.uuid][side]` |
+| 2 | Pattern rule image | `patternImages[NumistaLookup.matchQuery(item.name).rule.seedImageId][side]` |
+| 3 (not IDB) | Numista CDN URL | `item.obverseImageUrl` / `item.reverseImageUrl` (string on item, not from IDB) |
+
+Returns a **object URL** (caller must revoke) or `null`. The CDN URL step is handled by the caller (viewModal, inventory, card-view), not by the cascade function itself — `resolveImageUrlForItem` returns null at step 3 and callers fall back to the string URL directly.
+
+### Key public methods
+
+| Method | Description |
+|---|---|
+| `imageCache.init()` | Opens/creates IDB. Safe to call multiple times. |
+| `imageCache.isAvailable()` | Returns `true` if IDB is open and accessible. |
+| `imageCache.cacheUserImage(uuid, obverse, reverse, sharedImageId)` | Write user upload blobs to `userImages`. |
+| `imageCache.getUserImage(uuid)` | Read the full user image record. |
+| `imageCache.getUserImageUrl(uuid, side)` | Read and return an object URL for one side. |
+| `imageCache.deleteUserImage(uuid)` | Delete user image record. |
+| `imageCache.cachePatternImage(ruleId, obverseBlob, reverseBlob)` | Write pattern image blobs. |
+| `imageCache.getPatternImage(ruleId)` | Read the full pattern image record. |
+| `imageCache.getPatternImageUrl(ruleId, side)` | Read and return an object URL for one side. |
+| `imageCache.deletePatternImage(ruleId)` | Delete pattern image record. |
+| `imageCache.cacheMetadata(catalogId, numistaResult)` | Write Numista metadata. |
+| `imageCache.getMetadata(catalogId)` | Read Numista metadata. |
+| `imageCache.deleteMetadata(catalogId)` | Delete Numista metadata. |
+| `imageCache.resolveImageForItem(item)` | Legacy per-item resolver — returns `{catalogId, source}`. Prefer `resolveImageUrlForItem`. |
+| `imageCache.resolveImageUrlForItem(item, side)` | Per-side URL resolver — returns object URL or null. |
+| `imageCache.getStorageUsage()` | Detailed byte/count breakdown across all stores. |
+| `imageCache.clearAll()` | Wipe all four IDB stores. |
+| `imageCache.exportAllMetadata()` | Dump all `coinMetadata` records (ZIP backup). |
+| `imageCache.exportAllUserImages()` | Dump all `userImages` records (ZIP backup). |
+| `imageCache.exportAllPatternImages()` | Dump all `patternImages` records (ZIP backup). |
+| `imageCache.importMetadataRecord(record)` | Restore one metadata record from ZIP. |
+| `imageCache.importUserImageRecord(record)` | Restore one user image record from ZIP. |
+| `imageCache.importPatternImageRecord(record)` | Restore one pattern image record from ZIP. |
+
+### Internal resize/compress path
+
+When storing a blob (not a URL), `_resizeAndCompress(source)` delegates to `imageProcessor.processFile()` when available. If `ImageProcessor` throws (e.g. WebP encoding failure), it falls back to an inline Canvas JPEG resize using the same `_maxDim` and `_quality` constants.
 
 ---
 
-## Numista CDN URLs
+## image-processor.js: Resize, Compression, Format Conversion
 
-- Stored as plain strings directly on inventory items: `item.obverseImageUrl` and `item.reverseImageUrl`.
-- Populated when the user assigns a Numista result via the N# picker, or during a bulk Numista import.
-- Refreshed only on an explicit Numista API action — not on every page load.
-- No IDB blob is stored for CDN images; the string URL is used directly in `<img src>`.
-- Serve as cascade step 3 — used when no user upload or pattern image exists for that side.
-- CDN URL writeback was fixed in v3.32.39 (STAK-333).
+`ImageProcessor` is a singleton (`window.imageProcessor`). It is the authoritative resize/compress pipeline for all image writes.
+
+### Processing pipeline
+
+```
+processFile(file, opts)
+  → createImageBitmap(file)      -- decode to bitmap
+  → _processSource(bitmap, opts)
+      → scale dimensions (maxDim, maintain aspect ratio)
+      → draw to Canvas
+      → supportsWebP()           -- cached detection (1px canvas probe)
+      → format = 'image/webp' | 'image/jpeg'
+      → iterative quality loop:
+          while (blob.size > maxBytes && quality > minQuality)
+              quality -= qualityStep
+              re-encode
+      → return { blob, width, height, originalSize, compressedSize, format }
+```
+
+### Default parameters
+
+| Parameter | Default | Source |
+|---|---|---|
+| `maxDim` | `500` px | `IMAGE_MAX_DIM` from `js/constants.js` |
+| `quality` | `0.75` | `IMAGE_QUALITY` from `js/constants.js` |
+| `maxBytes` | `512000` (500 KB) | `IMAGE_MAX_BYTES` from `js/constants.js` |
+| `qualityStep` | `0.05` | Hardcoded constructor default |
+| `minQuality` | `0.30` | Hardcoded constructor default |
+
+All parameters can be overridden per-call via the `opts` argument.
+
+### WebP detection
+
+`supportsWebP()` probes by calling `canvas.toBlob(..., 'image/webp')` on a 1×1 canvas. The result is cached after the first call. All images are encoded as WebP when supported; JPEG is used on browsers that do not support WebP canvas encoding (rare in 2026).
+
+### Key public methods
+
+| Method | Description |
+|---|---|
+| `imageProcessor.processFile(file, opts)` | Main entry: File/Blob → compressed Blob |
+| `imageProcessor.processFromUrl(url, opts)` | Fetch URL + process (CORS required) |
+| `imageProcessor.createPreview(blob)` | Wrap blob in object URL for preview display |
+| `imageProcessor.estimateStorage(blob)` | Returns `blob.size` (used for quota checks) |
+| `imageProcessor.supportsWebP()` | Detect WebP canvas encoding support |
 
 ---
 
-## Rendering (Table / Card / View Modal)
+## image-cache-modal.js: Settings UI for Numista Sync
 
-### Table thumbnails
+This file is **not** a modal in the traditional sense — it is the inline Numista sync panel rendered inside **Settings > API > Numista**. It has no dedicated `<dialog>` element.
 
-`js/inventory.js` → `_loadThumbImage(item, side)`
+### Components
 
-- Calls `resolveImageUrlForItem(item, side)` for each side.
-- Creates an object URL from any returned blob.
-- Caller is responsible for revoking object URLs after the thumbnail is no longer displayed.
-- `renderTable()` must be called after any IDB write for thumbnails to update.
+| Function | Element | Description |
+|---|---|---|
+| `renderNumistaSyncUI()` | `#numistaSyncStats` + `#numistaSyncTableContainer` | Entry point: renders stats bar + eligible items table |
+| `renderSyncStats()` | `#numistaSyncStats` | Shows "N API cache · M eligible" counts |
+| `renderEligibleItemsTable()` | `#numistaSyncTableContainer` | Table of N#-linked items with cache status and action buttons |
+| `startBulkSync()` | `#numistaSyncStartBtn`, `#numistaSyncCancelBtn`, `#numistaSyncProgress` | Triggers `BulkImageCache.cacheAll()`, wires progress/log callbacks |
+| `clearAllCachedData()` | — | Confirms then calls `imageCache.clearAll()` |
+| `logSyncActivity(message, type)` | `#numistaSyncLog` | Appends timestamped monospaced log lines |
+| `updateStatusCell(catalogId, text, color)` | `_statusCells` Map | Live-updates per-row status during bulk sync |
+| `resyncCachedEntry(catalogId)` | — | Deletes metadata then re-fetches from Numista API for one entry |
 
-### Card thumbnails
+### Status cell tracking
 
-`js/card-view.js` → `_loadCardImage(item, side)`
+`_statusCells` is a `Map<catalogId, HTMLElement>` rebuilt every time `renderEligibleItemsTable()` runs. It enables `BulkImageCache.cacheAll()`'s `onLog` callback to update individual row status cells in real time without re-rendering the whole table.
 
-- Same pattern as table thumbnails.
-- Object URLs created per card, revoked when the card is removed from DOM.
+---
 
-### View modal
+## bulk-image-cache.js: Batch Metadata Sync
 
-`js/viewModal.js` → `loadViewImages(item, container)`
+`BulkImageCache` is an IIFE singleton (`window.BulkImageCache`). It syncs **Numista metadata** (not image blobs) for all inventory items that have a Numista catalog ID. Image downloading is intentionally excluded — images are loaded on-demand when the user opens the view modal.
 
-- Calls `resolveImageUrlForItem(item, 'obverse')` and `resolveImageUrlForItem(item, 'reverse')` independently.
-- Falls back to CDN URLs on the item (`item.obverseImageUrl` / `item.reverseImageUrl`) if both sides return null from IDB (defensive fallback, cascade should already have returned these).
-- Object URLs are tracked in `_viewModalObjectUrls` array and revoked on modal close to prevent memory leaks.
+### Catalog ID resolution
+
+`resolveCatalogId(item)` checks in order:
+
+1. `item.numistaId` (direct)
+2. `catalogManager.getCatalogId(item.serial)` (fallback for catalogManager-mapped items)
+
+### Eligible list
+
+`buildEligibleList()` iterates the full inventory and returns `[{item, catalogId}]` deduplicated by catalog ID (one entry per unique N#, even if multiple items share the same N#).
+
+### `cacheAll(opts)` loop
+
+```
+buildEligibleList()
+for each { item, catalogId }:
+  1. Repair malformed obverse/reverse URLs on the item (clear empty strings)
+  2. Check if metadata already cached (imageCache.getMetadata)
+  3. If cached + URLs present → apply tags from cache → skip
+  4. Try local provider cache (free, no API call)
+  5. Fall back to catalogAPI.lookupItem(catalogId) (Numista API)
+  6. Write metadata to IDB (imageCache.cacheMetadata)
+  7. Apply Numista tags to all items sharing this catalogId
+  8. Wait `delay` ms (default 200 ms) before next item
+post-loop:
+  saveItemTags()    -- if any tags were written
+  saveInventory()   -- if any URLs were written back to items
+```
+
+A pre-built `Map<catalogId, uuid[]>` enables O(1) tag application per catalog ID across all inventory items sharing the same N#.
+
+### Abort
+
+`BulkImageCache.abort()` sets an `_aborted` flag checked at the top of each loop iteration. The running operation finishes its current item before stopping.
+
+### Public API
+
+| Method | Description |
+|---|---|
+| `BulkImageCache.cacheAll(opts)` | Run the full batch metadata sync |
+| `BulkImageCache.abort()` | Cancel a running sync |
+| `BulkImageCache.isRunning()` | Returns true if a sync is active |
+| `BulkImageCache.buildEligibleList()` | Returns the deduplicated N#-linked item list |
+| `BulkImageCache.resolveCatalogId(item)` | Resolve catalog ID for one item |
+
+---
+
+## seed-images.js: Default Images for First-Time Users
+
+`seed-images.js` provides a first-run demo experience. On first launch, it creates two custom pattern rules (American Silver Eagle and Canadian Gold Maple Leaf) with real coin photos embedded as base64 WebP data URIs. These appear in **Settings > Images > Custom Pattern Rules** where users can interact with them (edit, delete, export) to learn the pattern image feature before uploading their own images.
+
+### How it works
+
+```
+loadSeedImages()   // called at app init
+  1. Guard: requires imageCache + NumistaLookup to be available
+  2. Check localStorage 'seedImagesVer' against SEED_IMAGES_VERSION
+     → if already loaded at current version, return immediately
+  3. For each entry in SEED_CUSTOM_RULES:
+     a. Convert base64 data URI → Blob (dataUriToBlob)
+     b. NumistaLookup.addRule(pattern, replacement, numistaId, seedImageId)
+     c. imageCache.cachePatternImage(seedImageId, obvBlob, revBlob)
+  4. localStorage.setItem('seedImagesVer', SEED_IMAGES_VERSION)
+```
+
+### Key constants and structures
+
+| Identifier | Description |
+|---|---|
+| `SEED_IMAGES_VERSION` | Version string (currently `'1'`). Bump this to force a re-load of seed images on existing installs. |
+| `SEED_CUSTOM_RULES` | Array of `{pattern, replacement, numistaId, obverse, reverse}` entries. `obverse` and `reverse` are base64 WebP data URIs embedded in the source file. |
+| `dataUriToBlob(dataUri)` | Converts a base64 data URI to a Blob. |
+| `loadSeedImages()` | Entry point, exposed as `window.loadSeedImages`. |
+
+### Seed image IDs
+
+Each rule gets a deterministic `seedImageId` of the form `seed-custom-img-{i}` (zero-indexed). These IDs are used as keys in the `patternImages` IDB store. They appear in pattern rule objects as `rule.seedImageId` and are referenced by the image resolution cascade.
+
+### Version gating
+
+Seed image loading is gated by `localStorage` key `seedImagesVer`. If the stored version matches `SEED_IMAGES_VERSION`, the function returns immediately (no IDB writes, no rule creation). To update demo images: replace the base64 data URIs in `SEED_CUSTOM_RULES` and increment `SEED_IMAGES_VERSION`. Existing users will get the new images on their next app load.
+
+---
+
+## Storage Limits and Overflow Behavior
+
+The effective quota is computed dynamically at IDB init (see image-cache.js quota section above). When the limit is approached or exceeded:
+
+- `imageCache.cacheUserImage()` returns `false` if the IDB `put()` throws.
+- `imageProcessor.processFile()` iteratively reduces quality (down to `minQuality = 0.30`) before giving up — this reduces the chance of hitting the limit on individual images.
+- No automatic eviction is performed. The user must manually clear cached data via the **Settings > API > Numista** panel (Clear Cache button, which calls `clearAllCachedData()`).
+- `getStorageUsage()` returns a breakdown by store (`numistaBytes`, `userImageBytes`, `patternImageBytes`, `metadataBytes`, `totalBytes`, `limitBytes`) for display in the settings footer.
+
+---
+
+## Bulk Operations
+
+### Backup / restore (ZIP)
+
+All three active IDB stores participate in ZIP backup:
+
+| Direction | Method |
+|---|---|
+| Export metadata | `imageCache.exportAllMetadata()` → array of records |
+| Export user images | `imageCache.exportAllUserImages()` → array of records |
+| Export pattern images | `imageCache.exportAllPatternImages()` → array of records |
+| Import metadata | `imageCache.importMetadataRecord(record)` |
+| Import user images | `imageCache.importUserImageRecord(record)` |
+| Import pattern images | `imageCache.importPatternImageRecord(record)` |
+
+### Bulk metadata sync
+
+Triggered from Settings via `startBulkSync()` → `BulkImageCache.cacheAll()`. See the bulk-image-cache.js section for loop details. Image blobs are not downloaded during bulk sync — only metadata. Images are fetched on demand when the user opens the view modal.
+
+### Clear all
+
+`imageCache.clearAll()` wipes all four IDB stores (including the legacy `coinImages` store) in a single multi-store transaction.
 
 ---
 
@@ -166,12 +392,15 @@ Pattern rules let a single image cover many items that share a name pattern.
 | Mistake | Correct approach |
 |---|---|
 | `document.getElementById('img-el')` | `safeGetElement('img-el')` |
-| Direct IDB write to `userImages` | `imageCache.cacheUserImage(uuid, obvBlob, revBlob)` |
+| Writing directly to `userImages` IDB | `imageCache.cacheUserImage(uuid, obvBlob, revBlob)` |
 | Assuming obverse is always set | Always null-check both sides; reverse-only records are valid since v3.32.41 |
-| Using `resolveImageForItem()` (legacy) | Use `resolveImageUrlForItem(item, side)` |
-| Not revoking object URLs | Track URL in array and call `URL.revokeObjectURL()` when done |
+| Using `resolveImageForItem()` (legacy) | `resolveImageUrlForItem(item, side)` for per-side resolution |
+| Not revoking object URLs | Track URLs in an array, call `URL.revokeObjectURL()` on cleanup |
 | IDB write without `renderTable()` | Always call `renderTable()` after writes so thumbnails refresh |
-| Touching `coinImages` IDB store | Store is legacy — do not add code that reads or writes it |
+| Touching `coinImages` IDB store | Store is legacy — do not read or write it |
+| Storing base64 strings in IDB | Always convert to Blob first (`dataUriToBlob`); IDB stores Blobs, not base64 |
+| Assuming WebP is always used | `ImageProcessor` falls back to JPEG when browser does not support WebP canvas encoding |
+| Running `BulkImageCache.cacheAll()` twice concurrently | Check `BulkImageCache.isRunning()` before calling `cacheAll()` |
 
 ---
 
@@ -188,6 +417,5 @@ Pattern rules let a single image cover many items that share a name pattern.
 
 ## Related Pages
 
-- [Frontend Overview](frontend-overview.md) — File load order, script block, constants role
-- [Data Model](data-model.md) — Item schema, storage patterns, spot state
-- [DOM Patterns](dom-patterns.md) — `safeGetElement()` and element access rules
+- [Storage Patterns](storage-patterns.md) — `saveData()`/`loadData()` wrappers, `ALLOWED_STORAGE_KEYS`, localStorage conventions
+- [Data Model](data-model.md) — Item schema, `obverseImageUrl`/`reverseImageUrl` fields, storage patterns, spot state

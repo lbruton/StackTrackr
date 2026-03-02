@@ -1,44 +1,43 @@
 ---
-title: "Backup & Restore"
+title: Backup & Restore
 category: frontend
 owner: staktrakr
-lastUpdated: v3.33.24
+lastUpdated: v3.33.25
 date: 2026-03-02
 sourceFiles:
-  - js/inventory.js
-  - js/vault.js
-  - js/cloud-sync.js
   - js/cloud-storage.js
-  - js/image-cache.js
+  - js/cloud-sync.js
   - js/utils.js
-  - js/diff-modal.js
-  - index.html
 relatedPages:
-  - cloud-sync.md
-  - image-pipeline.md
-  - idb-stores.md
-  - vault-crypto.md
-  - constants.md
+  - sync-cloud.md
+  - storage-patterns.md
 ---
 # Backup & Restore
 
-> **Last updated:** v3.33.24 — 2026-03-02
-> **Source files:** `js/inventory.js`, `js/vault.js`, `js/cloud-sync.js`, `js/cloud-storage.js`, `js/image-cache.js`, `js/utils.js`, `js/diff-modal.js`, `index.html`
+> **Last updated:** v3.33.25 — 2026-03-02
+> **Source files:** `js/cloud-storage.js`, `js/cloud-sync.js`, `js/utils.js`
 
 ## Overview
 
 StakTrakr has **4 backup/restore mechanisms**. Each covers a different slice of application data — no single mechanism backs up everything. Full recovery requires combining mechanisms (typically ZIP + vault, or vault + image vault).
 
+There is no dedicated `backup.js` or `restore.js`. All backup and restore logic lives in:
+
+- `js/cloud-storage.js` — OAuth token management, manual cloud backup upload/download/delete, vault upload to Dropbox/pCloud/Box, conflict detection, activity logging
+- `js/cloud-sync.js` — Auto-sync push/pull, override backup snapshots, password management, multi-tab coordination, manifest building
+- `js/inventory.js` — ZIP backup creation and restore (`createBackupZip`, `restoreBackupZip`)
+- `js/vault.js` — AES-256-GCM encryption/decryption for vault and image vault files
+
 | Mechanism | Format | Encrypted | Trigger |
 |-----------|--------|-----------|---------|
 | ZIP Backup | `.zip` | No | Settings → "Backup All Data" button |
 | Encrypted Vault | `.stvault` | Yes (AES-256-GCM) | Settings → Vault → "Export Vault" |
-| Image Vault | `.stvault` | Yes (AES-256-GCM) | Dropbox cloud sync (auto) |
-| Cloud Sync | Dropbox | Yes (vault-wrapped) | Settings → Cloud → Sync |
+| Image Vault | `.stvault` | Yes (AES-256-GCM) | Cloud auto-sync (automatic) |
+| Cloud Sync | Dropbox | Yes (vault-wrapped) | Settings → Cloud → Auto-sync toggle |
 
 ---
 
-## Key Rules (read before touching this area)
+## Key Rules
 
 - **Full recovery requires two steps.** Vault alone restores localStorage only. User-uploaded photo blobs live in IndexedDB (IDB) and need a ZIP restore or image vault restore separately.
 - **CDN image URLs survive a vault restore.** Numista-enriched images (`obverseImageUrl`, `reverseImageUrl`) are stored on the inventory items in localStorage, so they come back immediately with any vault or ZIP restore. Only user-uploaded blobs need IDB restore.
@@ -47,149 +46,96 @@ StakTrakr has **4 backup/restore mechanisms**. Each covers a different slice of 
 - When modifying restore logic, always verify the post-restore call sequence: `loadInventory()` → `renderTable()` → `renderActiveFilters()` → `loadSpotHistory()`.
 - **All imports go through `buildImportValidationResult()` before DiffModal opens.** Items that fail validation are surfaced as a pre-validation warning toast and excluded from the DiffModal. If all items are invalid, the import is aborted with an error toast.
 - **All exports embed `exportOrigin` (`window.location.origin`).** On import, if the file's `exportOrigin` differs from the current domain, a cross-domain warning toast is shown before the DiffModal opens. This is informational only and never blocks the import.
-- **DiffModal now shows a live count header** (Backup / Current / After import) and a warning when the projected count is less than the backup count.
+- **DiffModal shows a live count header** (Backup / Current / After import) and a warning when the projected count is less than the backup count.
 - **A summary banner appears after every import** (`showImportSummaryBanner()`) showing added / updated / removed / skipped counts, with collapsible skip reasons when items were rejected.
 
 ---
 
-## Import Validation & Feedback (STAK-374)
+## Architecture
 
-All import paths (JSON, CSV, vault) now share a consistent validation and feedback pipeline built from two new utilities in `js/utils.js`.
+### cloud-storage.js Role
 
-### `buildImportValidationResult(items, skippedNonPM)`
+`cloud-storage.js` handles the **OAuth layer and manual vault operations**:
 
-Batch-validates an array of sanitized inventory items by calling `validateInventoryItem()` on each one.
+- OAuth PKCE flow for Dropbox, pCloud, and Box (`cloudAuthStart`, `cloudExchangeCode`)
+- Token storage, refresh, and expiry management (`cloudGetToken`, `cloudStoreToken`, `cloudClearToken`)
+- Manual vault upload to cloud provider (`cloudUploadVault`) — writes a versioned `.stvault` file and a `staktrakr-latest.json` pointer
+- Cloud backup listing (`cloudListBackups`), download by name (`cloudDownloadVaultByName`), and deletion (`cloudDeleteBackup`)
+- Conflict detection via `cloudCheckConflict()` comparing remote `latest.json` timestamp against `cloud_last_backup` in localStorage
+- Cloud activity log: all transactions recorded to `cloud_activity_log` (capped at 500 entries, max 180 days)
+- UI state management via `syncCloudUI()`
 
-**Parameters:**
-- `items` — Array of items already processed by `sanitizeImportedItem()`
-- `skippedNonPM` — Optional array of items pre-filtered as non-precious-metal (CSV only); defaults to `[]`
+**Manual cloud backup flow:**
 
-**Returns:**
-```json
-{
-  "valid": [ /* items that passed validation */ ],
-  "invalid": [
-    { "index": 0, "name": "Item Name", "reasons": ["Missing name or weight"] }
-  ],
-  "skippedNonPM": [ /* pre-filtered non-PM items */ ],
-  "skippedCount": 3
-}
-```
+1. `vaultEncryptToBytes(password)` encrypts all `ALLOWED_STORAGE_KEYS` into a binary `.stvault`
+2. `cloudUploadVault(provider, fileBytes)` uploads the vault as `staktrakr-backup-YYYYMMDD-HHmmss.stvault` to the provider folder
+3. Also writes `staktrakr-latest.json` (pointer with `filename`, `timestamp`, `appVersion`, `itemCount`)
+4. Records `cloud_last_backup` in localStorage
 
-`skippedCount` = `invalid.length` + `skippedNonPM.length`
+### cloud-sync.js Role
 
-Called in `importJson` and `importCsv` before `showImportDiffReview()` is invoked. If all items are invalid, the import is aborted and an error toast is shown. If some items are invalid, a warning toast is shown and only valid items proceed to the DiffModal.
+`cloud-sync.js` handles **automatic background sync** (auto-sync mode):
 
-### `showImportSummaryBanner(result)`
+- Debounced push on inventory change via `scheduleSyncPush` (debounced `pushSyncVault`)
+- Leader election across multiple open tabs via `BroadcastChannel` — only one tab syncs at a time
+- Pre-pull local snapshot via `syncSaveOverrideBackup()` (rollback-only backup, enables "Restore Override Backup" button)
+- Post-push cloud-side backup-before-overwrite: copies existing cloud vault to `/StakTrakr/backups/pre-sync-TIMESTAMP.stvault` before overwriting
+- Sync manifest building and encrypted upload (`buildAndUploadManifest`) for diff-merge support
+- Multi-tab coordination via `BroadcastChannel('staktrakr-sync')` — push/pull events broadcast to all tabs
+- Password management (`getSyncPassword`, `getSyncPasswordSilent`, `changeVaultPassword`)
+- Empty-vault push guard: blocks push when local is empty but remote has items
 
-Renders a persistent, dismissible import summary banner above the inventory table after every import completes.
+**Auto-sync file layout on Dropbox:**
 
-**Parameter shape:**
-```json
-{
-  "added": 5,
-  "modified": 2,
-  "deleted": 0,
-  "skipped": 1,
-  "skippedReasons": ["Item 3: missing weight"]
-}
-```
+| File | Path | Contents |
+|------|------|----------|
+| Inventory vault | `/StakTrakr/sync/staktrakr-sync.stvault` | Sync-scoped vault (inventory + display prefs) |
+| Image vault | `/StakTrakr/sync/staktrakr-images.stvault` | `userImages` IDB blobs (base64) |
+| Metadata pointer | `/StakTrakr/sync/staktrakr-sync.json` | `rev`, `itemCount`, `syncId`, `deviceId`, `imageVault` hash |
+| Manifest | `/StakTrakr/sync/staktrakr-manifest.stvault` | Encrypted field-level change log for diff-merge |
+| Pre-push backups | `/StakTrakr/backups/pre-sync-TIMESTAMP.stvault` | Auto-backups before each vault overwrite |
 
-**Behavior:**
-- Removes any previously rendered banner before inserting a new one (element id `import-summary-banner`, class `import-summary-banner`)
-- Shows a success icon (`banner-success`) when `skipped === 0`, or a warning icon (`banner-warn`) when items were skipped
-- Displays count line: `+ N added  ~N updated  −N removed` plus skipped count when nonzero
-- Includes a `<details>` element listing up to 5 skip reasons when skipped > 0
-- Inserts before the inventory table container via `safeGetElement()`; falls back to `showToast()` if the DOM target is not found
-- Dismiss button (`class="banner-dismiss"`) removes the banner element on click
+> **Legacy paths:** Flat-root paths (`/StakTrakr/staktrakr-sync.*`) are retained as `*_LEGACY` constants in `js/constants.js` for migration only. Active sync uses `/StakTrakr/sync/`. Migration runs once on first push (`cloudMigrateToV2`).
 
-Called in `showImportDiffReview()` (inside the `onApply` callback) and in `vaultRestoreWithPreview()` (also in `onApply`).
+### utils.js Role
 
-### Cross-domain origin warning
+`js/utils.js` provides the import validation pipeline shared across all import paths:
 
-When a file is imported whose `exportOrigin` differs from `window.location.origin` (e.g., importing a backup made on `www.staktrakr.com` while running on `beta.staktrakr.com`), a yellow warning toast is shown before the DiffModal opens. The warning is non-blocking — it does not prevent the import. The origin string is sanitized with `sanitizeHtml()` before display.
-
-This warning appears for:
-- JSON imports (checked in `showImportDiffReview()` via `options.exportMeta.exportOrigin`)
-- Vault restores (checked in `vaultRestoreWithPreview()` via `payload._meta.exportOrigin`)
-
-### DiffModal count header
-
-`DiffModal.show()` accepts two new optional fields:
-- `backupCount` — total items in the backup (valid items + skippedCount)
-- `localCount` — current inventory item count
-
-When both are provided, a count row is rendered in the modal header:
-```
-Backup: 47 items | Current: 45 items | After import: 47
-```
-
-The projected count updates live as checkboxes are toggled (`localCount + selectedAdded − selectedDeleted`). A warning appears below the row when projected count is less than backup count, showing how many items will not be imported.
-
-A **Select All / Deselect All** toggle button cycles through three states:
-1. First click — selects all added and modified rows; button label becomes "Deselect All"
-2. Second click — deselects all; button label reverts to "Select All"
+- `buildImportValidationResult(items, skippedNonPM)` — batch validation before DiffModal
+- `showImportSummaryBanner(result)` — persistent dismissible banner after import completes
+- `saveData(key, value)` / `loadData(key)` — all localStorage reads/writes go through these (never direct `localStorage.setItem`)
+- `sanitizeImportedItem(item)` — sanitizes raw imported item before validation
 
 ---
 
-## Export Origin Metadata
+## Export Format
 
-All export formats now embed `exportOrigin` (`window.location.origin`) so that imports can detect cross-domain transfers.
+### JSON Export (inventory items only)
 
-| Format | Where stored |
-|--------|-------------|
-| JSON (`exportJson`) | `exportMeta.exportOrigin` in the wrapper object |
-| ZIP (`createBackupZip`) | `exportOrigin` field in `settings.json` |
-| Vault (`collectVaultData`) | `_meta.exportOrigin` in the vault payload |
-| CSV (`exportCsv`) | Comment line at the very top: `# exportOrigin: https://...` |
+`exportJson()` in `js/inventory.js` wraps the item array in an envelope object:
 
-Old exports without `exportOrigin` import silently with no warning.
-
-**JSON export format change:** `exportJson()` now wraps the item array in an object:
 ```json
 {
   "items": [ /* inventory items */ ],
   "exportMeta": {
     "exportOrigin": "https://www.staktrakr.com",
     "exportDate": "2026-03-02T00:00:00.000Z",
-    "version": "3.33.24",
+    "version": "3.33.25",
     "itemCount": 47
   }
 }
 ```
 
-`importJson` handles both the new wrapped format and the legacy plain array format.
+`importJson` handles both the new wrapped format and the legacy plain array format. Old files still import correctly.
 
----
+### ZIP Backup (full, non-encrypted)
 
-## Export Format UI Labels
-
-The backup/export panel in `index.html` now shows a `<small class="format-desc">` description beneath each format option to help users choose the right format:
-
-| Format | Description label |
-|--------|------------------|
-| CSV | "Inventory items only — spreadsheet compatible" |
-| JSON | "Inventory items only — no settings or price history" |
-| HTML report | "Inventory items only — printable report" |
-| ZIP | "Full backup — inventory, settings, price history, and images" |
-| .stvault | "Encrypted full backup — inventory, settings, price history, and images" |
-
-CSS: `.format-desc { display: block; font-size: 0.75em; opacity: 0.7; margin-top: 2px; }`
-
----
-
-## ZIP Backup (Non-Encrypted)
-
-**Trigger:** Settings → "Backup All Data" button (`exportZipBtn`)
-**Function:** `createBackupZip()` in `js/inventory.js`
 **Output filename:** `precious_metals_backup_YYYYMMDD.zip`
-
-### Files included in the ZIP
 
 | File in ZIP | Contents | Storage restored to |
 |-------------|----------|---------------------|
 | `inventory_data.json` | Full inventory array (includes CDN URLs: `obverseImageUrl`, `reverseImageUrl`) | localStorage (`LS_KEY`) |
-| `settings.json` | Theme, catalog mappings, feature flags, chip config (`chipMinCount`, `chipMaxCount`), table settings | localStorage (multiple keys) |
+| `settings.json` | Theme, catalog mappings, feature flags, chip config, table settings, `exportOrigin` | localStorage (multiple keys) |
 | `spot_price_history.json` | Historical spot prices | localStorage (`SPOT_HISTORY_KEY`) |
 | `item_price_history.json` | Per-item price history | Merged via `mergeItemPriceHistory()` |
 | `item_tags.json` | Item tags | localStorage |
@@ -197,82 +143,44 @@ CSS: `.format-desc { display: block; font-size: 0.75em; opacity: 0.7; margin-top
 | `retail_price_history.json` | Retail price history | localStorage |
 | `image_metadata.json` | Numista enrichment metadata | IDB `coinMetadata` store |
 | `user_images/` | User-uploaded photo blobs (obverse/reverse per UUID) | IDB `userImages` store |
-| `user_image_manifest.json` | UUID→filename mapping (STAK-226) | Used during restore |
+| `user_image_manifest.json` | UUID→filename mapping | Used during restore |
 | `pattern_images/` | Pattern rule image blobs | IDB `patternImages` store |
 | `inventory_export.csv` | Human-readable CSV | Not restored (report only) |
 | `inventory_report.html` | HTML report | Not restored (report only) |
 
-### What is NOT included
+What is NOT included: `coinImages` IDB store (legacy/dead, explicitly skipped), API keys, OAuth tokens, cloud sync state.
 
-- `coinImages` IDB store (legacy/dead — explicitly skipped)
-- API keys and Dropbox OAuth tokens
-- Cloud sync state
+### Encrypted Vault (.stvault — full scope)
 
-### Restore function
+**Crypto:** AES-256-GCM, PBKDF2 (600K iterations), 56-byte binary header
 
-`restoreBackupZip(file)` in `js/inventory.js`
+**Full scope** (`vaultEncryptToBytes`) includes all `ALLOWED_STORAGE_KEYS` (~80+ keys):
 
-- `coinImages/` folder explicitly skipped with debug log: `"skipping legacy coinImages folder (store deprecated)"`
-- User images use manifest-based import (`user_image_manifest.json`); falls back to filename parsing for old ZIPs that predate STAK-226
-- Post-restore sequence: `loadInventory()` → `renderTable()` → `renderActiveFilters()` → `loadSpotHistory()`
-
----
-
-## Encrypted Vault (.stvault)
-
-**Trigger:** Settings → Vault → "Export Vault"
-**Function:** `vaultEncryptToBytes()` in `js/vault.js`
-**Crypto:** AES-256-GCM, PBKDF2 (600K iterations), 56-byte header
-**Output:** `*.stvault` binary file
-
-### What is included
-
-All localStorage keys listed in `ALLOWED_STORAGE_KEYS` (~80+ keys), including:
-
-- Inventory items with CDN URLs (`obverseImageUrl`, `reverseImageUrl`)
+- Inventory items with CDN URLs
 - API keys and Dropbox OAuth tokens
 - Spot history, theme, all settings
 
-### What is NOT included
+Does NOT include: `userImages`, `patternImages`, or `coinMetadata` IDB blobs.
 
-- `userImages` IDB blobs
-- `patternImages` IDB blobs
-- `coinMetadata` IDB records
+### Sync-Scoped Vault (.stvault — sync scope)
 
-### Scope variants
+**Sync scope** (`vaultEncryptToBytesScoped`) includes only `SYNC_SCOPE_KEYS`:
 
-| Scope | Function | Keys included | Used by |
-|-------|----------|---------------|---------|
-| `'full'` | `vaultEncryptToBytes()` | All `ALLOWED_STORAGE_KEYS` | Manual export |
-| `'sync'` | `vaultEncryptToBytesScoped()` | `SYNC_SCOPE_KEYS` only (excludes API keys, tokens, spot history) | Cloud auto-sync |
+- `metalInventory`, `itemTags`, display preferences, `chipMinCount`, `chipMaxCount`
 
-### Restore function
+Intentionally excludes: API keys, OAuth tokens, spot price history.
 
-`vaultDecryptAndRestore(fileBytes, password)` in `js/vault.js`
+### Image Vault (.stvault — images only)
 
-- Decrypts and writes all scoped localStorage keys
-- Image blobs are NOT restored — requires a separate ZIP or image vault restore
-- Post-restore sequence: `loadInventory()` → `renderTable()` → `renderActiveFilters()` → `loadSpotHistory()`
-
----
-
-## Image Vault
-
-**Functions:** `collectAndHashImageVault()` → `vaultEncryptImageVault()` in `js/vault.js`
-**Crypto:** AES-256-GCM (same as regular vault)
-**Cloud path:** `/StakTrakr/sync/staktrakr-images.stvault` (Dropbox)
-
-### What is included
-
-All `userImages` IDB records serialized as base64 blobs.
+Built by `collectAndHashImageVault()` → encrypted by `vaultEncryptImageVault()`.
 
 **Payload shape:**
 
 ```json
 {
   "_meta": {
-    "appVersion": "3.32.41",
-    "exportTimestamp": "2026-02-25T...",
+    "appVersion": "3.33.25",
+    "exportTimestamp": "2026-03-02T...",
     "imageCount": 42
   },
   "records": [
@@ -289,75 +197,204 @@ All `userImages` IDB records serialized as base64 blobs.
 
 **Hash tracking:** `simpleHash(uuid + ':' + size + ':' + obverse.slice(0, 32))` — detects content changes even when file size is identical.
 
-### What is NOT included
+### Export Origin Metadata
 
-- `patternImages` IDB blobs
-- `coinMetadata` IDB records
+All export formats embed `exportOrigin` (`window.location.origin`) for cross-domain detection:
 
-### Restore function
+| Format | Where stored |
+|--------|-------------|
+| JSON (`exportJson`) | `exportMeta.exportOrigin` in the wrapper object |
+| ZIP (`createBackupZip`) | `exportOrigin` field in `settings.json` |
+| Vault (`collectVaultData`) | `_meta.exportOrigin` in the vault payload |
+| CSV (`exportCsv`) | Comment line at top: `# exportOrigin: https://...` |
 
-`vaultDecryptAndRestoreImages(fileBytes, password)` → `restoreImageVaultData()` in `js/vault.js`
+Old exports without `exportOrigin` import silently with no warning.
 
-- Decodes base64 strings back to `Blob` objects
-- Writes each record to `userImages` IDB via `imageCache.importUserImageRecord()`
+### Export Format UI Labels
+
+The backup/export panel shows a `<small class="format-desc">` beneath each option:
+
+| Format | Description label |
+|--------|------------------|
+| CSV | "Inventory items only — spreadsheet compatible" |
+| JSON | "Inventory items only — no settings or price history" |
+| HTML report | "Inventory items only — printable report" |
+| ZIP | "Full backup — inventory, settings, price history, and images" |
+| .stvault | "Encrypted full backup — inventory, settings, price history, and images" |
 
 ---
 
-## Cloud Sync (Dropbox)
+## Import/Restore Flow
 
-**Functions:** `pushSyncVault()` and `pullSyncVault()` in `js/cloud-sync.js`
-**Provider:** Dropbox via OAuth token
+### JSON Import (`importJson`)
 
-### Remote paths
+1. Parse file: detect new wrapped format (`{ items, exportMeta }`) vs legacy plain array
+2. Check `exportMeta.exportOrigin` — show cross-domain warning toast if origin differs
+3. Sanitize each item via `sanitizeImportedItem()`
+4. Run `buildImportValidationResult(items, skippedNonPM)` — filter invalid items
+5. If all invalid: abort with error toast
+6. If some invalid: show warning toast, proceed with valid items only
+7. Open `DiffModal` with `backupCount` and `localCount` for live count header
+8. On apply: merge items, call post-restore sequence, show `showImportSummaryBanner(result)`
 
-| File | Path | Contents |
-|------|------|----------|
-| Inventory vault | `/StakTrakr/sync/staktrakr-sync.stvault` | Sync-scoped vault (inventory + display prefs) |
-| Image vault | `/StakTrakr/sync/staktrakr-images.stvault` | `userImages` blobs only |
-| Metadata pointer | `/StakTrakr/sync/staktrakr-sync.json` | `imageHash`, `itemCount`, `syncId`, `deviceId` |
+### ZIP Restore (`restoreBackupZip`)
 
-> **Legacy paths:** Flat-root paths (`/StakTrakr/staktrakr-sync.*`) are retained as `*_LEGACY` constants in `js/constants.js` for migration only. Active sync uses `/StakTrakr/sync/`; backups go to `/StakTrakr/backups/`.
+1. Unzip all files
+2. Restore localStorage keys from `inventory_data.json`, `settings.json`, `spot_price_history.json`, etc.
+3. Restore `userImages` IDB from `user_images/` using `user_image_manifest.json`; falls back to filename parsing for old ZIPs pre-STAK-226
+4. Restore `patternImages` IDB from `pattern_images/`
+5. Restore `coinMetadata` IDB from `image_metadata.json`
+6. Explicitly skip `coinImages/` folder (logs: `"skipping legacy coinImages folder (store deprecated)"`)
+7. Post-restore sequence: `loadInventory()` → `renderTable()` → `renderActiveFilters()` → `loadSpotHistory()`
 
-### Push sequence
+### Vault Restore (`vaultDecryptAndRestore`)
 
-1. `vaultEncryptToBytesScoped(password)` — build sync-scope vault
-2. Upload inventory vault to Dropbox
-3. `collectAndHashImageVault()` — compute current image hash; compare vs last push
-4. If hash changed → `vaultEncryptImageVault()` → upload image vault (failure here is non-fatal)
-5. Upload metadata pointer JSON with `imageHash`, `itemCount`, `syncId`, `deviceId`
+1. Read 56-byte binary header to extract salt, IV, and version
+2. Derive key via PBKDF2 (600K iterations, SHA-256)
+3. Decrypt AES-256-GCM payload
+4. Parse JSON and write all scoped localStorage keys
+5. Check `_meta.exportOrigin` — show cross-domain warning if origin differs
+6. Post-restore sequence: `loadInventory()` → `renderTable()` → `renderActiveFilters()` → `loadSpotHistory()`
 
-### Pull sequence
+Image blobs are NOT restored via vault — requires a separate ZIP or image vault restore.
 
-1. `syncSaveOverrideBackup()` — snapshot local state before overwrite (rollback-only backup)
-2. Download + decrypt inventory vault → `vaultDecryptAndRestore()`
-3. Check remote `imageVault` hash vs local — if differs: download + decrypt image vault → `vaultDecryptAndRestoreImages()`
-4. Post-restore sequence: `loadInventory()` → `renderTable()` → `renderActiveFilters()` → `loadSpotHistory()`
+### Image Vault Restore (`vaultDecryptAndRestoreImages` → `restoreImageVaultData`)
 
-### Sync scope
+1. Decrypt image vault `.stvault` using same AES-256-GCM scheme
+2. Parse records array
+3. Decode each base64 blob back to a `Blob` object
+4. Write each record to `userImages` IDB via `imageCache.importUserImageRecord()`
 
-`SYNC_SCOPE_KEYS` (defined in `js/constants.js`) includes: `metalInventory`, `itemTags`, display preferences, `chipMinCount`, `chipMaxCount`.
+### Auto-Sync Pull (`pullSyncVault` in `cloud-sync.js`)
 
-Intentionally excludes: API keys, OAuth tokens, spot price history.
+1. `syncSaveOverrideBackup()` — snapshot all `SYNC_SCOPE_KEYS` to `cloud_sync_override_backup` in localStorage (rollback-only backup)
+2. Download inventory vault from `/StakTrakr/sync/staktrakr-sync.stvault`
+3. `vaultDecryptAndRestore(fileBytes, password)` — decrypt and write sync-scoped localStorage keys
+4. Check remote `staktrakr-sync.json` `imageVault.hash` vs last pull hash
+5. If image hash changed: download image vault → `vaultDecryptAndRestoreImages()`
+6. Post-restore sequence: `loadInventory()` → `renderTable()` → `renderActiveFilters()` → `loadSpotHistory()`
 
-### Conflict detection
+### Auto-Sync Push (`pushSyncVault` in `cloud-sync.js`)
 
-`syncSaveOverrideBackup()` stores a pre-pull snapshot as a rollback-only backup (enabling the "Restore Override Backup" button in the sync history section). Conflict detection is driven by `syncHasLocalChanges()`, which checks whether both local and remote have diverged (i.e., the last push timestamp is more recent than the last pull timestamp). When both sides have diverged, the conflict modal appears; it is not triggered by item-count differences between the snapshot and pulled data.
+1. Empty-vault guard: if local inventory is empty and remote has items, block push and prompt to pull instead
+2. Migration check: run `cloudMigrateToV2()` if not yet migrated (once per device)
+3. `vaultEncryptToBytesScoped(password)` — encrypt sync-scope vault
+4. Cloud-side backup-before-overwrite: copy existing cloud vault to `/StakTrakr/backups/pre-sync-TIMESTAMP.stvault` (non-blocking)
+5. Upload inventory vault to `/StakTrakr/sync/staktrakr-sync.stvault` (overwrite)
+6. `collectAndHashImageVault()` — compute image hash; if changed, encrypt and upload image vault (non-fatal on failure)
+7. Upload `staktrakr-sync.json` metadata pointer (`rev`, `itemCount`, `syncId`, `deviceId`, `imageVault`)
+8. `buildAndUploadManifest()` — encrypt and upload field-level change log for diff-merge (non-blocking)
+
+---
+
+## Key Functions
+
+### cloud-storage.js
+
+| Function | Signature | Purpose |
+|----------|-----------|---------|
+| `cloudUploadVault` | `async (provider, fileBytes)` | Upload a pre-built `.stvault` to cloud; writes versioned file + `latest.json` pointer |
+| `cloudDownloadVaultByName` | `async (provider, filename)` | Download a named `.stvault` from cloud; returns `Uint8Array` |
+| `cloudDownloadVault` | `async (provider)` | Download the latest vault (reads `latest.json` pointer first, falls back to newest in folder) |
+| `cloudListBackups` | `async (provider)` | List all `.stvault` files in cloud folder; returns array sorted newest-first |
+| `cloudDeleteBackup` | `async (provider, filename)` | Delete a named vault file; clears `cloud_last_backup` if matched |
+| `cloudCheckConflict` | `async (provider)` | Compare remote `latest.json` timestamp vs `cloud_last_backup`; returns conflict info object |
+| `cloudGetToken` | `async (provider)` | Get OAuth access token; auto-refreshes if expired; clears token on refresh failure |
+| `cloudIsConnected` | `(provider)` | Returns `true` if a stored token exists for the provider |
+| `cloudAuthStart` | `(provider)` | Opens OAuth popup; initiates PKCE flow for Dropbox |
+| `cloudExchangeCode` | `async (code, state)` | Exchanges OAuth auth code for access token; stores in localStorage |
+| `cloudDisconnect` | `(provider)` | Clears token and `cloud_last_backup` |
+| `recordCloudActivity` | `(entry)` | Appends to `cloud_activity_log` (max 500 entries, 180-day rolling window) |
+| `syncCloudUI` | `()` | Refreshes cloud card UI state (connected badge, backup status, button states) |
+
+### cloud-sync.js
+
+| Function | Signature | Purpose |
+|----------|-----------|---------|
+| `pushSyncVault` | `async ()` | Encrypt and push sync-scoped vault to Dropbox; includes empty-vault guard, image vault, and manifest |
+| `pullWithPreview` | `async ()` — (calls `pullSyncVault`) | Download and decrypt sync vault; saves override backup before applying |
+| `syncSaveOverrideBackup` | `()` | Snapshot all `SYNC_SCOPE_KEYS` raw strings to `cloud_sync_override_backup` |
+| `syncRestoreOverrideBackup` | `async ()` | Restore pre-pull snapshot with confirmation; clears scope keys then rewrites from snapshot |
+| `getSyncPassword` | `()` → `Promise<string|null>` | Interactively prompt for vault password; stores in localStorage; returns composite key |
+| `getSyncPasswordSilent` | `()` → `string|null` | Return composite key (`password:accountId`) without UI; returns `null` if either missing |
+| `changeVaultPassword` | `async (newPassword)` → `boolean` | Store new password; triggers debounced push to re-encrypt vault |
+| `syncIsEnabled` | `()` → `boolean` | Returns `true` when `cloud_sync_enabled === 'true'` in localStorage |
+| `syncGetLastPush` | `()` → `object|null` | Read `cloud_sync_last_push` from localStorage |
+| `syncSetLastPush` | `(meta)` | Write `cloud_sync_last_push` to localStorage |
+| `syncGetLastPull` | `()` → `object|null` | Read `cloud_sync_last_pull` from localStorage |
+| `getSyncDeviceId` | `()` → `string` | Get or create stable per-device UUID in localStorage |
+| `buildAndUploadManifest` | `async (token, password, syncId)` | Build encrypted field-level manifest from changeLog; upload to Dropbox (non-blocking) |
+| `initSyncTabCoordination` | `()` | Initialize `BroadcastChannel` leader election; falls back gracefully |
+| `updateSyncStatusIndicator` | `(state, detail)` | Update sync status dot (`idle`/`syncing`/`error`/`disabled`) |
+| `refreshSyncUI` | `()` | Refresh "Last synced" text, toggle state, and sync history section |
+| `computeInventoryHash` | `async (items)` → `string|null` | SHA-256 of sorted item keys; used for change detection |
+| `computeSettingsHash` | `async ()` → `string|null` | SHA-256 of sync-scoped settings values |
+
+### utils.js (import/restore pipeline)
+
+| Function | Signature | Purpose |
+|----------|-----------|---------|
+| `buildImportValidationResult` | `(items, skippedNonPM)` → `object` | Batch-validate sanitized items; returns `{ valid, invalid, skippedNonPM, skippedCount }` |
+| `showImportSummaryBanner` | `(result)` | Render dismissible summary banner above inventory table after import |
+| `saveData` | `(key, value)` | Write to localStorage via allowed-key guard |
+| `loadData` | `(key, defaultValue)` | Read from localStorage with JSON parse |
+
+---
+
+## Conflict Resolution During Restore
+
+### Manual cloud backup conflict
+
+`cloudCheckConflict(provider)` compares `latest.json` remote timestamp against `cloud_last_backup.timestamp` in localStorage. Returns `{ conflict: true, reason, remote, local }` when remote is newer. The UI renders a conflict modal; user chooses to download remote or keep local.
+
+### Auto-sync conflict
+
+Conflict detection is driven by `syncHasLocalChanges()`, which checks whether both local and remote have diverged (last push timestamp is more recent than last pull timestamp). When both sides have diverged, the conflict modal appears. It is not triggered by item-count differences alone.
+
+`syncSaveOverrideBackup()` stores a pre-pull snapshot enabling the "Restore Override Backup" button in the sync history section. If the user accepts a conflicting pull and wants to revert, `syncRestoreOverrideBackup()` writes the pre-pull snapshot back.
+
+**Override backup guard:** `syncRestoreOverrideBackup()` only clears scope keys if the snapshot is non-empty — an empty snapshot is treated as corruption and does not wipe localStorage.
+
+### Merge strategy during import
+
+All JSON/CSV/vault imports use a **merge strategy** (not replace-all):
+
+- Items in the import are merged into the existing inventory using `DiffEngine`
+- DiffModal shows added / modified / removed diffs; user selects which to apply
+- The apply callback calls `saveData` with the merged result
+- Post-apply summary banner shows final counts
+
+---
+
+## Manual Backup vs Automatic Cloud Sync
+
+| Aspect | Manual Backup (cloud-storage.js) | Auto-Sync (cloud-sync.js) |
+|--------|----------------------------------|---------------------------|
+| Trigger | User clicks "Backup" button | Debounced on every inventory change |
+| Vault scope | Full (`ALLOWED_STORAGE_KEYS`) | Sync-scope (`SYNC_SCOPE_KEYS`) only |
+| What's included | All localStorage keys including API keys and spot history | Inventory + display prefs only |
+| Filename | Versioned: `staktrakr-backup-YYYYMMDD-HHmmss.stvault` | Fixed: `staktrakr-sync.stvault` |
+| Pointer file | `staktrakr-latest.json` | `staktrakr-sync.json` (rev + hash + syncId) |
+| Image vault | Not part of manual backup | Pushed when `userImages` hash changes |
+| Conflict check | `cloudCheckConflict()` on manual download | `syncHasLocalChanges()` on pull |
+| Pre-restore snapshot | No | Yes: `syncSaveOverrideBackup()` before every pull |
+| Provider support | Dropbox, pCloud, Box | Dropbox only |
 
 ---
 
 ## Coverage Matrix
 
-| Data | ZIP Backup | Encrypted Vault | Image Vault | Cloud Sync |
-|------|:----------:|:---------------:|:-----------:|:----------:|
-| Inventory items | ✅ | ✅ | ❌ | ✅ (sync scope) |
-| CDN image URLs on items | ✅ (in items) | ✅ (in items) | ❌ | ✅ (in items) |
-| User-uploaded photo blobs | ✅ `user_images/` | ❌ | ✅ | ✅ conditional |
-| Pattern rule image blobs | ✅ `pattern_images/` | ❌ | ❌ | ❌ |
-| Numista metadata cache | ✅ `image_metadata.json` | ❌ | ❌ | ❌ |
-| API keys / OAuth tokens | ❌ | ✅ (full scope) | ❌ | ❌ |
-| Spot price history | ✅ | ✅ (full scope) | ❌ | ❌ |
-| Settings / theme / prefs | ✅ | ✅ | ❌ | ✅ (display prefs only) |
-| `coinImages` (legacy) | ❌ SKIPPED | ❌ | ❌ | ❌ |
+| Data | ZIP Backup | Encrypted Vault (full) | Image Vault | Cloud Auto-Sync |
+|------|:----------:|:----------------------:|:-----------:|:---------------:|
+| Inventory items | Yes | Yes | No | Yes (sync scope) |
+| CDN image URLs on items | Yes (in items) | Yes (in items) | No | Yes (in items) |
+| User-uploaded photo blobs | Yes `user_images/` | No | Yes | Yes (conditional) |
+| Pattern rule image blobs | Yes `pattern_images/` | No | No | No |
+| Numista metadata cache | Yes `image_metadata.json` | No | No | No |
+| API keys / OAuth tokens | No | Yes (full scope) | No | No |
+| Spot price history | Yes | Yes (full scope) | No | No |
+| Settings / theme / prefs | Yes | Yes | No | Yes (display prefs only) |
+| `coinImages` (legacy) | No (SKIPPED) | No | No | No |
 
 **Key takeaway:** Full recovery requires BOTH a ZIP backup (for IDB blobs) AND a vault (for localStorage including API keys). Cloud sync alone does not cover pattern images or Numista metadata.
 
@@ -381,7 +418,7 @@ Intentionally excludes: API keys, OAuth tokens, spot price history.
    - Restores: `userImages` IDB blobs
 3. Pattern images and Numista metadata are NOT recovered via this path
 
-### Scenario C: Cloud sync pull only
+### Scenario C: Cloud auto-sync pull only
 
 - Restores inventory + display prefs (sync scope)
 - CDN image URLs come back immediately
@@ -400,9 +437,10 @@ Intentionally excludes: API keys, OAuth tokens, spot price history.
 | "Image vault upload failed during cloud push" | Image vault upload is non-fatal — the inventory vault still succeeds. | Check Dropbox token validity. The next successful push will retry the image vault if the hash changed. |
 | "Conflict prompt appeared after cloud pull" | Both local and remote have diverged — last push is more recent than last pull, meaning both sides have independent changes. | Review the conflict UI and choose which version to keep. |
 | "DiffModal shows fewer items than I expected" | Pre-validation in `buildImportValidationResult()` filters out invalid items before DiffModal opens. The count header shows backup count (including skipped) vs. projected count. | Check the pre-validation warning toast for the number of skipped items and their reasons. The post-import summary banner also lists skip reasons. |
-| "I see a yellow cross-domain warning on import" | The file's `exportOrigin` (e.g., `https://beta.staktrakr.com`) differs from the current domain. This means you are importing a backup from a different environment — inventories are separate. | The warning is informational only. Proceed if you intentionally want to merge across environments. |
-| "The JSON file I exported doesn't look like a plain array anymore" | As of v3.33.24, `exportJson()` wraps items in an object with `items` and `exportMeta` fields. | Both the wrapped format and the legacy plain-array format are supported on import. Old files still import correctly. |
+| "I see a yellow cross-domain warning on import" | The file's `exportOrigin` (e.g., `https://beta.staktrakr.com`) differs from the current domain. | The warning is informational only. Proceed if you intentionally want to merge across environments. |
+| "The JSON file I exported doesn't look like a plain array anymore" | `exportJson()` now wraps items in an object with `items` and `exportMeta` fields. | Both the wrapped format and the legacy plain-array format are supported on import. Old files still import correctly. |
 | "Import shows a banner but also a toast" | If `safeGetElement()` cannot find the inventory table container, `showImportSummaryBanner()` falls back to `showToast()`. | Verify the inventory container element id is present in the DOM at import time. |
+| "Push was blocked with 'Empty vault — pull first'" | Empty-vault guard in `pushSyncVault()` detected remote has items but local is empty. | Pull from cloud first to restore local inventory, then push will proceed normally. |
 
 > **Never modify the `coinImages` IDB store.** It is a legacy store retained only to avoid a forced migration. It is never read or written. ZIP restore explicitly skips `coinImages/` and logs: `"skipping legacy coinImages folder (store deprecated)"`.
 
@@ -410,8 +448,5 @@ Intentionally excludes: API keys, OAuth tokens, spot price history.
 
 ## Related Pages
 
-- [cloud-sync.md](cloud-sync.md) — Dropbox OAuth setup and sync troubleshooting
-- [image-pipeline.md](image-pipeline.md) — Numista enrichment, CDN URL lifecycle, IDB stores
-- [idb-stores.md](idb-stores.md) — IndexedDB store reference (`userImages`, `patternImages`, `coinMetadata`, `coinImages`)
-- [vault-crypto.md](vault-crypto.md) — AES-256-GCM vault format, header layout, PBKDF2 parameters
-- [constants.md](constants.md) — `ALLOWED_STORAGE_KEYS`, `SYNC_SCOPE_KEYS`, `IMAGE_ZIP_MANIFEST_VERSION`
+- [sync-cloud.md](sync-cloud.md) — Dropbox OAuth setup and auto-sync troubleshooting
+- [storage-patterns.md](storage-patterns.md) — localStorage key patterns, `saveData`/`loadData`, `ALLOWED_STORAGE_KEYS`

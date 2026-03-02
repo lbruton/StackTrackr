@@ -2,7 +2,7 @@
 title: Cron Schedule
 category: infrastructure
 owner: staktrakr-api
-lastUpdated: v3.33.19
+lastUpdated: v3.33.25
 date: 2026-03-02
 sourceFiles: []
 relatedPages:
@@ -63,7 +63,7 @@ Written dynamically by `docker-entrypoint.sh` at container start. The `CRON_SCHE
 
 ---
 
-## Home LXC Cron
+## Home VM Cron
 
 Two separate cron files on the home LXC:
 
