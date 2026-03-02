@@ -1,235 +1,171 @@
 ---
-title: "Vendor Scraping Quirks"
+title: Vendor Quirks
 category: infrastructure
-owner: staktrakr-api
-lastUpdated: v3.33.19
-date: 2026-03-01
-sourceFiles: []
-relatedPages: []
+owner: staktrakr
+lastUpdated: v3.33.25
+date: 2026-03-02
+sourceFiles:
+  - js/retail.js
+  - js/api.js
+  - js/retail-view-modal.js
+relatedPages:
+  - retail-modal.md
+  - retail-pipeline.md
+  - providers.md
 ---
 
-# Vendor Scraping Quirks
+# Vendor Quirks
 
-Per-vendor scraping behavior, known issues, and workarounds. This is the runbook for diagnosing price extraction failures — check here first before modifying `price-extract.js`.
-
-> **Linear**: STAK-348 — planned sprint to move all vendor-specific config into the dashboard (editable per-vendor `hints` JSON).
-
----
-
-## APMEX
-
-| Property | Value |
-|----------|-------|
-| Site tech | Server-rendered HTML |
-| Firecrawl | Works reliably, no `waitFor` needed |
-| Playwright fallback | Rarely needed |
-| Price format | Markdown pipe table (Check/Wire \| Crypto \| Card columns) |
-| Extraction | `firstTableRowFirstPrice()` — 1-unit ACH price from first data row |
-| Known issues | None — most reliable vendor |
-
-**OOS detection**: Standard patterns work. No false positives observed.
+Frontend-specific behaviors, display adaptations, and data normalization rules for each retail price vendor. This page documents how `js/retail.js` and `js/retail-view-modal.js` handle the output produced by the StakTrakrApi retail poller — it is **not** a scraping runbook. For scraping-side quirks (Firecrawl waitFor, bot detection, OOS pattern matching), see the `StakTrakrApi` repo's `vendor-quirks.md`.
 
 ---
 
-## JM Bullion
+## Overview
 
-| Property | Value |
-|----------|-------|
-| Site tech | Next.js / React SPA |
-| Firecrawl | Requires `waitFor: 8000` (in `SLOW_PROVIDERS`) |
-| Playwright fallback | Raw `chromium.launch()` gets **403 Forbidden** (bot detection) |
-| Price format | Mix of pipe tables (silver) and prose tables (gold) |
-| Extraction | `firstTableRowFirstPrice()` → `jmPriceFromProseTable()` → `asLowAsPrices()` |
-| Sets | `SLOW_PROVIDERS`, `FRACTIONAL_EXEMPT_PROVIDERS` |
+Retail price data flows from `api.staktrakr.com/data/api` to the frontend via `manifest.json` and per-slug `latest.json` / `history-30d.json` files. The frontend reads this data and renders it as cards (grid view or list view). Each vendor has a fixed display name, brand color, and homepage URL hardcoded in `js/retail.js`. Per-slug product page URLs are loaded from `providers.json` and overlay the homepage fallbacks.
 
-**Critical quirks:**
-
-1. **Bot detection on headless Chromium**: JMBullion returns HTTP 403 to raw Playwright. The Firecrawl Playwright Service (port 3003) has stealth patches that bypass this. Always use Firecrawl Phase 1, never skip to raw Playwright.
-
-2. **Fractional nav links**: Mega-menu always includes "1/2 oz Gold Eagle", "1/4 oz Gold Eagle" links regardless of product page. Must be in `FRACTIONAL_EXEMPT_PROVIDERS` or fractional_weight detection fires on nav text.
-
-3. **Prose pricing table (gold pages)**: Gold product pages render pricing as plain text, not markdown pipe tables:
-   ```
-   (e)Check/Wire
-   1-9
-   $5,446.39
-   ```
-   Handled by `jmPriceFromProseTable()`. Silver pages use standard pipe tables.
-
-4. **`onlyMainContent: false`**: JMBullion's React shell returns empty markdown with `onlyMainContent: true`. Disabled specifically for this vendor (line 448).
-
-5. **Preorder tolerance**: In `PREORDER_TOLERANT_PROVIDERS` — JMBullion marks some items as "Pre-Order" with valid purchasable prices. The `pre-?order` OOS pattern is skipped for this vendor.
-
-**If JMBullion starts failing**: Check that Firecrawl Phase 1 is running (not skipped by `PLAYWRIGHT_ONLY_PROVIDERS`). Check that `waitFor` is >= 8000ms. Check Playwright Service health: `curl http://localhost:3003/health`.
+Vendor identity in the frontend is always a short string key: `apmex`, `monumentmetals`, `sdbullion`, `jmbullion`, `herobullion`, `bullionexchanges`, `summitmetals`, `goldback`.
 
 ---
 
-## Bullion Exchanges
+## Key Rules
 
-| Property | Value |
-|----------|-------|
-| Site tech | React / Magento SPA + Cloudflare |
-| Firecrawl | Requires `waitFor: 8000` (in `SLOW_PROVIDERS`) |
-| Playwright fallback | Raw `chromium.launch()` gets **Cloudflare challenge** (403) |
-| Price format | Prose (no pipe tables) — "As Low As $X.XX Over Spot" |
-| Extraction | `firstTableRowFirstPrice()` → `firstInRangePriceProse()` → `asLowAsPrices()` |
-| Sets | `SLOW_PROVIDERS`, `FRACTIONAL_EXEMPT_PROVIDERS` |
+1. **Prices are always displayed as USD.** Retail prices are USD source data. `_fmtRetailPrice()` always calls `toLocaleString('en-US', ...)` regardless of the user's currency setting. This is intentional — spot prices convert to user currency, retail prices do not.
 
-**Critical quirks:**
+2. **Vendor display info resolves in priority order: manifest `_vendor_meta` → hardcoded `RETAIL_VENDOR_NAMES`/`RETAIL_VENDOR_COLORS`/`RETAIL_VENDOR_URLS`.** `getVendorDisplay(vendorId)` uses this chain. If a vendor appears in the poller output but not in the hardcoded maps, the vendor key is used as the label and the color falls back to `#6c757d` (gray).
 
-1. **Cloudflare bot detection**: Like JMBullion, raw headless Chromium is blocked. Must go through Firecrawl (which uses the Playwright Service with stealth). Never skip Firecrawl Phase 1.
+3. **Product page URLs prefer `providers.json` over vendor homepages.** All vendor links (grid card rows, list view vendor chips, retail view modal legend items) use this resolution: `retailProviders[slug][vendorId]` → `RETAIL_VENDOR_URLS[vendorId]`. The `providers.json` file is fetched once per sync and cached in `localStorage` under `RETAIL_PROVIDERS_KEY`.
 
-2. **SPA rendering**: Without `waitFor`, Firecrawl returns only a banner image (~40 bytes of markdown). Needs 6-8 seconds for React to mount and render pricing grid.
+4. **OOS vendors are always rendered last in the sort.** The frontend sort order within a card/chip is: high-confidence in-stock (≥60% score) sorted by price ascending → low-confidence in-stock → OOS vendors. This is applied identically in both the grid view (`_buildRetailCard`) and list view (`_buildMarketListCard`).
 
-3. **Fractional related products**: Product pages include a "Related Products" carousel with fractional variants ("1/2 oz Platinum American Eagle"). Must be in `FRACTIONAL_EXEMPT_PROVIDERS`.
+5. **Confidence score drives medal awarding, not price alone.** Top-3 medals (gold/silver/bronze in grid view, "1st"/"2nd"/"3rd" in list view) are awarded only to vendors with confidence score ≥ 60. A vendor with the lowest price but confidence < 60 does not receive a medal.
 
-4. **Price format**: No pipe tables. Prices appear as prose: `$96.37` inline. Extracted by `firstInRangePriceProse()` — returns first dollar amount in the metal's expected range.
-
-5. **Legitimate OOS items**: Some items genuinely go out of stock (e.g., 1oz Platinum American Eagle as of 2026-02). Shows "Out Of Stock" + "NOTIFY ME" button. This is real, not a false positive.
-
-**If Bullion Exchanges starts failing**: Check Firecrawl Phase 1 is running. Check `waitFor >= 8000`. Verify Cloudflare isn't blocking the Playwright Service IP (check `curl http://localhost:3003/health`).
+6. **Goldback is a special vendor with a separate pipeline.** Its price comes from `getGoldbackVendorPrice(slug)`, not from the standard `priceData.vendors` map. It is injected at the top of the vendor list before the sorted main-vendor block and is never medal-ranked.
 
 ---
 
-## Monument Metals
+## Vendor Behavior Table
 
-| Property | Value |
-|----------|-------|
-| Site tech | Full SPA (React Native Web / Magento) |
-| Firecrawl | Requires `waitFor: 8000` (in `SLOW_PROVIDERS`) |
-| Playwright fallback | Works on Fly.io (via proxy chain), **blocked on home poller** without proxy |
-| Price format | "As Low As $X.XX" — no pricing table |
-| Extraction | `firstTableRowFirstPrice()` → `firstInRangePriceProse()` → `asLowAsPrices()` |
-| Sets | `SLOW_PROVIDERS` |
-
-**Critical quirks:**
-
-1. **False OOS from review text**: Customer reviews on product pages contain casual "notify me" text (e.g., "notify me when you ship"). The broad `/notify\s+me/i` OOS pattern matched this — **removed in 2026-02-26 fix**. The specific `/notify me when available/i` pattern (line 122) still catches real "Notify Me When Available" buttons.
-
-2. **SPA mount delay**: React Native Web router doesn't mount until ~6-8 seconds. Without `waitFor`, Firecrawl gets the shell (nav bar, spot tickers) but no product content.
-
-3. **Proxy dependency for Playwright**: On Fly.io, direct Playwright gets 403. Falls back through proxy chain (`HOME_PROXY_URL_2` → Webshare). On home poller, raw Playwright also gets 403 with no proxy chain to fall back on. Fix: use Firecrawl Phase 1 (which routes through Playwright Service with stealth).
-
-4. **"As Low As" is bulk pricing**: Monument shows "As Low As" for 500+ unit purchases. The real 1-unit price is in a pipe table (`1-24` row, `eCheck/Wire` column). Extraction uses table-first strategy (updated 2026-02-21).
+| Vendor | Display Name | Brand Color | Frontend-Specific Notes |
+|--------|-------------|-------------|------------------------|
+| `apmex` | APMEX | `#60a5fa` (bright blue) | Most reliable; no known frontend display anomalies |
+| `jmbullion` | JM | `#fbbf24` (bright amber) | History chart shows gaps when `inStock: false` on a day entry (`spanGaps: false`) |
+| `sdbullion` | SDB | `#34d399` (bright emerald) | No known frontend quirks |
+| `monumentmetals` | Monument | `#c4b5fd` (bright violet) | No known frontend quirks |
+| `herobullion` | Hero | `#f87171` (red) | Occasional legitimate OOS on `ape` (American Platinum Eagle) |
+| `bullionexchanges` | BullionX | `#f472b6` (bright pink) | Legitimate OOS has occurred on `ape`; OOS state persisted in `retailAvailability` |
+| `summitmetals` | Summit | `#22d3ee` (bright cyan) | No known frontend quirks |
+| `goldback` | Goldback | `#d4a017` (deep gold) | Separate pipeline; injected separately from vendor map; staleness shown as `(stale)` label |
 
 ---
 
-## Hero Bullion
+## OOS (Out-of-Stock) Detection — Frontend Side
 
-| Property | Value |
-|----------|-------|
-| Site tech | Next.js / React |
-| Firecrawl | Requires `waitFor: 8000` (in `SLOW_PROVIDERS`) |
-| Playwright fallback | Generally works |
-| Price format | Markdown pipe table |
-| Extraction | Standard table-first |
-| Sets | `SLOW_PROVIDERS` |
+OOS detection happens in the **poller** (StakTrakrApi). The frontend reads and persists the OOS state.
 
-**Known issues:**
+**Data flow:**
 
-1. **Occasional OOS**: Some items (e.g., `ape` — American Platinum Eagle) go legitimately OOS. Verify via Chrome DevTools before investigating code.
+1. `latest.json` for each slug contains `availability_by_site: { "apmex": true, "sdbullion": false, ... }`.
+2. `syncRetailPrices()` merges this into `retailAvailability[slug]` and persists it via `saveRetailAvailability()` in `localStorage`.
+3. Separately, `last_known_price_by_site` and `last_available_date_by_site` from `latest.json` are stored in `retailLastKnownPrices[slug]` and `retailLastAvailableDates[slug]`.
 
-2. **Slow render**: Like JMBullion, needs 5-6s for price table to populate.
+**Frontend OOS rendering:**
 
----
+- In **grid view** (`_buildOOSVendorRow`): the vendor name link is grayed out, the price is shown with a strikethrough `<del>` element, and a red `OOS` badge is appended. The row tooltip shows the last known price and last available date if present.
+- In **list view** (`_buildMarketListCard`): vendor chips with OOS status get the `.oos` CSS class. The price text reads "OOS" with no dollar amount.
+- In **retail view modal** (`_buildVendorLegend`): OOS vendors are rendered at 50% opacity. The price element uses `<del>` for the last known price plus a red `OOS` badge. The item title attribute carries the last available date.
+- In the **daily history chart** (`openRetailViewModal`): when a history entry has `vendors[vendorId].inStock === false`, `null` is returned for that day's data point. `spanGaps: false` is set, so Chart.js renders a gap in the line (not an interpolated bridge).
 
-## SD Bullion
-
-| Property | Value |
-|----------|-------|
-| Site tech | Server-rendered with some JS |
-| Firecrawl | Works reliably |
-| Playwright fallback | Rarely needed |
-| Price format | Markdown pipe table |
-| Extraction | Standard table-first |
-
-**Known issues:**
-
-1. **Markdown cutoff needed**: Page includes "Add on Items" and "Customers Also Purchased" sections with prices from other products. `MARKDOWN_CUTOFF_PATTERNS` truncates markdown before these sections to prevent cross-contamination.
+**Persistence caveat:** `retailAvailability` is merged with `Object.assign` on each sync. Once a vendor is marked OOS in `localStorage`, it stays OOS until the next sync where `availability_by_site` explicitly sets it back to `true`. If the poller omits a vendor from `availability_by_site` entirely, the prior stored state persists.
 
 ---
 
-## Summit Metals
+## Price Parsing Edge Cases
 
-| Property | Value |
-|----------|-------|
-| Site tech | Shopify |
-| Firecrawl | Requires `waitFor: 8000` (in `SLOW_PROVIDERS`) |
-| Price format | "Regular price $XX.XX" / "Sale price $XX.XX" |
-| Extraction | `regularPricePrices()` → `tablePrices()` |
-| Sets | `SLOW_PROVIDERS` |
+These are frontend display-layer concerns, not scraping issues.
 
-**Known issues:**
+### Goldback Price Staleness
 
-1. **Shopify price format**: Uses "Regular price" / "Sale price" labels instead of tables or "As Low As". Dedicated `regularPricePrices()` extractor handles this.
+The Goldback vendor price is sourced via `getGoldbackVendorPrice(slug)`, which reads from the `goldback-spot.json` feed (a separate pipeline). If that feed is older than ~25 hours, `isStale: true` is returned. The frontend appends `(stale)` to the price display text and reduces opacity to 0.6 on the card row.
 
----
+### Intraday Data: Forward-Fill for Chart Gaps
 
-## Goldback (goldback.com)
+When a vendor is not polled in a given 15-minute window (e.g., poller skipped or vendor was OOS for one window), the frontend applies **forward-fill** via `_forwardFillVendors()` in `retail-view-modal.js`. This carries the most recent seen price forward into gap windows. Forward-filled values are marked `_carriedVendors` on the window object. In the intraday table, carried values display as `~$XX.XX` in italic gray. In the intraday chart tooltip, carried values display with a `~` prefix.
 
-| Property | Value |
-|----------|-------|
-| Site tech | Custom (exchange rate page) |
-| Firecrawl | Works but price is on a shared exchange-rate page |
-| Price format | Exchange rate table — not standard product page |
-| Extraction | Separate pipeline (`goldback-pipeline`) |
+### Anomaly Detection — Intraday Spikes
 
-**Known issues:**
+The frontend applies a two-pass spike filter to intraday (15-min) data before chart/table rendering:
 
-1. **Single URL for all denominations**: All goldback coins (G1, G2, G5, G10, G25, G50) use the same URL (`/exchange-rates/`). Price extraction must parse the correct denomination row.
+**Pass 1 — Temporal spike detection:** For each vendor at window `t`, if the neighbors (`t-1`, `t+1`) are within ±5% of each other (stable neighborhood) but the current price deviates by more than 5% from their average, the point is treated as a scrape spike. The anomalous value is nulled for the chart (Chart.js gaps over it via `spanGaps: true`) but preserved in `_anomalyOriginals` for the table, where it displays with strikethrough and 45% opacity.
 
-2. **Separate pipeline**: Goldback prices are handled by the dedicated goldback pipeline, not the retail poller. Failures here are separate from the main failure queue.
+**Pass 2 — Cross-vendor median consensus:** For each window with 3+ vendors, any vendor deviating more than 40% from the median across that window is nulled. Catches multi-window vendor drift and extreme outliers.
 
----
+The same two-pass logic is applied to **daily history** via `_filterHistorySpikes()`, followed by `_interpolateGaps()` which linearly interpolates null gaps for smooth chart lines. Interpolated segments render as dashed lines in a dimmed color.
 
-## Debugging Playbook
+Threshold constants:
 
-### Vendor shows `price_not_found`
+- `RETAIL_SPIKE_NEIGHBOR_TOLERANCE` — default `0.05` (5%)
+- `RETAIL_ANOMALY_THRESHOLD` — default `0.40` (40%)
 
-1. **Check the URL**: Open it in Chrome DevTools — is the product actually there? Does it show a price?
-2. **Check Firecrawl output**: `curl -s http://localhost:3002/v1/scrape -H 'Content-Type: application/json' -d '{"url":"<URL>","formats":["markdown"],"waitFor":8000}'` — is the markdown complete or truncated?
-3. **Check price range**: Is the price within `METAL_PRICE_RANGE_PER_OZ[metal] * weight_oz`?
-   - Silver: $40–$200/oz
-   - Gold: $1,500–$15,000/oz
-   - Platinum: $500–$6,000/oz
-4. **Check extraction strategy**: Which `extractPrice()` path does this vendor take? Table-first, prose, or "As Low As"?
+### History Chart: OOS Creates Gaps, Not Carries
 
-### Vendor shows OOS but page is in stock
+In the daily history chart (`openRetailViewModal`), when a vendor entry has `inStock: false`, the chart dataset returns `null` for that day. `spanGaps: false` is used so Chart.js renders an actual gap in the line, not an interpolated bridge. This is the correct behavior — carried values would misrepresent availability.
 
-1. **Check `OUT_OF_STOCK_PATTERNS`**: Which pattern matched? Run the page markdown through each regex.
-2. **Check review/footer text**: Customer reviews and footer text can contain OOS keywords casually.
-3. **Check `PREORDER_TOLERANT_PROVIDERS`**: Is "Pre-Order" being treated as OOS for a vendor that sells preorders?
+The intraday chart uses `spanGaps: true` because short polling gaps are expected and bridging is preferred visually.
 
-### Playwright Phase 2 gets 403
+### Price Field Shape Differences by Context
 
-1. **Check if Firecrawl Phase 1 ran**: Is the vendor in `PLAYWRIGHT_ONLY_PROVIDERS`? It shouldn't be — all vendors should go through Firecrawl first.
-2. **Check Playwright Service**: `curl http://localhost:3003/health` — the Playwright Service has stealth; raw `chromium.launch()` does not.
-3. **Check proxy chain**: `WEBSHARE_PROXY_USER` set? `HOME_PROXY_URL_2` set? Both empty = no fallback.
+| Context | Field | Source |
+|---------|-------|--------|
+| Live price (card row) | `vendorData.price` | `latest.json` → `priceData.vendors[id].price` |
+| History chart (daily) | `vendorData.avg` | `history-30d.json` → `entry.vendors[id].avg` |
+| Market list stats | `.avg` (with `inStock` check) | Computed from in-stock vendors only via `_calcVendorAvg()` |
 
-### Total count drops unexpectedly
-
-1. **Check provider database**: `SELECT count(*) FROM provider_vendors WHERE enabled=1` — did someone disable items?
-2. **Check dashboard Failure Queue**: Items with 3+ failures get flagged.
-3. **Check for container restarts**: `fly logs --app staktrakr | grep -i restart` — Fly.io may have restarted.
+Do not mix `.price` and `.avg` — they represent different aggregation windows.
 
 ---
 
-## Configuration Reference
+## Vendor URL Resolution
 
-| Set | Purpose | Current members |
-|-----|---------|-----------------|
-| `SLOW_PROVIDERS` | `waitFor: 8000` for Firecrawl | jmbullion, herobullion, monumentmetals, summitmetals, bullionexchanges |
-| `PLAYWRIGHT_ONLY_PROVIDERS` | Skip Firecrawl Phase 1 | **Empty** (as of 2026-02-26) |
-| `PREORDER_TOLERANT_PROVIDERS` | Skip `pre-?order` OOS pattern | jmbullion |
-| `FRACTIONAL_EXEMPT_PROVIDERS` | Skip fractional weight check | jmbullion, bullionexchanges |
-| `MARKDOWN_CUTOFF_PATTERNS` | Truncate markdown before noise | sdbullion, jmbullion |
-| `MARKDOWN_HEADER_SKIP_PATTERNS` | Skip misleading headers | jmbullion |
+Two-tier URL resolution is used everywhere a vendor is linked (grid card, list card chip, retail view modal legend):
 
-## Incident Log
+```
+retailProviders[slug][vendorId]   // specific product page from providers.json
+  || RETAIL_VENDOR_URLS[vendorId] // vendor homepage fallback
+```
 
-| Date | Issue | Root cause | Fix |
-|------|-------|-----------|-----|
-| 2026-02-26 | Monument Metals all OOS on home | `/notify\s+me/i` matched review text | Removed broad pattern; specific `/notify me when available/i` suffices |
-| 2026-02-26 | JMBullion/BE `price_not_found` on home | `PLAYWRIGHT_ONLY_PROVIDERS` skipped Firecrawl → raw Playwright 403'd | Emptied set; all vendors use Firecrawl Phase 1 now |
-| 2026-02-26 | Home poller 11/47 failures | Combination of above two issues | Both fixes deployed |
-| 2026-02-26 | API poller orphaned at 22:10 | Process crash (600ms+ latency spike) | Self-recovered on next cron |
+`providers.json` is fetched at the start of each sync. If the fetch fails or returns an error status, the frontend logs a warning and falls back silently to homepage URLs for all links. No user-visible error is shown for a providers fetch failure.
+
+Vendor links always open in a named popup window (`retail_vendor_${vendorId}`) sized 1250×800. If the popup is blocked, `window.open(url, "_blank")` is used as fallback.
+
+---
+
+## Goldback Slug Parsing
+
+Goldback slugs beyond the hardcoded `goldback-oklahoma-g1` entry are dynamically resolved by `_parseGoldbackSlug(slug)` in `js/retail.js`. The function parses the pattern `goldback-{state}-{denomination}` and looks up the weight from `GOLDBACK_WEIGHTS`.
+
+Supported denominations: `g0.5` / `ghalf`, `g1`, `g2`, `g5`, `g10`, `g25`, `g50`.
+
+If a goldback slug appears in the manifest that does not match this pattern, `getRetailCoinMeta()` returns a default object with `weight: 0` and `metal: "unknown"`, which causes the card to render without a metal badge and `0 troy oz` as the weight label.
+
+---
+
+## Common Mistakes
+
+**Checking the wrong OOS state.** `retailAvailability[slug][vendorId] === false` means OOS. The default for a vendor not present in the map is treated as in-stock (`isAvailable = availability[key] !== false`). Do not use `=== true` to check in-stock status — a missing key is also in-stock.
+
+**Assuming vendor price is always a number.** `vendorData.price` can be `null` (vendor polled but no price found) or `undefined` (vendor not present in this slug's vendor map). Always null-check before rendering.
+
+**Editing `RETAIL_VENDOR_NAMES` without checking `RETAIL_VENDOR_COLORS` and `RETAIL_VENDOR_URLS`.** All three maps are keyed by the same vendor ID strings and must stay in sync. Adding a new vendor key to one but not the others results in undefined color (gray fallback) or missing homepage link.
+
+**Expecting `retailers.js` functions in `retail-view-modal.js`.** The modal file references `RETAIL_VENDOR_NAMES`, `RETAIL_VENDOR_COLORS`, `RETAIL_VENDOR_URLS`, `retailPrices`, `retailAvailability`, `retailLastKnownPrices`, `retailLastAvailableDates`, `retailIntradayData`, `retailPriceHistory`, and `retailProviders` as globals from `retail.js`. Script load order in `index.html` must place `retail.js` before `retail-view-modal.js`.
+
+**Forgetting intraday cap.** `saveRetailIntradayData()` caps `windows_24h` to the last 96 entries per slug (24h of 15-min data) before saving to `localStorage`. Any code that reads `retailIntradayData[slug].windows_24h` and expects more than 96 entries will be disappointed.
+
+---
+
+## Related Pages
+
+- [retail-modal.md](retail-modal.md) — Retail view modal UI behavior and tab structure
+- [retail-pipeline.md](retail-pipeline.md) — End-to-end data pipeline from poller to frontend
+- [providers.md](providers.md) — `providers.json` schema and per-slug product URL mapping

@@ -2,21 +2,21 @@
 title: "Poller Parity — Fly.io vs Home Poller"
 category: infrastructure
 owner: staktrakr-api
-lastUpdated: v3.33.19
-date: 2026-02-26
+lastUpdated: v3.33.25
+date: 2026-03-02
 sourceFiles: []
 relatedPages: []
 ---
 
 # Poller Parity — Fly.io vs Home Poller
 
-> **Last verified:** 2026-02-26 — all 5 core JS files have identical MD5 hashes across both pollers. Both read from the same Turso database.
+> **Last verified:** 2026-03-02 — all 5 core JS files have identical MD5 hashes across both pollers. Both read from the same Turso database. Proxy config updated: Webshare removed, tinyproxy + Tailscale exit node active on Fly.io.
 
 ---
 
 ## Goal
 
-Both pollers should produce identical scrape results for the same coin/vendor target, offset only by their cron schedule (Fly.io at `:15/:45`, home at `:30`). Any configuration drift between them is a bug.
+Both pollers should produce identical scrape results for the same coin/vendor target, offset only by their cron schedule (Fly.io at `:00`, home at `:30`). Any configuration drift between them is a bug.
 
 ---
 
@@ -37,8 +37,8 @@ Both pollers should produce identical scrape results for the same coin/vendor ta
 | **FIRECRAWL_BASE_URL** | `http://localhost:3002` | `http://localhost:3002` |
 | **Redis** | In-container | systemd |
 | **RabbitMQ** | In-container | systemd |
-| **Proxy (HOME_PROXY_URL_2)** | `""` (empty — not used) | Not set |
-| **Cron schedule** | `:15/:45` every hour | `:30` every hour |
+| **Proxy (HOME_PROXY_URL)** | `http://100.112.198.50:8888` (tinyproxy on home VM) — set as `PROXY_SERVER` on Playwright, Firecrawl API, Firecrawl Worker | Not set (home poller doesn't proxy to itself) |
+| **Cron schedule** | `:00` every hour (`CRON_SCHEDULE=0`) | `:30` every hour |
 | **Vision pipeline** | Yes (GEMINI_API_KEY set) | Yes (if GEMINI_API_KEY set in .env) |
 | **Run script** | `run-local.sh` | `run-home.sh` |
 | **Git push** | Yes (`run-publish.sh` at `:08/:23/:38/:53`) | No (Turso only) |
@@ -53,7 +53,7 @@ Both pollers should produce identical scrape results for the same coin/vendor ta
 | Node 20 (Fly) vs Node 22 (Home) | Minimal — ESM and all APIs are compatible | Pin home to Node 20 or accept minor runtime differences |
 | `playwright-core` (Fly) vs `playwright` (Home) | Fly uses Playwright Service on port 3003; home launches Chromium directly | Both produce equivalent Chromium sessions — same browser version is key |
 | Chromium version drift | Fly rebuilds from `ghcr.io/firecrawl/playwright-service:latest`; home updates via `npx playwright install` | After `fly deploy`, run `npx playwright install chromium` on home poller |
-| HOME_PROXY_URL_2 empty on Fly | Fly Playwright never tries tinyproxy hop; home poller also lacks it (not in .env) | Currently equivalent — neither uses it |
+| HOME_PROXY_URL active on Fly | Fly routes Firecrawl + Playwright through tinyproxy (`http://100.112.198.50:8888`); home poller scrapes directly (no proxy to itself) | Expected difference — both exit via residential IP |
 
 ---
 
@@ -143,12 +143,11 @@ The **home poller copy** has diverged from the repo. Key differences:
 | Command | `node /opt/playwright-service/dist/api.js` | `node /opt/playwright-service/dist/api.js` |
 | Port | 3003 | 3003 |
 | `PLAYWRIGHT_BROWSERS_PATH` | `/usr/local/share/playwright` | `/usr/local/share/playwright` |
-| `PROXY_SERVER` | `%(ENV_HOME_PROXY_URL_2)s` (home tinyproxy via Tailscale) | **Not set** |
-| `HOME_PROXY_URL_2` | From env (empty string) | **Not set** |
+| `PROXY_SERVER` | `%(ENV_HOME_PROXY_URL)s` → `http://100.112.198.50:8888` | **Not set** |
 | Chromium version | `chromium-1208` (from Docker stage) | `chromium-1208` (from `npx playwright install`) |
 | Log output | `/dev/stdout` (Docker) | `/var/log/supervisor/playwright-service.log` |
 
-> **Key difference:** Fly.io Playwright Service uses `HOME_PROXY_URL_2` (home tinyproxy via Tailscale) as its proxy. Home poller Playwright Service has no proxy configured. However, `price-extract.js` Playwright fallback (Phase 2) handles its own proxy chain independently of the Playwright Service.
+> **Key difference:** Fly.io Playwright Service uses `HOME_PROXY_URL` (home tinyproxy via Tailscale) as its proxy via `PROXY_SERVER` env var. Home poller Playwright Service has no proxy configured (it's already on the residential IP). `price-extract.js` Playwright fallback (Phase 2) handles its own proxy chain independently of the Playwright Service.
 
 ### Firecrawl API (supervisord)
 
@@ -160,15 +159,17 @@ The **home poller copy** has diverged from the repo. Key differences:
 | `PLAYWRIGHT_MICROSERVICE_URL` | `http://localhost:3003/scrape` | `http://localhost:3003/scrape` |
 | `NUQ_RABBITMQ_URL` | `amqp://localhost:5672` | **Not set** |
 | `POSTGRES_*` | Full PostgreSQL config | **Not set** |
+| `PROXY_SERVER` | `%(ENV_HOME_PROXY_URL)s` → `http://100.112.198.50:8888` | **Not set** |
 | `USE_DB_AUTHENTICATION` | `false` | `false` |
 | Firecrawl source | Docker stage `ghcr.io/firecrawl/firecrawl:latest` | Extracted from Docker image to `/opt/firecrawl/` |
 
-> **Key difference:** Fly.io has NUQ (RabbitMQ + PostgreSQL) for Firecrawl's internal job queue. Home poller lacks these env vars — Firecrawl worker falls back to in-memory or Redis-only mode. This should not affect scrape results but may impact error recovery on the home poller.
+> **Key differences:** (1) Fly.io Firecrawl routes through tinyproxy via `PROXY_SERVER`; home poller Firecrawl scrapes directly. (2) Fly.io has NUQ (RabbitMQ + PostgreSQL) for Firecrawl's internal job queue. Home poller lacks these env vars — Firecrawl worker falls back to in-memory or Redis-only mode. This should not affect scrape results but may impact error recovery on the home poller.
 
 ### Firecrawl Worker
 
 | Config | Fly.io | Home Poller |
 |--------|--------|-------------|
+| `PROXY_SERVER` | `%(ENV_HOME_PROXY_URL)s` → `http://100.112.198.50:8888` | **Not set** |
 | `NUQ_RABBITMQ_URL` | `amqp://localhost:5672` | **Not set** |
 | `NUQ_DATABASE_URL` | `postgresql://postgres:firecrawl@localhost:5432/postgres` | `postgresql://postgres:firecrawl@localhost:5432/postgres` |
 | `POSTGRES_*` | Full config | **Not set** |
@@ -381,7 +382,7 @@ For each enabled coin/vendor target:
      - Launch Chromium (PLAYWRIGHT_LAUNCH=1)
      - Block images/fonts/styles/media
      - Wait networkidle + 8s extra for SLOW_PROVIDERS
-     - Proxy chain: direct → HOME_PROXY_URL_2 → PROXY_HTTP (on 403/geo-block)
+     - Proxy chain: direct → HOME_PROXY_URL (tinyproxy) (on 403/geo-block)
      - Same preprocessMarkdown + detectStockStatus + extractPrice
 
   5. Record to Turso: price_snapshots + provider_failures (if failed)

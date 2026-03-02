@@ -2,7 +2,7 @@
 title: Home Poller (Ubuntu VM)
 category: infrastructure
 owner: staktrakr-api
-lastUpdated: v3.33.19
+lastUpdated: v3.33.25
 date: 2026-03-02
 sourceFiles: []
 relatedPages: []
@@ -16,7 +16,7 @@ relatedPages: []
 
 ## Overview
 
-A secondary poller host running on an Ubuntu Server LXC container. Hosts two cron-driven pollers: a **retail scraper** (`run-home.sh` at `:30`) and a **spot price poller** (`run-spot-home.sh` at `:15/:45`). The retail scraper offsets 30 min from Fly.io retail at `:00`. The spot poller interleaves with Fly.io spot at `:00/:30`, giving fresh spot prices every 15 minutes across both hosts.
+A secondary poller host running on an Ubuntu Server LXC container. Hosts two cron-driven pollers: a **retail scraper** (`run-home.sh` at `:30`) and a **spot price poller** (`run-spot-home.sh` at `:15/:45`). The retail scraper offsets 30 min from Fly.io retail at `:00` (`CRON_SCHEDULE=0`). The spot poller interleaves with Fly.io spot at `:00/:30`, giving fresh spot prices every 15 minutes across both hosts.
 
 Both pollers write to the **same Turso database**. `run-publish.sh` on Fly.io merges their data using `readLatestPerVendor()`. The home poller never touches Git.
 
@@ -130,15 +130,15 @@ As of 2026-02-24, this VM runs **tinyproxy** as an HTTP proxy for the Fly.io con
 
 | Property | Value |
 |----------|-------|
-| Proxy URL | `http://100.112.198.50:8889` (referenced as `HOME_PROXY_URL_2` on Fly) |
+| Proxy URL | `http://100.112.198.50:8888` (referenced as `HOME_PROXY_URL` / `PROXY_SERVER` on Fly) |
 | Accepts connections from | Tailscale IPs only (100.112.198.50, 100.90.171.110) |
 | Residential egress IP | `98.184.142.225` |
 | Config | `/etc/tinyproxy/tinyproxy.conf` |
 | `DisableViaHeader` | Yes (no proxy fingerprint) |
 
-The Fly.io container sets `HOME_PROXY_URL_2=http://100.112.198.50:8889` and the Playwright service routes scraper traffic through it. The home VM exits as a residential IP — retail bullion dealers don't block residential IPs.
+The Fly.io container sets `HOME_PROXY_URL=http://100.112.198.50:8888` and all three scraping services (Playwright Service, Firecrawl API, Firecrawl Worker) route traffic through it via `PROXY_SERVER` env var. The home VM exits as a residential IP — retail bullion dealers don't block residential IPs.
 
-**Previous approach (deprecated):** Tailscale exit node — `sudo tailscale set --advertise-exit-node=true`. This was replaced by tinyproxy in Feb 2026 for better reliability and selective routing.
+**Dual routing:** The Fly.io container also uses the home VM as a **Tailscale exit node** (`run-local.sh` dynamically sets `--exit-node=100.112.198.50` before each scrape). tinyproxy provides selective proxy routing for Firecrawl/Playwright; the exit node routes all container traffic through the residential IP.
 
 ### Tailscale mesh
 
