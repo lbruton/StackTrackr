@@ -14,7 +14,7 @@ relatedPages:
   - providers.md
 ---
 
-# Vendor Quirks
+## Vendor Quirks
 
 Frontend-specific behaviors, display adaptations, and data normalization rules for each retail price vendor. This page documents how `js/retail.js` and `js/retail-view-modal.js` handle the output produced by the StakTrakrApi retail poller — it is **not** a scraping runbook. For scraping-side quirks (Firecrawl waitFor, bot detection, OOS pattern matching), see the `StakTrakrApi` repo's `vendor-quirks.md`.
 
@@ -103,6 +103,7 @@ The frontend applies a two-pass spike filter to intraday (15-min) data before ch
 The same two-pass logic is applied to **daily history** via `_filterHistorySpikes()`, followed by `_interpolateGaps()` which linearly interpolates null gaps for smooth chart lines. Interpolated segments render as dashed lines in a dimmed color.
 
 Threshold constants:
+
 - `RETAIL_SPIKE_NEIGHBOR_TOLERANCE` — default `0.05` (5%)
 - `RETAIL_ANOMALY_THRESHOLD` — default `0.40` (40%)
 

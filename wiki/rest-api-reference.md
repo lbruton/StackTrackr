@@ -14,7 +14,7 @@ relatedPages:
   - turso-schema.md
 ---
 
-# REST API Reference
+## REST API Reference
 
 > **Last verified:** 2026-03-02 — cross-checked against js/api.js, js/retail.js, js/retail-view-modal.js, js/api-health.js
 > **Base URL:** `https://api.staktrakr.com`
@@ -104,7 +104,8 @@ All endpoints are static JSON files served via GitHub Pages from the `api` branc
 | Endpoint Pattern | Description | Updated |
 |------------------|-------------|---------|
 | `data/api/{slug}/latest.json` | Per-vendor prices, confidence, availability, 24h time series (96 windows) | Every 15 min |
-| `data/api/{slug}/history-7d.json` | Daily aggregates, last 7 days | Every 15 min | <!-- STALE: frontend never fetches history-7d.json — retail.js and retail-view-modal.js only fetch latest.json and history-30d.json; endpoint exists in manifest template but is not consumed by the app -->
+| `data/api/{slug}/history-7d.json` | Daily aggregates, last 7 days | Every 15 min |
+<!-- STALE: frontend never fetches history-7d.json — retail.js and retail-view-modal.js only fetch latest.json and history-30d.json; endpoint exists in manifest template but is not consumed by the app -->
 | `data/api/{slug}/history-30d.json` | Daily aggregates, last 30 days | Every 15 min |
 
 ### Committed Coin Slugs (11)

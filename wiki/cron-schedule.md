@@ -11,7 +11,7 @@ relatedPages:
   - health.md
 ---
 
-# Cron Schedule
+## Cron Schedule
 
 > **Last verified:** 2026-03-02 — read from live `/etc/cron.d/retail-poller` on Fly.io container and `/etc/cron.d/spot-poller` on home LXC
 

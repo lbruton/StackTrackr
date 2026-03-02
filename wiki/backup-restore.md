@@ -12,7 +12,7 @@ relatedPages:
   - sync-cloud.md
   - storage-patterns.md
 ---
-# Backup & Restore
+## Backup & Restore
 
 > **Last updated:** v3.33.25 — 2026-03-02
 > **Source files:** `js/cloud-storage.js`, `js/cloud-sync.js`, `js/utils.js`
@@ -315,20 +315,20 @@ Image blobs are NOT restored via vault — requires a separate ZIP or image vaul
 | `pullWithPreview` | `async ()` — (calls `pullSyncVault`) | Download and decrypt sync vault; saves override backup before applying |
 | `syncSaveOverrideBackup` | `()` | Snapshot all `SYNC_SCOPE_KEYS` raw strings to `cloud_sync_override_backup` |
 | `syncRestoreOverrideBackup` | `async ()` | Restore pre-pull snapshot with confirmation; clears scope keys then rewrites from snapshot |
-| `getSyncPassword` | `()` → `Promise<string|null>` | Interactively prompt for vault password; stores in localStorage; returns composite key |
-| `getSyncPasswordSilent` | `()` → `string|null` | Return composite key (`password:accountId`) without UI; returns `null` if either missing |
+| `getSyncPassword` | `()` → `Promise<string\|null>` | Interactively prompt for vault password; stores in localStorage; returns composite key |
+| `getSyncPasswordSilent` | `()` → `string\|null` | Return composite key (`password:accountId`) without UI; returns `null` if either missing |
 | `changeVaultPassword` | `async (newPassword)` → `boolean` | Store new password; triggers debounced push to re-encrypt vault |
 | `syncIsEnabled` | `()` → `boolean` | Returns `true` when `cloud_sync_enabled === 'true'` in localStorage |
-| `syncGetLastPush` | `()` → `object|null` | Read `cloud_sync_last_push` from localStorage |
+| `syncGetLastPush` | `()` → `object\|null` | Read `cloud_sync_last_push` from localStorage |
 | `syncSetLastPush` | `(meta)` | Write `cloud_sync_last_push` to localStorage |
-| `syncGetLastPull` | `()` → `object|null` | Read `cloud_sync_last_pull` from localStorage |
+| `syncGetLastPull` | `()` → `object\|null` | Read `cloud_sync_last_pull` from localStorage |
 | `getSyncDeviceId` | `()` → `string` | Get or create stable per-device UUID in localStorage |
 | `buildAndUploadManifest` | `async (token, password, syncId)` | Build encrypted field-level manifest from changeLog; upload to Dropbox (non-blocking) |
 | `initSyncTabCoordination` | `()` | Initialize `BroadcastChannel` leader election; falls back gracefully |
 | `updateSyncStatusIndicator` | `(state, detail)` | Update sync status dot (`idle`/`syncing`/`error`/`disabled`) |
 | `refreshSyncUI` | `()` | Refresh "Last synced" text, toggle state, and sync history section |
-| `computeInventoryHash` | `async (items)` → `string|null` | SHA-256 of sorted item keys; used for change detection |
-| `computeSettingsHash` | `async ()` → `string|null` | SHA-256 of sync-scoped settings values |
+| `computeInventoryHash` | `async (items)` → `string\|null` | SHA-256 of sorted item keys; used for change detection |
+| `computeSettingsHash` | `async ()` → `string\|null` | SHA-256 of sync-scoped settings values |
 
 ### utils.js (import/restore pipeline)
 

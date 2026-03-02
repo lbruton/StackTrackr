@@ -12,7 +12,7 @@ relatedPages:
   - storage-patterns.md
   - frontend-overview.md
 ---
-# Data Model
+## Data Model
 
 > **Last updated:** v3.33.25 — 2026-03-02
 > **Source files:** `js/constants.js`, `js/utils.js`, `js/types.js`

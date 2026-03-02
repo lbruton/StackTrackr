@@ -12,7 +12,7 @@ relatedPages:
   - frontend-overview.md
   - storage-patterns.md
 ---
-# DOM Patterns
+## DOM Patterns
 
 > **Last updated:** v3.33.25 — 2026-03-02
 > **Source files:** `js/utils.js`, `js/init.js`, `js/about.js`

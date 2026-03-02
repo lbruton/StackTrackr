@@ -8,7 +8,7 @@ sourceFiles: []
 relatedPages: []
 ---
 
-# Health & Diagnostics
+## Health & Diagnostics
 
 > **Last verified:** 2026-02-25
 

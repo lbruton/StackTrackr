@@ -11,7 +11,7 @@ relatedPages:
   - api-consumption.md
   - vendor-quirks.md
 ---
-# Retail Modal
+## Retail Modal
 
 > **Last updated:** v3.33.25 — 2026-03-02
 > **Source files:** `js/retail-view-modal.js`, `js/retail.js`
@@ -46,6 +46,7 @@ On open, the modal displays cached data from localStorage immediately, then fire
 ### Separation of Concerns: `retail.js` vs `retail-view-modal.js`
 
 **`retail.js`** owns:
+
 - All static coin and vendor configuration: `RETAIL_SLUGS`, `RETAIL_COIN_META`, `RETAIL_VENDOR_NAMES`, `RETAIL_VENDOR_COLORS`, `RETAIL_VENDOR_URLS`, `GOLDBACK_WEIGHTS`.
 - All module-level state: `retailPrices`, `retailPriceHistory`, `retailIntradayData`, `retailProviders`, `retailAvailability`, `retailLastKnownPrices`, `retailLastAvailableDates`.
 - All persistence helpers: `loadRetailPrices`, `saveRetailPrices`, `loadRetailPriceHistory`, `saveRetailPriceHistory`, `loadRetailIntradayData`, `saveRetailIntradayData`, `loadRetailProviders`, `saveRetailProviders`, `loadRetailAvailability`, `saveRetailAvailability`.
@@ -55,6 +56,7 @@ On open, the modal displays cached data from localStorage immediately, then fire
 - Rendering of all card/list views (grid view, market list view, sparklines).
 
 **`retail-view-modal.js`** owns:
+
 - The per-coin detail modal only: opening, closing, tab-switching, chart rendering, table rendering, vendor legend.
 - All intraday data processing: `_bucketWindows`, `_forwardFillVendors`, `_flagAnomalies`.
 - The async background refresh that fires when `openRetailViewModal` is called (per-coin `latest.json` + `history-30d.json` fetch, independent of the full sync).
@@ -190,6 +192,7 @@ _pickFreshestEndpoint()        -> tries each RETAIL_API_ENDPOINTS in order, pick
 Entry point. Called from card click handlers.
 
 **Sequence:**
+
 1. Reads `RETAIL_COIN_META[slug]` for coin name, weight, and metal type.
 2. Populates `#retailViewCoinName` (title) and `#retailViewModalSubtitle` (weight and metal).
 3. Removes any stale `.retail-stale-data-warning` banner from a previous open.
@@ -311,6 +314,7 @@ OOS entries (`inStock === false`) produce `null` in the chart dataset, rendering
 ### Trend Display (24h Chart)
 
 Trend glyphs in the intraday table compare each time-slot to the prior slot. Color classes:
+
 - `text-success` (green) — price increased.
 - `text-danger` (red) — price decreased.
 - No class (neutral) — price unchanged.
@@ -322,6 +326,7 @@ Carried (forward-filled) values never show a trend glyph because the movement is
 ## Vendor Display and Links
 
 Vendor URL resolution priority (checked in order):
+
 1. `retailProviders[slug][vendorId]` — deep-link URL to the specific product page, populated from `providers.json`.
 2. `RETAIL_VENDOR_URLS[vendorId]` — fallback homepage URL hardcoded in `retail.js`.
 3. No URL — vendor element rendered as `<span>` instead of `<a>`.

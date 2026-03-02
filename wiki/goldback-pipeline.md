@@ -12,7 +12,7 @@ relatedPages:
   - providers.md
 ---
 
-# Goldback Pipeline
+## Goldback Pipeline
 
 > **Last verified:** 2026-02-25 — audited from live Fly.io container + PR `StakTrakrApi#3` (STAK-335 per-state scaffolding).
 > **56 per-state slugs** (8 states × 7 denominations) + **6 deprecated legacy slugs**.
