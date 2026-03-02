@@ -12,7 +12,7 @@ relatedPages:
   - retail-modal.md
   - health.md
 ---
-## API Consumption
+# API Consumption
 
 > **Last updated:** v3.33.25 — 2026-03-02
 > **Source files:** `js/api.js`, `js/api-health.js`

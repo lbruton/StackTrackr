@@ -15,7 +15,7 @@ relatedPages:
   - data-model.md
 ---
 
-## Image Pipeline
+# Image Pipeline
 
 > **Last updated:** v3.33.25 — 2026-03-02
 > **Source files:** `js/image-cache.js`, `js/image-processor.js`, `js/image-cache-modal.js`, `js/bulk-image-cache.js`, `js/seed-images.js`

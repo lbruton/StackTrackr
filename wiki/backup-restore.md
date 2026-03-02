@@ -12,7 +12,7 @@ relatedPages:
   - sync-cloud.md
   - storage-patterns.md
 ---
-## Backup & Restore
+# Backup & Restore
 
 > **Last updated:** v3.33.25 — 2026-03-02
 > **Source files:** `js/cloud-storage.js`, `js/cloud-sync.js`, `js/utils.js`

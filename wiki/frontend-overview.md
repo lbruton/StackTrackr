@@ -15,7 +15,7 @@ relatedPages:
   - dom-patterns.md
   - service-worker.md
 ---
-## Frontend Overview
+# Frontend Overview
 
 > **Last updated:** v3.33.25 — 2026-03-02
 > **Source files:** `index.html`, `js/constants.js`, `sw.js`, `js/file-protocol-fix.js`

@@ -11,7 +11,7 @@ relatedPages:
   - api-consumption.md
   - vendor-quirks.md
 ---
-## Retail Modal
+# Retail Modal
 
 > **Last updated:** v3.33.25 — 2026-03-02
 > **Source files:** `js/retail-view-modal.js`, `js/retail.js`

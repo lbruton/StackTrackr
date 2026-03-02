@@ -8,7 +8,7 @@ sourceFiles: []
 relatedPages: []
 ---
 
-## StakTrakr Wiki
+# StakTrakr Wiki
 
 > Full wiki sweep — v3.33.25 — 2026-03-02
 

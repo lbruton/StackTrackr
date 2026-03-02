@@ -14,7 +14,7 @@ relatedPages:
   - turso-schema.md
 ---
 
-## REST API Reference
+# REST API Reference
 
 > **Last verified:** 2026-03-02 — cross-checked against js/api.js, js/retail.js, js/retail-view-modal.js, js/api-health.js
 > **Base URL:** `https://api.staktrakr.com`

@@ -13,7 +13,7 @@ relatedPages:
   - health.md
 ---
 
-## Provider Database (Turso)
+# Provider Database (Turso)
 
 > **Last verified:** 2026-02-26 — bulk vendor operations + goldback cleanup deployed, coverage stats added
 

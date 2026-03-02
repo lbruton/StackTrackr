@@ -8,7 +8,7 @@ sourceFiles: []
 relatedPages: []
 ---
 
-## Poller Parity — Fly.io vs Home Poller
+# Poller Parity — Fly.io vs Home Poller
 
 > **Last verified:** 2026-03-02 — all 5 core JS files have identical MD5 hashes across both pollers. Both read from the same Turso database. Proxy config updated: Webshare removed, tinyproxy + Tailscale exit node active on Fly.io.
 
