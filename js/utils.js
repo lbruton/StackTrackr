@@ -561,6 +561,8 @@ const formatDisplayDate = (dateStr) => {
   return `${month}/${day}/${yy}`;
 };
 
+const _currencyFormatters = new Map();
+
 /**
  * Formats a number as a currency string using the default currency
  *
@@ -575,10 +577,15 @@ const formatCurrency = (value, currency = (typeof displayCurrency !== 'undefined
   const rate = (typeof getExchangeRate === 'function') ? getExchangeRate(currency) : 1;
   const converted = num * rate;
   try {
-    return new Intl.NumberFormat(undefined, {
-      style: "currency",
-      currency,
-    }).format(converted);
+    let formatter = _currencyFormatters.get(currency);
+    if (!formatter) {
+      formatter = new Intl.NumberFormat(undefined, {
+        style: "currency",
+        currency,
+      });
+      _currencyFormatters.set(currency, formatter);
+    }
+    return formatter.format(converted);
   } catch (e) {
     // Fallback for environments without Intl support
     return `${currency} ${converted.toFixed(2)}`;
@@ -607,6 +614,8 @@ const saveDisplayCurrency = (code) => {
   if (typeof scheduleSyncPush === 'function') scheduleSyncPush();
 };
 
+const _currencySymbols = new Map();
+
 /**
  * Extracts the currency symbol from Intl.NumberFormat for the given currency code (STACK-50)
  * @param {string} [currency] - ISO 4217 code; defaults to displayCurrency
@@ -614,11 +623,21 @@ const saveDisplayCurrency = (code) => {
  */
 const getCurrencySymbol = (currency) => {
   const code = currency || (typeof displayCurrency !== 'undefined' ? displayCurrency : 'USD');
+
+  if (_currencySymbols.has(code)) {
+    return _currencySymbols.get(code);
+  }
+
   try {
     const parts = new Intl.NumberFormat('en', { style: 'currency', currency: code }).formatToParts(0);
     const sym = parts.find(p => p.type === 'currency');
-    return sym ? sym.value : code;
-  } catch (e) { return code; }
+    const symbol = sym ? sym.value : code;
+    _currencySymbols.set(code, symbol);
+    return symbol;
+  } catch (e) {
+    _currencySymbols.set(code, code);
+    return code;
+  }
 };
 
 /**
