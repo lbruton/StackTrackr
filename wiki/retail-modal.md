@@ -2,8 +2,8 @@
 title: "Retail View Modal & Market List View"
 category: frontend
 owner: staktrakr
-lastUpdated: v3.33.19
-date: 2026-03-01
+lastUpdated: v3.33.22
+date: 2026-03-02
 sourceFiles:
   - js/retail-view-modal.js
   - js/retail.js
@@ -15,7 +15,7 @@ relatedPages:
 ---
 # Retail View Modal & Market List View
 
-> **Last updated:** v3.33.19 — 2026-03-01
+> **Last updated:** v3.33.22 — 2026-03-02
 > **Source files:** `js/retail-view-modal.js`, `js/retail.js`, `css/styles.css`
 
 ## Overview
@@ -35,7 +35,7 @@ As of v3.32.25 the modal also forward-fills vendor prices across gap windows and
 ## Key Rules (read before touching this area)
 
 - **Never call `document.getElementById()` directly.** Use `safeGetElement(id)` for all DOM lookups.
-- **Do not access `localStorage` directly.** Retail data is read/written through `saveData()`/`loadData()` from `js/utils.js`. Specific retail helpers (`saveRetailPrices`, `saveRetailIntradayData`, etc.) are exported by `retail.js`.
+- **Do not access `localStorage` directly.** Retail data is read/written through `saveData()`/`loadData()` from `js/utils.js`. Specific retail helpers (`saveRetailPrices`, `saveRetailIntradayData`, etc.) are exported by `retail.js`. Note: `saveRetailIntradayData` failures are **non-critical** — the catch block calls `debugWarn()` for console-only logging and does NOT show a Storage Error modal. The intraday cache is a transient 24-hour sparkline store; losing it on a quota error is acceptable and the data is rebuilt on the next fetch.
 - `_buildIntradayChart` always calls `_buildIntradayTable` at the end. Do not call both independently.
 - `_buildVendorLegend` is called both on modal open and after the async background refresh completes. It must be idempotent — it clears the container on every call.
 - The Chart.js intraday chart instance is stored in the module-level `_retailViewIntradayChart` variable. Always destroy the old instance before creating a new one or you will leak canvas contexts.
@@ -473,6 +473,10 @@ Both `_retailViewModalChart` and `_retailViewIntradayChart` must be explicitly d
 ### Applying spike detection to estimated/OOS data points (v3.33.06)
 
 `_filterHistorySpikes` intentionally skips estimated points (OOS carry-forward) during temporal spike detection. If you modify the filter to include estimated points, OOS carry-forward prices — which are intentionally flat — will create false negatives in the neighbor stability check and allow real spikes to pass through.
+
+### Treating `saveRetailIntradayData` failures as critical (v3.33.22 — STAK-383)
+
+`saveRetailIntradayData()` uses `debugWarn()` in its catch block — NOT `_handleSaveError()`. Do not change this to `_handleSaveError()`. The intraday cache (`RETAIL_INTRADAY_KEY`) is a transient 24-hour sparkline store; a quota-exceeded error on save is non-critical and should degrade silently (console warn only, no modal, no `window._retailStorageFailure` flag). All other retail save functions (`saveRetailPrices`, `saveRetailPriceHistory`, `saveRetailProviders`, `saveRetailAvailability`) correctly use `_handleSaveError()` because they hold user-facing data that must persist.
 
 ---
 
