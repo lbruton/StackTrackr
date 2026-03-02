@@ -56,7 +56,7 @@ Requests are routed through different strategies based on URL matching in the `f
 | Bucket | Hosts / Paths | Strategy | Rationale |
 |---|---|---|---|
 | **Pre-cached shell** | `CORE_ASSETS` list | Cached on `install` via `cache.addAll()` | Ensures offline availability of core app |
-| **External API hosts** | `metalpriceapi.com`, `metals-api.com`, `gold-api.com`, `numista.com` | Network-first | Live price feeds must always return fresh data |
+| **External API hosts** | `api.metalpriceapi.com`, `metals-api.com`, `api.gold-api.com`, `en.numista.com` | Network-first | Live price feeds must always return fresh data |
 | **CDN libraries** | `cdnjs.cloudflare.com`, `cdn.jsdelivr.net`, `unpkg.com` | Stale-while-revalidate | Serve fast from cache, update in background |
 | **StakTrakr API** | `api.staktrakr.com`, `api2.staktrakr.com` | Stale-while-revalidate | Hourly price feeds benefit from fast cached response with background refresh |
 | **Spot history seed data** | Local `/data/spot-history*` | Stale-while-revalidate | Seed files updated between releases |
