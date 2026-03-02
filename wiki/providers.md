@@ -8,7 +8,7 @@ sourceFiles: []
 relatedPages: []
 ---
 
-# providers.json
+## providers.json
 
 > **Last verified:** 2026-02-24 — 15 URL corrections applied 2026-02-23, year-start SKU patterns documented
 

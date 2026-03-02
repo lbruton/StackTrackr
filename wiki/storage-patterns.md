@@ -11,7 +11,7 @@ relatedPages:
   - data-model.md
   - sync-cloud.md
 ---
-# Storage Patterns
+## Storage Patterns
 
 > **Last updated:** v3.33.25 — 2026-03-02
 > **Source files:** `js/utils.js`, `js/constants.js`

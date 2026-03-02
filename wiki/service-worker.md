@@ -11,7 +11,7 @@ relatedPages:
   - frontend-overview.md
   - release-workflow.md
 ---
-# Service Worker
+## Service Worker
 
 > **Last updated:** v3.33.25 — 2026-03-02
 > **Source files:** `sw.js`, `devops/hooks/stamp-sw-cache.sh`
@@ -55,6 +55,7 @@ const CACHE_NAME = 'staktrakr-v3.33.25-b1772431885';
 Every patch bump triggers `stamp-sw-cache.sh`, which produces a new `CACHE_NAME`. When a user's browser fetches the updated `sw.js`, it sees an unknown cache name, opens a fresh cache bucket, and re-downloads all `CORE_ASSETS`. The `activate` event then purges every cache key that starts with `staktrakr-` but does not match the current `CACHE_NAME`.
 
 This means:
+
 - Users always receive the latest JS/CSS within one page load of a new deploy.
 - No manual cache-clearing is required by the user.
 - Offline mode works immediately after the fresh install completes.

@@ -8,7 +8,7 @@ sourceFiles: []
 relatedPages: []
 ---
 
-# Home Poller (Ubuntu VM)
+## Home Poller (Ubuntu VM)
 
 > **Last verified:** 2026-03-02 — Ubuntu 24.04.3 LTS LXC at 192.168.1.81, user `stakpoller`. Verified from VM console. Home spot poller (`/etc/cron.d/spot-poller` at `15,45`) confirmed active.
 

@@ -15,7 +15,7 @@ relatedPages:
   - dom-patterns.md
   - service-worker.md
 ---
-# Frontend Overview
+## Frontend Overview
 
 > **Last updated:** v3.33.25 — 2026-03-02
 > **Source files:** `index.html`, `js/constants.js`, `sw.js`, `js/file-protocol-fix.js`
@@ -48,7 +48,7 @@ Read these before touching any frontend file:
 
 ### Runtime model
 
-```
+```text
 index.html  (single-page app — all UI panels, modals, and sections)
   ├── <head> scripts (synchronous, load first)
   │     └── js/file-protocol-fix.js   — localStorage fallback for file:// protocol
@@ -70,7 +70,7 @@ index.html  (single-page app — all UI panels, modals, and sections)
 
 `APP_VERSION` in `js/constants.js` follows the `BRANCH.RELEASE.PATCH` format:
 
-```
+```text
 3   .   33   .   25
 ^       ^        ^
 Branch  Release  Patch

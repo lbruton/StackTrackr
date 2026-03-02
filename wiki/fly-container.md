@@ -8,7 +8,7 @@ sourceFiles: []
 relatedPages: []
 ---
 
-# Fly.io Container
+## Fly.io Container
 
 > **Last verified:** 2026-03-02 — app `staktrakr`, region `dfw`, 8 GB RAM / 4 shared CPUs
 

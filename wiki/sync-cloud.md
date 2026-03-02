@@ -11,7 +11,7 @@ relatedPages:
   - storage-patterns.md
   - backup-restore.md
 ---
-# Cloud Sync
+## Cloud Sync
 
 > **Last updated:** v3.33.25 — 2026-03-02
 > **Source files:** `js/cloud-sync.js`, `js/cloud-storage.js`
@@ -299,6 +299,7 @@ When both sides have changes, the conflict modal displays:
 | Remote | item count, timestamp (relative), app version, device ID (first 8 chars) |
 
 Choices:
+
 - **Keep Mine** → `pushSyncVault()` — overwrites remote with local
 - **Keep Theirs** → `pullWithPreview(remoteMeta)` — shows diff preview, then applies remote
 - **Skip** → close modal, no action (remote change will reappear on next poll)

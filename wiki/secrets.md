@@ -8,7 +8,7 @@ sourceFiles: []
 relatedPages: []
 ---
 
-# Secrets & Keys
+## Secrets & Keys
 
 > **Last verified:** 2026-02-24
 > ⚠️ This page lists WHERE secrets live, not their values. Never commit secret values.
