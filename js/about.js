@@ -283,10 +283,10 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.33.20 &ndash; Market Panel Bug Fixes</strong>: API-driven item names via getRetailCoinMeta() as source of truth. Grid/list sync status shows &ldquo;just now&rdquo; after sync, time-ago when lingering, error state on API failure. Activity log dropdown dynamically populated from API manifest</li>
     <li><strong>v3.33.19 &ndash; DiffMerge Integration</strong>: Selective apply for cloud sync pull and encrypted vault restore. DiffModal preview replaces full overwrite &mdash; users choose which changes to accept. Shared _applyAndFinalize helper consolidates post-apply sequence</li>
     <li><strong>v3.33.18 &ndash; Diff/Merge Architecture Foundation</strong>: Manifest path constants, pruning threshold storage key, diffReviewModal HTML scaffold, and diff-modal.js script registration for the reusable change-review UI</li>
     <li><strong>v3.33.17 &ndash; Realized Gains/Losses</strong>: Disposition workflow to mark items as Sold, Traded, Lost, Gifted, or Returned. Calculates realized gain/loss, adds disposition badges, filter toggle, portfolio summary breakdown, and CSV export columns</li>
-    <li><strong>v3.33.16 &ndash; Clone Mode Redesign</strong>: Clone button activates clone mode on the edit modal with field-level checkboxes. Edit modal sections always visible, date N/A restyled as toggle button, Numista refresh button removed</li>
   `;
 };
 
