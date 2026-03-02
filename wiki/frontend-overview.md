@@ -121,7 +121,7 @@ Active feature flags as of v3.33.19:
 | Disposition (v3.33.17) | `js/inventory.js`, `js/constants.js` | Realized gains/losses workflow — dispose items as sold/traded/lost/gifted/returned; undo disposition; portfolio summary breakdown |
 | Retail pricing | `js/retail.js`, `js/api.js` | Polls `api.staktrakr.com/data/api/manifest.json` |
 | Market list view | `js/retail.js` | Full-width card layout with search/sort/charts (feature-flagged, v3.33.06) |
-| Spot prices | `js/spot.js`, `js/priceHistory.js` | Polls hourly and 15-min feeds from `api.staktrakr.com` |
+| Spot prices | `js/spot.js`, `js/api.js` | Polls hourly and 15-min feeds from `api.staktrakr.com` |
 | Cloud sync | `js/cloud-sync.js`, `js/cloud-storage.js` | Backup/restore via encrypted cloud vault |
 | Diff/Merge | `js/diff-engine.js`, `js/diff-modal.js` | Change-set diffing and interactive merge review UI (STAK-184). DiffModal accepts optional `backupCount`/`localCount` fields to render a live count header (Backup / Current / After import) with projected-count updates and a Select All toggle (STAK-374). |
 | Catalog | `js/catalog-manager.js`, `js/seed-images.js` | Coin/bar catalog with image cache |
