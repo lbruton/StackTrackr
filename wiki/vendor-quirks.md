@@ -14,7 +14,7 @@ relatedPages:
   - providers.md
 ---
 
-## Vendor Quirks
+# Vendor Quirks
 
 Frontend-specific behaviors, display adaptations, and data normalization rules for each retail price vendor. This page documents how `js/retail.js` and `js/retail-view-modal.js` handle the output produced by the StakTrakrApi retail poller — it is **not** a scraping runbook. For scraping-side quirks (Firecrawl waitFor, bot detection, OOS pattern matching), see the `StakTrakrApi` repo's `vendor-quirks.md`.
 

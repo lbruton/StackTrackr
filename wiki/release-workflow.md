@@ -13,7 +13,7 @@ relatedPages:
   - service-worker.md
   - architecture-overview.md
 ---
-## Release Workflow
+# Release Workflow
 
 > **Last updated:** v3.33.25 — 2026-03-02
 > **Source files:** `.claude/skills/release/SKILL.md`, `.claude/skills/ship/SKILL.md`, `devops/version.lock`, `js/constants.js`

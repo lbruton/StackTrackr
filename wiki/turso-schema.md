@@ -13,7 +13,7 @@ relatedPages:
   - spot-pipeline.md
 ---
 
-## Turso Database Schema
+# Turso Database Schema
 
 > **Last verified:** 2026-02-25 — audited from live Fly.io container `turso-client.js` and `db.js`
 > **Database:** `staktrakrapi` on Turso (libSQL cloud)

@@ -11,7 +11,7 @@ relatedPages:
   - frontend-overview.md
   - release-workflow.md
 ---
-## Service Worker
+# Service Worker
 
 > **Last updated:** v3.33.25 — 2026-03-02
 > **Source files:** `sw.js`, `devops/hooks/stamp-sw-cache.sh`

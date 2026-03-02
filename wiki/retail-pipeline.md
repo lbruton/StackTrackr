@@ -14,7 +14,7 @@ relatedPages:
   - providers.md
 ---
 
-## Retail Market Price Pipeline
+# Retail Market Price Pipeline
 
 > **Last verified:** 2026-03-02 — dual-poller architecture, Turso shared DB, readLatestPerVendor() merge logic; Fly.io retail cron corrected to `0 * * * *` (`CRON_SCHEDULE=0`)
 

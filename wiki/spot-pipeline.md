@@ -8,7 +8,7 @@ sourceFiles: []
 relatedPages: []
 ---
 
-## Spot Price Pipeline
+# Spot Price Pipeline
 
 > **Last verified:** 2026-03-01 — audited from live Fly.io container `spot-extract.js` (Node.js)
 

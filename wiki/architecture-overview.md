@@ -8,7 +8,7 @@ sourceFiles: []
 relatedPages: []
 ---
 
-## Architecture Overview
+# Architecture Overview
 
 > **Last verified:** 2026-03-01 — full audit from live Fly.io container source code. Dual poller, Turso shared DB, 11 coins, 7 vendors.
 

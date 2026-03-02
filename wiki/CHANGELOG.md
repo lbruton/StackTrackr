@@ -8,7 +8,7 @@ sourceFiles: []
 relatedPages: []
 ---
 
-## Wiki Changelog
+# Wiki Changelog
 
 Running log of structural wiki updates. Not a code changelog — tracks when wiki content was added, reorganized, or policy was updated.
 
