@@ -5,15 +5,16 @@
 
 /**
  * Computes a stable composite key for an inventory item.
- * If the item has a serial number, it is used as the sole key.
- * Otherwise a pipe-delimited composite of numistaId, name, and date is used.
+ * Mirrors DiffEngine.computeItemKey() — uuid → serial → numistaId|name|date → name|date.
  * @param {Object} item - Inventory item object
  * @returns {string} Stable item key
  */
 const computeItemKey = (item) => {
   if (!item) return '';
+  if (item.uuid) return String(item.uuid);
   if (item.serial) return String(item.serial);
-  return `${item.numistaId || ''}|${item.name || ''}|${item.date || ''}`;
+  if (item.numistaId) return `${item.numistaId}|${item.name || ''}|${item.date || ''}`;
+  return `${item.name || ''}|${item.date || ''}`;
 };
 
 /**
@@ -220,6 +221,31 @@ const toggleChange = (logIdx) => {
       }
       entry.undone = true;
     }
+  // Disposition undo/redo (STAK-388)
+  } else if (entry.field === 'Disposed') {
+    const item = inventory[entry.idx];
+    if (!item) return;
+    if (entry.undone) {
+      // Redo: re-apply the disposition from newValue
+      try {
+        item.disposition = JSON.parse(entry.newValue);
+      } catch (e) { return; }
+      saveInventory();
+      entry.undone = false;
+      if (typeof showToast === 'function') showToast(sanitizeHtml(item.name) + ' re-disposed.');
+    } else {
+      // Undo: clear the disposition
+      item.disposition = null;
+      saveInventory();
+      entry.undone = true;
+      if (typeof showToast === 'function') showToast(sanitizeHtml(item.name) + ' restored to active inventory.');
+    }
+    renderTable();
+    if (typeof renderActiveFilters === 'function') renderActiveFilters();
+    if (typeof updateSummary === 'function') updateSummary();
+    renderChangeLog();
+    saveDataSync('changeLog', changeLog);
+    return;
   } else {
     const item = inventory[entry.idx];
     if (!item) return;

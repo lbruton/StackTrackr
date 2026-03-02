@@ -3,6 +3,9 @@
   "MD013": false,
   "MD033": false,
   "MD060": false,
+  "MD025": {
+    "front_matter_title": ""
+  },
   "MD041": {
     "front_matter_title": ""
   },
@@ -20,5 +23,8 @@
   },
   "MD035": {
     "style": "---"
+  },
+  "MD025": {
+    "front_matter_title": ""
   }
 }

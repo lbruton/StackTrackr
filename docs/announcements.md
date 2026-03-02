@@ -1,18 +1,19 @@
 ## What's New
 
-- **Cloud Sync, Image Pipeline & Retail Charts (v3.33.00)**: Unified encryption for cloud sync with ambient status icons. Removed coinImages IDB cache — CDN-only Numista images. Dynamic IndexedDB quota. 24h retail intraday chart with anomaly filtering. Kilogram and pound weight units. Numista tags visible in edit modal and card view. Reorderable header buttons. Tabnabbing hardening across all external links
-- **Retail Anomaly Filter (v3.32.45)**: Two-pass anomaly detection in 24h retail chart — temporal spike smoothing (±5% neighbor consensus) plus cross-vendor median safety net. Anomalous table cells shown with line-through styling (STAK-325)
-- **Kilo & Pound Weight Units (v3.32.44)**: Added kilogram and pound to the weight unit dropdown. Melt values convert correctly. Table, cards, and modals all display in the chosen unit (STAK-338)
-- **Numista Tag Fixes (v3.32.43)**: Tags now visible in edit modal and card views. All tags (including Numista-applied) are removable per-item — no more stuck tags (STAK-343, STAK-344)
-- **Image Pipeline Simplification (v3.32.41)**: Removed coinImages IDB cache layer entirely. CDN URLs are now the sole Numista image source (STAK-339)
+- **Browserbase Test Runbook v2 (v3.33.25)**: Modular E2E test runbook with 75+ tests across 8 section files. `/bb-test` skill now reads runbook Markdown at runtime with section and tag filtering. Manual execution via Chrome DevTools or Claude browser extension documented as $0 alternative (STAK-396).
+- **Backup Integrity Audit (v3.33.24)**: exportOrigin metadata added to all export formats. Pre-import validation, DiffModal count header with Select All, and post-import summary banner. Fixes CSV round-trip breakage from comment header, const reassignment crash, and import target detection bug (STAK-374).
+- **Chip Max Count Setting (v3.33.23)**: New `chipMaxCount` setting caps the filter chip bar to prevent overflow. Search chips always render regardless of cap. Configure in Settings.
+- **Storage Error Modal Suppressed for Intraday Cache (v3.33.22)**: saveRetailIntradayData() failures now log a console warning instead of showing a user-visible Storage Error modal — transient 24h sparkline cache is non-critical
+- **Disposed Items: Restore &amp; View (v3.33.21)**: Three-state disposed filter (Hide/Show All/Disposed Only). Changelog undo now correctly reverses dispositions. "Restore to Inventory" button added to view modal for disposed items
+- **Market Panel Bug Fixes (v3.33.20)**: API-driven item names via getRetailCoinMeta() as source of truth. Grid/list sync status shows "just now" after sync, time-ago when lingering, error state on API failure. Activity log dropdown dynamically populated from API manifest
+- **DiffMerge Integration (v3.33.19)**: Selective apply for cloud sync pull and encrypted vault restore. DiffModal preview replaces full overwrite — users choose which changes to accept. Shared _applyAndFinalize helper consolidates post-apply sequence
+- **Diff/Merge Architecture Foundation (v3.33.18)**: Manifest path constants, pruning threshold storage key, diffReviewModal HTML scaffold, and diff-modal.js script registration for the reusable change-review UI
+- **Realized Gains/Losses (v3.33.17)**: Disposition workflow to mark items as Sold, Traded, Lost, Gifted, or Returned. Calculates realized gain/loss, adds disposition badges, filter toggle, portfolio summary breakdown, and CSV export columns
 
 ## Development Roadmap
 
 ### Next Up
 
+- **Market Page Phase 3**: Inventory-to-market linking with auto-update retail prices
 - **Cloud Backup Conflict Detection (STAK-150)**: Smarter conflict resolution using item count direction, not just timestamps
 - **Accessible Table Mode (STAK-144)**: Style D with horizontal scroll, long-press to edit, 300% zoom support
-
-### Near-Term
-
-- **Custom Theme Editor (STAK-121)**: User-defined color themes with CSS variable overrides

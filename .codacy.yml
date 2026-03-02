@@ -13,4 +13,5 @@ exclude_paths:
   - "GEMINI.md"
   - "style.html"
   - "about/**"
+  - "tests/**"
   - "vendor/**"

@@ -268,7 +268,7 @@ const getLastUpdateTime = (metalName, mode = "cache") => {
 
   if (latestEntry.source === "seed") {
     const dateText = latestEntry.timestamp.slice(0, 10);
-    return `Seed \u00b7 ${dateText}<br>Shift+click price to set`;
+    return `Seed \u00b7 ${dateText}<br>Shift+click or long-press to set`;
   }
 
   if (latestEntry.source === "default") return "";
@@ -301,11 +301,40 @@ const updateSpotTimestamp = (metalName) => {
 
   // If no price data at all, show shift+click hint for discoverability
   if (!cacheHtml && !apiHtml) {
-    el.innerHTML = "Shift+click price to set";
+    el.innerHTML = "Shift+click or long-press to set";
     el.onclick = null;
     return;
   }
 
+  // Compare raw storage data — when both keys hold the same provider+timestamp
+  // (e.g. cache disabled / duration=0), the rendered HTML differs only by label text.
+  // Compare the underlying data to detect this case correctly (STAK-274).
+  const cacheData = loadDataSync(LAST_CACHE_REFRESH_KEY, null);
+  const apiData = loadDataSync(LAST_API_SYNC_KEY, null);
+  const sameUnderlying = cacheData && apiData &&
+    cacheData.provider === apiData.provider &&
+    cacheData.timestamp === apiData.timestamp;
+
+  // When cache and API have the same underlying data (e.g. cache disabled / duration=0),
+  // or when only API data exists, show "Last API Sync" directly without toggle (STAK-274)
+  if (!cacheHtml || sameUnderlying) {
+    el.dataset.mode = "api";
+    // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml, javascript.browser.security.insecure-document-method.insecure-document-method
+    el.innerHTML = apiHtml || cacheHtml;
+    el.onclick = null;
+    return;
+  }
+
+  // When only cache data exists (no API sync yet), show cache without toggle
+  if (!apiHtml) {
+    el.dataset.mode = "cache";
+    // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml, javascript.browser.security.insecure-document-method.insecure-document-method
+    el.innerHTML = cacheHtml;
+    el.onclick = null;
+    return;
+  }
+
+  // Both cache and API have different data — show cache first with click-to-toggle
   el.dataset.mode = "cache";
   el.dataset.cache = cacheHtml;
   el.dataset.api = apiHtml;
@@ -818,9 +847,6 @@ const formatWeight = (ozt, weightUnit) => {
   if (weightUnit === 'g') {
     return `${oztToGrams(weight).toFixed(2)} g`;
   }
-  if (weight < 1) {
-    return `${oztToGrams(weight).toFixed(2)} g`;
-  }
   return `${weight.toFixed(2)} oz`;
 };
 
@@ -900,7 +926,8 @@ const sanitizeObjectFields = (obj) => {
   for (const key of Object.keys(cleaned)) {
     if (typeof cleaned[key] === "string" && key !== 'notes') {
       // URL fields must not be sanitized — they contain :, /, . characters
-      if (key === 'obverseImageUrl' || key === 'reverseImageUrl') continue;
+      // UUID fields must not be sanitized — hyphens are part of the format
+      if (key === 'obverseImageUrl' || key === 'reverseImageUrl' || key === 'uuid') continue;
       const allowHyphen = key === 'date';
       cleaned[key] =
         (key === 'name' || key === 'purchaseLocation' || key === 'year' || key === 'grade' || key === 'gradingAuthority' || key === 'certNumber' || key === 'serialNumber')
@@ -1102,6 +1129,91 @@ const validateInventoryItem = (item) => {
 };
 
 /**
+ * Batch-validates an array of sanitized inventory items.
+ * @param {Array} items - Items already processed by sanitizeImportedItem()
+ * @param {Array} [skippedNonPM] - Items pre-filtered as non-PM (CSV only), default []
+ * @returns {{ valid: Array, invalid: Array, skippedNonPM: Array, skippedCount: number }}
+ */
+const buildImportValidationResult = (items, skippedNonPM) => {
+  const skippedItems = skippedNonPM || [];
+  const valid = [];
+  const invalid = [];
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    const result = validateInventoryItem(item);
+    if (result.isValid) {
+      valid.push(item);
+    } else {
+      invalid.push({
+        index: i,
+        name: (item.name && item.name.trim()) ? item.name.trim() : ('Item ' + (i + 1)),
+        reasons: result.errors,
+      });
+    }
+  }
+  return {
+    valid,
+    invalid,
+    skippedNonPM: skippedItems,
+    skippedCount: invalid.length + skippedItems.length,
+  };
+};
+
+/**
+ * Renders a persistent, dismissible import summary banner above the inventory table.
+ * Falls back to showToast() if the DOM target is not found.
+ * @param {{ added: number, modified: number, deleted: number, skipped: number, skippedReasons: string[] }} result
+ */
+const showImportSummaryBanner = (result) => {
+  const added = result.added || 0;
+  const modified = result.modified || 0;
+  const deleted = result.deleted || 0;
+  const skipped = result.skipped || 0;
+  const skippedReasons = result.skippedReasons || [];
+
+  // Remove any existing banner
+  const existing = document.getElementById('import-summary-banner');
+  if (existing) { existing.parentNode.removeChild(existing); }
+
+  const hasSkipped = skipped > 0;
+  const iconClass = hasSkipped ? 'banner-warn' : 'banner-success';
+  const iconChar = hasSkipped ? '\u26A0' : '\u2713';
+
+  let reasonsHtml = '';
+  if (hasSkipped && skippedReasons.length > 0) {
+    const items = skippedReasons.slice(0, 5).map((r) => {
+      return '<li>' + sanitizeHtml(String(r)) + '</li>';
+    }).join('');
+    reasonsHtml = '<details class="banner-details"><summary>Why were items skipped?</summary><ul>' + items + '</ul></details>';
+  }
+
+  const skippedText = hasSkipped ? ('  \u2717 ' + skipped + ' skipped') : '';
+  const bannerHtml = '<div id="import-summary-banner" class="import-summary-banner">' +
+    '<span class="' + iconClass + '">' + iconChar + '</span> ' +
+    '+ ' + added + ' added&nbsp;&nbsp;~' + modified + ' updated&nbsp;&nbsp;&minus;' + deleted + ' removed' +
+    skippedText +
+    reasonsHtml +
+    '<button class="banner-dismiss" aria-label="Dismiss" onclick="(function(el){el.parentNode.removeChild(el);})(this.parentNode)">\u00D7</button>' +
+    '</div>';
+
+  // Try to insert before the inventory table container
+  const target = document.getElementById('inventory-container') ||
+                 document.getElementById('inventoryTable') ||
+                 document.getElementById('tableContainer');
+  if (target) {
+    const div = document.createElement('div');
+    div.innerHTML = bannerHtml;
+    target.parentNode.insertBefore(div.firstChild, target);
+    return;
+  }
+
+  // Fallback to toast
+  let summary = '+' + added + ' added, ~' + modified + ' updated, -' + deleted + ' removed';
+  if (hasSkipped) { summary += ', ' + skipped + ' skipped'; }
+  if (typeof showToast === 'function') { showToast('Import complete: ' + summary); }
+};
+
+/**
  * Sanitizes imported inventory data, coercing invalid fields to safe defaults.
  *
  * String fields default to an empty string and numeric fields become null when
@@ -1165,8 +1277,10 @@ const sanitizeImportedItem = (item) => {
     sanitized.totalPremium = 0;
   }
 
-  // Ensure every item has a stable UUID
-  if (!sanitized.uuid) sanitized.uuid = generateUUID();
+  // UUID generation is NOT done here — callers provide uuid from the import
+  // source (CSV/JSON/Numista), and loadInventory() assigns UUIDs to items
+  // that reach storage without one. This allows the DiffEngine serial→UUID
+  // bridge to work for backward-compat imports (STAK-380).
 
   return sanitizeObjectFields(sanitized);
 };
@@ -1412,62 +1526,6 @@ const updateStorageStats = async () => {
     if (el) el.textContent = "Storage info unavailable";
     console.warn("Could not calculate storage", err);
   }
-};
-
-/**
- * Shows storage report options with view and download actions
- */
-const downloadStorageReport = () => {
-  let modal = document.getElementById('storageOptionsModal');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'storageOptionsModal';
-    modal.className = 'modal';
-    modal.innerHTML = `
-      <div class="modal-content">
-        <div class="modal-header">
-          <h2>Storage Report</h2>
-          <button aria-label="Close modal" class="modal-close" id="storageOptionsClose">×</button>
-        </div>
-        <div class="modal-body">
-          <div class="options-buttons">
-            <button class="btn" id="viewStorageReportBtn">👁️ View Report</button>
-            <button class="btn secondary" id="downloadStorageZipBtn">📦 Download ZIP</button>
-          </div>
-        </div>
-      </div>`;
-    document.body.appendChild(modal);
-
-    const closeModal = () => {
-      modal.style.display = 'none';
-      document.body.style.overflow = '';
-    };
-
-    modal.addEventListener('click', (e) => {
-      if (e.target === modal) closeModal();
-    });
-    modal.querySelector('#storageOptionsClose').addEventListener('click', closeModal);
-
-    modal.querySelector('#viewStorageReportBtn').addEventListener('click', () => {
-      closeModal();
-      openStorageReportPopup();
-    });
-
-    modal.querySelector('#downloadStorageZipBtn').addEventListener('click', async () => {
-      closeModal();
-      try {
-        const zipContent = await generateStorageReportTar();
-        const timestamp = new Date().toISOString().split('T')[0];
-        downloadFile(`storage-report-${timestamp}.zip`, zipContent, 'application/zip');
-      } catch (error) {
-        console.error('Error creating ZIP file:', error);
-        appAlert('Error creating compressed report. Please try again.');
-      }
-    });
-  }
-
-  modal.style.display = 'flex';
-  document.body.style.overflow = 'hidden';
 };
 
 /**
@@ -3067,11 +3125,9 @@ if (typeof window !== 'undefined') {
 
   window.cleanupStorage = cleanupStorage;
   window.checkFileSize = checkFileSize;
-  window.MAX_LOCAL_FILE_SIZE = MAX_LOCAL_FILE_SIZE;
   window.closeModalById = closeModalById;
   window.openModalById = openModalById;
   window.updateStorageStats = updateStorageStats;
-  window.downloadStorageReport = downloadStorageReport;
   window.openStorageReportPopup = openStorageReportPopup;
   window.debounce = debounce;
   window.openEbayBuySearch = openEbayBuySearch;

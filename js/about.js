@@ -283,11 +283,11 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
-    <li><strong>v3.33.00 &ndash; Cloud Sync, Image Pipeline &amp; Retail Charts</strong>: Unified encryption for cloud sync with ambient status icons. Removed coinImages IDB cache &mdash; CDN-only Numista images. Dynamic IndexedDB quota. 24h retail intraday chart with anomaly filtering. Kilogram and pound weight units. Numista tags visible in edit modal and card view. Reorderable header buttons. Tabnabbing hardening across all external links</li>
-    <li><strong>v3.32.45 &ndash; Retail Anomaly Filter</strong>: Two-pass anomaly detection in 24h retail chart &mdash; temporal spike smoothing (&plusmn;5% neighbor consensus) plus cross-vendor median safety net. Anomalous table cells shown with line-through styling (STAK-325)</li>
-    <li><strong>v3.32.44 &ndash; Kilo &amp; Pound Weight Units</strong>: Added kilogram and pound to the weight unit dropdown. Melt values convert correctly. Table, cards, and modals all display in the chosen unit (STAK-338)</li>
-    <li><strong>v3.32.43 &ndash; Numista Tag Fixes</strong>: Tags now visible in edit modal and card views. All tags (including Numista-applied) are removable per-item &mdash; no more stuck tags (STAK-343, STAK-344)</li>
-    <li><strong>v3.32.41 &ndash; Image Pipeline Simplification</strong>: Removed coinImages IDB cache layer entirely. CDN URLs are now the sole Numista image source (STAK-339)</li>
+    <li><strong>v3.33.25 &ndash; Browserbase Test Runbook v2</strong>: Modular E2E test runbook with 75+ tests across 8 section files. /bb-test skill reads runbook Markdown at runtime with section and tag filtering. Manual execution via Chrome DevTools or Claude browser extension documented as $0 alternative (STAK-396)</li>
+    <li><strong>v3.33.24 &ndash; Backup Integrity Audit</strong>: exportOrigin metadata added to all export formats. Pre-import validation, DiffModal count header with Select All, and post-import summary banner (STAK-374)</li>
+    <li><strong>v3.33.23 &ndash; Chip Max Count Setting</strong>: New chipMaxCount setting caps the filter chip bar to prevent overflow. Search chips always render regardless of cap. Configure in Settings</li>
+    <li><strong>v3.33.22 &ndash; Storage Error Modal Suppressed for Intraday Cache</strong>: saveRetailIntradayData() failures now log a console warning instead of showing a user-visible Storage Error modal &mdash; transient 24h sparkline cache is non-critical</li>
+    <li><strong>v3.33.20 &ndash; Market Panel Bug Fixes</strong>: API-driven item names via getRetailCoinMeta() as source of truth. Grid/list sync status shows &ldquo;just now&rdquo; after sync, time-ago when lingering, error state on API failure. Activity log dropdown dynamically populated from API manifest</li>
   `;
 };
 
@@ -297,9 +297,9 @@ const getEmbeddedWhatsNew = () => {
  */
 const getEmbeddedRoadmap = () => {
   return `
+    <li><strong>Market Page Phase 3</strong>: Inventory-to-market linking with auto-update retail prices</li>
     <li><strong>Cloud Backup Conflict Detection (STAK-150)</strong>: Smarter conflict resolution using item count direction, not just timestamps</li>
     <li><strong>Accessible Table Mode (STAK-144)</strong>: Style D with horizontal scroll, long-press to edit, 300% zoom support</li>
-    <li><strong>Custom Theme Editor (STAK-121)</strong>: User-defined color themes with CSS variable overrides</li>
   `;
 };
 

@@ -2,7 +2,7 @@
 
 Instructions for AI agents working in this repository (Codex, Claude Code web, GitHub Actions, remote agents).
 
-This file contains codebase context only -- no local MCP servers, no local-only skills, no Mac-specific tooling. For local development context, see `CLAUDE.md` (gitignored, per-device).
+This file contains codebase context only -- no local MCP servers, no local-only skills, no Mac-specific tooling. For local development context with MCP servers, skills, and workflow rules, see `CLAUDE.md`.
 
 ## Project Overview
 
@@ -143,22 +143,29 @@ number collisions; worktrees prevent filesystem conflicts.
 
 **Full 9-step protocol** is in `devops/version-lock-protocol.md`. Summary:
 
-1. Check `devops/version.lock` — if present and not expired, **stop and report the conflict**
-2. If unlocked (or expired): compute next version, write the lock file immediately
-3. Create worktree + branch: `git worktree add .claude/worktrees/patch-VERSION -b patch/VERSION`
-4. Do all work inside `.claude/worktrees/patch-VERSION/`
-5. Push branch → open draft PR `patch/VERSION → dev` (Cloudflare generates preview)
-6. QA preview → merge to dev
-7. Cleanup: `git worktree remove .claude/worktrees/patch-VERSION --force && git branch -d patch/VERSION && rm devops/version.lock`
+1. Read `devops/version.lock` — parse the `claims` array (empty if no active claims)
+2. Prune expired entries (where `expires_at` < now). Write back if any were removed.
+3. Compute next version: take highest `version` in remaining active claims, or read `APP_VERSION` from `js/constants.js`. Increment PATCH by 1.
+4. Append your claim to the array and write the full `claims` array back to `devops/version.lock`.
+5. Create worktree + branch: `git worktree add .claude/worktrees/patch-VERSION -b patch/VERSION`
+6. Do all work inside `.claude/worktrees/patch-VERSION/`
+7. Push branch → open draft PR `patch/VERSION → dev` (Cloudflare generates preview)
+8. QA preview → merge to dev
+9. Cleanup: `git worktree remove .claude/worktrees/patch-VERSION --force && git branch -d patch/VERSION` — then remove **only your claim entry** from `devops/version.lock` (leave other active claims intact)
 
-Lock format (JSON):
+Lock format (JSON, claims array — multiple agents can hold concurrent claims):
 
 ```json
 {
-  "locked": "3.32.09",
-  "locked_by": "codex / STAK-XX description",
-  "locked_at": "2026-02-22T19:00:00Z",
-  "expires_at": "2026-02-22T19:30:00Z"
+  "claims": [
+    {
+      "version": "3.32.09",
+      "claimed_by": "codex / STAK-XX description",
+      "issue": "STAK-XX",
+      "claimed_at": "2026-02-22T19:00:00Z",
+      "expires_at": "2026-02-22T19:30:00Z"
+    }
+  ]
 }
 ```
 
@@ -262,9 +269,19 @@ No compile step is required.
 
 Validate both launch paths (`file://` and localhost). Smoke test core flows: add/edit/delete inventory, import/export, settings persistence, and spot-price sync.
 
-### Playwright Testing (Browserless)
+### NL E2E Testing (Browserbase Runbook) — Primary
 
-Browser tests run via Playwright connected to a self-hosted **browserless** Docker container. No cloud browser account required.
+The primary E2E test suite is `tests/runbook/*.md` — 75+ natural-language tests across 8 section files. Tests are executed via Stagehand/Browserbase against the PR preview URL.
+
+- Runbook sections: `01-page-load`, `02-crud`, `03-spot`, `04-import-export`, `05-settings`, `06-ui-ux`, `07-activity-log`, `08-api`
+- Each test block has 7 required fields: Test name, Added (version/STAK), Preconditions, Steps, Pass criteria, Tags, Section
+- Step types: `navigate:`, `act:`, `extract: → expect:`, `screenshot:`
+- **Browserbase requires explicit user approval** before use — it costs real money
+- After shipping a spec, use `/browserbase-test-maintenance` to add test steps for new behavior
+
+### Playwright Testing (Browserless) — Scripted Suite
+
+Complementary scripted test suite via Playwright connected to a self-hosted **browserless** Docker container. No cloud browser account required.
 
 - Test files: `tests/*.spec.js` (`.spec.js` extension, NOT `.test.js`)
 - `npm test` -- run full spec suite via browserless
@@ -290,48 +307,99 @@ Playwright test harness (`js/test-loader.js`) loads in localhost-only mode and i
 - Use `safeGetElement()` for DOM access
 - No `eval()` or `Function()` constructor
 
-## Documentation (StakTrakrWiki)
+## Documentation (Wiki)
 
-StakTrakr maintains a private wiki at `github.com/lbruton/StakTrakrWiki` as the single source of truth for the codebase. Reference it before making architectural changes. Pages are maintained by agents — do not let docs drift after meaningful patches.
+StakTrakr maintains an in-repo wiki at `wiki/` (served via Docsify) as the single source of truth for the codebase. Reference it before making architectural changes. Pages are maintained by agents — do not let docs drift after meaningful patches.
 
 ### Frontend pages (maintained by Claude Code / StakTrakr agents)
 
 | Page | Contents |
 |------|----------|
-| [Frontend Overview](https://github.com/lbruton/StakTrakrWiki/blob/main/frontend-overview.md) | File structure, 67-script load order, service worker, PWA |
-| [Data Model](https://github.com/lbruton/StakTrakrWiki/blob/main/data-model.md) | Portfolio model, storage keys, coin/entry schema |
-| [Storage Patterns](https://github.com/lbruton/StakTrakrWiki/blob/main/storage-patterns.md) | saveData/loadData wrappers, sync variants, key validation |
-| [DOM Patterns](https://github.com/lbruton/StakTrakrWiki/blob/main/dom-patterns.md) | safeGetElement, sanitizeHtml, event delegation |
-| [Cloud Sync](https://github.com/lbruton/StakTrakrWiki/blob/main/sync-cloud.md) | Cloudflare R2 backup/restore, vault encryption, sync flow |
-| [Retail Modal](https://github.com/lbruton/StakTrakrWiki/blob/main/retail-modal.md) | Coin detail modal, vendor legend, OOS detection, price carry-forward |
-| [API Consumption](https://github.com/lbruton/StakTrakrWiki/blob/main/api-consumption.md) | Spot feed, market price feed, goldback feed, health checks |
-| [Release Workflow](https://github.com/lbruton/StakTrakrWiki/blob/main/release-workflow.md) | Patch cycle, version bump, worktree pattern, ship to main |
-| [Service Worker](https://github.com/lbruton/StakTrakrWiki/blob/main/service-worker.md) | CORE_ASSETS, cache strategy, pre-commit stamp hook |
+| [Frontend Overview](wiki/frontend-overview.md) | File structure, 67-script load order, service worker, PWA |
+| [Data Model](wiki/data-model.md) | Portfolio model, storage keys, coin/entry schema |
+| [Storage Patterns](wiki/storage-patterns.md) | saveData/loadData wrappers, sync variants, key validation |
+| [DOM Patterns](wiki/dom-patterns.md) | safeGetElement, sanitizeHtml, event delegation |
+| [Cloud Sync](wiki/sync-cloud.md) | Cloudflare R2 backup/restore, vault encryption, sync flow |
+| [Retail Modal](wiki/retail-modal.md) | Coin detail modal, vendor legend, OOS detection, price carry-forward |
+| [API Consumption](wiki/api-consumption.md) | Spot feed, market price feed, goldback feed, health checks |
+| [Release Workflow](wiki/release-workflow.md) | Patch cycle, version bump, worktree pattern, ship to main |
+| [Service Worker](wiki/service-worker.md) | CORE_ASSETS, cache strategy, pre-commit stamp hook |
 
 ### Infrastructure pages (maintained by StakTrakrApi agents)
 
-Architecture, data pipelines, Fly.io, pollers, secrets — see `github.com/lbruton/StakTrakrWiki` README for full index.
+Architecture, data pipelines, Fly.io, pollers, secrets — see `wiki/README.md` for full index.
 
 ### Wiki update policy
 
 - Use `/wiki-update` after any patch that changes JS, CSS, skills, or devops files
 - Use `/wiki-audit` for background drift detection and auto-correction
-- Raw pages accessible at `raw.githubusercontent.com/lbruton/StakTrakrWiki/main/<page>.md`
+- Pages live at `wiki/*.md` in this repo
 
 ## Documentation Policy
 
-StakTrakrWiki (`lbruton/StakTrakrWiki`) is the single source of truth for all
-architecture, operational runbooks, and pattern documentation. Do not create
-new markdown documentation in this repo (except `docs/plans/` for planning artifacts).
+The `wiki/` subfolder is the single source of truth for all
+architecture, operational runbooks, and pattern documentation.
+New documentation goes in `wiki/` (or `docs/plans/` for planning artifacts).
 
-After any commit that changes behavior, update the relevant wiki page via `gh api`.
-Use `claude-context` to search the wiki: index path `/Volumes/DATA/GitHub/StakTrakrWiki`.
+After any commit that changes behavior, update the relevant wiki page directly.
+Use `claude-context` to search the wiki: index path includes `wiki/` within the StakTrakr repo.
 
 ```
 mcp__claude-context__search_code
   query: "your question about how something works"
-  path: /Volumes/DATA/GitHub/StakTrakrWiki
+  path: /Volumes/DATA/GitHub/StakTrakr
 ```
+
+---
+
+## Wiki Nightwatch (Jules Scheduled Task)
+
+Jules runs a nightly wiki accuracy patrol as a custom scheduled task. It picks ONE frontend wiki page per run, cross-checks every factual claim against the actual codebase, and opens a draft PR with corrections when it finds an inaccuracy.
+
+**Rotation state:** `wiki/.nightwatch-log.json` tracks which page is next and keeps a capped history of results. Frontend pages have `owner: staktrakr` in YAML frontmatter. Skip `_sidebar.md`, `README.md`, `CHANGELOG.md`, and `owner: staktrakr-api` pages.
+
+**Verification targets:** Each wiki page lists its `sourceFiles` in YAML frontmatter. Read every source file and cross-check counts, function names/signatures, window globals, storage keys, CORE_ASSETS entries, related page links, version numbers, and code patterns.
+
+**On inaccuracy:** Create a `nightwatch/fix-*` branch, make the minimum correction, commit both the wiki fix and the log update, and open a draft PR to `dev` with structured justification (what the wiki claimed, what the code shows, the correction, file:line evidence).
+
+**On verified OK:** Commit the log update directly to `dev` with 3 specific confirmed claims.
+
+---
+
+## Jules Scheduled Scan Exclusions
+
+Jules runs nightly scans via three agents (Bolt, Sentinel, Scribe). The exclusions below prevent repeat false positives. Jules reads `AGENTS.md` on every run — these take effect automatically.
+
+### General Exclusions (All Agents)
+
+- This is a vanilla JS single-page app with no build step — do not suggest framework migrations, build tool additions, or module bundler integration
+- Do not modify `constants.js` version numbers — versioning is managed externally by a release skill that bumps 7 files atomically
+- Do not add new files without updating `sw.js` CORE_ASSETS and `index.html` script order — the 67-script dependency chain is critical
+- Do not flag variables as "not defined" — this is a global-scope architecture with `no-undef` intentionally OFF
+- Do not suggest converting to ES modules — the global scope pattern is intentional and necessary for `file://` protocol support
+
+### Bolt (Performance) Exclusions
+
+- Do not optimize `filterInventoryAdvanced` — the current implementation is readable and performant for expected dataset sizes (< 5,000 items). Single-pass refactors have been reviewed and rejected twice (PRs #577, #595)
+- Do not suggest lazy-loading for scripts in `index.html` — all 67 scripts use `defer` (except `file-protocol-fix.js`) and load order is a hard dependency chain
+- Do not suggest Web Workers for spot price calculations — the computation is sub-millisecond and the thread marshalling overhead would be net negative
+
+### Sentinel (Security) Exclusions
+
+- Do not flag `Math.random()` fallback in `generateUUID` — `crypto.randomUUID()` is the primary path, `crypto.getRandomValues()` is the secondary fallback, and `Math.random()` only fires on environments where both crypto APIs are unavailable (ancient browsers where security is already compromised). This has been reviewed and intentionally kept as a last-resort fallback (PRs #576, #596)
+- Do not flag `localStorage.getItem`/`setItem` for scalar string preferences (timeout keys, boolean flag strings) — `loadData()`/`saveData()` are async and JSON-serialize values, which is incorrect for plain scalar string preferences. Direct `localStorage` access is intentional for these cases
+- Do not flag PBKDF2 iteration count without checking the current value — it was already upgraded to 600,000 iterations per OWASP recommendations
+- Do not suggest CSP headers — this app runs on `file://` protocol where CSP is not applicable
+
+### Scribe (Code Quality) Exclusions
+
+- Do not remove functions that appear unused without checking global scope — functions defined in one file are called from files loaded later in the script order. Use the 67-script dependency chain (section 1 above) to trace callers before flagging dead code
+- Do not flag `sanitizeHtml()` inline suppression comments (`// nosemgrep:`) — these are reviewed security exceptions, not accidental suppression
+- Do not flag long lines in `docs/announcements.md` — the parser splits on newlines, and each entry must be a single line
+
+### Suppression Tracking
+
+Suppression decisions are tracked in `.github/jules-suppressions.json` with IDs (`JULES-SNNN`), reasons, and closed PR references. Run `/jules-suppress prompt` to generate copy-pasteable exclusion text for the Jules dashboard scheduled task prompts.
 
 ---
 
@@ -388,6 +456,10 @@ The following MCP servers were live-tested on **2026-02-21**. Availability can v
   for recall, `add_memory` to save insights/sessions/handoffs, `get_memories` to list all.
   Automatic conversational memory — saves preferences, decisions, and context across sessions.
   Do NOT call `mcp__memento__*` tools — Memento is retired.
+  **Entity scoping:** Project-specific memories use `agent_id` (e.g., `staktrakr`, `hextrackr`).
+  Cross-project memories use `user_id: "lbruton"` (default when no `agent_id` is passed).
+  **Search rule:** Always run TWO searches in parallel — one with `agent_id` filter for the
+  current project, one without (cross-project). Merge and deduplicate results.
 - `memento`: **RETIRED 2026-02-22.** Historical archive only — still in `.mcp.json` but do not call.
   All Memento entities were migrated to mem0. Use `mcp__mem0__search_memories` for recall.
 - `sequential-thinking`: Structured iterative reasoning for complex planning/debugging tasks.  
