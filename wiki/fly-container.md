@@ -10,7 +10,7 @@ relatedPages: []
 
 # Fly.io Container
 
-> **Last verified:** 2026-03-02 — app `staktrakr`, region `dfw`, 8 GB RAM / 4 shared CPUs
+> **Last verified:** 2026-03-02 — app `staktrakr`, region `dfw`, 4 GB RAM / 8 shared CPUs
 
 ---
 
@@ -18,7 +18,9 @@ relatedPages: []
 
 Single Fly.io app (`staktrakr`) that runs all retail polling, spot price polling, and an HTTP API proxy. Everything is managed by **supervisord** inside one container.
 
-As of 2026-03-02, outbound scraping traffic is routed through a residential home VM via **Tailscale exit node** (dynamic per-cycle in `run-local.sh`) and **tinyproxy** (`HOME_PROXY_URL` for Firecrawl/Playwright). No third-party proxy services are used.
+As of 2026-03-02, outbound scraping traffic is routed through a residential home VM via **Tailscale exit node** (dynamic per-cycle in `run-local.sh`) and **tinyproxy** (`HOME_PROXY_URL` for all Chromium instances). No third-party proxy services are used.
+
+**Critical:** Chromium does NOT respect Tailscale exit node routing. The exit node handles Node.js `fetch()` (used by Firecrawl's HTTP client), but Chromium bypasses it and exits via the Fly.io datacenter IP. An explicit HTTP proxy (`HOME_PROXY_URL` → tinyproxy at `http://100.112.198.50:8888`) is mandatory for all three Chromium consumers: Firecrawl playwright-service (`PROXY_SERVER`), `price-extract.js` Phase 2, and `capture.js` vision screenshots. See `devops/infra/retail-pipeline-architecture.md` in StakTrakrApi for the full pipeline reference.
 
 Goldback retail prices are scraped as `goldback-{state}-g{denom}` coins via `providers.json` in the regular retail pipeline. Additionally, `run-goldback.sh` runs hourly at :01 to scrape the official G1 exchange rate from goldback.com via Firecrawl and writes `goldback-spot.json` + `goldback-YYYY.json`. The hourly cron skips if today's price is already captured. See [goldback-pipeline.md](goldback-pipeline.md).
 
@@ -30,8 +32,8 @@ Goldback retail prices are scraped as `goldback-{state}-g{denom}` coins via `pro
 |-----|-------|
 | App name | `staktrakr` |
 | Region | `dfw` (fly.toml says `iad` but deployed to `dfw`) |
-| Memory | 8192 MB (8 GB) |
-| CPUs | 4 shared |
+| Memory | 4096 MB (4 GB) |
+| CPUs | 8 shared |
 | Volume | `staktrakr_data` mounted at `/data` |
 | HTTP port | 8080 (proxied by Fly, force HTTPS) |
 
@@ -190,6 +192,7 @@ Tailscale state lives at `/data/tailscale/tailscaled.state` — also on the pers
 | Services not running | `fly ssh console --app staktrakr -C "supervisorctl status"` |
 | OOM / container crash | Concurrent `api-export.js` runs — verify `run-local.sh` does NOT call `api-export.js` |
 | Exit node not routing | `tailscale status` in container; check `stacktrckr-home` is Connected in Tailscale admin |
+| Chromium 403s despite exit node | Expected — Chromium ignores exit node. Verify `HOME_PROXY_URL` Fly secret is set and tinyproxy is running on home VM |
 | Volume not mounted | `fly volumes list --app staktrakr`; verify `staktrakr_data` exists |
 | Git push rejected in publish | Run `git fetch origin api && git rebase origin/api` inside the volume |
 | Tailscale SSH lockout | Exit node iptables can block Fly internal SSH — remove `--exit-node` from `tailscale-up` and redeploy |
