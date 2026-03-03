@@ -425,7 +425,12 @@ function updateCloudSyncHeaderBtn() {
   var dot = safeGetElement('headerCloudDot');
   if (!btn) return;
 
-  if (localStorage.getItem('cloud_sync_enabled') === 'false') {
+  var connected = typeof cloudIsConnected === 'function' ? cloudIsConnected(_syncProvider) : false;
+
+  // Show the button whenever a cloud provider is connected, regardless of
+  // cloud_sync_enabled.  The user needs the button to see cloud status and
+  // to enable/configure sync.  Hide only when no provider is connected at all.
+  if (!connected) {
     btn.style.display = 'none';
     return;
   }
@@ -434,7 +439,6 @@ function updateCloudSyncHeaderBtn() {
   if (!dot) return;
   dot.className = 'cloud-sync-dot header-cloud-dot';
 
-  var connected = typeof cloudIsConnected === 'function' ? cloudIsConnected(_syncProvider) : false;
   var hasPw = !!localStorage.getItem('cloud_vault_password');
   var hasAccountId = !!localStorage.getItem('cloud_dropbox_account_id');
   var autoSyncOn = syncIsEnabled();
@@ -528,14 +532,18 @@ function _syncRelativeTime(ts) {
  * Interactively prompt for / confirm the vault password.
  * Called when getSyncPasswordSilent() returns null (new device, first connection).
  * On success: stores password in localStorage, returns combined key string.
+ * @param {boolean} [forcePrompt=false] - Always show the interactive modal even
+ *   if a cached password exists.  Used by enableCloudSync() so the user can
+ *   confirm/correct the password when they explicitly toggle auto-sync on.
  * @returns {Promise<string|null>}
  */
-function getSyncPassword() {
-  // If getSyncPasswordSilent already has a valid key, return it immediately.
-  // Do not add a redundant localStorage check — getSyncPasswordSilent() handles
-  // both Unified mode (password+accountId) and Simple-mode migration (accountId only).
-  var silent = getSyncPasswordSilent();
-  if (silent) return Promise.resolve(silent);
+function getSyncPassword(forcePrompt) {
+  // If getSyncPasswordSilent already has a valid key and we're NOT being forced
+  // to show the prompt, return it immediately.
+  if (!forcePrompt) {
+    var silent = getSyncPasswordSilent();
+    if (silent) return Promise.resolve(silent);
+  }
 
   var accountId = localStorage.getItem('cloud_dropbox_account_id');
   var isNewAccount = !localStorage.getItem('cloud_vault_password');
@@ -2629,11 +2637,11 @@ async function enableCloudSync(provider) {
 
   // -----------------------------------------------------------------------
   // STAK-398 fix: Prompt for password BEFORE any sync operations.
-  // getSyncPasswordSilent() requires both cloud_vault_password and
-  // cloud_dropbox_account_id in localStorage. If either is missing (first-time
-  // setup), poll/push silently skip and the user sees "Connected" with no sync.
+  // forcePrompt=true ensures the user always sees the modal when they
+  // explicitly enable sync, even if a stale password is cached in localStorage.
+  // This prevents silently reusing a wrong/stale password from a prior session.
   // -----------------------------------------------------------------------
-  var password = await getSyncPassword();
+  var password = await getSyncPassword(true);
   var hasAccountId = !!localStorage.getItem('cloud_dropbox_account_id');
   debugWarn('[CloudSync] enableCloudSync: password obtained:', !!password, 'accountId:', hasAccountId);
   if (!password) {
@@ -2788,8 +2796,23 @@ document.addEventListener('visibilitychange', function () {
 /**
  * Smart sync: poll for remote changes first, then push local data.
  * Called by the "Sync Now" button. Replaces the old blind-push behavior.
+ * Ensures a valid password exists before attempting any sync operations.
  */
 async function syncNow() {
+  // Ensure we have a password before attempting sync.  If no silent password
+  // is available, prompt the user interactively.
+  var pw = getSyncPasswordSilent();
+  if (!pw) {
+    pw = await getSyncPassword();
+    if (!pw) {
+      debugWarn('[CloudSync] syncNow: no password — aborting');
+      if (typeof showCloudToast === 'function') {
+        showCloudToast('Cloud sync requires a vault password.');
+      }
+      return;
+    }
+  }
+
   debugLog('[CloudSync] syncNow: polling for remote changes first…');
   await pollForRemoteChanges();
   // pushSyncVault has its own pre-push remote check, so even if poll missed
