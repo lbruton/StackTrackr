@@ -887,7 +887,7 @@ async function pushSyncVault() {
   }
 
   if (_syncRemoteChangeActive) {
-    debugLog('[CloudSync] Remote change handling in progress — push deferred');
+    console.warn('[CloudSync] Remote change handling in progress — push deferred');
     return;
   }
 
@@ -1590,7 +1590,7 @@ async function handleRemoteChange(remoteMeta) {
     // Conflict: both sides have changes
     console.warn('[CloudSync] handleRemoteChange: CONFLICT — showing conflict modal');
     var lastPush = syncGetLastPush();
-    showSyncConflictModal({
+    await showSyncConflictModal({
       local: {
         itemCount: typeof inventory !== 'undefined' ? inventory.length : 0,
         timestamp: lastPush ? lastPush.timestamp : null,
@@ -1739,73 +1739,83 @@ async function pullSyncVault(remoteMeta) {
  * @param {{local: object, remote: object, remoteMeta: object}} opts
  */
 function showSyncConflictModal(opts) {
-  var modal = safeGetElement('cloudSyncConflictModal');
-  if (!modal) {
-    var msg = 'Sync conflict detected.\n\n' +
-      'Local:  ' + opts.local.itemCount + ' items\n' +
-      'Remote: ' + opts.remote.itemCount + ' items\n\n' +
-      'Keep YOUR local version? (Cancel to keep the remote version)';
-    if (typeof appConfirm === 'function') {
-      appConfirm(msg, 'Sync Conflict').then(function (keepMine) {
-        if (keepMine) pushSyncVault();
-        else pullWithPreview(opts.remoteMeta).catch(function (err) {
-          debugLog('[CloudSync] pullWithPreview failed in conflict fallback:', err);
+  return new Promise(function (resolve) {
+    var modal = safeGetElement('cloudSyncConflictModal');
+    if (!modal) {
+      var msg = 'Sync conflict detected.\n\n' +
+        'Local:  ' + opts.local.itemCount + ' items\n' +
+        'Remote: ' + opts.remote.itemCount + ' items\n\n' +
+        'Keep YOUR local version? (Cancel to keep the remote version)';
+      if (typeof appConfirm === 'function') {
+        appConfirm(msg, 'Sync Conflict').then(function (keepMine) {
+          if (keepMine) pushSyncVault();
+          else pullWithPreview(opts.remoteMeta).catch(function (err) {
+            debugLog('[CloudSync] pullWithPreview failed in conflict fallback:', err);
+            updateSyncStatusIndicator('error', 'Pull failed — ' + err.message);
+          });
+          resolve();
+        });
+      } else {
+        resolve();
+      }
+      return;
+    }
+
+    // Populate modal fields
+    var setEl = function (id, text) {
+      var el = safeGetElement(id);
+      if (el) el.textContent = text || '\u2014';
+    };
+
+    setEl('syncConflictLocalItems', opts.local.itemCount + ' items');
+    setEl('syncConflictLocalTime', opts.local.timestamp ? _syncRelativeTime(opts.local.timestamp) : 'Unknown');
+    setEl('syncConflictLocalVersion', 'v' + opts.local.appVersion);
+    setEl('syncConflictRemoteItems', opts.remote.itemCount + ' items');
+    setEl('syncConflictRemoteTime', opts.remote.timestamp ? _syncRelativeTime(opts.remote.timestamp) : 'Unknown');
+    setEl('syncConflictRemoteVersion', 'v' + opts.remote.appVersion);
+    setEl('syncConflictRemoteDevice', opts.remote.deviceId ? opts.remote.deviceId.slice(0, 8) + '\u2026' : 'Another device');
+
+    // Wire buttons
+    var keepMineBtn = safeGetElement('syncConflictKeepMine');
+    var keepTheirsBtn = safeGetElement('syncConflictKeepTheirs');
+    var skipBtn = safeGetElement('syncConflictSkip');
+
+    var closeModal = function () {
+      modal.style.display = 'none';
+      if (typeof closeModalById === 'function') closeModalById('cloudSyncConflictModal');
+    };
+
+    if (keepMineBtn) {
+      keepMineBtn.onclick = function () {
+        closeModal();
+        pushSyncVault();
+        resolve();
+      };
+    }
+    if (keepTheirsBtn) {
+      keepTheirsBtn.onclick = function () {
+        closeModal();
+        // Layer 5 — Show restore preview instead of direct pull (REQ-5)
+        pullWithPreview(opts.remoteMeta).catch(function (err) {
+          debugLog('[CloudSync] pullWithPreview failed on Keep Theirs:', err);
           updateSyncStatusIndicator('error', 'Pull failed — ' + err.message);
         });
-      });
+        resolve();
+      };
     }
-    return;
-  }
+    if (skipBtn) {
+      skipBtn.onclick = function () {
+        closeModal();
+        resolve();
+      };
+    }
 
-  // Populate modal fields
-  var setEl = function (id, text) {
-    var el = safeGetElement(id);
-    if (el) el.textContent = text || '\u2014';
-  };
-
-  setEl('syncConflictLocalItems', opts.local.itemCount + ' items');
-  setEl('syncConflictLocalTime', opts.local.timestamp ? _syncRelativeTime(opts.local.timestamp) : 'Unknown');
-  setEl('syncConflictLocalVersion', 'v' + opts.local.appVersion);
-  setEl('syncConflictRemoteItems', opts.remote.itemCount + ' items');
-  setEl('syncConflictRemoteTime', opts.remote.timestamp ? _syncRelativeTime(opts.remote.timestamp) : 'Unknown');
-  setEl('syncConflictRemoteVersion', 'v' + opts.remote.appVersion);
-  setEl('syncConflictRemoteDevice', opts.remote.deviceId ? opts.remote.deviceId.slice(0, 8) + '\u2026' : 'Another device');
-
-  // Wire buttons
-  var keepMineBtn = safeGetElement('syncConflictKeepMine');
-  var keepTheirsBtn = safeGetElement('syncConflictKeepTheirs');
-  var skipBtn = safeGetElement('syncConflictSkip');
-
-  var closeModal = function () {
-    modal.style.display = 'none';
-    if (typeof closeModalById === 'function') closeModalById('cloudSyncConflictModal');
-  };
-
-  if (keepMineBtn) {
-    keepMineBtn.onclick = function () {
-      closeModal();
-      pushSyncVault();
-    };
-  }
-  if (keepTheirsBtn) {
-    keepTheirsBtn.onclick = function () {
-      closeModal();
-      // Layer 5 — Show restore preview instead of direct pull (REQ-5)
-      pullWithPreview(opts.remoteMeta).catch(function (err) {
-        debugLog('[CloudSync] pullWithPreview failed on Keep Theirs:', err);
-        updateSyncStatusIndicator('error', 'Pull failed — ' + err.message);
-      });
-    };
-  }
-  if (skipBtn) {
-    skipBtn.onclick = closeModal;
-  }
-
-  if (typeof openModalById === 'function') {
-    openModalById('cloudSyncConflictModal');
-  } else {
-    modal.style.display = 'flex';
-  }
+    if (typeof openModalById === 'function') {
+      openModalById('cloudSyncConflictModal');
+    } else {
+      modal.style.display = 'flex';
+    }
+  });
 }
 
 // ---------------------------------------------------------------------------
