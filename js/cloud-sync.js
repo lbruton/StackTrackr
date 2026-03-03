@@ -2402,6 +2402,18 @@ async function pullWithPreview(remoteMeta) {
           // Build diff-like result from manifest data
           var manifestDiff = _buildDiffFromManifest(manifest);
 
+          // STAK-402: If the manifest shows zero changes but the remote item count
+          // differs from the local inventory, the manifest was built from an empty
+          // changeLog (seeded/imported items have no changeLog entries). Fall through
+          // to the vault-first path which does a full DiffEngine.compareItems comparison.
+          var _mChanges = manifestDiff.added.length + manifestDiff.modified.length + manifestDiff.deleted.length;
+          var _mRemoteCount = remoteMeta ? (remoteMeta.itemCount || 0) : 0;
+          var _mLocalCount = typeof inventory !== 'undefined' ? inventory.length : 0;
+          if (_mChanges === 0 && _mRemoteCount !== _mLocalCount) {
+            debugLog('[CloudSync] Manifest diff empty but item counts differ (' + _mRemoteCount + ' remote vs ' + _mLocalCount + ' local) — using vault-first');
+            throw new Error('Manifest stale: empty diff with count mismatch');
+          }
+
           // Stash pull metadata
           _previewPullMeta = {
             syncId: remoteMeta ? remoteMeta.syncId : null,

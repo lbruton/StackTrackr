@@ -519,6 +519,12 @@
 
   function _onApply() {
     var selected = _buildSelectedChanges();
+    // STAK-402: When _checkedItems is empty (empty diff — no selectable items were shown),
+    // pass null instead of [] to signal "accept all / full overwrite". Callers that
+    // check `selectedChanges &&` treat null as "no selective picks, do full restore".
+    // This differs from the intentional "deselect all" case where _checkedItems has
+    // entries but they are all false (then selected is [] and apply-nothing is correct).
+    if (Object.keys(_checkedItems).length === 0) selected = null;
     // Capture callback before close() — close() nullifies _options
     var callback = _options && _options.onApply;
     DiffModal.close();
