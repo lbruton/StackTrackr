@@ -1089,18 +1089,10 @@ const persistInventoryAndRefresh = () => {
 };
 
 /**
- * Updates the displayed inventory item count based on active filters
- *
- * @param {number} filteredCount - Items matching current filters
- * @param {number} totalCount - Total items in inventory
+ * Updates the displayed inventory item count — now handled by the summary bar
+ * in card-view.js (_renderSortBarSummary). Kept as no-op for call-site compat.
  */
-const updateItemCount = (filteredCount, totalCount) => {
-  if (!elements.itemCount) return;
-  elements.itemCount.textContent =
-    filteredCount === totalCount
-      ? `${totalCount} items`
-      : `${filteredCount} of ${totalCount} items`;
-};
+const updateItemCount = () => {};
 
 /**
  * Enhanced validation for inline edits with comprehensive field support

@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.39] - 2026-03-03
+
+### Changed — Summary Bar Items + Weight (STAK-418)
+
+- **Changed**: Item count and total weight now display in the portfolio summary bar (ITEMS/WEIGHT alongside Buy/Melt/Market/G/L) instead of a separate bottom footer — shows filtered/total format when filters active (e.g., 172/189), total weight in troy ounces for currently visible items (STAK-418)
+
+---
+
 ## [3.33.38] - 2026-03-03
 
 ### Fixed — Sync Poll, Settings Sync, DiffModal (STAK-414, STAK-415, STAK-416, STAK-417)
