@@ -2,7 +2,7 @@
 title: Cloud Sync
 category: frontend
 owner: staktrakr
-lastUpdated: v3.33.32
+lastUpdated: v3.33.34
 date: 2026-03-03
 sourceFiles:
   - js/cloud-sync.js
@@ -13,7 +13,7 @@ relatedPages:
 ---
 # Cloud Sync
 
-> **Last updated:** v3.33.32 — 2026-03-03
+> **Last updated:** v3.33.34 — 2026-03-03
 > **Source files:** `js/cloud-sync.js`, `js/cloud-storage.js`
 
 ---
@@ -46,7 +46,7 @@ A separate image vault lives at:
 
 1. **Never bypass `getSyncPasswordSilent()`** — do not add your own `localStorage.getItem('cloud_vault_password')` reads inline. All key derivation logic (Simple mode migration, Unified mode construction) is encapsulated there.
 2. **`.catch()` on `pushSyncVault()` is optional** — it catches internally and all guard conditions return silently. **`.catch()` on `pullSyncVault()` is required** — the token check at the top fires before the internal try/catch, so callers must handle rejection.
-3. **Cancel the debounced push before pulling** — `handleRemoteChange()` calls `scheduleSyncPush.cancel()` before opening any modal. If you add a new pull path, replicate this cancel guard or the vault overwrite race will reopen.
+3. **Cancel the debounced push before pulling** — `handleRemoteChange()` calls `scheduleSyncPush.cancel()` before opening any modal. If you add a new pull path, replicate this cancel guard or the vault overwrite race will reopen. `handleRemoteChange()` also sets `_syncRemoteChangeActive = true` for the entire duration of the pull (including while the DiffModal is open, awaiting user action), which blocks concurrent `pushSyncVault()` calls. Both guards are required: the cancel prevents the queued debounce from firing, and the `_syncRemoteChangeActive` flag blocks any new push triggered while the user is reviewing the diff.
 4. **Do not duplicate `getSyncPassword()` logic** — the fast-path check at the top delegates to `getSyncPasswordSilent()`, which handles both modes and the migration edge case. Adding a second localStorage read before it breaks Simple-mode migration.
 5. **Only the leader tab pushes and polls** — `_syncIsLeader` guards both `pushSyncVault()` and `pollForRemoteChanges()`. Do not call the underlying network operations directly from UI code without this guard, or multi-tab races occur.
 6. **`cloud_dropbox_account_id` is required on every pull/poll path** — `pollForRemoteChanges()`, `pullSyncVault()`, and `pullWithPreview()` all check for a present `cloud_dropbox_account_id` before attempting any decrypt. Missing accountId yields an early-return with a "setup incomplete" toast instead of a misleading "Wrong Vault Password" error.
@@ -136,7 +136,7 @@ getSyncPasswordSilent()
 | `pushSyncVault()` | `() → Promise<void>` | Encrypt and upload inventory to Dropbox. Includes empty-vault guard, backup-before-overwrite, image vault upload, manifest upload, metadata pointer write. |
 | `scheduleSyncPush` | `debounced fn` | Debounced wrapper around `pushSyncVault` (2000ms delay). Exposed on `window` so `saveInventory()` can call it. |
 | `pullSyncVault(remoteMeta)` | `(object) → Promise<void>` | Download, decrypt, and restore vault. Throws if no token — callers must `.catch()`. |
-| `pullWithPreview(remoteMeta)` | `(object) → Promise<void>` | Primary pull path. Manifest-first: downloads `.stmanifest`, builds diff, shows `DiffModal`. Falls back to vault-first if manifest unavailable. |
+| `pullWithPreview(remoteMeta)` | `(object) → Promise<void>` | Primary pull path. Manifest-first: downloads `.stmanifest`, builds diff, shows `DiffModal` and awaits user action before returning. Falls back to vault-first if manifest unavailable; vault-first path also awaits user action. Does not return until Apply or Cancel is selected. |
 | `pollForRemoteChanges()` | `() → Promise<void>` | Download `staktrakr-sync.json`, compare `syncId` with last pull, call `handleRemoteChange()` on change. Only runs if leader tab + visible. |
 | `handleRemoteChange(remoteMeta)` | `(object) → Promise<void>` | Route a detected remote change: cancel debounced push, then show update modal (no local changes) or conflict modal (both sides changed). |
 | `showSyncConflictModal(opts)` | `({local, remote, remoteMeta}) → void` | Display conflict modal with Keep Mine / Keep Theirs / Skip. |
@@ -232,9 +232,11 @@ pollForRemoteChanges()
 ```
 handleRemoteChange(remoteMeta)
   ├─ Defer if password prompt is active
+  ├─ _syncRemoteChangeActive = true   ← blocks concurrent pushes for the full duration
   ├─ scheduleSyncPush.cancel()   ← CRITICAL: prevents vault overwrite race
   ├─ syncHasLocalChanges()?
-  │    No  → showSyncUpdateModal() → user accepts → pullWithPreview()
+  │    No  → showSyncUpdateModal() → user accepts → await pullWithPreview()
+  │                                                  (returns only after Apply/Cancel)
   │                                  user chooses "Push My Data"
   │                                    → _syncConflictUserOverride = true → pushSyncVault()
   │    Yes → showSyncConflictModal()
@@ -242,6 +244,7 @@ handleRemoteChange(remoteMeta)
   │             ├─ Keep Theirs → pullWithPreview(remoteMeta)
   │             └─ Skip → close modal
   │             (appConfirm fallback: keepMine → _syncConflictUserOverride = true → pushSyncVault())
+  └─ finally: _syncRemoteChangeActive = false   ← clears only after pull is fully applied
 ```
 
 ### Pull (Dropbox → inventory)
@@ -256,16 +259,21 @@ pullWithPreview(remoteMeta)
   ├─ Manifest-first path (preferred):
   │    ├─ Download /sync/staktrakr-sync.stmanifest
   │    ├─ decryptManifest() → build diff from changelog entries
-  │    ├─ DiffModal.show() with manifest diff
-  │    │    └─ onApply: _deferredVaultRestore() — download full vault only now
-  │    └─ return (vault download deferred until user confirms)
+  │    ├─ await new Promise(resolveModal):
+  │    │    DiffModal.show() with manifest diff
+  │    │    └─ onApply: _deferredVaultRestore().finally(resolveModal)
+  │    │         — download full vault, decrypt, selective apply
+  │    │    └─ onCancel: resolveModal() — no vault downloaded
+  │    └─ returns only after user selects Apply or Cancel
   │
   └─ Vault-first fallback (if manifest unavailable or DiffModal missing):
        ├─ Download /sync/staktrakr-sync.stvault
        ├─ vaultDecryptToData() → DiffEngine.compareItems() + compareSettings()
-       ├─ showRestorePreviewModal(diffResult, settingsDiff, ...)
-       │    └─ onApply: _applyAndFinalize()
-       └─ fallback: direct pullSyncVault() if modal unavailable
+       ├─ await showRestorePreviewModal(diffResult, settingsDiff, ...)
+       │    ├─ returns Promise<void> — resolves on Apply or Cancel
+       │    └─ onApply: _applyAndFinalize() → resolve()
+       │    (returns null if DiffModal unavailable → falls back below)
+       └─ null fallback: direct pullSyncVault() if modal unavailable
 ```
 
 `pullSyncVault()` is the lower-level restore function (full overwrite, no preview):
@@ -388,7 +396,7 @@ The override backup is the safety net for "Keep Theirs" conflicts or unwanted sy
 
 - **`pushSyncVault()`** — all errors caught internally; sets status indicator to `'error'`; returns silently. No caller catch required.
 - **`pullSyncVault()`** — token guard THROWS before the internal try/catch. All callers must `.catch()` or wrap in try/catch.
-- **`pullWithPreview()`** — catches internally; falls back to `pullSyncVault()` on outer error; sets status indicator to `'error'`.
+- **`pullWithPreview()`** — catches internally; falls back to `pullSyncVault()` on outer error; sets status indicator to `'error'`. Awaits the DiffModal user action (Apply or Cancel) before returning, so `_syncRemoteChangeActive` stays `true` until the pull is fully applied.
 - **Missing `cloud_dropbox_account_id`** — `pollForRemoteChanges()`, `pullSyncVault()`, and `pullWithPreview()` all guard against a missing accountId. Each fires a `console.warn('[CloudSync] … cloud_dropbox_account_id missing')` and a `showCloudToast('Cloud sync setup is incomplete on this device. Please reconnect Dropbox…')` then returns early. No decrypt is attempted.
 - **`getSyncPassword()` missing accountId at confirm time** — the onConfirm handler re-reads `cloud_dropbox_account_id`; if absent, it injects an error message into the modal's error element and returns without closing (modal stays open for the user to cancel and reconnect). The `appPrompt` fallback path resolves `null` when accountId is missing.
 - **`buildAndUploadManifest()`** — must be called inside try/catch; failure is intentionally non-blocking relative to the vault push.
@@ -471,15 +479,17 @@ scheduleSyncPush(); // for inventory changes
 
 ---
 
-## Vault Overwrite Race (fixed v3.32.24)
+## Vault Overwrite Race (fixed v3.32.24, extended v3.33.34)
 
 **Symptom:** On two-device setups, choosing "Keep Theirs" in the conflict modal silently discarded the remote device's changes.
 
 **Root cause:** `initSyncModule()` builds `scheduleSyncPush` with a 2000ms debounce. If the poller detected a remote change within that 2-second window, the debounced push fired during or after the conflict modal, overwriting the remote vault before the pull could complete.
 
-**Fix (v3.32.24):** `handleRemoteChange()` calls `scheduleSyncPush.cancel()` as its first substantive action — before any modal is shown.
+**Fix (v3.32.24):** `handleRemoteChange()` calls `scheduleSyncPush.cancel()` as its first substantive action — before any modal is shown. This prevents the *queued debounce* from firing.
 
-**Both devices must be on v3.32.24+.** A device on v3.32.23 will still exhibit the bug on its own debounced push, even if the other device is updated.
+**Extended fix (v3.33.34, STAK-406):** A second race path remained: `pullWithPreview()` previously returned as soon as it handed off to `DiffModal.show()`, clearing `_syncRemoteChangeActive` before the user had applied or cancelled. A new push triggered while the DiffModal was open (e.g., from another tab broadcast or user action) would not be blocked. The fix makes `pullWithPreview()` await the DiffModal user action in both the manifest-first and vault-first paths before returning, so `_syncRemoteChangeActive` stays `true` until the pull is fully applied. Similarly, `showRestorePreviewModal()` now returns a `Promise<void>` (resolved on Apply or Cancel) instead of a boolean, enabling callers to await it. It returns `null` only when DiffModal is unavailable.
+
+**Both devices must be on v3.32.24+.** A device on v3.32.23 will still exhibit the original debounce-race bug on its own debounced push, even if the other device is updated.
 
 ---
 
