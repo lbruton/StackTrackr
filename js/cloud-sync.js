@@ -565,7 +565,7 @@ function getSyncPassword(forcePrompt) {
           if (pw && pw.length >= 8) {
             var freshId = localStorage.getItem('cloud_dropbox_account_id');
             try { localStorage.setItem('cloud_vault_password', pw); } catch (_) {}
-            resolve(freshId ? pw + ':' + freshId : pw);
+            resolve(freshId ? pw + ':' + freshId : null);
           } else {
             resolve(null);
           }
@@ -607,11 +607,18 @@ function getSyncPassword(forcePrompt) {
       // Re-read accountId at confirm time — it may have been stored after the modal opened
       // (e.g., async Dropbox token exchange completing while the user types their password).
       var freshAccountId = localStorage.getItem('cloud_dropbox_account_id');
+      if (!freshAccountId) {
+        if (errorEl) {
+          errorEl.textContent = 'No Dropbox account ID found. Please cancel and reconnect your Dropbox account.';
+          errorEl.style.display = '';
+        }
+        return;
+      }
       try { localStorage.setItem('cloud_vault_password', pw); } catch (_) {}
       cleanup();
       if (typeof updateCloudSyncHeaderBtn === 'function') updateCloudSyncHeaderBtn();
       // Do NOT push here — the caller (enableCloudSync / initCloudSync) handles sync after resolving.
-      resolve(freshAccountId ? pw + ':' + freshAccountId : pw);
+      resolve(pw + ':' + freshAccountId);
     };
 
     var onCancel = function () { cleanup(); resolve(null); };
@@ -638,8 +645,15 @@ function getSyncPassword(forcePrompt) {
  * @param {Uint8Array} fileBytes
  * @returns {Promise<Object>} Parsed vault payload
  */
-async function _tryDecryptVault(fileBytes) {
+async function _tryDecryptVault(fileBytes, artifactLabel) {
   var candidates = _getSyncKeyCandidates();
+  var _diagPw  = !!localStorage.getItem('cloud_vault_password');
+  var _diagAid = localStorage.getItem('cloud_dropbox_account_id');
+  console.warn('[CloudSync] decrypt attempt:',
+    'artifact=' + (artifactLabel || 'stvault'),
+    'vaultPw:', _diagPw,
+    'accountId:', _diagAid ? _diagAid.slice(0, 8) + '… (' + _diagAid.length + ' chars)' : 'MISSING',
+    'candidates:', candidates.length);
   for (var i = 0; i < candidates.length; i++) {
     try {
       var payload = await vaultDecryptToData(fileBytes, candidates[i].key);
@@ -675,6 +689,13 @@ function _getSyncKeyCandidates() {
  */
 async function _tryDecryptMetadata(parsed) {
   var candidates = _getSyncKeyCandidates();
+  var _diagPw  = !!localStorage.getItem('cloud_vault_password');
+  var _diagAid = localStorage.getItem('cloud_dropbox_account_id');
+  console.warn('[CloudSync] decrypt attempt:',
+    'artifact=metadata',
+    'vaultPw:', _diagPw,
+    'accountId:', _diagAid ? _diagAid.slice(0, 8) + '… (' + _diagAid.length + ' chars)' : 'MISSING',
+    'candidates:', candidates.length);
   for (var i = 0; i < candidates.length; i++) {
     try {
       var derivedKey = await vaultDeriveKey(candidates[i].key, parsed.salt, parsed.iterations);
@@ -1467,6 +1488,17 @@ async function pollForRemoteChanges() {
   var token = typeof cloudGetToken === 'function' ? await cloudGetToken(_syncProvider) : null;
   if (!token) return;
 
+  var _pollAccountId = localStorage.getItem('cloud_dropbox_account_id');
+  if (!_pollAccountId) {
+    console.warn('[CloudSync] Poll: cloud_dropbox_account_id missing — sync key incomplete');
+    if (typeof showCloudToast === 'function') {
+      showCloudToast(
+        'Cloud sync setup is incomplete on this device. Please reconnect Dropbox to refresh your account identity.'
+      );
+    }
+    return;
+  }
+
   // Layer 3 — Folder migration check (REQ-3)
   if (loadDataSync('cloud_sync_migrated', '') !== 'v2') {
     debugLog('[CloudSync] Poll: migration needed — running cloudMigrateToV2');
@@ -1753,6 +1785,17 @@ async function pullSyncVault(remoteMeta) {
   }
   if (!password) {
     debugLog('[CloudSync] Pull cancelled — no password');
+    return;
+  }
+
+  var _pullAccountId = localStorage.getItem('cloud_dropbox_account_id');
+  if (!_pullAccountId) {
+    console.warn('[CloudSync] pullSyncVault: cloud_dropbox_account_id missing — aborting');
+    if (typeof showCloudToast === 'function') {
+      showCloudToast(
+        'Cloud sync setup is incomplete on this device. Please reconnect Dropbox to refresh your account identity.'
+      );
+    }
     return;
   }
 
@@ -2223,7 +2266,7 @@ async function _deferredVaultRestore(token, password, remoteMeta, selectedChange
     // ── Selective apply path ──
     if (selectedChanges && typeof DiffEngine !== 'undefined' && typeof DiffEngine.applySelectedChanges === 'function') {
       var payload = typeof vaultDecryptToData === 'function'
-        ? await _tryDecryptVault(bytes)
+        ? await _tryDecryptVault(bytes, 'stvault')
         : null;
 
       if (payload && payload.data) {
@@ -2271,7 +2314,7 @@ async function _deferredVaultRestore(token, password, remoteMeta, selectedChange
 
     // ── Full-overwrite fallback (try all key variants) ──
     syncSaveOverrideBackup();
-    var fbPayload = await _tryDecryptVault(bytes);
+    var fbPayload = await _tryDecryptVault(bytes, 'stvault');
     await restoreVaultData(fbPayload);
     debugLog('[CloudSync] Deferred vault restore complete (full overwrite)');
 
@@ -2307,6 +2350,17 @@ async function pullWithPreview(remoteMeta) {
   }
   if (!password) {
     debugLog('[CloudSync] Pull preview cancelled — no password');
+    return;
+  }
+
+  var _pullPreviewAccountId = localStorage.getItem('cloud_dropbox_account_id');
+  if (!_pullPreviewAccountId) {
+    console.warn('[CloudSync] pullWithPreview: cloud_dropbox_account_id missing — aborting');
+    if (typeof showCloudToast === 'function') {
+      showCloudToast(
+        'Cloud sync setup is incomplete on this device. Please reconnect Dropbox to refresh your account identity.'
+      );
+    }
     return;
   }
 
@@ -2444,7 +2498,7 @@ async function pullWithPreview(remoteMeta) {
 
     // Attempt to decrypt and preview
     try {
-      var remotePayload = await _tryDecryptVault(bytes);
+      var remotePayload = await _tryDecryptVault(bytes, 'stvault');
       var remoteItems = remotePayload.data || [];
       var localItems = typeof inventory !== 'undefined' ? inventory : [];
 
@@ -2530,7 +2584,7 @@ async function pullWithPreview(remoteMeta) {
         // Modal not in DOM — fall back to direct restore (try all key variants)
         debugLog('[CloudSync] Preview modal unavailable — falling back to direct restore');
         syncSaveOverrideBackup();
-        var fbPayload2 = await _tryDecryptVault(bytes);
+        var fbPayload2 = await _tryDecryptVault(bytes, 'stvault');
         await restoreVaultData(fbPayload2);
         syncSetLastPull(_previewPullMeta);
         _previewPullMeta = null;
