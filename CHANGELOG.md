@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.30] - 2026-03-03
+
+### Fixed — Bi-Directional Sync Fix (STAK-398)
+
+- **Fixed**: Pre-push remote check — `pushSyncVault()` now checks remote metadata before pushing; if another device pushed since last pull, routes to `handleRemoteChange()` instead of silently overwriting
+- **Fixed**: "Sync Now" button calls `syncNow()` (poll-then-push) instead of blind `pushSyncVault()`
+- **Fixed**: `enableCloudSync()` polls for existing remote data before initial push, preventing second browser from overwriting first browser's data
+- **Fixed**: `computeSettingsHash()` was using async `loadData()` without await — settings hash compared Promise objects instead of strings (now uses `loadDataSync`)
+- **Fixed**: `pullWithPreview` vault-first path was using async `loadData()` without await for local settings comparison (now uses `loadDataSync`)
+
+---
+
 ## [3.33.29] - 2026-03-03
 
 ### Fixed — Cloud Backup/Restore Pipeline Fix (STAK-398, STAK-382)
