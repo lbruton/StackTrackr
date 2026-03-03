@@ -4,7 +4,7 @@ Custom review instructions for GitHub Copilot PR reviews.
 
 ## Project Context
 
-StakTrakr is a single-page vanilla JavaScript app (no framework, no build step). It runs on both `file://` protocol and HTTP servers. The runtime artifact is `index.html` plus JS/CSS assets -- no bundler, no transpiler. 70 script files load in strict dependency order via `<script defer>` tags.
+StakTrakr is a single-page vanilla JavaScript app (no framework, no build step). It runs on both `file://` protocol and HTTP servers. The runtime artifact is `index.html` plus JS/CSS assets -- no bundler, no transpiler. 67 script files load in strict dependency order via `<script defer>` tags.
 
 For full codebase context, see `AGENTS.md` in the repository root.
 
@@ -34,7 +34,7 @@ Prefer `saveData()`/`loadData()` (async) or `saveDataSync()`/`loadDataSync()` fr
 
 Scripts load via `<script>` tags in `index.html` in strict dependency order. `file-protocol-fix.js` loads first (no `defer`), `init.js` loads last. If a PR adds a new script file, verify it's placed correctly in `index.html`.
 
-**CRITICAL: Do not flag "undefined" globals** -- this is a vanilla JS app with global scope across 70 files. The following globals are defined in other files and are intentionally available throughout the app:
+**CRITICAL: Do not flag "undefined" globals** -- this is a vanilla JS app with global scope across 67 files. The following globals are defined in other files and are intentionally available throughout the app:
 
 **From `js/state.js`:**
 
@@ -179,9 +179,9 @@ Scripts load via `<script>` tags in `index.html` in strict dependency order. `fi
 
 - `loadSeedImages()` -- first-run seed image loader
 
-- Plus many others across 70 script files
+- Plus many others across 67 script files
 
-**IMPORTANT: Do NOT flag any variable as "not defined" in PR reviews.** This is a vanilla JS app with global scope across 70 files. The `no-undef` ESLint rule is intentionally OFF. Every "X is not defined" comment is a false positive. If you are uncertain whether a variable exists, check the other script files before flagging -- it will be defined in another file loaded earlier in the script order.
+**IMPORTANT: Do NOT flag any variable as "not defined" in PR reviews.** This is a vanilla JS app with global scope across 67 files. The `no-undef` ESLint rule is intentionally OFF. Every "X is not defined" comment is a false positive. If you are uncertain whether a variable exists, check the other script files before flagging -- it will be defined in another file loaded earlier in the script order.
 
 ### 4. Service Worker -- respondWith() Must Always Resolve to a Response
 

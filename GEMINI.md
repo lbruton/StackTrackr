@@ -67,7 +67,7 @@ This file provides foundational mandates and project-specific context for Gemini
 ## Project Structure
 
 - `index.html`: The single entry point.
-- `js/`: 70 JavaScript modules loaded in sequence.
+- `js/`: 67 JavaScript files loaded in strict dependency order via `index.html`.
   - `constants.js`: Global configuration and storage keys.
   - `state.js`: Centralized application state.
   - `utils.js`: Formatting, validation, and storage helpers.
@@ -297,7 +297,7 @@ StakTrakr maintains an in-repo wiki at `wiki/` (served via Docsify) — single s
 
 | Page | Topic |
 |------|-------|
-| `wiki/frontend-overview.md` | File structure, 70-script load order, service worker, PWA |
+| `wiki/frontend-overview.md` | File structure, 67-script load order, service worker, PWA |
 | `wiki/data-model.md` | Portfolio model, storage keys, coin/entry schema |
 | `wiki/storage-patterns.md` | saveData/loadData wrappers, sync variants, key validation |
 | `wiki/dom-patterns.md` | safeGetElement, sanitizeHtml, event delegation |
