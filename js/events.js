@@ -778,6 +778,8 @@ const setupHeaderButtonListeners = () => {
               ? 'Synced ' + (typeof _syncRelativeTime === 'function' ? _syncRelativeTime(lp.timestamp) : '')
               : 'Sync complete';
             if (typeof showCloudToast === 'function') showCloudToast(msg, 2500);
+          }).catch(function (err) {
+            if (typeof showCloudToast === 'function') showCloudToast('Sync failed: ' + (err.message || 'Unknown error'), 3000);
           });
         }
       } else {
