@@ -10,20 +10,29 @@ allowed-tools: Bash, mcp__claude_ai_Linear__create_issue, mcp__claude_ai_Linear_
 
 Automated QA smoke test running Playwright specs via self-hosted **browserless** Docker against the local app. No Browserbase, no cloud credits. The browser runs inside Docker and connects to the app at `host.docker.internal:8765` (which resolves to the host machine from inside the container).
 
-**Spec inventory:** `tests/*.spec.js` — 27 active tests, 4 skipped (API keys required).
+**Spec inventory:** `tests/*.spec.js` — 19 files, 123 tests, 5 skipped.
 
-| Spec | Tests | Coverage |
-|---|---|---|
-| `smoke.spec.js` | 4 | Page load, About/Settings/Add Item modals |
-| `crud.spec.js` | 3 | Add/Edit/Delete item (custom `#appDialogModal` wipe in beforeEach) |
-| `calculations.spec.js` | 2 | Melt value math (injects spot price), gram→oz conversion |
-| `backup-restore.spec.js` | 3 | CSV export, JSON round-trip, vault AES encrypt/decrypt |
-| `live-demo.spec.js` | 1 | Load + hover spot cards + About modal |
-| `ui-checks.spec.js` | 7 | Spot prices, summary cards, seed count, filter chips, search, card views A/B/C/D, activity log |
-| `connection.spec.js` | 1 | browserless connection + page load (@smoke tagged) |
-| `hello-kitty.spec.js` | 1 | Sepia easter egg theme |
-| `cloud-sync.spec.js` | 5 | Dropbox: connected state, backup upload, restore list, disconnect, auto-sync toggle (mocked API) |
-| `api-integrations.spec.js` | 4 | ⏭️ Skipped — need API keys |
+| Spec | Tests | Skipped | Coverage |
+|---|---|---|---|
+| `api-integrations.spec.js` | 14 | 4 | API endpoint validation, sync status, retail endpoints (4 skipped — need API keys) |
+| `backup-restore.spec.js` | 6 | 0 | CSV export, JSON round-trip, vault AES encrypt/decrypt |
+| `calculations.spec.js` | 2 | 0 | Melt value math (injects spot price), gram→oz conversion |
+| `cloud-sync.spec.js` | 5 | 0 | Dropbox: connected state, backup upload, restore list, disconnect, auto-sync toggle (mocked API) |
+| `connection.spec.js` | 1 | 0 | browserless connection + page load (@smoke tagged) |
+| `crud.spec.js` | 3 | 0 | Add/Edit/Delete item (custom `#appDialogModal` wipe in beforeEach) |
+| `diff-merge.spec.js` | 12 | 0 | Diff/merge conflict resolution, field-level comparisons |
+| `disposition.spec.js` | 7 | 0 | Item disposition tracking (sold, gifted, lost, etc.) |
+| `fuzzy-search.spec.js` | 14 | 0 | Fuzzy search matching, ranking, edge cases |
+| `hello-kitty.spec.js` | 1 | 0 | Sepia easter egg theme |
+| `image-storage-stress.spec.js` | 24 | 0 | Image cache stress tests, storage limits, cleanup |
+| `import-export.spec.js` | 4 | 0 | JSON/CSV import/export round-trips |
+| `live-demo.spec.js` | 1 | 0 | Load + hover spot cards + About modal |
+| `market-toggle.spec.js` | 6 | 0 | Market header buttons, toggle visibility, responsive grid |
+| `numista-e2e.spec.js` | 2 | 1 | Numista integration end-to-end (1 skipped — API key) |
+| `numista-regression.spec.js` | 3 | 0 | Numista regression tests |
+| `retail-view-modal.spec.js` | 4 | 0 | Retail view modal display, pricing, interactions |
+| `smoke.spec.js` | 4 | 0 | Page load, About/Settings/Add Item modals |
+| `ui-checks.spec.js` | 10 | 0 | Spot prices, summary cards, seed count, filter chips, search, card views, activity log |
 
 ## Arguments
 
@@ -134,20 +143,27 @@ Print a results table:
 ```
 Results
 =======
-| Spec                       | Tests | Status       | Notes |
-|----------------------------|-------|--------------|-------|
-| smoke.spec.js              | 4     | ✅/⚠️/❌    | ... |
-| crud.spec.js               | 3     | ✅/⚠️/❌    | ... |
-| calculations.spec.js       | 2     | ✅/⚠️/❌    | ... |
-| backup-restore.spec.js     | 3     | ✅/⚠️/❌    | KF-007 if vault times out |
-| live-demo.spec.js          | 1     | ✅/⚠️/❌    | KF-003 if timing failure |
-| ui-checks.spec.js          | 7     | ✅/⚠️/❌    | ... |
-| connection.spec.js         | 1     | ✅/⚠️/❌    | ... |
-| hello-kitty.spec.js        | 1     | ✅/⚠️/❌    | ... |
-| cloud-sync.spec.js         | 5     | ✅/⚠️/❌    | ... |
-| market-toggle.spec.js      | 5     | ✅/⚠️/❌    | KF-004, KF-005 if broken |
-| import-export.spec.js      | 3     | ✅/⚠️/❌    | KF-006 against HTTPS URLs |
-| api-integrations.spec.js   | 4+    | ⏭️/⚠️/❌   | 4 skipped (API keys); KF-001, KF-002 may appear |
+| Spec                         | Tests | Status       | Notes |
+|------------------------------|-------|--------------|-------|
+| api-integrations.spec.js     | 14    | ⏭️/⚠️/❌   | 4 skipped (API keys); KF-001, KF-002 may appear |
+| backup-restore.spec.js       | 6     | ✅/⚠️/❌    | KF-007 if vault times out |
+| calculations.spec.js         | 2     | ✅/⚠️/❌    | ... |
+| cloud-sync.spec.js           | 5     | ✅/⚠️/❌    | ... |
+| connection.spec.js           | 1     | ✅/⚠️/❌    | ... |
+| crud.spec.js                 | 3     | ✅/⚠️/❌    | ... |
+| diff-merge.spec.js           | 12    | ✅/⚠️/❌    | ... |
+| disposition.spec.js          | 7     | ✅/⚠️/❌    | ... |
+| fuzzy-search.spec.js         | 14    | ✅/⚠️/❌    | ... |
+| hello-kitty.spec.js          | 1     | ✅/⚠️/❌    | ... |
+| image-storage-stress.spec.js | 24    | ✅/⚠️/❌    | ... |
+| import-export.spec.js        | 4     | ✅/⚠️/❌    | KF-006 against HTTPS URLs |
+| live-demo.spec.js            | 1     | ✅/⚠️/❌    | KF-003 if timing failure |
+| market-toggle.spec.js        | 6     | ✅/⚠️/❌    | KF-004, KF-005 if broken |
+| numista-e2e.spec.js          | 2     | ⏭️/⚠️/❌   | 1 skipped (API key) |
+| numista-regression.spec.js   | 3     | ✅/⚠️/❌    | ... |
+| retail-view-modal.spec.js    | 4     | ✅/⚠️/❌    | ... |
+| smoke.spec.js                | 4     | ✅/⚠️/❌    | ... |
+| ui-checks.spec.js            | 10    | ✅/⚠️/❌    | ... |
 
 Overall: ✅ PASS / ✅ PASS WITH WARNINGS / ❌ FAIL
 ```
