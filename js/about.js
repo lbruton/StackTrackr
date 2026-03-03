@@ -283,11 +283,11 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.33.27 &ndash; Documentation Accuracy Cleanup</strong>: Full audit fix &mdash; script counts, test section names, skill references, wiki page counts, and stale file removal. 24 issues resolved across instruction files, skills, and wiki (STAK-397)</li>
     <li><strong>v3.33.25 &ndash; Browserbase Test Runbook v2</strong>: Modular E2E test runbook with 75+ tests across 8 section files. /bb-test skill reads runbook Markdown at runtime with section and tag filtering. Manual execution via Chrome DevTools or Claude browser extension documented as $0 alternative (STAK-396)</li>
     <li><strong>v3.33.24 &ndash; Backup Integrity Audit</strong>: exportOrigin metadata added to all export formats. Pre-import validation, DiffModal count header with Select All, and post-import summary banner (STAK-374)</li>
     <li><strong>v3.33.23 &ndash; Chip Max Count Setting</strong>: New chipMaxCount setting caps the filter chip bar to prevent overflow. Search chips always render regardless of cap. Configure in Settings</li>
     <li><strong>v3.33.22 &ndash; Storage Error Modal Suppressed for Intraday Cache</strong>: saveRetailIntradayData() failures now log a console warning instead of showing a user-visible Storage Error modal &mdash; transient 24h sparkline cache is non-critical</li>
-    <li><strong>v3.33.20 &ndash; Market Panel Bug Fixes</strong>: API-driven item names via getRetailCoinMeta() as source of truth. Grid/list sync status shows &ldquo;just now&rdquo; after sync, time-ago when lingering, error state on API failure. Activity log dropdown dynamically populated from API manifest</li>
   `;
 };
 
