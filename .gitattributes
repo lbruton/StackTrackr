@@ -17,6 +17,7 @@ GEMINI.md             export-ignore
 devops/               export-ignore
 functions/            export-ignore
 package.json          export-ignore
+package-lock.json     export-ignore
 
 # GitHub & hosting infrastructure
 .github/              export-ignore
@@ -32,11 +33,13 @@ CNAME                 export-ignore
 .codacy.yml           export-ignore
 .eslintrc.json        export-ignore
 eslint.config.js      export-ignore
+eslint.config.cjs     export-ignore
 .markdownlint.json    export-ignore
 ruleset.xml           export-ignore
 
 # Tests
 tests/                export-ignore
+playwright.config.js  export-ignore
 
 # Documentation & project management (internal)
 about/                export-ignore
@@ -45,9 +48,12 @@ ROADMAP.md            export-ignore
 SPRINT.md             export-ignore
 CHANGELOG.md          export-ignore
 
-# Dev reference pages
+# Dev reference pages & prototypes
 design-preview.html   export-ignore
 style.html            export-ignore
+playground/           export-ignore
+ui-standards/         export-ignore
+sample.csv            export-ignore
 
 # Data files not needed at runtime (bundle.js is the runtime artifact)
 data/hourly/          export-ignore
@@ -56,6 +62,9 @@ data/spot-history-*.json  export-ignore
 
 # Deprecated / archived
 deprecated/           export-ignore
+
+# Wiki (internal documentation)
+wiki/                 export-ignore
 
 # Misc repo assets
 ScreenshotStakTrakr.png  export-ignore
