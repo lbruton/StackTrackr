@@ -18,7 +18,7 @@ relatedPages: []
 
 Single Fly.io app (`staktrakr`) that runs all retail polling, spot price polling, and an HTTP API proxy. Everything is managed by **supervisord** inside one container.
 
-As of 2026-03-02, outbound scraping traffic is routed through a residential home VM via **Tailscale exit node** (dynamic per-cycle in `run-local.sh`) and **tinyproxy** (`HOME_PROXY_URL` for Firecrawl/Playwright). No third-party proxy services are used.
+As of 2026-03-02 (API-3 reorder-scrape-pipeline), the Fly.io poller uses a **Playwright-direct-first** pipeline: most targets are scraped directly from the Fly.io IP with no proxy (~65 of ~85 targets succeed). Only targets that fail direct scrape (403/timeout) fall back to **Firecrawl with proxy** via `HOME_PROXY_URL` (tinyproxy on home VM via Tailscale). The Tailscale exit node is still used for full-container routing, but the majority of scrapes no longer depend on it.
 
 Goldback retail prices are scraped as `goldback-{state}-g{denom}` coins via `providers.json` in the regular retail pipeline. Additionally, `run-goldback.sh` runs hourly at :01 to scrape the official G1 exchange rate from goldback.com via Firecrawl and writes `goldback-spot.json` + `goldback-YYYY.json`. The hourly cron skips if today's price is already captured. See [goldback-pipeline.md](goldback-pipeline.md).
 
@@ -48,7 +48,7 @@ Goldback retail prices are scraped as `goldback-{state}-g{denom}` coins via `pro
 | `redis` | `redis-server` on `127.0.0.1:6379` | 10 | Firecrawl queue backing |
 | `rabbitmq` | `rabbitmq-server` | 10 | Firecrawl job queue |
 | `postgres` | PostgreSQL 17 on `localhost:5432` | 10 | Firecrawl NUQ state |
-| `playwright-service` | Node.js on port 3003 | 15 | Playwright CDP; `PROXY_SERVER="%(ENV_HOME_PROXY_URL)s"` |
+| `playwright-service` | Node.js on port 3003 | 15 | Playwright CDP for Firecrawl; `PROXY_SERVER="%(ENV_HOME_PROXY_URL)s"`. Note: `price-extract.js` Phase 0 launches Chromium directly (no proxy), not through this service |
 | `firecrawl-api` | Node.js on port 3002 | 20 | Firecrawl HTTP API; `PROXY_SERVER="%(ENV_HOME_PROXY_URL)s"` |
 | `firecrawl-worker` | Node.js queue worker | 20 | Processes scrape jobs; `PROXY_SERVER="%(ENV_HOME_PROXY_URL)s"` |
 | `firecrawl-extract-worker` | Node.js extract worker | 20 | LLM extraction jobs |
@@ -73,15 +73,33 @@ Written dynamically by `docker-entrypoint.sh` at container start. `CRON_SCHEDULE
 
 ---
 
-## 4-Tier Scraper Fallback
+## Scrape Pipeline (Fly.io)
 
-As of 2026-02-24, the retail poller uses a fully automated 4-tier fallback to recover from scraping failures without data gaps.
+> **Pipeline reordered (API-3, 2026-03-02).** The Fly.io poller now uses Playwright-direct-first, with Firecrawl as a proxy-based fallback. This is different from the home poller, which still uses Firecrawl-first. See [Poller Parity](poller-parity.md) for comparison.
+
+### Phase 0: Playwright direct (tried first)
+
+`scrapeWithPlaywrightDirect(url, providerId)` — lightweight scrape using Fly.io's own datacenter IP. 15-second timeout, no retries, no proxy. ~65 of ~85 targets succeed here (~5s avg).
+
+### Phase 1: Firecrawl with proxy (fallback)
+
+Only runs if Phase 0 fails (403, timeout, or no price). Routes through `HOME_PROXY_URL` (tinyproxy on home VM via Tailscale) for residential IP. ~20 targets need this (~20s avg).
+
+### Abort/timeout skipRetry
+
+The `scrapeUrl()` catch block sets `skipRetry = true` for `AbortError` and timeout errors, preventing wasted retries on genuinely unreachable targets.
+
+---
+
+## Tiered Recovery (T1–T4)
+
+Beyond the two-phase scrape pipeline, the retail poller has additional recovery layers:
 
 | Tier | Method | When | Status |
 |------|--------|------|--------|
-| T1 | **Tailscale exit node** (`100.112.198.50`) | Normal — residential IP every cycle | Active (supervisord manages `tailscaled` + `tailscale-up`) |
-| T2 | **Fly.io datacenter IP** | Tailscale socket absent — automatic via socket-check in `run-local.sh` | Live (current active egress) |
-| T3 | **`:15` cron retry** (re-scrapes failed SKUs) | ≥1 SKU still failed after T1/T2 | Live |
+| T1 | **Tailscale exit node** (`100.112.198.50`) | Normal — residential IP for container-wide routing | Active (supervisord manages `tailscaled` + `tailscale-up`) |
+| T2 | **Fly.io datacenter IP** | Tailscale socket absent — automatic via socket-check in `run-local.sh` | Live |
+| T3 | **`:15` cron retry** (re-scrapes failed SKUs) | ≥1 SKU still failed after Phase 0 + Phase 1 | Live |
 | T4 | **Turso last-known-good price** | T3 also failed for a vendor | Live |
 
 ### T1 → T2: automatic per-cycle egress selection
@@ -96,9 +114,11 @@ else
 fi
 ```
 
+> **Note:** With API-3's Playwright-direct-first pipeline, Phase 0 scrapes bypass the exit node routing by design (they use the Fly.io IP directly). The exit node primarily benefits Phase 1 Firecrawl requests.
+
 ### T3: automated retry at `:15`
 
-After the retail scrape, `price-extract.js` writes `/tmp/retail-failures.json` listing any SKUs that failed both the main scrape and the FBP backfill. `run-retry.sh` fires at `:15` each hour:
+After the retail scrape, `price-extract.js` writes `/tmp/retail-failures.json` listing any SKUs that failed both Phase 0 and Phase 1. `run-retry.sh` fires at `:15` each hour:
 
 - **No-op** if `/tmp/retail-failures.json` is absent — zero overhead on clean runs
 - Re-scrapes only the failed coin slugs (uses residential proxy via tinyproxy/Tailscale)
@@ -139,6 +159,7 @@ The `stale` flag is available for future frontend UI use. Vendor is kept in the 
 | `TURSO_DATABASE_URL` | Fly secret | Turso libSQL cloud |
 | `TURSO_AUTH_TOKEN` | Fly secret | Turso auth |
 | `GEMINI_API_KEY` | Fly secret | Vision pipeline (Gemini) |
+| `VISION_ENABLED` | Fly secret (or `run-local.sh` default) | Vision pipeline gate; `0` = disabled (default), `1` = enabled. Toggle via `fly secrets set VISION_ENABLED=1` |
 | `METAL_PRICE_API_KEY` | Fly secret | Spot price API (MetalPriceAPI) |
 | `TS_AUTHKEY` | Fly secret | Tailscale reusable ephemeral auth key (also in Infisical as `FLY_TAILSCALE_AUTHKEY`) |
 | `CRON_SCHEDULE` | Fly secret | Retail poller cron override; set to `0` (runs at `:00`) |

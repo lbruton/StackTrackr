@@ -23,7 +23,7 @@ Written dynamically by `docker-entrypoint.sh` at container start. The `CRON_SCHE
 
 | Minute | Script | Purpose | Log file |
 |--------|--------|---------|----------|
-| `0` | `run-local.sh` | Retail price scrape (Firecrawl + Vision) | `/var/log/retail-poller.log` |
+| `0` | `run-local.sh` | Retail price scrape (Playwright direct → Firecrawl fallback; vision if `VISION_ENABLED=1`) | `/var/log/retail-poller.log` |
 | `0,30` | `run-spot.sh` | Spot price poll (MetalPriceAPI → Turso + JSON) | `/var/log/spot-poller.log` |
 | `8,23,38,53` | `run-publish.sh` | Export Turso → JSON, git push to `api` branch | `/var/log/publish.log` |
 | `15` (hourly) | `run-retry.sh` | T3 retry of failed retail SKUs with Webshare proxy | `/var/log/retail-retry.log` |
@@ -44,7 +44,7 @@ Written dynamically by `docker-entrypoint.sh` at container start. The `CRON_SCHE
 ## Timeline View (one hour)
 
 ```
-:00  Fly.io retail scrape (run-local.sh — Firecrawl + Vision → Turso)
+:00  Fly.io retail scrape (run-local.sh — Playwright direct → Firecrawl fallback → Turso; ~16 min without vision)
 :00  Fly.io spot poll #1 (run-spot.sh — MetalPriceAPI → Turso + hourly & 15-min snapshot files)
 :01  Goldback rate scrape (run-goldback.sh — skips if today's price already captured)
 :08  Publisher #1 (run-publish.sh — Turso → JSON → git push api branch)
@@ -52,7 +52,7 @@ Written dynamically by `docker-entrypoint.sh` at container start. The `CRON_SCHE
 :15  T3 Retry (run-retry.sh — re-scrape failures with Webshare proxy)
 :23  Publisher #2 ← picks up :00 retail data
 :30  Fly.io spot poll #2 (run-spot.sh — MetalPriceAPI → Turso + hourly & 15-min snapshot files)
-:30  Home retail scrape (run-home.sh — Firecrawl → Turso)
+:30  Home retail scrape (run-home.sh — Firecrawl first → Playwright fallback → Turso)
 :38  Publisher #3 ← picks up :30 home retail data
 :45  Home spot poll #2 (run-spot-home.sh — MetalPriceAPI → Turso + hourly & 15-min snapshot files)
 :53  Publisher #4
