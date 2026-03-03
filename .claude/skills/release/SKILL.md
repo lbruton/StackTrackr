@@ -6,7 +6,7 @@ allowed-tools: Bash, Read, Write, Edit, Grep, Glob
 
 # Release — StakTrakr
 
-End-to-end release workflow: bump version across all 7 files, commit to the patch branch, and open a draft PR to dev. The `dev → main` PR is created separately at Phase 4.5 only when you explicitly say you're ready to ship.
+End-to-end release workflow: bump version across 7 files (5 manual edits + sw.js auto-stamped by pre-commit hook + seed data), commit to the patch branch, and open a draft PR to dev. The `dev → main` PR is created separately at Phase 4.5 only when you explicitly say you're ready to ship.
 
 ## When to Run
 
@@ -167,7 +167,7 @@ Proceed? [Adjust title / Adjust bullets / Go]
 
 Wait for user confirmation before writing any files.
 
-## Phase 1: Version Bump (5 files)
+## Phase 1: Version Bump (5 manual files + sw.js auto + seed)
 
 Update each file directly using the patterns below. There is no external script — this skill is the single source of truth for version bumps.
 
@@ -275,7 +275,7 @@ Format rules:
 ## Phase 2: Verify
 
 Run the equivalent of `/verify full`:
-1. Confirm all 7 files were updated (grep for the new version string in each)
+1. Confirm all 7 files were updated — 5 manual edits + sw.js (auto-stamped) + seed data (grep for the new version string in each)
 2. Check that the `CHANGELOG.md` section is well-formed
 3. Check that `announcements.md` has 3–5 What's New entries and 3–4 Roadmap items (no stale bloat)
 4. **Sync check**: Verify `getEmbeddedWhatsNew()` in `about.js` contains the same entries as `announcements.md` What's New, and `getEmbeddedRoadmap()` matches the Roadmap section. Flag any drift.
@@ -315,7 +315,7 @@ If there are other uncommitted changes beyond the 5 version files, ask the user 
 **After a successful commit, dispatch a background wiki update:**
 
 Invoke the `wiki-update` skill (Skill tool) as a background Task agent. It identifies
-which wiki pages were affected by this patch and pushes updates to `StakTrakrWiki`.
+which wiki pages were affected by this patch and updates in-repo `wiki/`.
 Do not wait for it — proceed to Phase 4 immediately.
 
 **After a successful commit, push the patch branch and open a PR to dev** (Phase 4 covers this).

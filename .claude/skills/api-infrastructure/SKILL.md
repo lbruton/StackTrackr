@@ -61,18 +61,18 @@ Turso is a free-tier cloud libSQL database — internal to the retail poller. NO
 |----------|---------------|
 | `js/api-health.js` | Stale thresholds, feed URLs, `_normalizeTs` logic |
 | `CLAUDE.md` API Infrastructure table | Feed/threshold/healthy-check summary |
-| StakTrakrWiki (single source of truth): | |
-| — `health.md` | Health checks, stale thresholds, diagnosis commands |
-| — `fly-container.md` | Fly config, crons, VM spec, GHA workflow table |
-| — `rest-api-reference.md` | Endpoint map, schemas, confidence tiers |
-| — `turso-schema.md` | Database tables, indexes, key queries |
-| — `cron-schedule.md` | Full cron timeline |
-| — `spot-pipeline.md` | Spot poller architecture |
-| — `goldback-pipeline.md` | Per-state slugs, denomination generation |
-| — `retail-pipeline.md` | Dual-poller, T1–T5 resilience |
+| `wiki/` (in-repo, single source of truth): | |
+| — `wiki/health.md` | Health checks, stale thresholds, diagnosis commands |
+| — `wiki/fly-container.md` | Fly config, crons, VM spec, GHA workflow table |
+| — `wiki/rest-api-reference.md` | Endpoint map, schemas, confidence tiers |
+| — `wiki/turso-schema.md` | Database tables, indexes, key queries |
+| — `wiki/cron-schedule.md` | Full cron timeline |
+| — `wiki/spot-pipeline.md` | Spot poller architecture |
+| — `wiki/goldback-pipeline.md` | Per-state slugs, denomination generation |
+| — `wiki/retail-pipeline.md` | Dual-poller, T1–T5 resilience |
 | `lbruton/StakTrakrApi` `README.md` | If endpoints, branches, or directory structure changes |
 
-> **Lookup:** Pull wiki → index → search via `mcp__claude-context__search_code` with `path: /Volumes/DATA/GitHub/StakTrakrWiki`.
+> **Lookup:** Search via `mcp__claude-context__search_code` with `path: /Volumes/DATA/GitHub/StakTrakr/wiki`.
 > **Deprecated:** `docs/devops/api-infrastructure-runbook.md` — do not update, will be deleted.
 
 ---
@@ -124,5 +124,5 @@ EOF
 | Notion infrastructure pages | Deprecated 2026-02-25 — do not update |
 | `docs/devops/api-infrastructure-runbook.md` | Deprecated — will be deleted after next wiki audit |
 
-**StakTrakrWiki is the single source of truth.** All documentation changes go there.
-See `/wiki-search` for how to pull, index, and query the wiki.
+**`wiki/` (in-repo) is the single source of truth.** All documentation changes go there.
+See `/wiki-search` for how to search the wiki.

@@ -43,7 +43,7 @@ This file provides foundational mandates and project-specific context for Gemini
 
 1. **Script Order:** Preserve the exact script dependency order in `index.html`. New scripts must be placed appropriately before `js/init.js`.
 2. **Global Scope:** Scripts share a global scope. Do not use ES Modules (`import`/`export`) at runtime.
-3. **DOM Access:** Use `safeGetElement(id)` (defined in `js/utils.js`) for all DOM access, except for elements guaranteed to exist during the very early startup phase in `init.js` or `about.js`.
+3. **DOM Access:** Use `safeGetElement(id)` (defined in `js/init.js`) for all DOM access, except for elements guaranteed to exist during the very early startup phase in `init.js` or `about.js`.
 4. **Data Persistence:** Use `saveData()` and `loadData()` helpers. All new storage keys **must** be registered in `ALLOWED_STORAGE_KEYS` in `js/constants.js`.
 5. **Security:** Always sanitize user-provided strings before DOM injection. Prefer `textContent` over `innerHTML`. Never use `eval()` or `new Function()`.
 6. **State Management:** Centralize shared application state in the `state` object within `js/state.js`.
@@ -67,7 +67,7 @@ This file provides foundational mandates and project-specific context for Gemini
 ## Project Structure
 
 - `index.html`: The single entry point.
-- `js/`: 67 JavaScript modules loaded in sequence.
+- `js/`: 70 JavaScript modules loaded in sequence.
   - `constants.js`: Global configuration and storage keys.
   - `state.js`: Centralized application state.
   - `utils.js`: Formatting, validation, and storage helpers.
@@ -297,7 +297,7 @@ StakTrakr maintains an in-repo wiki at `wiki/` (served via Docsify) — single s
 
 | Page | Topic |
 |------|-------|
-| `wiki/frontend-overview.md` | File structure, 67-script load order, service worker, PWA |
+| `wiki/frontend-overview.md` | File structure, 70-script load order, service worker, PWA |
 | `wiki/data-model.md` | Portfolio model, storage keys, coin/entry schema |
 | `wiki/storage-patterns.md` | saveData/loadData wrappers, sync variants, key validation |
 | `wiki/dom-patterns.md` | safeGetElement, sanitizeHtml, event delegation |
