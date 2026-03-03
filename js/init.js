@@ -263,7 +263,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Pagination elements
     debugLog("Phase 5: Initializing pagination elements...");
     elements.itemsPerPage = safeGetElement("itemsPerPage");
-    elements.itemCount = safeGetElement("itemCount");
 
       elements.changeLogBtn = safeGetElement("changeLogBtn");
       elements.backupReminder = safeGetElement("backupReminder");
