@@ -82,7 +82,7 @@ Providers support two forms:
 
 **Never set both on the same entry.** Use `urls` when a provider has year-specific SKUs that may go OOS; use `url` for stable random-year SKUs.
 
-The scraper (since 2026-02-23) tries all `urls` via Firecrawl first, then falls back to Playwright on the last URL only if the entire Firecrawl chain fails. On OOS or parse failure at URL[i], it jitters and tries URL[i+1]. A price found at any URL stops the loop immediately.
+The scraper tries all `urls` in sequence. On OOS or parse failure at URL[i], it jitters and tries URL[i+1]. A price found at any URL stops the loop immediately. The **scrape method per URL** differs by poller: Fly.io tries Playwright direct first (Phase 0), then Firecrawl with proxy (Phase 1); the home poller tries Firecrawl first, then Playwright fallback. See [Retail Pipeline](retail-pipeline.md) for details.
 
 ---
 
