@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.31] - 2026-03-03
+
+### Fixed — Manifest-First Pull Shows Real Diff (STAK-402)
+
+- **Fixed**: `pullWithPreview` manifest-first path now falls through to vault-first when manifest reports zero changes but remote item count differs from local — seeded/imported items have no changeLog entries, so the manifest was always empty for first-time sync
+- **Fixed**: `DiffModal._onApply` passes `null` (not `[]`) when no diff items were shown, signaling callers to do a full restore rather than apply zero changes
+
+---
+
 ## [3.33.30] - 2026-03-03
 
 ### Fixed — Bi-Directional Sync Fix (STAK-398)

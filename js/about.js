@@ -283,6 +283,7 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.33.31 &ndash; Sync Diff Preview Fix</strong>: Pull preview now shows real item differences instead of &ldquo;No changes detected&rdquo; when seeded/imported items have no changeLog history. Empty-diff Accept correctly does a full restore (STAK-402)</li>
     <li><strong>v3.33.30 &ndash; Bi-Directional Sync Fix</strong>: Pre-push remote check prevents blind overwrite when another device has pushed. Sync Now polls before pushing. Settings hash and diff preview use synchronous storage reads. 5 bugs fixed (STAK-398)</li>
     <li><strong>v3.33.29 &ndash; Cloud Backup/Restore Pipeline Fix</strong>: Fixed backup path functions, async/sync bugs in settings and migration checks, encrypted sync metadata with AES-256-GCM, restructured cloud card UI with backup count badge (STAK-398, STAK-382)</li>
     <li><strong>v3.33.27 &ndash; Documentation Accuracy Cleanup</strong>: Full audit fix &mdash; script counts, test section names, skill references, wiki page counts, and stale file removal. 24 issues resolved (STAK-397)</li>
