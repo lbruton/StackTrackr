@@ -236,6 +236,27 @@ cd /opt/poller && sudo npm install playwright && sudo npx playwright install --w
 
 The vision pipeline (`capture.js` → `extract-vision.js`) runs on the home poller when `GEMINI_API_KEY` is set in `.env`. It uses `BROWSER_MODE=local` with Playwright's bundled Chromium.
 
+### Scrape pipeline (Firecrawl-first)
+
+> **Different from Fly.io.** As of API-3 (2026-03-02), the Fly.io poller uses a Playwright-direct-first pipeline. The home poller still uses the **original Firecrawl-first** pipeline:
+
+```
+For each enabled coin/vendor target:
+  1. Firecrawl (no proxy — home poller is on residential IP)
+     - If price found → done
+     - If OOS → done
+     - If failed → Playwright fallback
+
+  2. Playwright fallback (if Firecrawl failed)
+     - Launch local Chromium
+     - Same extraction logic
+     - If failed → recorded as failed in Turso
+```
+
+This pipeline is slower than Fly.io's (~45-60 min vs ~16 min) but benefits from the residential IP — most dealer sites do not block residential traffic, so Firecrawl succeeds on the first attempt without needing a direct-scrape optimization.
+
+See [Poller Parity](poller-parity.md) for a detailed comparison of both pipeline orders.
+
 ---
 
 ## Common Tasks
