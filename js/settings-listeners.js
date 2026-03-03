@@ -1115,6 +1115,24 @@ const _cloudRestoreWithCachedPw = async (provider, password, fileBytes) => {
   }
 };
 
+/**
+ * Fetches the backup count for a cloud provider and updates the badge element.
+ * Fire-and-forget — errors are silently caught and the badge shows a dash.
+ *
+ * @param {string} provider - Cloud provider key (e.g. 'dropbox')
+ */
+const cloudUpdateBackupCount = async (provider) => {
+  const el = safeGetElement('cloudBackupCount_' + provider);
+  if (!el) return;
+  try {
+    const backups = await cloudListBackups(provider);
+    const count = Array.isArray(backups) ? backups.length : 0;
+    el.textContent = count + ' backup' + (count !== 1 ? 's' : '');
+  } catch {
+    el.textContent = '\u2014';
+  }
+};
+
 const bindCloudStorageListeners = () => {
   var panel = document.getElementById('inventoryCloudSection') || document.getElementById('settingsPanel_cloud');
   if (!panel) return;
@@ -1376,4 +1394,5 @@ const setupSettingsEventListeners = () => {
 
 if (typeof window !== 'undefined') {
   window.setupSettingsEventListeners = setupSettingsEventListeners;
+  window.cloudUpdateBackupCount = cloudUpdateBackupCount;
 }
