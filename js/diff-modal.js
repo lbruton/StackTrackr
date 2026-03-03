@@ -281,15 +281,16 @@
     }
 
     // Apply button count
-    // Only disable when there ARE selectable items but none are checked.
-    // When the diff is empty (no items at all), Apply should be enabled so the
-    // user can acknowledge "no changes" and let onApply record the pull timestamp.
+    // Only disable when there ARE selectable items but none are checked AND
+    // there are no pending settings changes. Settings are always included when
+    // Apply is clicked, so the button should stay enabled for settings-only apply.
     if (applyBtn) {
       var count = _checkedCount();
       var hasSelectableItems = Object.keys(_checkedItems).length > 0;
+      var hasSettings = _options && _options.settingsDiff && _options.settingsDiff.length > 0;
       applyBtn.textContent = count > 0 ? 'Apply (' + count + ')' : 'Apply';
-      applyBtn.disabled = hasSelectableItems && count === 0;
-      applyBtn.style.opacity = (hasSelectableItems && count === 0) ? '0.4' : '';
+      applyBtn.disabled = hasSelectableItems && count === 0 && !hasSettings;
+      applyBtn.style.opacity = (hasSelectableItems && count === 0 && !hasSettings) ? '0.4' : '';
     }
 
     // Count row (backup import flow only)
@@ -420,9 +421,10 @@
     if (applyBtn) {
       var count = _checkedCount();
       var hasSelectableItems = Object.keys(_checkedItems).length > 0;
+      var hasSettings = _options && _options.settingsDiff && _options.settingsDiff.length > 0;
       applyBtn.textContent = count > 0 ? 'Apply (' + count + ')' : 'Apply';
-      applyBtn.disabled = hasSelectableItems && count === 0;
-      applyBtn.style.opacity = (hasSelectableItems && count === 0) ? '0.4' : '';
+      applyBtn.disabled = hasSelectableItems && count === 0 && !hasSettings;
+      applyBtn.style.opacity = (hasSelectableItems && count === 0 && !hasSettings) ? '0.4' : '';
     }
     _updateCountRow();
   }
