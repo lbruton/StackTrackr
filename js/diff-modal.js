@@ -281,11 +281,15 @@
     }
 
     // Apply button count
+    // Only disable when there ARE selectable items but none are checked.
+    // When the diff is empty (no items at all), Apply should be enabled so the
+    // user can acknowledge "no changes" and let onApply record the pull timestamp.
     if (applyBtn) {
       var count = _checkedCount();
+      var hasSelectableItems = Object.keys(_checkedItems).length > 0;
       applyBtn.textContent = count > 0 ? 'Apply (' + count + ')' : 'Apply';
-      applyBtn.disabled = count === 0;
-      applyBtn.style.opacity = count === 0 ? '0.4' : '';
+      applyBtn.disabled = hasSelectableItems && count === 0;
+      applyBtn.style.opacity = (hasSelectableItems && count === 0) ? '0.4' : '';
     }
 
     // Count row (backup import flow only)
@@ -415,9 +419,10 @@
     var applyBtn = safeGetElement('diffReviewApplyBtn');
     if (applyBtn) {
       var count = _checkedCount();
+      var hasSelectableItems = Object.keys(_checkedItems).length > 0;
       applyBtn.textContent = count > 0 ? 'Apply (' + count + ')' : 'Apply';
-      applyBtn.disabled = count === 0;
-      applyBtn.style.opacity = count === 0 ? '0.4' : '';
+      applyBtn.disabled = hasSelectableItems && count === 0;
+      applyBtn.style.opacity = (hasSelectableItems && count === 0) ? '0.4' : '';
     }
     _updateCountRow();
   }

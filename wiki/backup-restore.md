@@ -2,8 +2,8 @@
 title: Backup & Restore
 category: frontend
 owner: staktrakr
-lastUpdated: v3.33.25
-date: 2026-03-02
+lastUpdated: v3.33.30
+date: 2026-03-03
 sourceFiles:
   - js/cloud-storage.js
   - js/cloud-sync.js
@@ -14,7 +14,7 @@ relatedPages:
 ---
 # Backup & Restore
 
-> **Last updated:** v3.33.25 — 2026-03-02
+> **Last updated:** v3.33.30 — 2026-03-03
 > **Source files:** `js/cloud-storage.js`, `js/cloud-sync.js`, `js/utils.js`
 
 ## Overview
@@ -267,12 +267,13 @@ Image blobs are NOT restored via vault — requires a separate ZIP or image vaul
 
 ### Auto-Sync Pull (`pullSyncVault` in `cloud-sync.js`)
 
-1. `syncSaveOverrideBackup()` — snapshot all `SYNC_SCOPE_KEYS` to `cloud_sync_override_backup` in localStorage (rollback-only backup)
-2. Download inventory vault from `/StakTrakr/sync/staktrakr-sync.stvault`
-3. `vaultDecryptAndRestore(fileBytes, password)` — decrypt and write sync-scoped localStorage keys
-4. Check remote `staktrakr-sync.json` `imageVault.hash` vs last pull hash
-5. If image hash changed: download image vault → `vaultDecryptAndRestoreImages()`
-6. Post-restore sequence: `loadInventory()` → `renderTable()` → `renderActiveFilters()` → `loadSpotHistory()`
+1. Guard: `cloud_dropbox_account_id` must be present — if missing, a toast is shown and the pull aborts before any network call
+2. `syncSaveOverrideBackup()` — snapshot all `SYNC_SCOPE_KEYS` to `cloud_sync_override_backup` in localStorage (rollback-only backup)
+3. Download inventory vault from `/StakTrakr/sync/staktrakr-sync.stvault`
+4. `vaultDecryptAndRestore(fileBytes, password)` — decrypt and write sync-scoped localStorage keys
+5. Check remote `staktrakr-sync.json` `imageVault.hash` vs last pull hash
+6. If image hash changed: download image vault → `vaultDecryptAndRestoreImages()`
+7. Post-restore sequence: `loadInventory()` → `renderTable()` → `renderActiveFilters()` → `loadSpotHistory()`
 
 ### Auto-Sync Push (`pushSyncVault` in `cloud-sync.js`)
 
