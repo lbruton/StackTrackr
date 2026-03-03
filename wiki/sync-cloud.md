@@ -2,8 +2,8 @@
 title: Cloud Sync
 category: frontend
 owner: staktrakr
-lastUpdated: v3.33.25
-date: 2026-03-02
+lastUpdated: v3.33.30
+date: 2026-03-03
 sourceFiles:
   - js/cloud-sync.js
   - js/cloud-storage.js
@@ -13,7 +13,7 @@ relatedPages:
 ---
 # Cloud Sync
 
-> **Last updated:** v3.33.25 — 2026-03-02
+> **Last updated:** v3.33.30 — 2026-03-03
 > **Source files:** `js/cloud-sync.js`, `js/cloud-storage.js`
 
 ---
@@ -49,6 +49,7 @@ A separate image vault lives at:
 3. **Cancel the debounced push before pulling** — `handleRemoteChange()` calls `scheduleSyncPush.cancel()` before opening any modal. If you add a new pull path, replicate this cancel guard or the vault overwrite race will reopen.
 4. **Do not duplicate `getSyncPassword()` logic** — the fast-path check at the top delegates to `getSyncPasswordSilent()`, which handles both modes and the migration edge case. Adding a second localStorage read before it breaks Simple-mode migration.
 5. **Only the leader tab pushes and polls** — `_syncIsLeader` guards both `pushSyncVault()` and `pollForRemoteChanges()`. Do not call the underlying network operations directly from UI code without this guard, or multi-tab races occur.
+6. **`cloud_dropbox_account_id` is required on every pull/poll path** — `pollForRemoteChanges()`, `pullSyncVault()`, and `pullWithPreview()` all check for a present `cloud_dropbox_account_id` before attempting any decrypt. Missing accountId yields an early-return with a "setup incomplete" toast instead of a misleading "Wrong Vault Password" error.
 
 ---
 
@@ -108,7 +109,7 @@ getSyncPasswordSilent()
   └─ null → caller must call getSyncPassword() to open the password modal
 ```
 
-`getSyncPassword()` checks `getSyncPasswordSilent()` first. If null, opens `cloudSyncPasswordModal`. On confirm, writes `cloud_vault_password` to localStorage and fires `pushSyncVault()` 100ms later.
+`getSyncPassword()` checks `getSyncPasswordSilent()` first. If null, opens `cloudSyncPasswordModal`. On confirm, re-reads `cloud_dropbox_account_id` — if still absent, an in-modal error is displayed ("No Dropbox account ID found. Please cancel and reconnect your Dropbox account.") and the modal stays open; if present, writes `cloud_vault_password` to localStorage and resolves the composite key.
 
 ### Multi-Tab Coordination
 
@@ -141,7 +142,7 @@ getSyncPasswordSilent()
 | `showSyncConflictModal(opts)` | `({local, remote, remoteMeta}) → void` | Display conflict modal with Keep Mine / Keep Theirs / Skip. |
 | `showSyncUpdateModal(remoteMeta)` | `(object) → Promise<boolean>` | Display "Update available" modal, resolves true/false on user action. |
 | `getSyncPasswordSilent()` | `() → string\|null` | Non-interactive key derivation — safe to call from background loops. |
-| `getSyncPassword()` | `() → Promise<string\|null>` | Interactive key prompt — falls back to modal if `getSyncPasswordSilent()` returns null. |
+| `getSyncPassword()` | `() → Promise<string\|null>` | Interactive key prompt — opens password modal; shows in-modal error if `cloud_dropbox_account_id` is absent at confirm time. |
 | `changeVaultPassword(newPassword)` | `(string) → Promise<boolean>` | Update vault password in localStorage and trigger re-encrypt push. |
 | `syncSaveOverrideBackup()` | `() → void` | Snapshot all `SYNC_SCOPE_KEYS` from localStorage before a pull overwrites them. |
 | `syncRestoreOverrideBackup()` | `() → Promise<void>` | Restore the pre-pull snapshot (with confirmation dialog). |
@@ -217,6 +218,7 @@ Rate limiting (HTTP 429): exponential backoff doubles `_syncRetryDelay` on each 
 ```
 pollForRemoteChanges()
   ├─ Guard: syncIsEnabled() + _syncIsLeader + !document.hidden + token
+  ├─ Guard: cloud_dropbox_account_id present (toast + return if missing)
   ├─ Download: /sync/staktrakr-sync.json
   ├─ Legacy fallback: if 404/409, retry at SYNC_META_PATH_LEGACY
   ├─ Echo detection: if remoteMeta.deviceId === getSyncDeviceId() → skip (our own push)
@@ -246,6 +248,7 @@ handleRemoteChange(remoteMeta)
 ```
 pullWithPreview(remoteMeta)
   ├─ getSyncPasswordSilent() or getSyncPassword()
+  ├─ Guard: cloud_dropbox_account_id present (toast + return if missing)
   │
   ├─ Manifest-first path (preferred):
   │    ├─ Download /sync/staktrakr-sync.stmanifest
@@ -267,6 +270,7 @@ pullWithPreview(remoteMeta)
 ```
 pullSyncVault(remoteMeta)
   ├─ getSyncPasswordSilent() or getSyncPassword()
+  ├─ Guard: cloud_dropbox_account_id present (toast + return if missing)
   ├─ token guard (THROWS if no token — callers MUST .catch())
   ├─ Download /sync/staktrakr-sync.stvault
   ├─ syncSaveOverrideBackup()
@@ -349,10 +353,27 @@ The override backup is the safety net for "Keep Theirs" conflicts or unwanted sy
 - **`pushSyncVault()`** — all errors caught internally; sets status indicator to `'error'`; returns silently. No caller catch required.
 - **`pullSyncVault()`** — token guard THROWS before the internal try/catch. All callers must `.catch()` or wrap in try/catch.
 - **`pullWithPreview()`** — catches internally; falls back to `pullSyncVault()` on outer error; sets status indicator to `'error'`.
+- **Missing `cloud_dropbox_account_id`** — `pollForRemoteChanges()`, `pullSyncVault()`, and `pullWithPreview()` all guard against a missing accountId. Each fires a `console.warn('[CloudSync] … cloud_dropbox_account_id missing')` and a `showCloudToast('Cloud sync setup is incomplete on this device. Please reconnect Dropbox…')` then returns early. No decrypt is attempted.
+- **`getSyncPassword()` missing accountId at confirm time** — the onConfirm handler re-reads `cloud_dropbox_account_id`; if absent, it injects an error message into the modal's error element and returns without closing (modal stays open for the user to cancel and reconnect). The `appPrompt` fallback path resolves `null` when accountId is missing.
 - **`buildAndUploadManifest()`** — must be called inside try/catch; failure is intentionally non-blocking relative to the vault push.
 - **Image vault** — all image upload/download errors are caught with `console.warn`; inventory sync continues uninterrupted.
 - **Rate limiting (429)** — `pushSyncVault()` and `pollForRemoteChanges()` both handle 429 by doubling `_syncRetryDelay` (capped at 5 min). Resets to `SYNC_POLL_INTERVAL` on success.
 - **Activity log** — `recordCloudActivity()` is called on every meaningful cloud operation (connect, disconnect, push, pull, backup, restore, refresh, auth failure) with action, provider, result, detail, and duration.
+
+### Pre-decrypt diagnostics
+
+`_tryDecryptVault(fileBytes, artifactLabel?)` and `_tryDecryptMetadata(parsed)` each emit a structured `console.warn` **before entering the key-candidate loop**:
+
+```
+[CloudSync] decrypt attempt: artifact=stvault vaultPw: true accountId: dbid:abc1… (40 chars) candidates: 3
+[CloudSync] decrypt attempt: artifact=metadata vaultPw: true accountId: MISSING candidates: 0
+```
+
+Fields logged:
+- `artifact` — `'stvault'` (all `_tryDecryptVault` call sites), `'metadata'` (`_tryDecryptMetadata`)
+- `vaultPw` — boolean presence of `cloud_vault_password`
+- `accountId` — first 8 chars + length if present, or `MISSING`
+- `candidates` — count from `_getSyncKeyCandidates()` (0 when accountId is missing, since no valid composite key can be formed)
 
 ---
 
