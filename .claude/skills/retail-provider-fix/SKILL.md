@@ -6,7 +6,7 @@ description: Use when retail prices are failing for a vendor — wrong prices, f
 # Retail Provider Fix
 
 Diagnose and fix scraping failures for individual dealers in the StakTrakr retail pipeline.
-All code lives in `StakTrakrApi/devops/retail-poller/`. All URL config is in `providers.json` on the `api` branch.
+All code lives in `StakTrakrApi/devops/fly-poller/`. All URL config is in `providers.json` on the `api` branch.
 
 ---
 
@@ -48,7 +48,7 @@ ssh home-lxc "curl -s -X POST http://localhost:3002/v1/scrape ..."
 
 ## Step 3 — Config Map in `price-extract.js`
 
-All extraction config is in `StakTrakrApi/devops/retail-poller/price-extract.js`.
+All extraction config is in `StakTrakrApi/devops/fly-poller/price-extract.js`.
 
 | Config | Line ~| What it does |
 |---|---|---|
@@ -122,7 +122,7 @@ After verifying the fix in dry-run:
 
 ```bash
 # Fly.io — redeploy container (required for price-extract.js changes)
-cd /Volumes/DATA/GitHub/StakTrakrApi/devops/retail-poller
+cd /Volumes/DATA/GitHub/StakTrakrApi/devops/fly-poller
 fly deploy -a staktrakr
 
 # Home LXC — no deploy needed; run-home.sh reads price-extract.js directly
