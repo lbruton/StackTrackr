@@ -1630,16 +1630,37 @@ async function pollForRemoteChanges() {
     }
 
     // Layer 4 — Hash-based change detection (REQ-4)
-    // Skip notification if inventory hashes match (content is identical)
+    // Skip notification if BOTH inventory AND settings hashes match.
+    // STAK-416: Previously only checked inventoryHash — settings-only changes
+    // were silently swallowed because the poll recorded the pull and returned
+    // without showing the DiffModal.
     if (remoteMeta.inventoryHash) {
       try {
         var localInv = typeof inventory !== 'undefined' ? inventory : [];
         var localHash = await computeInventoryHash(localInv);
-        console.warn('[CloudSync] Poll: hash comparison — local:', localHash, '(' + localInv.length + ' items) vs remote:', remoteMeta.inventoryHash, '(' + remoteMeta.itemCount + ' items)');
-        if (localHash && localHash === remoteMeta.inventoryHash) {
-          console.warn('[CloudSync] Poll: inventory hashes MATCH — silently recording pull (no notification)');
+        var invMatch = localHash && localHash === remoteMeta.inventoryHash;
+
+        // Also compare settings hash when available
+        var settingsMatch = true; // default true if no remote hash (backward compat)
+        if (remoteMeta.settingsHash) {
+          try {
+            var localSetHash = await computeSettingsHash();
+            settingsMatch = localSetHash && localSetHash === remoteMeta.settingsHash;
+          } catch (_sErr) {
+            settingsMatch = false;
+          }
+        }
+
+        console.warn('[CloudSync] Poll: hash comparison — inv:', invMatch, 'settings:', settingsMatch,
+          '| local:', localHash, '(' + localInv.length + ' items) vs remote:', remoteMeta.inventoryHash, '(' + remoteMeta.itemCount + ' items)');
+
+        if (invMatch && settingsMatch) {
+          console.warn('[CloudSync] Poll: inventory + settings hashes MATCH — silently recording pull');
           syncSetLastPull({ syncId: remoteMeta.syncId, timestamp: remoteMeta.timestamp, rev: remoteMeta.rev });
           return;
+        }
+        if (invMatch && !settingsMatch) {
+          console.warn('[CloudSync] Poll: inventory matches but SETTINGS DIFFER — proceeding to pull');
         }
       } catch (_hashErr) {
         console.warn('[CloudSync] Poll: hash comparison failed (falling through):', _hashErr.message);
@@ -2410,6 +2431,17 @@ async function pullWithPreview(remoteMeta) {
           // Build diff-like result from manifest data
           var manifestDiff = _buildDiffFromManifest(manifest);
 
+          // STAK-417: If manifest has no item changes, fall through to vault-first
+          // which can also check settings. The manifest path doesn't compare settings,
+          // so an empty manifest diff might hide a settings-only change.
+          var _mNoChanges = (manifestDiff.added || []).length === 0
+            && (manifestDiff.deleted || []).length === 0
+            && (manifestDiff.modified || []).length === 0;
+          if (_mNoChanges) {
+            console.warn('[CloudSync] Manifest has no item changes — falling through to vault-first (may have settings changes)');
+            throw new Error('Manifest empty: falling through to vault-first for settings check');
+          }
+
           // STAK-402 + STAK-412: Verify the manifest diff is complete by checking
           // whether the expected post-apply count matches the remote item count.
           // The manifest changelog only records changes the pushing device made — it
@@ -2633,6 +2665,23 @@ async function pullWithPreview(remoteMeta) {
       } catch (conflictErr) {
         debugLog('[CloudSync] Conflict detection failed (non-blocking):', conflictErr.message);
         conflicts = null;
+      }
+
+      // STAK-417: If the diff is completely empty (no item changes AND no settings
+      // changes), silently record the pull and skip the DiffModal entirely.
+      // This prevents the annoying "No changes detected" popup when both sides
+      // are already in sync but the poll fell through the hash comparison.
+      var _noItemChanges = (diffResult.added || []).length === 0
+        && (diffResult.deleted || []).length === 0
+        && (diffResult.modified || []).length === 0;
+      var _noSettingsChanges = !settingsDiff || !settingsDiff.changed || settingsDiff.changed.length === 0;
+      if (_noItemChanges && _noSettingsChanges) {
+        console.warn('[CloudSync] Pull preview: diff is EMPTY (no item or settings changes) — silently recording pull');
+        syncSetLastPull(_previewPullMeta);
+        _previewPullMeta = null;
+        logCloudSyncActivity('auto_sync_pull', 'success', 'No changes — pull recorded silently');
+        updateSyncStatusIndicator('idle', 'just now');
+        return;
       }
 
       // STAK-406: shownPromise resolves only after user completes Apply/Cancel,
