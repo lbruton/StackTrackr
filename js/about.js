@@ -283,11 +283,11 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.33.36 &ndash; Sync Pull Root Cause Fix</strong>: Vault-first pull now correctly extracts inventory from the encrypted payload &mdash; was treating the localStorage dict as an array, showing zero additions. Removed redundant Sync Conflict dialog; remote changes go directly to Review Sync Changes DiffModal. Manifest count check expanded to catch incomplete diffs (STAK-412)</li>
     <li><strong>v3.33.35 &ndash; Sync Apply &amp; Dialog Fixes</strong>: DiffModal Apply no longer empties the vault when remote-only additions are missed by the manifest diff &mdash; falls back to full overwrite. Empty-vault guard dialog OK button now correctly triggers a pull. Double conflict modal prevented (STAK-409, STAK-410, STAK-411)</li>
     <li><strong>v3.33.34 &ndash; Sync Pull Race Fix</strong>: Cloud sync no longer overwrites Dropbox with stale local data while the diff preview modal is open &mdash; the pull now fully blocks concurrent pushes until the user clicks Apply and the vault restore completes (STAK-406)</li>
     <li><strong>v3.33.33 &ndash; Cloud Button Always Visible</strong>: Cloud header button and Settings Cloud tab are now always shown &mdash; removed hide-when-disconnected logic that blocked access to cloud setup for new users (STAK-405)</li>
     <li><strong>v3.33.32 &ndash; Keep Mine Conflict Fix</strong>: Pressing Keep Mine or Push My Data now completes the push &mdash; a one-shot override flag prevents the pre-push check from re-detecting the resolved conflict and looping (STAK-403)</li>
-    <li><strong>v3.33.31 &ndash; Sync Diff Preview Fix</strong>: Pull preview now shows real item differences instead of &ldquo;No changes detected&rdquo; when seeded/imported items have no changeLog history. Empty-diff Accept correctly does a full restore (STAK-402)</li>
   `;
 };
 
