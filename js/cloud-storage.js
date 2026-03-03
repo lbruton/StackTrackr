@@ -213,7 +213,6 @@ const CLOUD_REDIRECT_URI = window.location.origin + '/oauth-callback.html';
     } catch (e) { /* ignore */ }
   }
 })();
-const CLOUD_LATEST_FILENAME = 'staktrakr-latest.json';
 
 // ---------------------------------------------------------------------------
 // PKCE helpers
@@ -637,9 +636,29 @@ async function cloudUploadVault(provider, fileBytes) {
   await cloudEnsureFolder(provider, token);
 
   if (provider === 'dropbox') {
+    // Ensure /backups/ subfolder exists (ignore 409 = already exists)
+    const backupsPath = config.folder + '/backups';
+    try {
+      const ensureResp = await fetch('https://api.dropboxapi.com/2/files/create_folder_v2', {
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer ' + token,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ path: backupsPath, autorename: false }),
+      });
+      if (ensureResp.ok || ensureResp.status === 409) {
+        debugLog('[CloudStorage] Backups folder OK:', backupsPath);
+      } else {
+        debugLog('[CloudStorage] Backups folder create returned', ensureResp.status);
+      }
+    } catch (ensureErr) {
+      debugLog('[CloudStorage] Backups folder ensure failed:', ensureErr.message);
+    }
+
     // Upload versioned backup
     var apiArg = JSON.stringify({
-      path: config.folder + '/' + filename,
+      path: config.folder + '/backups/' + filename,
       mode: 'add',
       autorename: true,
       mute: true,
@@ -663,7 +682,7 @@ async function cloudUploadVault(provider, fileBytes) {
     };
     var latestBytes = new TextEncoder().encode(JSON.stringify(latestData));
     var latestArg = JSON.stringify({
-      path: config.folder + '/' + CLOUD_LATEST_FILENAME,
+      path: config.folder + '/backups/' + CLOUD_LATEST_FILENAME,
       mode: 'overwrite',
       autorename: false,
       mute: true,
@@ -726,7 +745,8 @@ async function cloudGetRemoteLatest(provider) {
 
   try {
     if (provider === 'dropbox') {
-      var apiArg = JSON.stringify({ path: config.folder + '/' + CLOUD_LATEST_FILENAME });
+      // Try v2 path first (/backups/ subfolder)
+      var apiArg = JSON.stringify({ path: config.folder + '/backups/' + CLOUD_LATEST_FILENAME });
       var resp = await fetch('https://content.dropboxapi.com/2/files/download', {
         method: 'POST',
         headers: {
@@ -734,8 +754,21 @@ async function cloudGetRemoteLatest(provider) {
           'Dropbox-API-Arg': apiArg,
         },
       });
-      if (!resp.ok) return null;
-      return resp.json();
+      if (resp.ok) return resp.json();
+
+      // Fallback: legacy flat path (pre-v2 migration)
+      if (resp.status === 409 || resp.status === 404) {
+        var legacyArg = JSON.stringify({ path: config.folder + '/' + CLOUD_LATEST_FILENAME });
+        var legacyResp = await fetch('https://content.dropboxapi.com/2/files/download', {
+          method: 'POST',
+          headers: {
+            Authorization: 'Bearer ' + token,
+            'Dropbox-API-Arg': legacyArg,
+          },
+        });
+        if (legacyResp.ok) return legacyResp.json();
+      }
+      return null;
     }
   } catch (e) {
     debugLog('[CloudStorage] Failed to fetch remote latest', e);
@@ -763,7 +796,7 @@ async function cloudListBackups(provider) {
         Authorization: 'Bearer ' + token,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ path: config.folder, recursive: false }),
+      body: JSON.stringify({ path: config.folder + '/backups', recursive: false }),
     });
     if (!resp.ok) {
       // Folder may not exist yet
@@ -806,7 +839,7 @@ async function cloudDownloadVaultByName(provider, filename) {
   var config = CLOUD_PROVIDERS[provider];
 
   if (provider === 'dropbox') {
-    var apiArg = JSON.stringify({ path: config.folder + '/' + filename });
+    var apiArg = JSON.stringify({ path: config.folder + '/backups/' + filename });
     var resp = await fetch('https://content.dropboxapi.com/2/files/download', {
       method: 'POST',
       headers: {
@@ -842,7 +875,7 @@ async function cloudDeleteBackup(provider, filename) {
         Authorization: 'Bearer ' + token,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ path: config.folder + '/' + filename }),
+      body: JSON.stringify({ path: config.folder + '/backups/' + filename }),
     });
     if (!resp.ok) throw new Error('Delete failed: ' + resp.status);
 
@@ -994,6 +1027,14 @@ function syncCloudUI() {
     // Update legacy status detail text
     var statusEl = card.querySelector('.cloud-status-detail');
     if (statusEl) statusEl.textContent = '';
+
+    // Update backup count badge when connected; clear when disconnected
+    if (connected && typeof cloudUpdateBackupCount === 'function') {
+      cloudUpdateBackupCount(key);
+    } else {
+      var badgeEl = document.getElementById('cloudBackupCount_' + key);
+      if (badgeEl) badgeEl.textContent = '';
+    }
 
     // Hide backup list when disconnected
     if (backupListEl && !connected) {

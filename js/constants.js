@@ -785,6 +785,9 @@ const SYNC_MANIFEST_PATH_LEGACY = '/StakTrakr/staktrakr-sync.stmanifest';
 /** Dropbox folder for cloud-side backups */
 const SYNC_BACKUP_FOLDER = '/StakTrakr/backups';
 
+/** Filename used for the "latest" cloud backup snapshot */
+const CLOUD_LATEST_FILENAME = 'staktrakr-latest.json';
+
 /** Cloud backup history depth — how many backups to retain */
 const CLOUD_BACKUP_HISTORY_KEY = 'cloud_backup_history_depth';
 const CLOUD_BACKUP_HISTORY_DEFAULT = 5;
@@ -1731,6 +1734,7 @@ if (typeof window !== "undefined") {
   window.SYNC_MANIFEST_PATH = SYNC_MANIFEST_PATH;
   window.SYNC_MANIFEST_PATH_LEGACY = SYNC_MANIFEST_PATH_LEGACY;
   window.SYNC_BACKUP_FOLDER = SYNC_BACKUP_FOLDER;
+  window.CLOUD_LATEST_FILENAME = CLOUD_LATEST_FILENAME;
   window.CLOUD_BACKUP_HISTORY_KEY = CLOUD_BACKUP_HISTORY_KEY;
   window.CLOUD_BACKUP_HISTORY_DEFAULT = CLOUD_BACKUP_HISTORY_DEFAULT;
   window.CLOUD_BACKUP_HISTORY_OPTIONS = CLOUD_BACKUP_HISTORY_OPTIONS;

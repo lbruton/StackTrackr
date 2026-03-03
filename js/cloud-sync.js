@@ -930,7 +930,25 @@ async function pushSyncVault() {
           // No remote meta file — first push, allow
           debugLog('[CloudSync] Empty-vault guard: no remote meta (first push) — allowing');
         } else if (guardResp.ok) {
-          var guardMeta = await guardResp.json();
+          // Decrypt metadata (encrypted format) or fall back to legacy plaintext JSON
+          var guardMeta;
+          try {
+            var guardBuffer = await guardResp.arrayBuffer();
+            var guardParsed = parseVaultFile(new Uint8Array(guardBuffer));
+            var guardMetaKey = await vaultDeriveKey(password, guardParsed.salt, guardParsed.iterations);
+            var guardDecrypted = await vaultDecrypt(guardParsed.ciphertext, guardMetaKey, guardParsed.iv);
+            guardMeta = JSON.parse(new TextDecoder().decode(guardDecrypted));
+          } catch (guardDecryptErr) {
+            // Legacy plaintext metadata — fall back to JSON parse
+            debugLog('[CloudSync] Guard: metadata not encrypted, falling back to JSON parse:', guardDecryptErr.message);
+            try {
+              var guardFallbackText = new TextDecoder().decode(new Uint8Array(guardBuffer));
+              guardMeta = JSON.parse(guardFallbackText);
+            } catch (guardJsonErr) {
+              debugLog('[CloudSync] Guard: metadata parse failed entirely:', guardJsonErr.message);
+              guardMeta = null;
+            }
+          }
           if (guardMeta && guardMeta.itemCount && guardMeta.itemCount > 0) {
             // Remote has items, local is empty — hard block
             debugLog('[CloudSync] Empty-vault guard: BLOCKED — remote has', guardMeta.itemCount, 'items');
@@ -1109,7 +1127,14 @@ async function pushSyncVault() {
       debugLog('[CloudSync] Settings hash failed (omitting):', _sHashErr.message);
     }
 
-    var metaBytes = new TextEncoder().encode(JSON.stringify(metaPayload));
+    // Encrypt metadata before upload (same AES-256-GCM as vault files)
+    var metaJson = JSON.stringify(metaPayload);
+    var metaSalt = vaultRandomBytes(32);
+    var metaIv = vaultRandomBytes(12);
+    var metaKey = await vaultDeriveKey(password, metaSalt, VAULT_PBKDF2_ITERATIONS);
+    var metaCiphertext = await vaultEncrypt(new TextEncoder().encode(metaJson), metaKey, metaIv);
+    var metaBytes = serializeVaultFile(metaSalt, metaIv, VAULT_PBKDF2_ITERATIONS, metaCiphertext);
+
     var metaArg = JSON.stringify({
       path: SYNC_META_PATH,
       mode: 'overwrite',
@@ -1148,7 +1173,7 @@ async function pushSyncVault() {
 
     // Auto-prune old backups (fire-and-forget)
     if (typeof cloudPruneBackups === 'function') {
-      var pruneMax = parseInt(loadData(CLOUD_BACKUP_HISTORY_KEY), 10) || CLOUD_BACKUP_HISTORY_DEFAULT;
+      var pruneMax = parseInt(loadDataSync(CLOUD_BACKUP_HISTORY_KEY, String(CLOUD_BACKUP_HISTORY_DEFAULT)), 10);
       cloudPruneBackups(_syncProvider, pruneMax).catch(function (e) {
         debugLog('[CloudSync] Prune error (non-blocking):', e.message);
       });
@@ -1244,7 +1269,31 @@ async function pollForRemoteChanges() {
     }
     _syncRetryDelay = SYNC_POLL_INTERVAL;
 
-    var remoteMeta = await resp.json();
+    // Decrypt metadata (encrypted format) or fall back to legacy plaintext JSON
+    var remoteMeta;
+    try {
+      var metaBuffer = await resp.arrayBuffer();
+      var metaParsed = parseVaultFile(new Uint8Array(metaBuffer));
+      var syncPassword = getSyncPasswordSilent();
+      if (!syncPassword) {
+        debugLog('[CloudSync] Poll: no password available for metadata decryption — skipping');
+        return;
+      }
+      var metaKey = await vaultDeriveKey(syncPassword, metaParsed.salt, metaParsed.iterations);
+      var metaDecrypted = await vaultDecrypt(metaParsed.ciphertext, metaKey, metaParsed.iv);
+      remoteMeta = JSON.parse(new TextDecoder().decode(metaDecrypted));
+    } catch (decryptErr) {
+      // Legacy plaintext metadata — fall back to JSON parse
+      debugLog('[CloudSync] Metadata not encrypted, falling back to JSON parse:', decryptErr.message);
+      try {
+        // Response body already consumed by arrayBuffer() — re-parse from the buffer
+        var fallbackText = new TextDecoder().decode(new Uint8Array(metaBuffer));
+        remoteMeta = JSON.parse(fallbackText);
+      } catch (jsonErr) {
+        debugLog('[CloudSync] Poll: metadata parse failed entirely:', jsonErr.message);
+        return;
+      }
+    }
     if (!remoteMeta || !remoteMeta.syncId) return;
 
     var lastPull = syncGetLastPull();
@@ -1422,6 +1471,7 @@ async function handleRemoteChange(remoteMeta) {
  * @param {object} remoteMeta - Remote sync metadata (from pollForRemoteChanges)
  */
 async function pullSyncVault(remoteMeta) {
+  debugLog('[CloudSync] pullSyncVault invoked as DiffEngine fallback — full overwrite path');
   // Try silent key first (Simple mode or cached Secure password)
   var password = getSyncPasswordSilent();
   if (!password) {
