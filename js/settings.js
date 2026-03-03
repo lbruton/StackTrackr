@@ -231,7 +231,7 @@ const syncSettingsUI = () => {
   // Cloud backup history depth
   var historySelect = safeGetElement('cloudBackupHistoryDepth');
   if (historySelect) {
-    var savedDepth = loadDataSync(CLOUD_BACKUP_HISTORY_KEY, String(CLOUD_BACKUP_HISTORY_DEFAULT));
+    const savedDepth = loadDataSync(CLOUD_BACKUP_HISTORY_KEY, String(CLOUD_BACKUP_HISTORY_DEFAULT));
     historySelect.value = savedDepth;
   }
 
