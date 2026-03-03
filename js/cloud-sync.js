@@ -160,7 +160,7 @@ async function computeSettingsHash() {
     var settings = {};
     for (var i = 0; i < keys.length; i++) {
       if (keys[i] === 'metalInventory') continue; // skip inventory — covered by inventoryHash
-      var val = loadData(keys[i]);
+      var val = loadDataSync(keys[i], null);
       if (val !== null && val !== undefined) settings[keys[i]] = val;
     }
     var sorted = JSON.stringify(settings, Object.keys(settings).sort());
@@ -906,6 +906,78 @@ async function pushSyncVault() {
       } catch (migErr) {
         debugLog('[CloudSync] Migration error (non-blocking):', migErr.message);
       }
+    }
+
+    // -----------------------------------------------------------------------
+    // Layer 0 — Pre-push remote check (STAK-398 fix)
+    // Before pushing, check if another device has pushed since our last pull.
+    // If so, route to handleRemoteChange() instead of overwriting.
+    // This prevents the push-races-poll bug where pushSyncVault (2s debounce)
+    // always beats pollForRemoteChanges (10min interval).
+    // -----------------------------------------------------------------------
+    try {
+      var prePushApiArg = JSON.stringify({ path: SYNC_META_PATH });
+      var prePushResp = await fetch('https://content.dropboxapi.com/2/files/download', {
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer ' + token,
+          'Dropbox-API-Arg': prePushApiArg,
+        },
+      });
+
+      // Try legacy path if new path not found
+      if (prePushResp.status === 409 || prePushResp.status === 404) {
+        var prePushLegacyArg = JSON.stringify({ path: SYNC_META_PATH_LEGACY });
+        var prePushLegacyResp = await fetch('https://content.dropboxapi.com/2/files/download', {
+          method: 'POST',
+          headers: {
+            Authorization: 'Bearer ' + token,
+            'Dropbox-API-Arg': prePushLegacyArg,
+          },
+        });
+        if (prePushLegacyResp.ok) prePushResp = prePushLegacyResp;
+      }
+
+      if (prePushResp.ok) {
+        // Decrypt metadata (encrypted format) or fall back to legacy plaintext JSON
+        var prePushMeta;
+        try {
+          var prePushBuffer = await prePushResp.arrayBuffer();
+          var prePushParsed = parseVaultFile(new Uint8Array(prePushBuffer));
+          var prePushKey = await vaultDeriveKey(password, prePushParsed.salt, prePushParsed.iterations);
+          var prePushDecrypted = await vaultDecrypt(prePushParsed.ciphertext, prePushKey, prePushParsed.iv);
+          prePushMeta = JSON.parse(new TextDecoder().decode(prePushDecrypted));
+        } catch (prePushDecryptErr) {
+          debugLog('[CloudSync] Pre-push: metadata not encrypted, falling back to JSON:', prePushDecryptErr.message);
+          try {
+            var prePushFallbackText = new TextDecoder().decode(new Uint8Array(prePushBuffer));
+            prePushMeta = JSON.parse(prePushFallbackText);
+          } catch (prePushJsonErr) {
+            debugLog('[CloudSync] Pre-push: metadata parse failed:', prePushJsonErr.message);
+            prePushMeta = null;
+          }
+        }
+
+        if (prePushMeta && prePushMeta.syncId && prePushMeta.deviceId) {
+          var myDeviceId = getSyncDeviceId();
+          var lastPull = syncGetLastPull();
+
+          // If a DIFFERENT device pushed AND we haven't pulled this syncId yet
+          if (prePushMeta.deviceId !== myDeviceId &&
+              (!lastPull || lastPull.syncId !== prePushMeta.syncId)) {
+            debugLog('[CloudSync] Pre-push: remote change from another device detected — routing to handleRemoteChange');
+            logCloudSyncActivity('auto_sync_push', 'deferred', 'Remote change detected from device ' + prePushMeta.deviceId.slice(0, 8) + ' — showing diff');
+            _syncPushInFlight = false;
+            updateSyncStatusIndicator('idle');
+            await handleRemoteChange(prePushMeta);
+            return; // Do NOT push — let the user decide via the update/conflict modal
+          }
+        }
+      }
+      // If meta fetch failed (409/404 = first push, or network error), proceed with push
+    } catch (prePushErr) {
+      debugLog('[CloudSync] Pre-push remote check failed (non-blocking):', prePushErr.message);
+      // Non-blocking: if the check fails, proceed with push (fail-open for first push scenarios)
     }
 
     // -----------------------------------------------------------------------
@@ -2159,7 +2231,7 @@ async function pullWithPreview(remoteMeta) {
       if (typeof SYNC_SCOPE_KEYS !== 'undefined') {
         for (var i = 0; i < SYNC_SCOPE_KEYS.length; i++) {
           if (SYNC_SCOPE_KEYS[i] === 'metalInventory') continue;
-          var v = loadData(SYNC_SCOPE_KEYS[i]);
+          var v = loadDataSync(SYNC_SCOPE_KEYS[i], null);
           if (v !== null && v !== undefined) localSettings[SYNC_SCOPE_KEYS[i]] = v;
         }
       }
@@ -2335,7 +2407,13 @@ async function enableCloudSync(provider) {
   // Update UI immediately so Sync Now button is enabled before the async push
   refreshSyncUI();
 
-  // Initial push (this will open the password modal if no cached password)
+  // Poll first to check for existing remote data before pushing (STAK-398 fix).
+  // This ensures a second browser joining sync sees the first browser's data
+  // instead of blindly overwriting it.
+  await pollForRemoteChanges();
+
+  // Push local data (the pre-push check inside pushSyncVault will detect if
+  // pollForRemoteChanges already handled a remote change and skip if needed)
   await pushSyncVault();
 
   // Start the poller
@@ -2438,12 +2516,30 @@ document.addEventListener('visibilitychange', function () {
 });
 
 // ---------------------------------------------------------------------------
+// Sync Now — smart bi-directional sync (STAK-398 fix)
+// Polls for remote changes first, then pushes if no conflict detected.
+// ---------------------------------------------------------------------------
+
+/**
+ * Smart sync: poll for remote changes first, then push local data.
+ * Called by the "Sync Now" button. Replaces the old blind-push behavior.
+ */
+async function syncNow() {
+  debugLog('[CloudSync] syncNow: polling for remote changes first…');
+  await pollForRemoteChanges();
+  // pushSyncVault has its own pre-push remote check, so even if poll missed
+  // something (race), the push will catch it and route to handleRemoteChange.
+  await pushSyncVault();
+}
+
+// ---------------------------------------------------------------------------
 // Window exports
 // ---------------------------------------------------------------------------
 
 window.initCloudSync = initCloudSync;
 window.enableCloudSync = enableCloudSync;
 window.disableCloudSync = disableCloudSync;
+window.syncNow = syncNow;
 window.pushSyncVault = pushSyncVault;
 window.pullSyncVault = pullSyncVault;
 window.pollForRemoteChanges = pollForRemoteChanges;
