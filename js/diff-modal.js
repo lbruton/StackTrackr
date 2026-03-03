@@ -364,7 +364,7 @@
         // Detail line
         var detail = [];
         if (item.metal) detail.push(_esc(item.metal));
-        if (item.weight != null) detail.push(item.weight + (item.weightUnit || 'oz'));
+        if (item.weight != null) detail.push(item.weight + _esc(item.weightUnit || 'oz'));
         if (item.qty != null) detail.push('\u00d7 ' + item.qty);
         if (detail.length > 0) {
           html += '<div style="font-size:0.73rem;opacity:0.5;margin-top:0.1rem">' + detail.join(' \u00b7 ') + '</div>';
@@ -519,6 +519,12 @@
 
   function _onApply() {
     var selected = _buildSelectedChanges();
+    // STAK-402: When _checkedItems is empty (empty diff — no selectable items were shown),
+    // pass null instead of [] to signal "accept all / full overwrite". Callers that
+    // check `selectedChanges &&` treat null as "no selective picks, do full restore".
+    // This differs from the intentional "deselect all" case where _checkedItems has
+    // entries but they are all false (then selected is [] and apply-nothing is correct).
+    if (Object.keys(_checkedItems).length === 0) selected = null;
     // Capture callback before close() — close() nullifies _options
     var callback = _options && _options.onApply;
     DiffModal.close();
