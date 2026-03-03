@@ -1028,8 +1028,13 @@ function syncCloudUI() {
     var statusEl = card.querySelector('.cloud-status-detail');
     if (statusEl) statusEl.textContent = '';
 
-    // Update backup count badge when connected
-    if (connected && typeof cloudUpdateBackupCount === 'function') cloudUpdateBackupCount(key);
+    // Update backup count badge when connected; clear when disconnected
+    if (connected && typeof cloudUpdateBackupCount === 'function') {
+      cloudUpdateBackupCount(key);
+    } else {
+      var badgeEl = document.getElementById('cloudBackupCount_' + key);
+      if (badgeEl) badgeEl.textContent = '';
+    }
 
     // Hide backup list when disconnected
     if (backupListEl && !connected) {
