@@ -391,12 +391,6 @@ const syncSettingsUI = () => {
     switchProviderTab('NUMISTA');
   }
 
-  // Hide Cloud nav item when no provider is connected (STAK-317)
-  const cloudNavItem = document.querySelector('.settings-nav-item[data-section="cloud"]');
-  if (cloudNavItem && typeof cloudIsConnected === 'function' && typeof CLOUD_PROVIDERS !== 'undefined') {
-    const connectedCount = Object.keys(CLOUD_PROVIDERS).filter(p => cloudIsConnected(p)).length;
-    cloudNavItem.style.display = connectedCount >= 1 ? '' : 'none';
-  }
 };
 
 /**
