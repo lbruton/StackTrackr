@@ -3196,7 +3196,26 @@ function _openCloudSyncPopover() {
     try { localStorage.setItem('cloud_vault_password', pw); } catch (_) {}
     if (typeof cloudCachePassword === 'function') cloudCachePassword('dropbox', pw);
     if (typeof updateCloudSyncHeaderBtn === 'function') updateCloudSyncHeaderBtn();
-    setTimeout(function () { if (typeof pushSyncVault === 'function') pushSyncVault(); }, 100);
+    // STAK-398: poll for remote changes first, then push. Check account_id is present.
+    var hasAccountId = !!localStorage.getItem('cloud_dropbox_account_id');
+    debugWarn('[CloudSync] Popover unlock: password set, accountId:', hasAccountId);
+    if (!hasAccountId) {
+      debugWarn('[CloudSync] Popover unlock: no account_id — sync key incomplete, skipping sync');
+      if (typeof showCloudToast === 'function') {
+        showCloudToast('Cloud sync setup incomplete — please reconnect your Dropbox account.');
+      }
+      return;
+    }
+    // Short delay lets popover cleanup / DOM update finish before async sync starts
+    setTimeout(function () {
+      if (typeof pollForRemoteChanges === 'function') {
+        pollForRemoteChanges().then(function () {
+          if (typeof pushSyncVault === 'function') pushSyncVault();
+        });
+      } else if (typeof pushSyncVault === 'function') {
+        pushSyncVault();
+      }
+    }, 100);
   }
 
   if (unlockBtn) unlockBtn.onclick = onUnlock;

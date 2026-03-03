@@ -542,8 +542,9 @@ function getSyncPassword() {
       if (typeof appPrompt === 'function') {
         appPrompt(prompt, '', 'Cloud Sync').then(function (pw) {
           if (pw && pw.length >= 8) {
+            var freshId = localStorage.getItem('cloud_dropbox_account_id');
             try { localStorage.setItem('cloud_vault_password', pw); } catch (_) {}
-            resolve(accountId ? pw + ':' + accountId : pw);
+            resolve(freshId ? pw + ':' + freshId : pw);
           } else {
             resolve(null);
           }
@@ -582,11 +583,14 @@ function getSyncPassword() {
         }
         return;
       }
+      // Re-read accountId at confirm time — it may have been stored after the modal opened
+      // (e.g., async Dropbox token exchange completing while the user types their password).
+      var freshAccountId = localStorage.getItem('cloud_dropbox_account_id');
       try { localStorage.setItem('cloud_vault_password', pw); } catch (_) {}
       cleanup();
       if (typeof updateCloudSyncHeaderBtn === 'function') updateCloudSyncHeaderBtn();
-      setTimeout(function () { if (typeof pushSyncVault === 'function') pushSyncVault(); }, 100);
-      resolve(accountId ? pw + ':' + accountId : pw);
+      // Do NOT push here — the caller (enableCloudSync / initCloudSync) handles sync after resolving.
+      resolve(freshAccountId ? pw + ':' + freshAccountId : pw);
     };
 
     var onCancel = function () { cleanup(); resolve(null); };
@@ -2484,13 +2488,43 @@ async function enableCloudSync(provider) {
   _syncProvider = provider || 'dropbox';
   try { localStorage.setItem('cloud_sync_enabled', 'true'); } catch (_) { /* ignore */ }
 
-  debugLog('[CloudSync] Enabling auto-sync for', _syncProvider);
+  debugWarn('[CloudSync] Enabling auto-sync for', _syncProvider);
 
   // Ensure we have a device ID
   getSyncDeviceId();
 
   // Update UI immediately so Sync Now button is enabled before the async push
   refreshSyncUI();
+
+  // -----------------------------------------------------------------------
+  // STAK-398 fix: Prompt for password BEFORE any sync operations.
+  // getSyncPasswordSilent() requires both cloud_vault_password and
+  // cloud_dropbox_account_id in localStorage. If either is missing (first-time
+  // setup), poll/push silently skip and the user sees "Connected" with no sync.
+  // -----------------------------------------------------------------------
+  var password = await getSyncPassword();
+  var hasAccountId = !!localStorage.getItem('cloud_dropbox_account_id');
+  debugWarn('[CloudSync] enableCloudSync: password obtained:', !!password, 'accountId:', hasAccountId);
+  if (!password) {
+    // User cancelled password prompt — revert sync enabled flag
+    debugWarn('[CloudSync] No password set — reverting auto-sync enable');
+    try { localStorage.setItem('cloud_sync_enabled', 'false'); } catch (_) { /* ignore */ }
+    refreshSyncUI();
+    if (typeof showCloudToast === 'function') {
+      showCloudToast('Cloud sync requires a vault password. Please try again.');
+    }
+    return;
+  }
+  // Guard: account_id must be present for composite key derivation
+  if (!hasAccountId) {
+    debugWarn('[CloudSync] No account_id — cannot derive sync key, reverting');
+    try { localStorage.setItem('cloud_sync_enabled', 'false'); } catch (_) { /* ignore */ }
+    refreshSyncUI();
+    if (typeof showCloudToast === 'function') {
+      showCloudToast('Cloud sync setup incomplete — please reconnect your Dropbox account.');
+    }
+    return;
+  }
 
   // Poll first to check for existing remote data before pushing (STAK-398 fix).
   // This ensures a second browser joining sync sees the first browser's data
@@ -2567,16 +2601,31 @@ function initCloudSync() {
   debugLog('[CloudSync] Resuming auto-sync from previous session');
 
   var hasPw = getSyncPasswordSilent();
+  debugWarn('[CloudSync] initCloudSync: password available:', !!hasPw,
+    'accountId:', !!localStorage.getItem('cloud_dropbox_account_id'));
   updateCloudSyncHeaderBtn();
 
   if (!hasPw) {
-    // No password available — show orange indicator, wait for user to tap
-    debugLog('[CloudSync] No vault password — showing setup toast');
-    setTimeout(function () {
-      if (typeof showCloudToast === 'function') {
-        showCloudToast('Cloud sync paused — tap the cloud icon to set your vault password', 5000);
+    // No password available — prompt interactively instead of just showing a toast.
+    // STAK-398 fix: the toast-and-return pattern left sync silently broken.
+    debugWarn('[CloudSync] No vault password — prompting user');
+    getSyncPassword().then(function (pw) {
+      if (pw) {
+        debugWarn('[CloudSync] Password set via prompt — starting sync');
+        updateCloudSyncHeaderBtn();
+        startSyncPoller();
+        // Poll + push after a short delay to let UI settle
+        setTimeout(function () {
+          pollForRemoteChanges().then(function () { pushSyncVault(); });
+        }, 1000);
+      } else {
+        debugWarn('[CloudSync] User cancelled password prompt — sync paused');
+        updateCloudSyncHeaderBtn();
+        if (typeof showCloudToast === 'function') {
+          showCloudToast('Cloud sync paused — tap the cloud icon to set your vault password', 5000);
+        }
       }
-    }, 1000);
+    });
     return;
   }
 
