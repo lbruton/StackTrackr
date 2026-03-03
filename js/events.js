@@ -3198,10 +3198,15 @@ function _openCloudSyncPopover() {
     if (typeof updateCloudSyncHeaderBtn === 'function') updateCloudSyncHeaderBtn();
     // STAK-398: poll for remote changes first, then push. Check account_id is present.
     var hasAccountId = !!localStorage.getItem('cloud_dropbox_account_id');
-    console.warn('[CloudSync] Popover unlock: password set, accountId:', hasAccountId);
+    debugWarn('[CloudSync] Popover unlock: password set, accountId:', hasAccountId);
     if (!hasAccountId) {
-      console.warn('[CloudSync] Popover unlock: WARNING — no account_id, sync password will be incomplete');
+      debugWarn('[CloudSync] Popover unlock: no account_id — sync key incomplete, skipping sync');
+      if (typeof showCloudToast === 'function') {
+        showCloudToast('Cloud sync setup incomplete — please reconnect your Dropbox account.');
+      }
+      return;
     }
+    // Short delay lets popover cleanup / DOM update finish before async sync starts
     setTimeout(function () {
       if (typeof pollForRemoteChanges === 'function') {
         pollForRemoteChanges().then(function () {
