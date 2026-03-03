@@ -26,6 +26,9 @@ var _syncPushInFlight = false;
 /** @type {boolean} Whether the sync password prompt is currently open */
 var _syncPasswordPromptActive = false;
 
+/** @type {boolean} Whether handleRemoteChange is actively running (blocks pushes) */
+var _syncRemoteChangeActive = false;
+
 /** @type {number} Retry backoff multiplier for 429 / network errors */
 var _syncRetryDelay = 2000;
 
@@ -883,6 +886,11 @@ async function pushSyncVault() {
     return;
   }
 
+  if (_syncRemoteChangeActive) {
+    console.warn('[CloudSync] Remote change handling in progress — push deferred');
+    return;
+  }
+
   var password = getSyncPasswordSilent();
   debugLog('[CloudSync] Password obtained (silent):', !!password);
   if (!password) {
@@ -916,6 +924,7 @@ async function pushSyncVault() {
     // always beats pollForRemoteChanges (10min interval).
     // -----------------------------------------------------------------------
     try {
+      console.warn('[CloudSync] Pre-push check: starting metadata download from', SYNC_META_PATH);
       var prePushApiArg = JSON.stringify({ path: SYNC_META_PATH });
       var prePushResp = await fetch('https://content.dropboxapi.com/2/files/download', {
         method: 'POST',
@@ -924,9 +933,11 @@ async function pushSyncVault() {
           'Dropbox-API-Arg': prePushApiArg,
         },
       });
+      console.warn('[CloudSync] Pre-push check: metadata response status:', prePushResp.status);
 
       // Try legacy path if new path not found
       if (prePushResp.status === 409 || prePushResp.status === 404) {
+        console.warn('[CloudSync] Pre-push check: new path not found, trying legacy path', SYNC_META_PATH_LEGACY);
         var prePushLegacyArg = JSON.stringify({ path: SYNC_META_PATH_LEGACY });
         var prePushLegacyResp = await fetch('https://content.dropboxapi.com/2/files/download', {
           method: 'POST',
@@ -935,6 +946,7 @@ async function pushSyncVault() {
             'Dropbox-API-Arg': prePushLegacyArg,
           },
         });
+        console.warn('[CloudSync] Pre-push check: legacy response status:', prePushLegacyResp.status);
         if (prePushLegacyResp.ok) prePushResp = prePushLegacyResp;
       }
 
@@ -943,21 +955,23 @@ async function pushSyncVault() {
         var prePushMeta = null;
         var prePushBuffer = await prePushResp.arrayBuffer();
         var prePushBytes = new Uint8Array(prePushBuffer);
+        console.warn('[CloudSync] Pre-push check: metadata downloaded,', prePushBytes.length, 'bytes');
 
         // First, try to interpret the metadata as an encrypted .stvault file
         var prePushParsed = null;
         try {
           prePushParsed = parseVaultFile(prePushBytes);
+          console.warn('[CloudSync] Pre-push check: parsed as .stvault, iterations:', prePushParsed.iterations);
         } catch (prePushParseErr) {
           // Not a .stvault — likely legacy plaintext JSON
-          debugLog('[CloudSync] Pre-push: metadata not in .stvault format, falling back to legacy JSON:', prePushParseErr.message);
+          console.warn('[CloudSync] Pre-push check: not .stvault format, trying legacy JSON:', prePushParseErr.message);
         }
 
         if (prePushParsed) {
           // Cap iterations to prevent a tampered remote file from hanging the UI
           var prePushMaxIterations = (typeof VAULT_PBKDF2_ITERATIONS !== 'undefined' ? VAULT_PBKDF2_ITERATIONS : 600000) * 2;
           if (prePushParsed.iterations > prePushMaxIterations) {
-            debugLog('[CloudSync] Pre-push: iterations exceeds safe cap (' + prePushParsed.iterations + ' > ' + prePushMaxIterations + '), aborting push');
+            console.warn('[CloudSync] Pre-push check: ABORT — iterations exceed cap:', prePushParsed.iterations, '>', prePushMaxIterations);
             logCloudSyncActivity('auto_sync_push', 'error', 'Remote metadata iterations exceed safe limit — possible tampering');
             _syncPushInFlight = false;
             updateSyncStatusIndicator('error', 'Sync metadata invalid');
@@ -970,8 +984,9 @@ async function pushSyncVault() {
             var prePushKey = await vaultDeriveKey(password, prePushParsed.salt, prePushParsed.iterations);
             var prePushDecrypted = await vaultDecrypt(prePushParsed.ciphertext, prePushKey, prePushParsed.iv);
             prePushMeta = JSON.parse(new TextDecoder().decode(prePushDecrypted));
+            console.warn('[CloudSync] Pre-push check: decrypted metadata OK — deviceId:', prePushMeta.deviceId, 'syncId:', prePushMeta.syncId, 'itemCount:', prePushMeta.itemCount);
           } catch (prePushDecryptErr) {
-            debugLog('[CloudSync] Pre-push: encrypted metadata could not be decrypted, aborting push:', prePushDecryptErr.message);
+            console.warn('[CloudSync] Pre-push check: ABORT — decryption failed:', prePushDecryptErr.message);
             logCloudSyncActivity('auto_sync_push', 'error', 'Encrypted sync metadata exists but could not be decrypted. Check your sync password.');
             _syncPushInFlight = false;
             updateSyncStatusIndicator('error', 'Wrong vault password?');
@@ -982,8 +997,9 @@ async function pushSyncVault() {
           try {
             var prePushFallbackText = new TextDecoder().decode(prePushBytes);
             prePushMeta = JSON.parse(prePushFallbackText);
+            console.warn('[CloudSync] Pre-push check: parsed legacy JSON — deviceId:', prePushMeta.deviceId, 'syncId:', prePushMeta.syncId);
           } catch (prePushJsonErr) {
-            debugLog('[CloudSync] Pre-push: metadata parse failed:', prePushJsonErr.message);
+            console.warn('[CloudSync] Pre-push check: legacy JSON parse failed:', prePushJsonErr.message);
             prePushMeta = null;
           }
         }
@@ -991,23 +1007,31 @@ async function pushSyncVault() {
         if (prePushMeta && prePushMeta.syncId && prePushMeta.deviceId) {
           var myDeviceId = getSyncDeviceId();
           var lastPull = syncGetLastPull();
+          console.warn('[CloudSync] Pre-push check: comparing — remote.deviceId:', prePushMeta.deviceId, 'myDeviceId:', myDeviceId, 'remote.syncId:', prePushMeta.syncId, 'lastPull:', lastPull ? lastPull.syncId : 'null');
 
           // If a DIFFERENT device pushed AND we haven't pulled this syncId yet
           if (prePushMeta.deviceId !== myDeviceId &&
               (!lastPull || lastPull.syncId !== prePushMeta.syncId)) {
-            debugLog('[CloudSync] Pre-push: remote change from another device detected — routing to handleRemoteChange');
+            console.warn('[CloudSync] Pre-push check: BLOCKING — remote change from device', prePushMeta.deviceId.slice(0, 8), '— routing to handleRemoteChange');
             logCloudSyncActivity('auto_sync_push', 'deferred', 'Remote change detected from device ' + prePushMeta.deviceId.slice(0, 8) + ' — showing diff');
             _syncPushInFlight = false;
             updateSyncStatusIndicator('idle');
             await handleRemoteChange(prePushMeta);
             return; // Do NOT push — let the user decide via the update/conflict modal
+          } else {
+            console.warn('[CloudSync] Pre-push check: PASSED —',
+              prePushMeta.deviceId === myDeviceId ? 'same device' : 'already pulled syncId ' + prePushMeta.syncId);
           }
+        } else {
+          console.warn('[CloudSync] Pre-push check: metadata incomplete — syncId:', prePushMeta ? prePushMeta.syncId : 'null', 'deviceId:', prePushMeta ? prePushMeta.deviceId : 'null');
         }
+      } else {
+        console.warn('[CloudSync] Pre-push check: no metadata file found (status:', prePushResp.status, ') — first push, proceeding');
       }
-      // If meta fetch failed (409/404 = first push, or network error), proceed with push
     } catch (prePushErr) {
+      // Only fail-open for network errors; log prominently so we can diagnose
+      console.warn('[CloudSync] Pre-push check: EXCEPTION (fail-open):', prePushErr.message);
       debugLog('[CloudSync] Pre-push remote check failed (non-blocking):', prePushErr.message);
-      // Non-blocking: if the check fails, proceed with push (fail-open for first push scenarios)
     }
 
     // -----------------------------------------------------------------------
@@ -1373,36 +1397,46 @@ async function pollForRemoteChanges() {
 
     // Decrypt metadata (encrypted format) or fall back to legacy plaintext JSON
     var remoteMeta;
+    var metaBuffer;
     try {
-      var metaBuffer = await resp.arrayBuffer();
-      var metaParsed = parseVaultFile(new Uint8Array(metaBuffer));
+      metaBuffer = await resp.arrayBuffer();
+      var metaBytes = new Uint8Array(metaBuffer);
+      console.warn('[CloudSync] Poll: metadata downloaded,', metaBytes.length, 'bytes');
+      var metaParsed = parseVaultFile(metaBytes);
       var syncPassword = getSyncPasswordSilent();
       if (!syncPassword) {
-        debugLog('[CloudSync] Poll: no password available for metadata decryption — skipping');
+        console.warn('[CloudSync] Poll: no password available — skipping');
         return;
       }
       var metaKey = await vaultDeriveKey(syncPassword, metaParsed.salt, metaParsed.iterations);
       var metaDecrypted = await vaultDecrypt(metaParsed.ciphertext, metaKey, metaParsed.iv);
       remoteMeta = JSON.parse(new TextDecoder().decode(metaDecrypted));
+      console.warn('[CloudSync] Poll: metadata decrypted OK');
     } catch (decryptErr) {
       // Legacy plaintext metadata — fall back to JSON parse
-      debugLog('[CloudSync] Metadata not encrypted, falling back to JSON parse:', decryptErr.message);
+      console.warn('[CloudSync] Poll: metadata decrypt failed, trying legacy JSON:', decryptErr.message);
       try {
         // Response body already consumed by arrayBuffer() — re-parse from the buffer
         var fallbackText = new TextDecoder().decode(new Uint8Array(metaBuffer));
         remoteMeta = JSON.parse(fallbackText);
+        console.warn('[CloudSync] Poll: legacy JSON parse OK');
       } catch (jsonErr) {
-        debugLog('[CloudSync] Poll: metadata parse failed entirely:', jsonErr.message);
+        console.warn('[CloudSync] Poll: metadata parse FAILED ENTIRELY:', jsonErr.message);
         return;
       }
     }
-    if (!remoteMeta || !remoteMeta.syncId) return;
+    if (!remoteMeta || !remoteMeta.syncId) {
+      console.warn('[CloudSync] Poll: metadata missing syncId — skipping');
+      return;
+    }
 
     var lastPull = syncGetLastPull();
+    console.warn('[CloudSync] Poll: remote — deviceId:', remoteMeta.deviceId, 'syncId:', remoteMeta.syncId, 'itemCount:', remoteMeta.itemCount,
+      '| local — myDeviceId:', getSyncDeviceId(), 'lastPull:', lastPull ? lastPull.syncId : 'null');
 
     // Echo detection: if this device pushed this syncId, just record the pull
     if (remoteMeta.deviceId === getSyncDeviceId()) {
-      debugLog('[CloudSync] Poll: remote is our own push, skipping');
+      console.warn('[CloudSync] Poll: echo detection — this is our own push, recording lastPull');
       if (!lastPull || lastPull.syncId !== remoteMeta.syncId) {
         syncSetLastPull({ syncId: remoteMeta.syncId, timestamp: remoteMeta.timestamp, rev: remoteMeta.rev });
       }
@@ -1411,7 +1445,7 @@ async function pollForRemoteChanges() {
 
     // No change since last pull
     if (lastPull && lastPull.syncId === remoteMeta.syncId) {
-      debugLog('[CloudSync] Poll: no new changes');
+      console.warn('[CloudSync] Poll: already pulled this syncId — no new changes');
       return;
     }
 
@@ -1421,17 +1455,18 @@ async function pollForRemoteChanges() {
       try {
         var localInv = typeof inventory !== 'undefined' ? inventory : [];
         var localHash = await computeInventoryHash(localInv);
+        console.warn('[CloudSync] Poll: hash comparison — local:', localHash, '(' + localInv.length + ' items) vs remote:', remoteMeta.inventoryHash, '(' + remoteMeta.itemCount + ' items)');
         if (localHash && localHash === remoteMeta.inventoryHash) {
-          debugLog('[CloudSync] Poll: inventoryHash matches — skipping notification');
+          console.warn('[CloudSync] Poll: inventory hashes MATCH — silently recording pull (no notification)');
           syncSetLastPull({ syncId: remoteMeta.syncId, timestamp: remoteMeta.timestamp, rev: remoteMeta.rev });
           return;
         }
       } catch (_hashErr) {
-        debugLog('[CloudSync] Poll: hash comparison failed (falling through):', _hashErr.message);
+        console.warn('[CloudSync] Poll: hash comparison failed (falling through):', _hashErr.message);
       }
     }
 
-    debugLog('[CloudSync] Poll: remote change detected — syncId:', remoteMeta.syncId);
+    console.warn('[CloudSync] Poll: REMOTE CHANGE DETECTED — calling handleRemoteChange. syncId:', remoteMeta.syncId, 'itemCount:', remoteMeta.itemCount);
     logCloudSyncActivity('auto_sync_poll', 'success', 'Remote change detected: ' + remoteMeta.itemCount + ' items');
     await handleRemoteChange(remoteMeta);
 
@@ -1515,11 +1550,16 @@ function showSyncUpdateModal(remoteMeta) {
  * @param {object} remoteMeta - The parsed staktrakr-sync.json content
  */
 async function handleRemoteChange(remoteMeta) {
+  console.warn('[CloudSync] handleRemoteChange called — remote deviceId:', remoteMeta.deviceId, 'syncId:', remoteMeta.syncId, 'itemCount:', remoteMeta.itemCount);
+
   // Don't interrupt the user mid-password-entry — retry on next poll cycle
   if (_syncPasswordPromptActive) {
-    debugLog('[CloudSync] Password prompt active — deferring remote change notification');
+    console.warn('[CloudSync] handleRemoteChange: password prompt active — DEFERRING');
     return;
   }
+
+  // Set flag to block pushes while we show the modal
+  _syncRemoteChangeActive = true;
 
   // Cancel any queued debounced push before showing the update/conflict modal.
   // Without this, the debounced push can fire while the modal is open, overwriting
@@ -1530,38 +1570,43 @@ async function handleRemoteChange(remoteMeta) {
     debugLog('[CloudSync] Cancelled queued push — remote change takes priority');
   }
 
-  var hasLocal = syncHasLocalChanges();
+  try {
+    var hasLocal = syncHasLocalChanges();
+    console.warn('[CloudSync] handleRemoteChange: hasLocalChanges:', hasLocal);
 
-  if (!hasLocal) {
-    // Show the update-available modal — let user decide before password prompt
-    debugLog('[CloudSync] Remote change detected — showing update modal');
-    var accepted = await showSyncUpdateModal(remoteMeta);
-    if (!accepted) {
-      debugLog('[CloudSync] User dismissed update — will retry next poll');
+    if (!hasLocal) {
+      // Show the update-available modal — let user decide before password prompt
+      console.warn('[CloudSync] handleRemoteChange: showing update modal');
+      var accepted = await showSyncUpdateModal(remoteMeta);
+      if (!accepted) {
+        console.warn('[CloudSync] handleRemoteChange: user dismissed update — will retry next poll');
+        return;
+      }
+      // Layer 5 — Show restore preview instead of direct pull (REQ-5)
+      await pullWithPreview(remoteMeta);
       return;
     }
-    // Layer 5 — Show restore preview instead of direct pull (REQ-5)
-    await pullWithPreview(remoteMeta);
-    return;
-  }
 
-  // Conflict: both sides have changes
-  debugLog('[CloudSync] Conflict detected — showing conflict modal');
-  var lastPush = syncGetLastPush();
-  showSyncConflictModal({
-    local: {
-      itemCount: typeof inventory !== 'undefined' ? inventory.length : 0,
-      timestamp: lastPush ? lastPush.timestamp : null,
-      appVersion: typeof APP_VERSION !== 'undefined' ? APP_VERSION : 'unknown',
-    },
-    remote: {
-      itemCount: remoteMeta.itemCount || 0,
-      timestamp: remoteMeta.timestamp || null,
-      appVersion: remoteMeta.appVersion || 'unknown',
-      deviceId: remoteMeta.deviceId || '',
-    },
-    remoteMeta: remoteMeta,
-  });
+    // Conflict: both sides have changes
+    console.warn('[CloudSync] handleRemoteChange: CONFLICT — showing conflict modal');
+    var lastPush = syncGetLastPush();
+    await showSyncConflictModal({
+      local: {
+        itemCount: typeof inventory !== 'undefined' ? inventory.length : 0,
+        timestamp: lastPush ? lastPush.timestamp : null,
+        appVersion: typeof APP_VERSION !== 'undefined' ? APP_VERSION : 'unknown',
+      },
+      remote: {
+        itemCount: remoteMeta.itemCount || 0,
+        timestamp: remoteMeta.timestamp || null,
+        appVersion: remoteMeta.appVersion || 'unknown',
+        deviceId: remoteMeta.deviceId || '',
+      },
+      remoteMeta: remoteMeta,
+    });
+  } finally {
+    _syncRemoteChangeActive = false;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -1694,73 +1739,83 @@ async function pullSyncVault(remoteMeta) {
  * @param {{local: object, remote: object, remoteMeta: object}} opts
  */
 function showSyncConflictModal(opts) {
-  var modal = safeGetElement('cloudSyncConflictModal');
-  if (!modal) {
-    var msg = 'Sync conflict detected.\n\n' +
-      'Local:  ' + opts.local.itemCount + ' items\n' +
-      'Remote: ' + opts.remote.itemCount + ' items\n\n' +
-      'Keep YOUR local version? (Cancel to keep the remote version)';
-    if (typeof appConfirm === 'function') {
-      appConfirm(msg, 'Sync Conflict').then(function (keepMine) {
-        if (keepMine) pushSyncVault();
-        else pullWithPreview(opts.remoteMeta).catch(function (err) {
-          debugLog('[CloudSync] pullWithPreview failed in conflict fallback:', err);
+  return new Promise(function (resolve) {
+    var modal = safeGetElement('cloudSyncConflictModal');
+    if (!modal) {
+      var msg = 'Sync conflict detected.\n\n' +
+        'Local:  ' + opts.local.itemCount + ' items\n' +
+        'Remote: ' + opts.remote.itemCount + ' items\n\n' +
+        'Keep YOUR local version? (Cancel to keep the remote version)';
+      if (typeof appConfirm === 'function') {
+        appConfirm(msg, 'Sync Conflict').then(function (keepMine) {
+          if (keepMine) pushSyncVault();
+          else pullWithPreview(opts.remoteMeta).catch(function (err) {
+            debugLog('[CloudSync] pullWithPreview failed in conflict fallback:', err);
+            updateSyncStatusIndicator('error', 'Pull failed — ' + err.message);
+          });
+          resolve();
+        });
+      } else {
+        resolve();
+      }
+      return;
+    }
+
+    // Populate modal fields
+    var setEl = function (id, text) {
+      var el = safeGetElement(id);
+      if (el) el.textContent = text || '\u2014';
+    };
+
+    setEl('syncConflictLocalItems', opts.local.itemCount + ' items');
+    setEl('syncConflictLocalTime', opts.local.timestamp ? _syncRelativeTime(opts.local.timestamp) : 'Unknown');
+    setEl('syncConflictLocalVersion', 'v' + opts.local.appVersion);
+    setEl('syncConflictRemoteItems', opts.remote.itemCount + ' items');
+    setEl('syncConflictRemoteTime', opts.remote.timestamp ? _syncRelativeTime(opts.remote.timestamp) : 'Unknown');
+    setEl('syncConflictRemoteVersion', 'v' + opts.remote.appVersion);
+    setEl('syncConflictRemoteDevice', opts.remote.deviceId ? opts.remote.deviceId.slice(0, 8) + '\u2026' : 'Another device');
+
+    // Wire buttons
+    var keepMineBtn = safeGetElement('syncConflictKeepMine');
+    var keepTheirsBtn = safeGetElement('syncConflictKeepTheirs');
+    var skipBtn = safeGetElement('syncConflictSkip');
+
+    var closeModal = function () {
+      modal.style.display = 'none';
+      if (typeof closeModalById === 'function') closeModalById('cloudSyncConflictModal');
+    };
+
+    if (keepMineBtn) {
+      keepMineBtn.onclick = function () {
+        closeModal();
+        pushSyncVault();
+        resolve();
+      };
+    }
+    if (keepTheirsBtn) {
+      keepTheirsBtn.onclick = function () {
+        closeModal();
+        // Layer 5 — Show restore preview instead of direct pull (REQ-5)
+        pullWithPreview(opts.remoteMeta).catch(function (err) {
+          debugLog('[CloudSync] pullWithPreview failed on Keep Theirs:', err);
           updateSyncStatusIndicator('error', 'Pull failed — ' + err.message);
         });
-      });
+        resolve();
+      };
     }
-    return;
-  }
+    if (skipBtn) {
+      skipBtn.onclick = function () {
+        closeModal();
+        resolve();
+      };
+    }
 
-  // Populate modal fields
-  var setEl = function (id, text) {
-    var el = safeGetElement(id);
-    if (el) el.textContent = text || '\u2014';
-  };
-
-  setEl('syncConflictLocalItems', opts.local.itemCount + ' items');
-  setEl('syncConflictLocalTime', opts.local.timestamp ? _syncRelativeTime(opts.local.timestamp) : 'Unknown');
-  setEl('syncConflictLocalVersion', 'v' + opts.local.appVersion);
-  setEl('syncConflictRemoteItems', opts.remote.itemCount + ' items');
-  setEl('syncConflictRemoteTime', opts.remote.timestamp ? _syncRelativeTime(opts.remote.timestamp) : 'Unknown');
-  setEl('syncConflictRemoteVersion', 'v' + opts.remote.appVersion);
-  setEl('syncConflictRemoteDevice', opts.remote.deviceId ? opts.remote.deviceId.slice(0, 8) + '\u2026' : 'Another device');
-
-  // Wire buttons
-  var keepMineBtn = safeGetElement('syncConflictKeepMine');
-  var keepTheirsBtn = safeGetElement('syncConflictKeepTheirs');
-  var skipBtn = safeGetElement('syncConflictSkip');
-
-  var closeModal = function () {
-    modal.style.display = 'none';
-    if (typeof closeModalById === 'function') closeModalById('cloudSyncConflictModal');
-  };
-
-  if (keepMineBtn) {
-    keepMineBtn.onclick = function () {
-      closeModal();
-      pushSyncVault();
-    };
-  }
-  if (keepTheirsBtn) {
-    keepTheirsBtn.onclick = function () {
-      closeModal();
-      // Layer 5 — Show restore preview instead of direct pull (REQ-5)
-      pullWithPreview(opts.remoteMeta).catch(function (err) {
-        debugLog('[CloudSync] pullWithPreview failed on Keep Theirs:', err);
-        updateSyncStatusIndicator('error', 'Pull failed — ' + err.message);
-      });
-    };
-  }
-  if (skipBtn) {
-    skipBtn.onclick = closeModal;
-  }
-
-  if (typeof openModalById === 'function') {
-    openModalById('cloudSyncConflictModal');
-  } else {
-    modal.style.display = 'flex';
-  }
+    if (typeof openModalById === 'function') {
+      openModalById('cloudSyncConflictModal');
+    } else {
+      modal.style.display = 'flex';
+    }
+  });
 }
 
 // ---------------------------------------------------------------------------
