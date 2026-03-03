@@ -430,14 +430,8 @@ function updateCloudSyncHeaderBtn() {
 
   var connected = typeof cloudIsConnected === 'function' ? cloudIsConnected(_syncProvider) : false;
 
-  // Show the button whenever a cloud provider is connected, regardless of
-  // cloud_sync_enabled.  The user needs the button to see cloud status and
-  // to enable/configure sync.  Hide only when no provider is connected at all.
-  if (!connected) {
-    btn.style.display = 'none';
-    return;
-  }
-
+  // Always show the Cloud button — it is the entry point for cloud setup and status.
+  // The gray dot state handles the "not connected" case visually.
   btn.style.display = '';
   if (!dot) return;
   dot.className = 'cloud-sync-dot header-cloud-dot';
