@@ -478,23 +478,32 @@ async function cloudExchangeCode(code, state) {
     };
     cloudStoreToken(provider, tokenData);
 
-    // Fetch Dropbox account ID for Simple mode key derivation (non-blocking, Dropbox-only)
+    // Store Dropbox account ID for key derivation.
+    // The token exchange response includes account_id — grab it directly (synchronous, no race).
+    // Fall back to get_current_account API only if the token response didn't include it.
     if (provider === 'dropbox') {
-      fetch('https://api.dropboxapi.com/2/users/get_current_account', {
-        method: 'POST',
-        headers: {
-          Authorization: 'Bearer ' + tokenData.access_token,
-          'Content-Type': 'application/json',
-        },
-        body: 'null',
-      }).then(function (r) { return r.ok ? r.json() : null; })
-        .then(function (info) {
-          if (info && info.account_id) {
-            localStorage.setItem('cloud_dropbox_account_id', info.account_id);
-            debugLog('[CloudStorage] Stored Dropbox account ID for Simple mode');
-          }
-        })
-        .catch(function (e) { debugLog('[CloudStorage] Failed to fetch Dropbox account ID', e); });
+      if (data.account_id) {
+        localStorage.setItem('cloud_dropbox_account_id', data.account_id);
+        console.warn('[CloudStorage] Stored Dropbox account ID from token exchange:', data.account_id);
+      } else {
+        // Fallback: fetch account ID from API (still non-blocking since enableCloudSync will check)
+        console.warn('[CloudStorage] Token exchange did not include account_id — fetching from API');
+        fetch('https://api.dropboxapi.com/2/users/get_current_account', {
+          method: 'POST',
+          headers: {
+            Authorization: 'Bearer ' + tokenData.access_token,
+            'Content-Type': 'application/json',
+          },
+          body: 'null',
+        }).then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (info) {
+            if (info && info.account_id) {
+              localStorage.setItem('cloud_dropbox_account_id', info.account_id);
+              console.warn('[CloudStorage] Stored Dropbox account ID from API fallback');
+            }
+          })
+          .catch(function (e) { console.warn('[CloudStorage] Failed to fetch Dropbox account ID', e); });
+      }
     }
     sessionStorage.removeItem('cloud_oauth_state');
     if (typeof syncCloudUI === 'function') syncCloudUI();

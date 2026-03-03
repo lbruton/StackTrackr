@@ -3196,7 +3196,21 @@ function _openCloudSyncPopover() {
     try { localStorage.setItem('cloud_vault_password', pw); } catch (_) {}
     if (typeof cloudCachePassword === 'function') cloudCachePassword('dropbox', pw);
     if (typeof updateCloudSyncHeaderBtn === 'function') updateCloudSyncHeaderBtn();
-    setTimeout(function () { if (typeof pushSyncVault === 'function') pushSyncVault(); }, 100);
+    // STAK-398: poll for remote changes first, then push. Check account_id is present.
+    var hasAccountId = !!localStorage.getItem('cloud_dropbox_account_id');
+    console.warn('[CloudSync] Popover unlock: password set, accountId:', hasAccountId);
+    if (!hasAccountId) {
+      console.warn('[CloudSync] Popover unlock: WARNING — no account_id, sync password will be incomplete');
+    }
+    setTimeout(function () {
+      if (typeof pollForRemoteChanges === 'function') {
+        pollForRemoteChanges().then(function () {
+          if (typeof pushSyncVault === 'function') pushSyncVault();
+        });
+      } else if (typeof pushSyncVault === 'function') {
+        pushSyncVault();
+      }
+    }, 100);
   }
 
   if (unlockBtn) unlockBtn.onclick = onUnlock;
