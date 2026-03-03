@@ -640,20 +640,48 @@ function getSyncPassword(forcePrompt) {
 }
 
 /**
+ * Emit a structured pre-decrypt console.warn for QA isolation of identity vs crypto failures.
+ * @param {string} artifact - Label for what is being decrypted (e.g. 'metadata', 'stvault')
+ * @param {Array} candidates - Key candidates from _getSyncKeyCandidates()
+ */
+function _logDecryptAttempt(artifact, candidates) {
+  var _diagPw  = !!localStorage.getItem('cloud_vault_password');
+  var _diagAid = localStorage.getItem('cloud_dropbox_account_id');
+  console.warn('[CloudSync] decrypt attempt:',
+    'artifact=' + artifact,
+    'vaultPw:', _diagPw,
+    'accountId:', _diagAid ? _diagAid.slice(0, 8) + '… (' + _diagAid.length + ' chars)' : 'MISSING',
+    'candidates:', candidates.length);
+}
+
+/**
+ * Guard that cloud_dropbox_account_id is present before any pull/poll operation.
+ * Logs a warning and shows a reconnect toast when the accountId is missing.
+ * Returns true when the accountId is present (safe to proceed), false when absent (caller must return).
+ * @param {string} context - Caller label for the console warning (e.g. 'Poll', 'pullSyncVault')
+ * @returns {boolean}
+ */
+function _assertSyncAccountId(context) {
+  if (localStorage.getItem('cloud_dropbox_account_id')) return true;
+  console.warn('[CloudSync]', context + ': cloud_dropbox_account_id missing — aborting');
+  if (typeof showCloudToast === 'function') {
+    showCloudToast(
+      'Cloud sync setup is incomplete on this device. Please reconnect Dropbox to refresh your account identity.'
+    );
+  }
+  return false;
+}
+
+/**
  * Try to decrypt a vault file using all known key variants.
  * Returns the decrypted payload on success, throws on total failure.
  * @param {Uint8Array} fileBytes
+ * @param {string} [artifactLabel] - Label for pre-decrypt log (e.g. 'stvault', 'stmanifest')
  * @returns {Promise<Object>} Parsed vault payload
  */
 async function _tryDecryptVault(fileBytes, artifactLabel) {
   var candidates = _getSyncKeyCandidates();
-  var _diagPw  = !!localStorage.getItem('cloud_vault_password');
-  var _diagAid = localStorage.getItem('cloud_dropbox_account_id');
-  console.warn('[CloudSync] decrypt attempt:',
-    'artifact=' + (artifactLabel || 'stvault'),
-    'vaultPw:', _diagPw,
-    'accountId:', _diagAid ? _diagAid.slice(0, 8) + '… (' + _diagAid.length + ' chars)' : 'MISSING',
-    'candidates:', candidates.length);
+  _logDecryptAttempt(artifactLabel || 'stvault', candidates);
   for (var i = 0; i < candidates.length; i++) {
     try {
       var payload = await vaultDecryptToData(fileBytes, candidates[i].key);
@@ -689,13 +717,7 @@ function _getSyncKeyCandidates() {
  */
 async function _tryDecryptMetadata(parsed) {
   var candidates = _getSyncKeyCandidates();
-  var _diagPw  = !!localStorage.getItem('cloud_vault_password');
-  var _diagAid = localStorage.getItem('cloud_dropbox_account_id');
-  console.warn('[CloudSync] decrypt attempt:',
-    'artifact=metadata',
-    'vaultPw:', _diagPw,
-    'accountId:', _diagAid ? _diagAid.slice(0, 8) + '… (' + _diagAid.length + ' chars)' : 'MISSING',
-    'candidates:', candidates.length);
+  _logDecryptAttempt('metadata', candidates);
   for (var i = 0; i < candidates.length; i++) {
     try {
       var derivedKey = await vaultDeriveKey(candidates[i].key, parsed.salt, parsed.iterations);
@@ -1488,16 +1510,7 @@ async function pollForRemoteChanges() {
   var token = typeof cloudGetToken === 'function' ? await cloudGetToken(_syncProvider) : null;
   if (!token) return;
 
-  var _pollAccountId = localStorage.getItem('cloud_dropbox_account_id');
-  if (!_pollAccountId) {
-    console.warn('[CloudSync] Poll: cloud_dropbox_account_id missing — sync key incomplete');
-    if (typeof showCloudToast === 'function') {
-      showCloudToast(
-        'Cloud sync setup is incomplete on this device. Please reconnect Dropbox to refresh your account identity.'
-      );
-    }
-    return;
-  }
+  if (!_assertSyncAccountId('Poll')) return;
 
   // Layer 3 — Folder migration check (REQ-3)
   if (loadDataSync('cloud_sync_migrated', '') !== 'v2') {
@@ -1653,10 +1666,10 @@ function syncHasLocalChanges() {
 }
 
 /**
- * Show the "Update available" modal and return a Promise that resolves true
- * (user accepted) or false (user dismissed / closed).
+ * Show the "Update available" modal and return a Promise that resolves with the
+ * user's choice: 'accept', 'push', or 'dismiss'. Resolves null if the modal is not in the DOM.
  * @param {object} remoteMeta - The parsed staktrakr-sync.json content
- * @returns {Promise<boolean>}
+ * @returns {Promise<'accept'|'push'|'dismiss'|null>}
  */
 function showSyncUpdateModal(remoteMeta) {
   return new Promise(function (resolve) {
@@ -1743,7 +1756,7 @@ async function handleRemoteChange(remoteMeta) {
       if (choice === 'push') {
         // User chose to assert local data as authoritative — push over remote
         console.warn('[CloudSync] handleRemoteChange: user chose Push My Data');
-        pushSyncVault();
+        pushSyncVault().catch(function(e) { console.error('[CloudSync] Push My Data failed:', e); });
         return;
       }
       if (!choice || choice === 'dismiss') {
@@ -1798,16 +1811,7 @@ async function pullSyncVault(remoteMeta) {
     return;
   }
 
-  var _pullAccountId = localStorage.getItem('cloud_dropbox_account_id');
-  if (!_pullAccountId) {
-    console.warn('[CloudSync] pullSyncVault: cloud_dropbox_account_id missing — aborting');
-    if (typeof showCloudToast === 'function') {
-      showCloudToast(
-        'Cloud sync setup is incomplete on this device. Please reconnect Dropbox to refresh your account identity.'
-      );
-    }
-    return;
-  }
+  if (!_assertSyncAccountId('pullSyncVault')) return;
 
   var token = typeof cloudGetToken === 'function' ? await cloudGetToken(_syncProvider) : null;
   if (!token) throw new Error('Not connected to cloud provider');
@@ -2363,16 +2367,7 @@ async function pullWithPreview(remoteMeta) {
     return;
   }
 
-  var _pullPreviewAccountId = localStorage.getItem('cloud_dropbox_account_id');
-  if (!_pullPreviewAccountId) {
-    console.warn('[CloudSync] pullWithPreview: cloud_dropbox_account_id missing — aborting');
-    if (typeof showCloudToast === 'function') {
-      showCloudToast(
-        'Cloud sync setup is incomplete on this device. Please reconnect Dropbox to refresh your account identity.'
-      );
-    }
-    return;
-  }
+  if (!_assertSyncAccountId('pullWithPreview')) return;
 
   var token = typeof cloudGetToken === 'function' ? await cloudGetToken(_syncProvider) : null;
   if (!token) {
