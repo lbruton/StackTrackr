@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.35] - 2026-03-03
+
+### Fixed — Sync DiffModal Apply Data Loss + Empty-Vault Dialog (STAK-409, STAK-410, STAK-411)
+
+- **Fixed**: DiffModal Apply no longer empties the vault when the manifest-first diff shows only deletions — `_deferredVaultRestore` now falls back to full overwrite when selective apply would produce an empty result but the remote has items, preventing silent data loss when remote-only additions are missed by the local manifest (STAK-409)
+- **Fixed**: Empty-vault push guard dialog now correctly calls `pullWithPreview()` on OK — the `showAppConfirm` call was using an old callback-style API, passing the callback as the `title` argument, causing the dialog heading to display `function () { pullWithPreview(); }` and OK to do nothing (STAK-410)
+- **Fixed**: Double conflict modal prevented — pre-push check now sets `_syncRemoteChangeActive = true` before `await handleRemoteChange()` so a concurrent auto-poll that fires between the routing decision and the flag being set inside `handleRemoteChange` sees the flag and skips its own modal (STAK-411)
+
+---
+
 ## [3.33.34] - 2026-03-03
 
 ### Fixed — Cloud Sync Push Race with DiffModal (STAK-406)

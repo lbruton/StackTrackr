@@ -1188,6 +1188,9 @@ async function pushSyncVault() {
             logCloudSyncActivity('auto_sync_push', 'deferred', 'Remote change detected from device ' + prePushMeta.deviceId.slice(0, 8) + ' — showing diff');
             _syncPushInFlight = false;
             updateSyncStatusIndicator('idle');
+            // STAK-411: Set flag before await so concurrent poll sees it and skips
+            // its own handleRemoteChange call, preventing a double conflict modal.
+            _syncRemoteChangeActive = true;
             await handleRemoteChange(prePushMeta);
             return; // Do NOT push — let the user decide via the update/conflict modal
           } else {
@@ -1253,14 +1256,15 @@ async function pushSyncVault() {
             updateSyncStatusIndicator('error', 'Empty vault — pull first');
             guardBlocked = true;
             _syncPushInFlight = false;
+            // STAK-410: showAppConfirm is Promise-based (message, title) — use .then()
+            // instead of passing the callback as arg 2 (old callback-style API).
             showAppConfirm(
               'Your local vault is empty but the cloud has ' + guardMeta.itemCount + ' items. ' +
               'Push cancelled to prevent data loss. Pull from cloud instead?',
-              function () { pullWithPreview(); },
-              null,
-              'Pull from Cloud',
-              'Cancel'
-            );
+              'Sync Update'
+            ).then(function (confirmed) {
+              if (confirmed) pullWithPreview();
+            });
             return;
           } else {
             debugLog('[CloudSync] Empty-vault guard: remote is also empty — allowing');
@@ -2328,12 +2332,21 @@ async function _deferredVaultRestore(token, password, remoteMeta, selectedChange
 
         var localItems = typeof inventory !== 'undefined' ? inventory : [];
         var newInv = DiffEngine.applySelectedChanges(localItems, selectedChanges);
-        // Manifest-first selective apply intentionally applies inventory only.
-        // Sync-scoped settings are not restored via this path (null settingsChanges);
-        // they update only during vault-first pulls which have full payload access.
-        _applyAndFinalize(newInv, selectedChanges, null, remoteMeta, { source: 'sync' });
-        debugLog('[CloudSync] Deferred vault restore complete (selective apply)');
-        return;
+        // STAK-409: Safety guard — if selective apply would empty the vault but the
+        // remote has items, the manifest-first diff missed remote-only additions
+        // (items the local device has never seen). Fall through to full overwrite
+        // to prevent silent data loss.
+        if (newInv.length === 0 && remoteItems.length > 0) {
+          debugLog('[CloudSync] Selective apply would empty vault but remote has', remoteItems.length, 'items — falling back to full overwrite');
+          // fall through to full-overwrite path below
+        } else {
+          // Manifest-first selective apply intentionally applies inventory only.
+          // Sync-scoped settings are not restored via this path (null settingsChanges);
+          // they update only during vault-first pulls which have full payload access.
+          _applyAndFinalize(newInv, selectedChanges, null, remoteMeta, { source: 'sync' });
+          debugLog('[CloudSync] Deferred vault restore complete (selective apply)');
+          return;
+        }
       }
       // payload missing or corrupt — fall through to full overwrite
       debugLog('[CloudSync] Selective apply failed (bad payload) — falling back to full overwrite');
