@@ -625,6 +625,63 @@ function getSyncPassword() {
 }
 
 /**
+ * Try to decrypt a vault file using all known key variants.
+ * Returns the decrypted payload on success, throws on total failure.
+ * @param {Uint8Array} fileBytes
+ * @returns {Promise<Object>} Parsed vault payload
+ */
+async function _tryDecryptVault(fileBytes) {
+  var candidates = _getSyncKeyCandidates();
+  for (var i = 0; i < candidates.length; i++) {
+    try {
+      var payload = await vaultDecryptToData(fileBytes, candidates[i].key);
+      console.warn('[CloudSync] Vault decrypted with', candidates[i].label, 'key');
+      return payload;
+    } catch (_) {
+      // Next candidate
+    }
+  }
+  throw new Error('All key variants failed to decrypt vault');
+}
+
+/**
+ * Build an ordered list of key candidates for decryption.
+ * Tries composite first (most likely), then password-only, then simple-mode.
+ * @returns {Array<{key: string, label: string}>}
+ */
+function _getSyncKeyCandidates() {
+  var vaultPw = localStorage.getItem('cloud_vault_password');
+  var accountId = localStorage.getItem('cloud_dropbox_account_id');
+  var candidates = [];
+  if (vaultPw && accountId) candidates.push({ key: vaultPw + ':' + accountId, label: 'composite' });
+  if (vaultPw) candidates.push({ key: vaultPw, label: 'password-only' });
+  if (accountId) candidates.push({ key: STAKTRAKR_SIMPLE_SALT + ':' + accountId, label: 'simple-mode' });
+  return candidates;
+}
+
+/**
+ * Try to decrypt a parsed .stvault structure using all known key variants.
+ * Returns { meta, keyUsed } on success, throws on total failure.
+ * @param {Object} parsed - Output of parseVaultFile (salt, iv, iterations, ciphertext)
+ * @returns {Promise<{meta: Object, keyUsed: string}>}
+ */
+async function _tryDecryptMetadata(parsed) {
+  var candidates = _getSyncKeyCandidates();
+  for (var i = 0; i < candidates.length; i++) {
+    try {
+      var derivedKey = await vaultDeriveKey(candidates[i].key, parsed.salt, parsed.iterations);
+      var decrypted = await vaultDecrypt(parsed.ciphertext, derivedKey, parsed.iv);
+      var meta = JSON.parse(new TextDecoder().decode(decrypted));
+      console.warn('[CloudSync] Metadata decrypted with', candidates[i].label, 'key (attempt', i + 1 + '/' + candidates.length + ')');
+      return { meta: meta, keyUsed: candidates[i].label };
+    } catch (_) {
+      console.warn('[CloudSync] Decrypt attempt', i + 1, 'failed (' + candidates[i].label + ', key length:', candidates[i].key.length + ')');
+    }
+  }
+  throw new Error('All ' + candidates.length + ' key variants failed to decrypt metadata');
+}
+
+/**
  * Get the sync password/key without any user interaction.
  * Unified mode: combines vault_password (localStorage) + account_id (Dropbox OAuth).
  * Returns null if either value is missing — caller must prompt user.
@@ -1040,14 +1097,11 @@ async function pushSyncVault() {
             prePushMeta = null; // Treat as no prior metadata — allow push
           } else {
             try {
-              console.warn('[CloudSync] Pre-push DECRYPT: password length:', password.length,
-                '| salt:', prePushParsed.salt.length, 'bytes | iterations:', prePushParsed.iterations);
-              var prePushKey = await vaultDeriveKey(password, prePushParsed.salt, prePushParsed.iterations);
-              var prePushDecrypted = await vaultDecrypt(prePushParsed.ciphertext, prePushKey, prePushParsed.iv);
-              prePushMeta = JSON.parse(new TextDecoder().decode(prePushDecrypted));
-              console.warn('[CloudSync] Pre-push check: decrypted metadata OK — deviceId:', prePushMeta.deviceId, 'syncId:', prePushMeta.syncId, 'itemCount:', prePushMeta.itemCount);
+              var prePushResult = await _tryDecryptMetadata(prePushParsed);
+              prePushMeta = prePushResult.meta;
+              console.warn('[CloudSync] Pre-push check: decrypted OK (' + prePushResult.keyUsed + ') — deviceId:', prePushMeta.deviceId, 'syncId:', prePushMeta.syncId, 'itemCount:', prePushMeta.itemCount);
             } catch (prePushDecryptErr) {
-              console.warn('[CloudSync] Pre-push check: ABORT — decryption failed:', prePushDecryptErr.message);
+              console.warn('[CloudSync] Pre-push check: ABORT — all key variants failed:', prePushDecryptErr.message);
               logCloudSyncActivity('auto_sync_push', 'error', 'Encrypted sync metadata exists but could not be decrypted. Check your sync password.');
               _syncPushInFlight = false;
               updateSyncStatusIndicator('error', 'Wrong vault password?');
@@ -1120,12 +1174,11 @@ async function pushSyncVault() {
         } else if (guardResp.ok) {
           // Decrypt metadata (encrypted format) or fall back to legacy plaintext JSON
           var guardMeta;
+          var guardBuffer = await guardResp.arrayBuffer();
           try {
-            var guardBuffer = await guardResp.arrayBuffer();
             var guardParsed = parseVaultFile(new Uint8Array(guardBuffer));
-            var guardMetaKey = await vaultDeriveKey(password, guardParsed.salt, guardParsed.iterations);
-            var guardDecrypted = await vaultDecrypt(guardParsed.ciphertext, guardMetaKey, guardParsed.iv);
-            guardMeta = JSON.parse(new TextDecoder().decode(guardDecrypted));
+            var guardResult = await _tryDecryptMetadata(guardParsed);
+            guardMeta = guardResult.meta;
           } catch (guardDecryptErr) {
             // Legacy plaintext metadata — fall back to JSON parse
             debugLog('[CloudSync] Guard: metadata not encrypted, falling back to JSON parse:', guardDecryptErr.message);
@@ -1469,20 +1522,17 @@ async function pollForRemoteChanges() {
       var metaBytes = new Uint8Array(metaBuffer);
       console.warn('[CloudSync] Poll: metadata downloaded,', metaBytes.length, 'bytes');
       var metaParsed = parseVaultFile(metaBytes);
-      var syncPassword = getSyncPasswordSilent();
-      if (!syncPassword) {
-        console.warn('[CloudSync] Poll: no password available — skipping');
+      // Check we have at least a password before trying decrypt
+      if (!localStorage.getItem('cloud_vault_password')) {
+        console.warn('[CloudSync] Poll: no vault password — skipping');
         return;
       }
-      console.warn('[CloudSync] Poll DECRYPT: password length:', syncPassword.length,
-        '| salt:', metaParsed.salt.length, 'bytes | iterations:', metaParsed.iterations);
-      var metaKey = await vaultDeriveKey(syncPassword, metaParsed.salt, metaParsed.iterations);
-      var metaDecrypted = await vaultDecrypt(metaParsed.ciphertext, metaKey, metaParsed.iv);
-      remoteMeta = JSON.parse(new TextDecoder().decode(metaDecrypted));
-      console.warn('[CloudSync] Poll: metadata decrypted OK');
+      var pollResult = await _tryDecryptMetadata(metaParsed);
+      remoteMeta = pollResult.meta;
+      console.warn('[CloudSync] Poll: metadata decrypted OK (' + pollResult.keyUsed + ')');
     } catch (decryptErr) {
       // Legacy plaintext metadata — fall back to JSON parse
-      console.warn('[CloudSync] Poll: metadata decrypt failed, trying legacy JSON:', decryptErr.message);
+      console.warn('[CloudSync] Poll: encrypted decrypt failed, trying legacy JSON:', decryptErr.message);
       try {
         // Response body already consumed by arrayBuffer() — re-parse from the buffer
         var fallbackText = new TextDecoder().decode(new Uint8Array(metaBuffer));
@@ -1721,7 +1771,22 @@ async function pullSyncVault(remoteMeta) {
     syncSaveOverrideBackup();
 
     if (typeof vaultDecryptAndRestore === 'function') {
-      await vaultDecryptAndRestore(bytes, password);
+      // Try all key variants — the vault may have been encrypted with a different
+      // key variant than the metadata (e.g., password-only vs composite)
+      var vaultDecrypted = false;
+      var vaultCandidates = _getSyncKeyCandidates();
+      for (var vi = 0; vi < vaultCandidates.length; vi++) {
+        try {
+          await vaultDecryptAndRestore(bytes, vaultCandidates[vi].key);
+          console.warn('[CloudSync] Vault decrypted with', vaultCandidates[vi].label, 'key');
+          vaultDecrypted = true;
+          password = vaultCandidates[vi].key; // use this key for image vault too
+          break;
+        } catch (_vaultErr) {
+          console.warn('[CloudSync] Vault decrypt attempt', vi + 1, 'failed (' + vaultCandidates[vi].label + ')');
+        }
+      }
+      if (!vaultDecrypted) throw new Error('All key variants failed to decrypt vault');
     } else {
       throw new Error('vaultDecryptAndRestore not available');
     }
@@ -2150,7 +2215,7 @@ async function _deferredVaultRestore(token, password, remoteMeta, selectedChange
     // ── Selective apply path ──
     if (selectedChanges && typeof DiffEngine !== 'undefined' && typeof DiffEngine.applySelectedChanges === 'function') {
       var payload = typeof vaultDecryptToData === 'function'
-        ? await vaultDecryptToData(bytes, password)
+        ? await _tryDecryptVault(bytes)
         : null;
 
       if (payload && payload.data) {
@@ -2196,9 +2261,10 @@ async function _deferredVaultRestore(token, password, remoteMeta, selectedChange
       debugLog('[CloudSync] Selective apply failed (bad payload) — falling back to full overwrite');
     }
 
-    // ── Full-overwrite fallback ──
+    // ── Full-overwrite fallback (try all key variants) ──
     syncSaveOverrideBackup();
-    await vaultDecryptAndRestore(bytes, password);
+    var fbPayload = await _tryDecryptVault(bytes);
+    await restoreVaultData(fbPayload);
     debugLog('[CloudSync] Deferred vault restore complete (full overwrite)');
 
     if (_previewPullMeta) {
@@ -2370,7 +2436,7 @@ async function pullWithPreview(remoteMeta) {
 
     // Attempt to decrypt and preview
     try {
-      var remotePayload = await vaultDecryptToData(bytes, password);
+      var remotePayload = await _tryDecryptVault(bytes);
       var remoteItems = remotePayload.data || [];
       var localItems = typeof inventory !== 'undefined' ? inventory : [];
 
@@ -2453,10 +2519,11 @@ async function pullWithPreview(remoteMeta) {
 
       var shown = showRestorePreviewModal(diffResult, settingsDiff, remotePayload, remoteMeta, conflicts);
       if (!shown) {
-        // Modal not in DOM — fall back to direct restore
+        // Modal not in DOM — fall back to direct restore (try all key variants)
         debugLog('[CloudSync] Preview modal unavailable — falling back to direct restore');
         syncSaveOverrideBackup();
-        await vaultDecryptAndRestore(bytes, password);
+        var fbPayload2 = await _tryDecryptVault(bytes);
+        await restoreVaultData(fbPayload2);
         syncSetLastPull(_previewPullMeta);
         _previewPullMeta = null;
       }
