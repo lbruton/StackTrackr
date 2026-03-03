@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.38] - 2026-03-03
+
+### Fixed — Sync Poll Local-Newer Detection + DiffModal Apply (STAK-414, STAK-415)
+
+- **Fixed**: Sync poll no longer triggers a pull when local inventory is newer than the remote vault — now compares `lastLocalModified` timestamp (set on every inventory save) against `remoteMeta.timestamp` and triggers a push instead, preventing the user's newly added items from appearing as deletions in the DiffModal (STAK-414)
+- **Fixed**: DiffModal Apply button stays enabled when settings changes are pending even if all item checkboxes are unchecked — previously the button disabled with zero item selections, blocking settings-only apply (STAK-415)
+
+---
+
 ## [3.33.37] - 2026-03-03
 
 ### Changed — Remove Redundant Sync Update Dialog (STAK-413)
