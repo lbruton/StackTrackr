@@ -44,15 +44,15 @@ Path on disk: `$DATA_REPO_PATH/data/retail/providers.json`
 
 | File | Purpose |
 |------|---------|
-| `devops/retail-poller/price-extract.js` | Primary scraper — Firecrawl + Playwright fallback → Turso |
-| `devops/retail-poller/capture.js` | Screenshot capture — `BROWSER_MODE=browserless` (browserless Docker via `connectOverCDP`), `browserbase` (cloud CDP), or `local` (local Chromium). `ARTIFACT_DIR` sets output dir; writes `manifest.json`. |
-| `devops/retail-poller/extract-vision.js` | Gemini Vision price extraction from screenshots → per-coin JSON files (not Turso). Reads `MANIFEST_PATH`. |
-| `devops/retail-poller/api-export.js` | Turso + vision JSON → `data/api/` static JSON endpoints with confidence scoring |
-| `devops/retail-poller/vision-patch.js` | Standalone utility — patches `data/api/{slug}/latest.json` confidence scores using vision JSON, without Turso. For manual one-off runs. |
-| `devops/retail-poller/merge-prices.js` | **Legacy** — not called in either pipeline. Reads flat `{date}.json` files that no longer exist in Turso arch. |
-| `devops/retail-poller/db.js` | Turso helper — schema, read/write functions |
-| `devops/retail-poller/run-local.sh` | Full local run: extract → capture → vision → export → push |
-| `devops/retail-poller/run-fbp.sh` | Gap-fill run: failed vendors → FindBullionPrices scrape |
+| `devops/fly-poller/price-extract.js` | Primary scraper — Firecrawl + Playwright fallback → Turso |
+| `devops/fly-poller/capture.js` | Screenshot capture — `BROWSER_MODE=browserless` (browserless Docker via `connectOverCDP`), `browserbase` (cloud CDP), or `local` (local Chromium). `ARTIFACT_DIR` sets output dir; writes `manifest.json`. |
+| `devops/fly-poller/extract-vision.js` | Gemini Vision price extraction from screenshots → per-coin JSON files (not Turso). Reads `MANIFEST_PATH`. |
+| `devops/fly-poller/api-export.js` | Turso + vision JSON → `data/api/` static JSON endpoints with confidence scoring |
+| `devops/fly-poller/vision-patch.js` | Standalone utility — patches `data/api/{slug}/latest.json` confidence scores using vision JSON, without Turso. For manual one-off runs. |
+| `devops/fly-poller/merge-prices.js` | **Legacy** — not called in either pipeline. Reads flat `{date}.json` files that no longer exist in Turso arch. |
+| `devops/fly-poller/db.js` | Turso helper — schema, read/write functions |
+| `devops/fly-poller/run-local.sh` | Full local run: extract → capture → vision → export → push |
+| `devops/fly-poller/run-fbp.sh` | Gap-fill run: failed vendors → FindBullionPrices scrape |
 
 ---
 
@@ -236,7 +236,7 @@ The StakTrakr app fetches `data/api/{slug}/latest.json` in `retail-view-modal.js
 ## Running Locally
 
 ```bash
-cd devops/retail-poller
+cd devops/fly-poller
 
 # Full run against self-hosted Firecrawl (port 3002)
 DATA_REPO_PATH=/path/to/api-branch-checkout \

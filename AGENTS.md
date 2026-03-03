@@ -26,7 +26,7 @@ Future plans include ApexCharts and Tabler integration. Slowly migrating new fea
 
 ### 1. Script Loading Order (MANDATORY)
 
-67 scripts load in strict dependency order via `index.html`. Breaking this order causes undefined variable errors. The full chain:
+67 script files load in strict dependency order via `index.html`. Breaking this order causes undefined variable errors. The full chain:
 
 ```text
 file-protocol-fix.js  (no defer -- loads FIRST)
@@ -273,7 +273,7 @@ Validate both launch paths (`file://` and localhost). Smoke test core flows: add
 
 The primary E2E test suite is `tests/runbook/*.md` — 75+ natural-language tests across 8 section files. Tests are executed via Stagehand/Browserbase against the PR preview URL.
 
-- Runbook sections: `01-page-load`, `02-crud`, `03-spot`, `04-import-export`, `05-settings`, `06-ui-ux`, `07-activity-log`, `08-api`
+- Runbook sections: `01-page-load`, `02-crud`, `03-backup-restore`, `04-import-export`, `05-market`, `06-ui-ux`, `07-activity-log`, `08-spot-prices`
 - Each test block has 7 required fields: Test name, Added (version/STAK), Preconditions, Steps, Pass criteria, Tags, Section
 - Step types: `navigate:`, `act:`, `extract: → expect:`, `screenshot:`
 - **Browserbase requires explicit user approval** before use — it costs real money
@@ -381,7 +381,7 @@ Jules runs nightly scans via three agents (Bolt, Sentinel, Scribe). The exclusio
 ### Bolt (Performance) Exclusions
 
 - Do not optimize `filterInventoryAdvanced` — the current implementation is readable and performant for expected dataset sizes (< 5,000 items). Single-pass refactors have been reviewed and rejected twice (PRs #577, #595)
-- Do not suggest lazy-loading for scripts in `index.html` — all 67 scripts use `defer` (except `file-protocol-fix.js`) and load order is a hard dependency chain
+- Do not suggest lazy-loading for scripts in `index.html` — all 67 script files use `defer` (except `file-protocol-fix.js`) and load order is a hard dependency chain
 - Do not suggest Web Workers for spot price calculations — the computation is sub-millisecond and the thread marshalling overhead would be net negative
 
 ### Sentinel (Security) Exclusions
