@@ -565,7 +565,7 @@ function getSyncPassword(forcePrompt) {
           if (pw && pw.length >= 8) {
             var freshId = localStorage.getItem('cloud_dropbox_account_id');
             try { localStorage.setItem('cloud_vault_password', pw); } catch (_) {}
-            resolve(freshId ? pw + ':' + freshId : pw);
+            resolve(freshId ? pw + ':' + freshId : null);
           } else {
             resolve(null);
           }
@@ -607,11 +607,18 @@ function getSyncPassword(forcePrompt) {
       // Re-read accountId at confirm time — it may have been stored after the modal opened
       // (e.g., async Dropbox token exchange completing while the user types their password).
       var freshAccountId = localStorage.getItem('cloud_dropbox_account_id');
+      if (!freshAccountId) {
+        if (errorEl) {
+          errorEl.textContent = 'No Dropbox account ID found. Please cancel and reconnect your Dropbox account.';
+          errorEl.style.display = '';
+        }
+        return;
+      }
       try { localStorage.setItem('cloud_vault_password', pw); } catch (_) {}
       cleanup();
       if (typeof updateCloudSyncHeaderBtn === 'function') updateCloudSyncHeaderBtn();
       // Do NOT push here — the caller (enableCloudSync / initCloudSync) handles sync after resolving.
-      resolve(freshAccountId ? pw + ':' + freshAccountId : pw);
+      resolve(pw + ':' + freshAccountId);
     };
 
     var onCancel = function () { cleanup(); resolve(null); };
@@ -633,13 +640,48 @@ function getSyncPassword(forcePrompt) {
 }
 
 /**
+ * Emit a structured pre-decrypt console.warn for QA isolation of identity vs crypto failures.
+ * @param {string} artifact - Label for what is being decrypted (e.g. 'metadata', 'stvault')
+ * @param {Array} candidates - Key candidates from _getSyncKeyCandidates()
+ */
+function _logDecryptAttempt(artifact, candidates) {
+  var _diagPw  = !!localStorage.getItem('cloud_vault_password');
+  var _diagAid = localStorage.getItem('cloud_dropbox_account_id');
+  console.warn('[CloudSync] decrypt attempt:',
+    'artifact=' + artifact,
+    'vaultPw:', _diagPw,
+    'accountId:', _diagAid ? _diagAid.slice(0, 8) + '… (' + _diagAid.length + ' chars)' : 'MISSING',
+    'candidates:', candidates.length);
+}
+
+/**
+ * Guard that cloud_dropbox_account_id is present before any pull/poll operation.
+ * Logs a warning and shows a reconnect toast when the accountId is missing.
+ * Returns true when the accountId is present (safe to proceed), false when absent (caller must return).
+ * @param {string} context - Caller label for the console warning (e.g. 'Poll', 'pullSyncVault')
+ * @returns {boolean}
+ */
+function _assertSyncAccountId(context) {
+  if (localStorage.getItem('cloud_dropbox_account_id')) return true;
+  console.warn('[CloudSync]', context + ': cloud_dropbox_account_id missing — aborting');
+  if (typeof showCloudToast === 'function') {
+    showCloudToast(
+      'Cloud sync setup is incomplete on this device. Please reconnect Dropbox to refresh your account identity.'
+    );
+  }
+  return false;
+}
+
+/**
  * Try to decrypt a vault file using all known key variants.
  * Returns the decrypted payload on success, throws on total failure.
  * @param {Uint8Array} fileBytes
+ * @param {string} [artifactLabel] - Label for pre-decrypt log (e.g. 'stvault', 'stmanifest')
  * @returns {Promise<Object>} Parsed vault payload
  */
-async function _tryDecryptVault(fileBytes) {
+async function _tryDecryptVault(fileBytes, artifactLabel) {
   var candidates = _getSyncKeyCandidates();
+  _logDecryptAttempt(artifactLabel || 'stvault', candidates);
   for (var i = 0; i < candidates.length; i++) {
     try {
       var payload = await vaultDecryptToData(fileBytes, candidates[i].key);
@@ -675,6 +717,7 @@ function _getSyncKeyCandidates() {
  */
 async function _tryDecryptMetadata(parsed) {
   var candidates = _getSyncKeyCandidates();
+  _logDecryptAttempt('metadata', candidates);
   for (var i = 0; i < candidates.length; i++) {
     try {
       var derivedKey = await vaultDeriveKey(candidates[i].key, parsed.salt, parsed.iterations);
@@ -1467,6 +1510,8 @@ async function pollForRemoteChanges() {
   var token = typeof cloudGetToken === 'function' ? await cloudGetToken(_syncProvider) : null;
   if (!token) return;
 
+  if (!_assertSyncAccountId('Poll')) return;
+
   // Layer 3 — Folder migration check (REQ-3)
   if (loadDataSync('cloud_sync_migrated', '') !== 'v2') {
     debugLog('[CloudSync] Poll: migration needed — running cloudMigrateToV2');
@@ -1621,10 +1666,10 @@ function syncHasLocalChanges() {
 }
 
 /**
- * Show the "Update available" modal and return a Promise that resolves true
- * (user accepted) or false (user dismissed / closed).
+ * Show the "Update available" modal and return a Promise that resolves with the
+ * user's choice: 'accept', 'push', or 'dismiss'. Resolves null if the modal is not in the DOM.
  * @param {object} remoteMeta - The parsed staktrakr-sync.json content
- * @returns {Promise<boolean>}
+ * @returns {Promise<'accept'|'push'|'dismiss'|null>}
  */
 function showSyncUpdateModal(remoteMeta) {
   return new Promise(function (resolve) {
@@ -1648,22 +1693,26 @@ function showSyncUpdateModal(remoteMeta) {
 
     modal.style.display = 'flex';
 
-    function cleanup(result) {
-      modal.style.display = 'none';
-      acceptBtn.removeEventListener('click', onAccept);
-      dismissBtn.removeEventListener('click', onDismiss);
-      dismissX.removeEventListener('click', onDismiss);
-      resolve(result);
-    }
-
-    function onAccept()  { cleanup(true); }
-    function onDismiss() { cleanup(false); }
-
     var acceptBtn  = safeGetElement('syncUpdateAcceptBtn');
+    var pushBtn    = safeGetElement('syncUpdatePushBtn');
     var dismissBtn = safeGetElement('syncUpdateDismissBtn');
     var dismissX   = safeGetElement('syncUpdateDismissX');
 
+    function cleanup(result) {
+      modal.style.display = 'none';
+      if (acceptBtn)  acceptBtn.removeEventListener('click', onAccept);
+      if (pushBtn)    pushBtn.removeEventListener('click', onPush);
+      if (dismissBtn) dismissBtn.removeEventListener('click', onDismiss);
+      if (dismissX)   dismissX.removeEventListener('click', onDismiss);
+      resolve(result);
+    }
+
+    function onAccept()  { cleanup('accept'); }
+    function onPush()    { cleanup('push'); }
+    function onDismiss() { cleanup('dismiss'); }
+
     if (acceptBtn)  acceptBtn.addEventListener('click', onAccept);
+    if (pushBtn)    pushBtn.addEventListener('click', onPush);
     if (dismissBtn) dismissBtn.addEventListener('click', onDismiss);
     if (dismissX)   dismissX.addEventListener('click', onDismiss);
   });
@@ -1703,12 +1752,18 @@ async function handleRemoteChange(remoteMeta) {
     if (!hasLocal) {
       // Show the update-available modal — let user decide before password prompt
       console.warn('[CloudSync] handleRemoteChange: showing update modal');
-      var accepted = await showSyncUpdateModal(remoteMeta);
-      if (!accepted) {
+      var choice = await showSyncUpdateModal(remoteMeta);
+      if (choice === 'push') {
+        // User chose to assert local data as authoritative — push over remote
+        console.warn('[CloudSync] handleRemoteChange: user chose Push My Data');
+        pushSyncVault().catch(function(e) { console.error('[CloudSync] Push My Data failed:', e); });
+        return;
+      }
+      if (!choice || choice === 'dismiss') {
         console.warn('[CloudSync] handleRemoteChange: user dismissed update — will retry next poll');
         return;
       }
-      // Layer 5 — Show restore preview instead of direct pull (REQ-5)
+      // choice === 'accept' — Layer 5: show restore preview instead of direct pull (REQ-5)
       await pullWithPreview(remoteMeta);
       return;
     }
@@ -1755,6 +1810,8 @@ async function pullSyncVault(remoteMeta) {
     debugLog('[CloudSync] Pull cancelled — no password');
     return;
   }
+
+  if (!_assertSyncAccountId('pullSyncVault')) return;
 
   var token = typeof cloudGetToken === 'function' ? await cloudGetToken(_syncProvider) : null;
   if (!token) throw new Error('Not connected to cloud provider');
@@ -2223,7 +2280,7 @@ async function _deferredVaultRestore(token, password, remoteMeta, selectedChange
     // ── Selective apply path ──
     if (selectedChanges && typeof DiffEngine !== 'undefined' && typeof DiffEngine.applySelectedChanges === 'function') {
       var payload = typeof vaultDecryptToData === 'function'
-        ? await _tryDecryptVault(bytes)
+        ? await _tryDecryptVault(bytes, 'stvault')
         : null;
 
       if (payload && payload.data) {
@@ -2271,7 +2328,7 @@ async function _deferredVaultRestore(token, password, remoteMeta, selectedChange
 
     // ── Full-overwrite fallback (try all key variants) ──
     syncSaveOverrideBackup();
-    var fbPayload = await _tryDecryptVault(bytes);
+    var fbPayload = await _tryDecryptVault(bytes, 'stvault');
     await restoreVaultData(fbPayload);
     debugLog('[CloudSync] Deferred vault restore complete (full overwrite)');
 
@@ -2309,6 +2366,8 @@ async function pullWithPreview(remoteMeta) {
     debugLog('[CloudSync] Pull preview cancelled — no password');
     return;
   }
+
+  if (!_assertSyncAccountId('pullWithPreview')) return;
 
   var token = typeof cloudGetToken === 'function' ? await cloudGetToken(_syncProvider) : null;
   if (!token) {
@@ -2444,7 +2503,7 @@ async function pullWithPreview(remoteMeta) {
 
     // Attempt to decrypt and preview
     try {
-      var remotePayload = await _tryDecryptVault(bytes);
+      var remotePayload = await _tryDecryptVault(bytes, 'stvault');
       var remoteItems = remotePayload.data || [];
       var localItems = typeof inventory !== 'undefined' ? inventory : [];
 
@@ -2530,7 +2589,7 @@ async function pullWithPreview(remoteMeta) {
         // Modal not in DOM — fall back to direct restore (try all key variants)
         debugLog('[CloudSync] Preview modal unavailable — falling back to direct restore');
         syncSaveOverrideBackup();
-        var fbPayload2 = await _tryDecryptVault(bytes);
+        var fbPayload2 = await _tryDecryptVault(bytes, 'stvault');
         await restoreVaultData(fbPayload2);
         syncSetLastPull(_previewPullMeta);
         _previewPullMeta = null;
