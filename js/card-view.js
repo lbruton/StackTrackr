@@ -22,18 +22,21 @@ function isCardViewActive() {
  */
 function _computePortfolioSummary() {
   const items = (typeof filterInventory === 'function') ? filterInventory() : (inventory || []);
-  const totalCount = (typeof inventory !== 'undefined' && Array.isArray(inventory)) ? inventory.length : items.length;
-  let purchase = 0, melt = 0, retail = 0, totalWeight = 0;
-  const gbToOzt = (typeof GB_TO_OZT !== 'undefined') ? GB_TO_OZT : 1 / 50;
+  // Total pieces across ALL inventory (sum of qty, matches metal card "Items" count)
+  const allItems = (typeof inventory !== 'undefined' && Array.isArray(inventory)) ? inventory : items;
+  const totalPieces = allItems.reduce((sum, it) => sum + (Number(it.qty) || 0), 0);
+  let purchase = 0, melt = 0, retail = 0, totalWeight = 0, filteredPieces = 0;
+  const gbToOzt = (typeof GB_TO_OZT !== 'undefined') ? GB_TO_OZT : 0.001;
   items.forEach(item => {
+    const qty = Number(item.qty) || 0;
+    filteredPieces += qty;
     const spot = (typeof spotPrices !== 'undefined' ? spotPrices[(item.metal || '').toLowerCase()] : 0) || 0;
     const valuation = (typeof computeItemValuation === 'function')
       ? computeItemValuation(item, spot)
       : {
           meltValue: (typeof computeMeltValue === 'function') ? computeMeltValue(item, spot) : 0,
-          purchaseTotal: (typeof item.price === 'number' ? item.price : parseFloat(item.price) || 0) * (Number(item.qty) || 1),
+          purchaseTotal: (typeof item.price === 'number' ? item.price : parseFloat(item.price) || 0) * qty,
           retailTotal: (() => {
-            const qty = Number(item.qty) || 1;
             const gbPrice = (typeof getGoldbackRetailPrice === 'function') ? getGoldbackRetailPrice(item) : null;
             const mktVal = parseFloat(item.marketValue) || 0;
             return gbPrice ? gbPrice * qty : (mktVal > 0 ? mktVal * qty : ((typeof computeMeltValue === 'function') ? computeMeltValue(item, spot) : 0));
@@ -42,12 +45,11 @@ function _computePortfolioSummary() {
     purchase += valuation.purchaseTotal || 0;
     melt += valuation.meltValue || 0;
     retail += valuation.retailTotal || 0;
-    const qty = Number(item.qty) || 1;
     const w = parseFloat(item.weight) || 0;
     const wOz = (item.weightUnit === 'gb') ? w * gbToOzt : w;
     totalWeight += qty * wOz;
   });
-  return { purchase, melt, retail, gainLoss: retail - purchase, filteredCount: items.length, totalCount, totalWeight };
+  return { purchase, melt, retail, gainLoss: retail - purchase, filteredCount: filteredPieces, totalCount: totalPieces, totalWeight };
 }
 
 /**
