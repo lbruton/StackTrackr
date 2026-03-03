@@ -899,7 +899,7 @@ async function pushSyncVault() {
     // Layer 3 — Folder migration check (REQ-3)
     // Migrate legacy flat /StakTrakr/ layout to /sync/ + /backups/ on first run.
     // -----------------------------------------------------------------------
-    if (loadData('cloud_sync_migrated') !== 'v2') {
+    if (loadDataSync('cloud_sync_migrated', '') !== 'v2') {
       debugLog('[CloudSync] Migration needed — running cloudMigrateToV2');
       try {
         await cloudMigrateToV2(_syncProvider);
@@ -1215,7 +1215,7 @@ async function pollForRemoteChanges() {
   if (!token) return;
 
   // Layer 3 — Folder migration check (REQ-3)
-  if (loadData('cloud_sync_migrated') !== 'v2') {
+  if (loadDataSync('cloud_sync_migrated', '') !== 'v2') {
     debugLog('[CloudSync] Poll: migration needed — running cloudMigrateToV2');
     try {
       await cloudMigrateToV2(_syncProvider);

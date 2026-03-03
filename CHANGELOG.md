@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.29] - 2026-03-03
+
+### Fixed — Cloud Backup/Restore Pipeline Fix (STAK-398, STAK-382)
+
+- **Fixed**: All 4 backup path functions now target `/StakTrakr/backups/` subfolder instead of root (STAK-398)
+- **Fixed**: Backup history dropdown async/sync mismatch — was showing `[object Promise]` instead of saved value
+- **Fixed**: Prune depth read async/sync mismatch — was getting `NaN` from Promise
+- **Fixed**: Migration check async/sync mismatch — `loadData` → `loadDataSync` for `cloud_sync_migrated` flag
+- **Fixed**: Conflict check reads `latest.json` from `/backups/` with legacy root fallback
+- **Security**: Sync metadata file encrypted with AES-256-GCM, backward-compatible plaintext fallback (STAK-382)
+- **Changed**: Cloud card restructured — auto-sync first, manual backup section with count badge, View Sync Log on main card
+- **Changed**: Export button descriptions converted to native `title` tooltips
+- **Changed**: `CLOUD_LATEST_FILENAME` promoted to `constants.js` global
+
+---
+
 ## [3.33.27] - 2026-03-03
 
 ### Fixed — Documentation & Instruction Accuracy Cleanup (STAK-397)
