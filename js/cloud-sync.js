@@ -29,6 +29,9 @@ var _syncPasswordPromptActive = false;
 /** @type {boolean} Whether handleRemoteChange is actively running (blocks pushes) */
 var _syncRemoteChangeActive = false;
 
+/** @type {boolean} Whether vault password was just changed — skip pre-push metadata decryption */
+var _syncPasswordJustChanged = false;
+
 /** @type {number} Retry backoff multiplier for 429 / network errors */
 var _syncRetryDelay = 2000;
 
@@ -434,17 +437,26 @@ function updateCloudSyncHeaderBtn() {
   var connected = typeof cloudIsConnected === 'function' ? cloudIsConnected(_syncProvider) : false;
   var hasPw = !!localStorage.getItem('cloud_vault_password');
   var hasAccountId = !!localStorage.getItem('cloud_dropbox_account_id');
+  var autoSyncOn = syncIsEnabled();
 
-  if (connected && hasPw && hasAccountId) {
+  if (connected && hasPw && hasAccountId && autoSyncOn) {
+    // Green: fully operational — connected, credentials set, auto-sync enabled
     dot.classList.add('header-cloud-dot--green');
     btn.title = 'Cloud sync active';
     btn.setAttribute('aria-label', 'Cloud sync active');
     btn.dataset.syncState = 'green';
   } else if (connected && (!hasPw || !hasAccountId)) {
+    // Orange: connected but missing password or account ID
     dot.classList.add('header-cloud-dot--orange');
     btn.title = 'Cloud sync needs setup — tap to configure';
     btn.setAttribute('aria-label', 'Cloud sync needs setup');
     btn.dataset.syncState = 'orange';
+  } else if (connected && hasPw && hasAccountId && !autoSyncOn) {
+    // Orange: connected and ready but auto-sync is off (distinct from 'orange' setup-needed)
+    dot.classList.add('header-cloud-dot--orange');
+    btn.title = 'Cloud sync ready — enable auto-sync in Settings';
+    btn.setAttribute('aria-label', 'Cloud sync ready but not enabled');
+    btn.dataset.syncState = 'ready';
   } else {
     dot.classList.add('header-cloud-dot--gray');
     btn.title = 'Cloud sync — tap to configure';
@@ -473,11 +485,12 @@ function refreshSyncUI() {
     }
   }
 
-  // Sync Now button — enabled only when connected AND sync is on
+  // Sync Now button — enabled when connected (works regardless of auto-sync toggle)
   var syncNowBtn = safeGetElement('cloudSyncNowBtn');
   if (syncNowBtn) {
     var connected = typeof cloudIsConnected === 'function' ? cloudIsConnected(_syncProvider) : false;
-    syncNowBtn.disabled = !(syncIsEnabled() && connected);
+    var hasSyncPw = !!getSyncPasswordSilent();
+    syncNowBtn.disabled = !(connected && hasSyncPw);
   }
 
   // Status dot
@@ -622,6 +635,12 @@ function getSyncPasswordSilent() {
   var vaultPw = localStorage.getItem('cloud_vault_password');
   var accountId = localStorage.getItem('cloud_dropbox_account_id');
 
+  // STAK-398 diagnostic: log key component shapes (not values) — MUST use console.warn, not debugLog
+  console.warn('[CloudSync] getSyncPasswordSilent:',
+    'vaultPw:', vaultPw ? vaultPw.length + ' chars' : 'NULL',
+    '| accountId:', accountId ? accountId.slice(0, 8) + '… (' + accountId.length + ' chars)' : 'NULL',
+    '| compositeKey:', (vaultPw && accountId) ? (vaultPw + ':' + accountId).length + ' chars' : 'N/A');
+
   // Unified mode: both required
   if (vaultPw && accountId) {
     return vaultPw + ':' + accountId;
@@ -651,8 +670,19 @@ async function changeVaultPassword(newPassword) {
     localStorage.setItem('cloud_vault_password', newPassword);
     logCloudSyncActivity('password_change', 'success', 'Vault password updated');
     if (typeof updateCloudSyncHeaderBtn === 'function') updateCloudSyncHeaderBtn();
+    // STAK-398: Set flag so pushSyncVault skips pre-push metadata decryption.
+    // The remote metadata is encrypted with the OLD password — decryption would fail
+    // and block the push, creating a deadlock where the password can never be changed.
+    _syncPasswordJustChanged = true;
+    let pushScheduled = false;
     if (syncIsEnabled() && typeof scheduleSyncPush === 'function') {
       scheduleSyncPush();
+      pushScheduled = true;
+    }
+    // If no push was scheduled (e.g., auto-sync is disabled), do not leave the
+    // flag stuck true indefinitely; it should only apply to the next push.
+    if (!pushScheduled) {
+      _syncPasswordJustChanged = false;
     }
     if (typeof showCloudToast === 'function') showCloudToast('Vault password updated — syncing now', 3000);
     return true;
@@ -984,17 +1014,45 @@ async function pushSyncVault() {
 
           // Encrypted metadata exists; decryption must succeed or we abort the push
           // (wrong password ≠ legacy plaintext — do not fail-open)
-          try {
-            var prePushKey = await vaultDeriveKey(password, prePushParsed.salt, prePushParsed.iterations);
-            var prePushDecrypted = await vaultDecrypt(prePushParsed.ciphertext, prePushKey, prePushParsed.iv);
-            prePushMeta = JSON.parse(new TextDecoder().decode(prePushDecrypted));
-            console.warn('[CloudSync] Pre-push check: decrypted metadata OK — deviceId:', prePushMeta.deviceId, 'syncId:', prePushMeta.syncId, 'itemCount:', prePushMeta.itemCount);
-          } catch (prePushDecryptErr) {
-            console.warn('[CloudSync] Pre-push check: ABORT — decryption failed:', prePushDecryptErr.message);
-            logCloudSyncActivity('auto_sync_push', 'error', 'Encrypted sync metadata exists but could not be decrypted. Check your sync password.');
-            _syncPushInFlight = false;
-            updateSyncStatusIndicator('error', 'Wrong vault password?');
-            return;
+          // Exception: after a password change, the remote metadata is encrypted with the
+          // OLD password. In that case we cannot reliably decrypt with the NEW password.
+          if (_syncPasswordJustChanged) {
+            console.warn('[CloudSync] Pre-push check: password just changed — remote metadata likely encrypted with old password');
+            var confirmBlindOverwrite = window.confirm(
+              'Your sync password was just changed.\n\n' +
+              'StakTrakr cannot verify whether the cloud copy of your vault is newer than this device. ' +
+              'Continuing may overwrite newer remote data.\n\n' +
+              'Do you want to overwrite the cloud copy with the data from this device now?'
+            );
+            if (!confirmBlindOverwrite) {
+              console.warn('[CloudSync] Pre-push check: user cancelled blind overwrite after password change');
+              logCloudSyncActivity(
+                'auto_sync_push',
+                'cancelled',
+                'User cancelled potential overwrite after vault password change'
+              );
+              _syncPushInFlight = false;
+              updateSyncStatusIndicator('idle', 'Sync cancelled');
+              return;
+            }
+            // User explicitly accepted the risk; treat as no prior metadata and proceed.
+            _syncPasswordJustChanged = false;
+            prePushMeta = null; // Treat as no prior metadata — allow push
+          } else {
+            try {
+              console.warn('[CloudSync] Pre-push DECRYPT: password length:', password.length,
+                '| salt:', prePushParsed.salt.length, 'bytes | iterations:', prePushParsed.iterations);
+              var prePushKey = await vaultDeriveKey(password, prePushParsed.salt, prePushParsed.iterations);
+              var prePushDecrypted = await vaultDecrypt(prePushParsed.ciphertext, prePushKey, prePushParsed.iv);
+              prePushMeta = JSON.parse(new TextDecoder().decode(prePushDecrypted));
+              console.warn('[CloudSync] Pre-push check: decrypted metadata OK — deviceId:', prePushMeta.deviceId, 'syncId:', prePushMeta.syncId, 'itemCount:', prePushMeta.itemCount);
+            } catch (prePushDecryptErr) {
+              console.warn('[CloudSync] Pre-push check: ABORT — decryption failed:', prePushDecryptErr.message);
+              logCloudSyncActivity('auto_sync_push', 'error', 'Encrypted sync metadata exists but could not be decrypted. Check your sync password.');
+              _syncPushInFlight = false;
+              updateSyncStatusIndicator('error', 'Wrong vault password?');
+              return;
+            }
           }
         } else {
           // No valid .stvault header — attempt legacy plaintext JSON metadata
@@ -1258,6 +1316,9 @@ async function pushSyncVault() {
     }
 
     // Encrypt metadata before upload (same AES-256-GCM as vault files)
+    // STAK-398 diagnostic: log the key used for metadata encryption (for cross-device comparison)
+    console.warn('[CloudSync] Metadata ENCRYPT: password length:', password.length,
+      '| iterations:', VAULT_PBKDF2_ITERATIONS);
     var metaJson = JSON.stringify(metaPayload);
     var metaSalt = vaultRandomBytes(32);
     var metaIv = vaultRandomBytes(12);
@@ -1321,6 +1382,7 @@ async function pushSyncVault() {
     updateSyncStatusIndicator('error', errMsg.slice(0, 60));
   } finally {
     _syncPushInFlight = false;
+    _syncPasswordJustChanged = false; // Clear after push attempt (success or fail)
   }
 }
 
@@ -1412,6 +1474,8 @@ async function pollForRemoteChanges() {
         console.warn('[CloudSync] Poll: no password available — skipping');
         return;
       }
+      console.warn('[CloudSync] Poll DECRYPT: password length:', syncPassword.length,
+        '| salt:', metaParsed.salt.length, 'bytes | iterations:', metaParsed.iterations);
       var metaKey = await vaultDeriveKey(syncPassword, metaParsed.salt, metaParsed.iterations);
       var metaDecrypted = await vaultDecrypt(metaParsed.ciphertext, metaKey, metaParsed.iv);
       remoteMeta = JSON.parse(new TextDecoder().decode(metaDecrypted));
