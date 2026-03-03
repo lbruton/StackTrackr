@@ -3442,7 +3442,7 @@
                         <span class="cloud-status-value" id="cloudAutoSyncLastSync">Never</span>
                       </div>
                       <div style="margin-top:0.4rem">
-                        <button class="btn" id="cloudSyncNowBtn" disabled onclick="if(typeof pushSyncVault==='function')pushSyncVault();" style="font-size:0.8rem;padding:0.35rem 0.75rem;min-height:0;width:100%">
+                        <button class="btn" id="cloudSyncNowBtn" disabled onclick="if(typeof syncNow==='function')syncNow();else if(typeof pushSyncVault==='function')pushSyncVault();" style="font-size:0.8rem;padding:0.35rem 0.75rem;min-height:0;width:100%">
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:0.3rem"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
                           Sync Now
                         </button>
