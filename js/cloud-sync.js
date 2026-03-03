@@ -452,11 +452,11 @@ function updateCloudSyncHeaderBtn() {
     btn.setAttribute('aria-label', 'Cloud sync needs setup');
     btn.dataset.syncState = 'orange';
   } else if (connected && hasPw && hasAccountId && !autoSyncOn) {
-    // Orange: connected and ready but auto-sync is off
+    // Orange: connected and ready but auto-sync is off (distinct from 'orange' setup-needed)
     dot.classList.add('header-cloud-dot--orange');
     btn.title = 'Cloud sync ready — enable auto-sync in Settings';
     btn.setAttribute('aria-label', 'Cloud sync ready but not enabled');
-    btn.dataset.syncState = 'orange';
+    btn.dataset.syncState = 'ready';
   } else {
     dot.classList.add('header-cloud-dot--gray');
     btn.title = 'Cloud sync — tap to configure';
@@ -635,9 +635,9 @@ function getSyncPasswordSilent() {
   var vaultPw = localStorage.getItem('cloud_vault_password');
   var accountId = localStorage.getItem('cloud_dropbox_account_id');
 
-  // STAK-398 diagnostic: log exact key components so we can compare across devices
+  // STAK-398 diagnostic: log key component shapes (not values) for cross-device comparison
   console.warn('[CloudSync] getSyncPasswordSilent: vaultPw length:', vaultPw ? vaultPw.length : 'null',
-    '| accountId:', accountId || 'null',
+    '| accountId present:', accountId ? 'yes (' + accountId.length + ' chars)' : 'NO',
     '| compositeKey length:', (vaultPw && accountId) ? (vaultPw + ':' + accountId).length : 'null');
 
   // Unified mode: both required
