@@ -1778,23 +1778,12 @@ async function handleRemoteChange(remoteMeta) {
       return;
     }
 
-    // Conflict: both sides have changes
-    console.warn('[CloudSync] handleRemoteChange: CONFLICT — showing conflict modal');
-    var lastPush = syncGetLastPush();
-    await showSyncConflictModal({
-      local: {
-        itemCount: typeof inventory !== 'undefined' ? inventory.length : 0,
-        timestamp: lastPush ? lastPush.timestamp : null,
-        appVersion: typeof APP_VERSION !== 'undefined' ? APP_VERSION : 'unknown',
-      },
-      remote: {
-        itemCount: remoteMeta.itemCount || 0,
-        timestamp: remoteMeta.timestamp || null,
-        appVersion: remoteMeta.appVersion || 'unknown',
-        deviceId: remoteMeta.deviceId || '',
-      },
-      remoteMeta: remoteMeta,
-    });
+    // STAK-412: Skip the redundant Sync Conflict dialog (Keep Mine / Keep Theirs)
+    // and go directly to the DiffModal (Review Sync Changes) which shows the full
+    // item-level diff. The conflict dialog was an extra layer that confused users
+    // without adding information the DiffModal doesn't already provide.
+    console.warn('[CloudSync] handleRemoteChange: CONFLICT — going directly to pull preview');
+    await pullWithPreview(remoteMeta);
   } finally {
     _syncRemoteChangeActive = false;
   }
@@ -2428,16 +2417,18 @@ async function pullWithPreview(remoteMeta) {
           // Build diff-like result from manifest data
           var manifestDiff = _buildDiffFromManifest(manifest);
 
-          // STAK-402: If the manifest shows zero changes but the remote item count
-          // differs from the local inventory, the manifest was built from an empty
-          // changeLog (seeded/imported items have no changeLog entries). Fall through
-          // to the vault-first path which does a full DiffEngine.compareItems comparison.
-          var _mChanges = manifestDiff.added.length + manifestDiff.modified.length + manifestDiff.deleted.length;
+          // STAK-402 + STAK-412: Verify the manifest diff is complete by checking
+          // whether the expected post-apply count matches the remote item count.
+          // The manifest changelog only records changes the pushing device made — it
+          // cannot enumerate items the local device has never seen. If the math
+          // doesn't add up, fall through to vault-first which does a full
+          // DiffEngine.compareItems comparison with the actual inventory arrays.
           var _mRemoteCount = remoteMeta ? (remoteMeta.itemCount || 0) : 0;
           var _mLocalCount = (typeof inventory !== 'undefined' && inventory) ? inventory.length : 0;
-          if (_mChanges === 0 && _mRemoteCount !== _mLocalCount) {
-            debugLog('[CloudSync] Manifest diff empty but item counts differ (' + _mRemoteCount + ' remote vs ' + _mLocalCount + ' local) — using vault-first');
-            throw new Error('Manifest stale: empty diff with count mismatch');
+          var _mExpectedAfterApply = _mLocalCount + manifestDiff.added.length - manifestDiff.deleted.length;
+          if (_mExpectedAfterApply !== _mRemoteCount) {
+            debugLog('[CloudSync] Manifest diff incomplete: expected ' + _mExpectedAfterApply + ' items after apply but remote has ' + _mRemoteCount + ' (' + _mLocalCount + ' local + ' + manifestDiff.added.length + ' added - ' + manifestDiff.deleted.length + ' deleted) — using vault-first');
+            throw new Error('Manifest stale: post-apply count mismatch');
           }
 
           // Stash pull metadata
@@ -2550,16 +2541,37 @@ async function pullWithPreview(remoteMeta) {
     // Attempt to decrypt and preview
     try {
       var remotePayload = await _tryDecryptVault(bytes, 'stvault');
-      var remoteItems = remotePayload.data || [];
+      // STAK-412: remotePayload.data is a dict of localStorage keys (e.g.
+      // {metalInventory: "CMP1:...", itemTags: "...", ...}), NOT an inventory
+      // array. Extract and decompress metalInventory to get the actual items.
+      var remoteItems = [];
+      try {
+        var _vfRaw = remotePayload.data && remotePayload.data.metalInventory
+          ? remotePayload.data.metalInventory : '[]';
+        var _vfDecompressed = typeof __decompressIfNeeded === 'function'
+          ? __decompressIfNeeded(_vfRaw) : _vfRaw;
+        remoteItems = JSON.parse(_vfDecompressed);
+      } catch (_vfErr) {
+        debugLog('[CloudSync] Vault-first: could not parse metalInventory:', _vfErr.message);
+      }
       var localItems = typeof inventory !== 'undefined' ? inventory : [];
 
       var diffResult = typeof DiffEngine !== 'undefined'
         ? DiffEngine.compareItems(localItems, remoteItems)
         : { added: [], deleted: [], modified: [], unchanged: [] };
 
-      // Compare settings
+      // Compare settings — settings are stored inside remotePayload.data as
+      // individual localStorage keys (everything except metalInventory).
       var localSettings = {};
-      var remoteSettings = remotePayload.settings || {};
+      var remoteSettings = {};
+      if (remotePayload.data) {
+        var _rsKeys = Object.keys(remotePayload.data);
+        for (var rs = 0; rs < _rsKeys.length; rs++) {
+          if (_rsKeys[rs] !== 'metalInventory') {
+            remoteSettings[_rsKeys[rs]] = remotePayload.data[_rsKeys[rs]];
+          }
+        }
+      }
       if (typeof SYNC_SCOPE_KEYS !== 'undefined') {
         for (var i = 0; i < SYNC_SCOPE_KEYS.length; i++) {
           if (SYNC_SCOPE_KEYS[i] === 'metalInventory') continue;
