@@ -568,6 +568,8 @@ const formatDisplayDate = (dateStr) => {
  * @param {string} [currency=DEFAULT_CURRENCY] - ISO currency code
  * @returns {string} Formatted currency string (e.g., "$1,234.56")
  */
+// Cache Intl.NumberFormat instances to prevent expensive instantiation overhead during large DOM renders (⚡ Bolt optimization)
+const _currencyFormatters = new Map();
 const formatCurrency = (value, currency = (typeof displayCurrency !== 'undefined' ? displayCurrency : DEFAULT_CURRENCY)) => {
   const num = parseFloat(value);
   if (isNaN(num)) return "";
@@ -575,10 +577,15 @@ const formatCurrency = (value, currency = (typeof displayCurrency !== 'undefined
   const rate = (typeof getExchangeRate === 'function') ? getExchangeRate(currency) : 1;
   const converted = num * rate;
   try {
-    return new Intl.NumberFormat(undefined, {
-      style: "currency",
-      currency,
-    }).format(converted);
+    let formatter = _currencyFormatters.get(currency);
+    if (!formatter) {
+      formatter = new Intl.NumberFormat(undefined, {
+        style: "currency",
+        currency,
+      });
+      _currencyFormatters.set(currency, formatter);
+    }
+    return formatter.format(converted);
   } catch (e) {
     // Fallback for environments without Intl support
     return `${currency} ${converted.toFixed(2)}`;
@@ -612,10 +619,17 @@ const saveDisplayCurrency = (code) => {
  * @param {string} [currency] - ISO 4217 code; defaults to displayCurrency
  * @returns {string} Currency symbol (e.g. "$", "€", "£", "₽")
  */
+// Cache Intl.NumberFormat instances to prevent expensive instantiation overhead during large DOM renders (⚡ Bolt optimization)
+const _currencySymbolFormatters = new Map();
 const getCurrencySymbol = (currency) => {
   const code = currency || (typeof displayCurrency !== 'undefined' ? displayCurrency : 'USD');
   try {
-    const parts = new Intl.NumberFormat('en', { style: 'currency', currency: code }).formatToParts(0);
+    let formatter = _currencySymbolFormatters.get(code);
+    if (!formatter) {
+      formatter = new Intl.NumberFormat('en', { style: 'currency', currency: code });
+      _currencySymbolFormatters.set(code, formatter);
+    }
+    const parts = formatter.formatToParts(0);
     const sym = parts.find(p => p.type === 'currency');
     return sym ? sym.value : code;
   } catch (e) { return code; }
