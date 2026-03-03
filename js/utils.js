@@ -998,6 +998,12 @@ const saveData = async (key, data) => {
     const raw = JSON.stringify(data);
     const out = __compressIfNeeded(raw);
     localStorage.setItem(key, out);
+    // STAK-414: Track when inventory was last modified locally so the sync
+    // poller can detect that local data is newer than the remote vault and
+    // trigger a push instead of a pull.
+    if (key === 'metalInventory') {
+      localStorage.setItem('cloud_sync_local_modified', new Date().toISOString());
+    }
   } catch(e) {
     console.error('saveData failed', e);
   }
