@@ -635,6 +635,11 @@ function getSyncPasswordSilent() {
   var vaultPw = localStorage.getItem('cloud_vault_password');
   var accountId = localStorage.getItem('cloud_dropbox_account_id');
 
+  // STAK-398 diagnostic: log exact key components so we can compare across devices
+  console.warn('[CloudSync] getSyncPasswordSilent: vaultPw length:', vaultPw ? vaultPw.length : 'null',
+    '| accountId:', accountId || 'null',
+    '| compositeKey length:', (vaultPw && accountId) ? (vaultPw + ':' + accountId).length : 'null');
+
   // Unified mode: both required
   if (vaultPw && accountId) {
     return vaultPw + ':' + accountId;
@@ -1008,6 +1013,8 @@ async function pushSyncVault() {
             prePushMeta = null; // Treat as no prior metadata — allow push
           } else {
             try {
+              console.warn('[CloudSync] Pre-push check: attempting decrypt with password length:', password.length,
+                '| salt length:', prePushParsed.salt.length, '| iterations:', prePushParsed.iterations);
               var prePushKey = await vaultDeriveKey(password, prePushParsed.salt, prePushParsed.iterations);
               var prePushDecrypted = await vaultDecrypt(prePushParsed.ciphertext, prePushKey, prePushParsed.iv);
               prePushMeta = JSON.parse(new TextDecoder().decode(prePushDecrypted));
@@ -1437,6 +1444,8 @@ async function pollForRemoteChanges() {
         console.warn('[CloudSync] Poll: no password available — skipping');
         return;
       }
+      console.warn('[CloudSync] Poll: attempting decrypt with password length:', syncPassword.length,
+        '| salt length:', metaParsed.salt.length, '| iterations:', metaParsed.iterations);
       var metaKey = await vaultDeriveKey(syncPassword, metaParsed.salt, metaParsed.iterations);
       var metaDecrypted = await vaultDecrypt(metaParsed.ciphertext, metaKey, metaParsed.iv);
       remoteMeta = JSON.parse(new TextDecoder().decode(metaDecrypted));
