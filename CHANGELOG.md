@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.34] - 2026-03-03
+
+### Fixed — Cloud Sync Push Race with DiffModal (STAK-406)
+
+- **Fixed**: `pullWithPreview()` now awaits the user's DiffModal decision (Apply or Cancel) before returning — previously it returned immediately after showing the modal, clearing `_syncRemoteChangeActive` while the user was still reading the diff, allowing a concurrent `pushSyncVault()` call to overwrite Dropbox with stale local data before the pull was applied
+- **Fixed**: `showRestorePreviewModal()` (vault-first path) now returns a Promise that resolves after the user completes the modal, so the vault-first pull is also fully awaited
+- **Fixed**: `_deferredVaultRestore()` is now awaited in the manifest-first `onApply` callback before the modal Promise resolves, ensuring the full vault download and apply completes before any push can proceed
+
+---
+
 ## [3.33.33] - 2026-03-03
 
 ### Fixed — Cloud Button and Settings Tab Always Visible (STAK-405)
