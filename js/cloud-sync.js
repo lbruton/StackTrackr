@@ -635,11 +635,11 @@ function getSyncPasswordSilent() {
   var vaultPw = localStorage.getItem('cloud_vault_password');
   var accountId = localStorage.getItem('cloud_dropbox_account_id');
 
-  // STAK-398 diagnostic: log key component presence (not values) for cross-device comparison
-  if (typeof debugLog === 'function') {
-    debugLog('[CloudSync] getSyncPasswordSilent: vaultPw present: ' + (vaultPw ? 'yes' : 'no') +
-      ' | accountId present: ' + (accountId ? 'yes' : 'no'));
-  }
+  // STAK-398 diagnostic: log key component shapes (not values) — MUST use console.warn, not debugLog
+  console.warn('[CloudSync] getSyncPasswordSilent:',
+    'vaultPw:', vaultPw ? vaultPw.length + ' chars' : 'NULL',
+    '| accountId:', accountId ? accountId.slice(0, 8) + '… (' + accountId.length + ' chars)' : 'NULL',
+    '| compositeKey:', (vaultPw && accountId) ? (vaultPw + ':' + accountId).length + ' chars' : 'N/A');
 
   // Unified mode: both required
   if (vaultPw && accountId) {
@@ -1040,7 +1040,8 @@ async function pushSyncVault() {
             prePushMeta = null; // Treat as no prior metadata — allow push
           } else {
             try {
-              if (typeof debugLog === 'function') debugLog('[CloudSync] Pre-push check: attempting metadata decrypt');
+              console.warn('[CloudSync] Pre-push DECRYPT: password length:', password.length,
+                '| salt:', prePushParsed.salt.length, 'bytes | iterations:', prePushParsed.iterations);
               var prePushKey = await vaultDeriveKey(password, prePushParsed.salt, prePushParsed.iterations);
               var prePushDecrypted = await vaultDecrypt(prePushParsed.ciphertext, prePushKey, prePushParsed.iv);
               prePushMeta = JSON.parse(new TextDecoder().decode(prePushDecrypted));
@@ -1315,6 +1316,9 @@ async function pushSyncVault() {
     }
 
     // Encrypt metadata before upload (same AES-256-GCM as vault files)
+    // STAK-398 diagnostic: log the key used for metadata encryption (for cross-device comparison)
+    console.warn('[CloudSync] Metadata ENCRYPT: password length:', password.length,
+      '| iterations:', VAULT_PBKDF2_ITERATIONS);
     var metaJson = JSON.stringify(metaPayload);
     var metaSalt = vaultRandomBytes(32);
     var metaIv = vaultRandomBytes(12);
@@ -1470,7 +1474,8 @@ async function pollForRemoteChanges() {
         console.warn('[CloudSync] Poll: no password available — skipping');
         return;
       }
-      if (typeof debugLog === 'function') debugLog('[CloudSync] Poll: attempting metadata decrypt');
+      console.warn('[CloudSync] Poll DECRYPT: password length:', syncPassword.length,
+        '| salt:', metaParsed.salt.length, 'bytes | iterations:', metaParsed.iterations);
       var metaKey = await vaultDeriveKey(syncPassword, metaParsed.salt, metaParsed.iterations);
       var metaDecrypted = await vaultDecrypt(metaParsed.ciphertext, metaKey, metaParsed.iv);
       remoteMeta = JSON.parse(new TextDecoder().decode(metaDecrypted));
