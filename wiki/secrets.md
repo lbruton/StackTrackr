@@ -35,6 +35,7 @@ Set with `fly secrets set KEY=VALUE --app staktrakr`.
 | `TURSO_DATABASE_URL` | Turso libSQL cloud DB | `libsql://staktrakrapi-lbruton.aws-us-east-2.turso.io` |
 | `TURSO_AUTH_TOKEN` | Turso auth | Rotate in Turso dashboard |
 | `GEMINI_API_KEY` | Vision pipeline (Gemini API) | Google AI Studio |
+| `VISION_ENABLED` | Vision pipeline gate (`1` = on, absent/`0` = off) | Default off in `run-local.sh`; `fly secrets set VISION_ENABLED=1` to enable |
 | `METAL_PRICE_API_KEY` | Spot price API | MetalPriceAPI dashboard |
 | `WEBSHARE_PROXY_USER` | Webshare credentials for Playwright fallback / `run-retry.sh` | Webshare dashboard |
 | `WEBSHARE_PROXY_PASS` | Webshare credentials for Playwright fallback / `run-retry.sh` | Webshare dashboard |

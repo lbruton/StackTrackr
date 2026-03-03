@@ -10,7 +10,7 @@ relatedPages: []
 
 # Architecture Overview
 
-> **Last verified:** 2026-03-01 — full audit from live Fly.io container source code. Dual poller, Turso shared DB, 11 coins, 7 vendors.
+> **Last verified:** 2026-03-02 — full audit from live Fly.io container source code. Dual poller (different scrape pipelines since API-3), Turso shared DB, 11 coins, 7 vendors.
 
 ---
 
@@ -65,6 +65,8 @@ relatedPages: []
           ▼
   StakTrakr frontend (Cloudflare Pages)
 ```
+
+> **Pipeline divergence (API-3, 2026-03-02):** The two pollers now use different scrape strategies. Fly.io uses **Playwright direct first** (fast, ~16 min, no proxy for most targets) with Firecrawl as fallback. Home poller uses **Firecrawl first** (residential IP, ~45-60 min) with Playwright fallback. Both write to the same Turso DB and produce equivalent results. See [Poller Parity](poller-parity.md) for details.
 
 ---
 
