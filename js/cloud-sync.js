@@ -940,17 +940,47 @@ async function pushSyncVault() {
 
       if (prePushResp.ok) {
         // Decrypt metadata (encrypted format) or fall back to legacy plaintext JSON
-        var prePushMeta;
+        var prePushMeta = null;
+        var prePushBuffer = await prePushResp.arrayBuffer();
+        var prePushBytes = new Uint8Array(prePushBuffer);
+
+        // First, try to interpret the metadata as an encrypted .stvault file
+        var prePushParsed = null;
         try {
-          var prePushBuffer = await prePushResp.arrayBuffer();
-          var prePushParsed = parseVaultFile(new Uint8Array(prePushBuffer));
-          var prePushKey = await vaultDeriveKey(password, prePushParsed.salt, prePushParsed.iterations);
-          var prePushDecrypted = await vaultDecrypt(prePushParsed.ciphertext, prePushKey, prePushParsed.iv);
-          prePushMeta = JSON.parse(new TextDecoder().decode(prePushDecrypted));
-        } catch (prePushDecryptErr) {
-          debugLog('[CloudSync] Pre-push: metadata not encrypted, falling back to JSON:', prePushDecryptErr.message);
+          prePushParsed = parseVaultFile(prePushBytes);
+        } catch (prePushParseErr) {
+          // Not a .stvault — likely legacy plaintext JSON
+          debugLog('[CloudSync] Pre-push: metadata not in .stvault format, falling back to legacy JSON:', prePushParseErr.message);
+        }
+
+        if (prePushParsed) {
+          // Cap iterations to prevent a tampered remote file from hanging the UI
+          var prePushMaxIterations = (typeof VAULT_PBKDF2_ITERATIONS !== 'undefined' ? VAULT_PBKDF2_ITERATIONS : 600000) * 2;
+          if (prePushParsed.iterations > prePushMaxIterations) {
+            debugLog('[CloudSync] Pre-push: iterations exceeds safe cap (' + prePushParsed.iterations + ' > ' + prePushMaxIterations + '), aborting push');
+            logCloudSyncActivity('auto_sync_push', 'error', 'Remote metadata iterations exceed safe limit — possible tampering');
+            _syncPushInFlight = false;
+            updateSyncStatusIndicator('error', 'Sync metadata invalid');
+            return;
+          }
+
+          // Encrypted metadata exists; decryption must succeed or we abort the push
+          // (wrong password ≠ legacy plaintext — do not fail-open)
           try {
-            var prePushFallbackText = new TextDecoder().decode(new Uint8Array(prePushBuffer));
+            var prePushKey = await vaultDeriveKey(password, prePushParsed.salt, prePushParsed.iterations);
+            var prePushDecrypted = await vaultDecrypt(prePushParsed.ciphertext, prePushKey, prePushParsed.iv);
+            prePushMeta = JSON.parse(new TextDecoder().decode(prePushDecrypted));
+          } catch (prePushDecryptErr) {
+            debugLog('[CloudSync] Pre-push: encrypted metadata could not be decrypted, aborting push:', prePushDecryptErr.message);
+            logCloudSyncActivity('auto_sync_push', 'error', 'Encrypted sync metadata exists but could not be decrypted. Check your sync password.');
+            _syncPushInFlight = false;
+            updateSyncStatusIndicator('error', 'Wrong vault password?');
+            return;
+          }
+        } else {
+          // No valid .stvault header — attempt legacy plaintext JSON metadata
+          try {
+            var prePushFallbackText = new TextDecoder().decode(prePushBytes);
             prePushMeta = JSON.parse(prePushFallbackText);
           } catch (prePushJsonErr) {
             debugLog('[CloudSync] Pre-push: metadata parse failed:', prePushJsonErr.message);
