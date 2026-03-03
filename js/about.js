@@ -283,11 +283,11 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.33.34 &ndash; Sync Pull Race Fix</strong>: Cloud sync no longer overwrites Dropbox with stale local data while the diff preview modal is open &mdash; the pull now fully blocks concurrent pushes until the user clicks Apply and the vault restore completes (STAK-406)</li>
     <li><strong>v3.33.33 &ndash; Cloud Button Always Visible</strong>: Cloud header button and Settings Cloud tab are now always shown &mdash; removed hide-when-disconnected logic that blocked access to cloud setup for new users (STAK-405)</li>
     <li><strong>v3.33.32 &ndash; Keep Mine Conflict Fix</strong>: Pressing Keep Mine or Push My Data now completes the push &mdash; a one-shot override flag prevents the pre-push check from re-detecting the resolved conflict and looping (STAK-403)</li>
     <li><strong>v3.33.31 &ndash; Sync Diff Preview Fix</strong>: Pull preview now shows real item differences instead of &ldquo;No changes detected&rdquo; when seeded/imported items have no changeLog history. Empty-diff Accept correctly does a full restore (STAK-402)</li>
     <li><strong>v3.33.30 &ndash; Bi-Directional Sync Fix</strong>: Pre-push remote check prevents blind overwrite when another device has pushed. Sync Now polls before pushing. Settings hash and diff preview use synchronous storage reads. 5 bugs fixed (STAK-398)</li>
-    <li><strong>v3.33.29 &ndash; Cloud Backup/Restore Pipeline Fix</strong>: Fixed backup path functions, async/sync bugs in settings and migration checks, encrypted sync metadata with AES-256-GCM, restructured cloud card UI with backup count badge (STAK-398, STAK-382)</li>
   `;
 };
 
