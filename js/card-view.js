@@ -18,11 +18,13 @@ function isCardViewActive() {
 
 /**
  * Computes portfolio summary totals for currently filtered items.
- * @returns {{ purchase: number, melt: number, retail: number, gainLoss: number, count: number }}
+ * @returns {{ purchase: number, melt: number, retail: number, gainLoss: number, filteredCount: number, totalCount: number, totalWeight: number }}
  */
 function _computePortfolioSummary() {
   const items = (typeof filterInventory === 'function') ? filterInventory() : (inventory || []);
-  let purchase = 0, melt = 0, retail = 0, count = 0;
+  const totalCount = (typeof inventory !== 'undefined' && Array.isArray(inventory)) ? inventory.length : items.length;
+  let purchase = 0, melt = 0, retail = 0, totalWeight = 0;
+  const gbToOzt = (typeof GB_TO_OZT !== 'undefined') ? GB_TO_OZT : 1 / 50;
   items.forEach(item => {
     const spot = (typeof spotPrices !== 'undefined' ? spotPrices[(item.metal || '').toLowerCase()] : 0) || 0;
     const valuation = (typeof computeItemValuation === 'function')
@@ -40,9 +42,12 @@ function _computePortfolioSummary() {
     purchase += valuation.purchaseTotal || 0;
     melt += valuation.meltValue || 0;
     retail += valuation.retailTotal || 0;
-    count++;
+    const qty = Number(item.qty) || 1;
+    const w = parseFloat(item.weight) || 0;
+    const wOz = (item.weightUnit === 'gb') ? w * gbToOzt : w;
+    totalWeight += qty * wOz;
   });
-  return { purchase, melt, retail, gainLoss: retail - purchase, count };
+  return { purchase, melt, retail, gainLoss: retail - purchase, filteredCount: items.length, totalCount, totalWeight };
 }
 
 /**
@@ -258,7 +263,15 @@ function _renderSortBarSummary() {
   const gl = s.gainLoss;
   const glClass = gl >= 0 ? 'summary-positive' : 'summary-negative';
   const glSign = gl >= 0 ? '+' : '';
+  const itemsText = s.filteredCount === s.totalCount
+    ? `${s.totalCount}`
+    : `${s.filteredCount}/${s.totalCount}`;
+  const weightText = `${s.totalWeight.toFixed(1)}oz`;
   el.innerHTML =
+    `<span class="summary-item"><span class="summary-label">Items</span><span class="summary-val">${itemsText}</span></span>` +
+    `<span class="summary-sep">·</span>` +
+    `<span class="summary-item"><span class="summary-label">Weight</span><span class="summary-val">${weightText}</span></span>` +
+    `<span class="summary-sep">·</span>` +
     `<span class="summary-item"><span class="summary-label">Buy</span><span class="summary-val">${fmt(s.purchase)}</span></span>` +
     `<span class="summary-sep">·</span>` +
     `<span class="summary-item"><span class="summary-label">Melt</span><span class="summary-val">${fmt(s.melt)}</span></span>` +
