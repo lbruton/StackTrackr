@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.27] - 2026-03-03
+
+### Fixed — Documentation & Instruction Accuracy Cleanup (STAK-397)
+
+- **Fixed**: Script count corrected from 67/57 to 70 across all instruction files (CLAUDE.md, AGENTS.md, GEMINI.md, copilot-instructions.md)
+- **Fixed**: Test runbook section names corrected in instruction files (03-backup-restore, 05-market, 08-spot-prices)
+- **Fixed**: safeGetElement location corrected in GEMINI.md (js/init.js, not js/utils.js)
+- **Fixed**: Stale StakTrakrWiki references replaced with in-repo wiki/ in 3 skill files
+- **Fixed**: smoke-test spec inventory rebuilt — 123 tests across 19 spec files (was 27 across 8)
+- **Fixed**: CORE_ASSETS count corrected in wiki/frontend-overview.md (57 to 76)
+- **Fixed**: Skills list in CLAUDE.md updated to 25 entries (added sync-poller, wiki-nightwatch)
+- **Removed**: 6 stale devops files (design-explorer.html, design-preview.html, firebase-debug.log, claude-backup/, screenshots/, test-results/)
+
+---
+
 ## [3.33.25] - 2026-03-02
 
 ### Added — Browserbase Test Runbook v2 (STAK-396)
