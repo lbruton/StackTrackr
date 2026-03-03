@@ -774,13 +774,24 @@ const setupHeaderButtonListeners = () => {
           if (typeof showCloudToast === 'function') showCloudToast('Syncing…', 1500);
           syncNow().then(function () {
             var lp = typeof syncGetLastPush === 'function' ? syncGetLastPush() : null;
-            var msg = lp && lp.timestamp
-              ? 'Synced ' + (typeof _syncRelativeTime === 'function' ? _syncRelativeTime(lp.timestamp) : '')
-              : 'Sync complete';
-            if (typeof showCloudToast === 'function') showCloudToast(msg, 2500);
-          }).catch(function (err) {
-            if (typeof showCloudToast === 'function') showCloudToast('Sync failed: ' + (err.message || 'Unknown error'), 3000);
-          });
+          syncNow()
+            .then(function () {
+              var lp = typeof syncGetLastPush === 'function' ? syncGetLastPush() : null;
+              var msg = lp && lp.timestamp
+                ? 'Synced ' + (typeof _syncRelativeTime === 'function' ? _syncRelativeTime(lp.timestamp) : '')
+                : 'Sync complete';
+              if (typeof showCloudToast === 'function') showCloudToast(msg, 2500);
+            })
+            .catch(function (err) {
+              if (typeof debugLog === 'function') {
+                debugLog('Cloud sync failed: ' + (err && err.message ? err.message : String(err)), 'error');
+              } else {
+                console.error('Cloud sync failed:', err);
+              }
+              if (typeof showCloudToast === 'function') {
+                showCloudToast('Sync failed', 2500);
+              }
+            });
         }
       } else {
         if (typeof showSettingsModal === 'function') showSettingsModal('system');
