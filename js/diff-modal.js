@@ -364,7 +364,7 @@
         // Detail line
         var detail = [];
         if (item.metal) detail.push(_esc(item.metal));
-        if (item.weight != null) detail.push(item.weight + (item.weightUnit || 'oz'));
+        if (item.weight != null) detail.push(item.weight + _esc(item.weightUnit || 'oz'));
         if (item.qty != null) detail.push('\u00d7 ' + item.qty);
         if (detail.length > 0) {
           html += '<div style="font-size:0.73rem;opacity:0.5;margin-top:0.1rem">' + detail.join(' \u00b7 ') + '</div>';
