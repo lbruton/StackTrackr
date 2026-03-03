@@ -2408,7 +2408,7 @@ async function pullWithPreview(remoteMeta) {
           // to the vault-first path which does a full DiffEngine.compareItems comparison.
           var _mChanges = manifestDiff.added.length + manifestDiff.modified.length + manifestDiff.deleted.length;
           var _mRemoteCount = remoteMeta ? (remoteMeta.itemCount || 0) : 0;
-          var _mLocalCount = typeof inventory !== 'undefined' ? inventory.length : 0;
+          var _mLocalCount = (typeof inventory !== 'undefined' && inventory) ? inventory.length : 0;
           if (_mChanges === 0 && _mRemoteCount !== _mLocalCount) {
             debugLog('[CloudSync] Manifest diff empty but item counts differ (' + _mRemoteCount + ' remote vs ' + _mLocalCount + ' local) — using vault-first');
             throw new Error('Manifest stale: empty diff with count mismatch');
