@@ -115,7 +115,7 @@ Full order is canonical in `sw.js` `CORE_ASSETS` and reflected in `index.html`.
 
 `sw.js` provides offline support and PWA installability. Key behaviors:
 
-- **Install phase:** pre-caches all files listed in `CORE_ASSETS` (57 paths: JS, CSS, images, vendor libs, seed data).
+- **Install phase:** pre-caches all files listed in `CORE_ASSETS` (76 paths: JS, CSS, images, vendor libs, seed data).
 - **Activate phase:** purges any old caches whose name starts with `staktrakr-` but does not match the current `CACHE_NAME`.
 - **Fetch routing strategies:**
   - `file://` or OAuth callback: bypassed (no caching).
