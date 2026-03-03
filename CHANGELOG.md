@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.33] - 2026-03-03
+
+### Fixed — Cloud Button and Settings Tab Always Visible (STAK-405)
+
+- **Fixed**: Cloud header button is now always visible — removed the `!connected` early-return that hid the button when no OAuth token was stored, blocking access to cloud setup
+- **Fixed**: Cloud tab in Settings is now always visible — removed the STAK-317 hide block that suppressed the nav item when no provider was connected; the gray dot state communicates "not connected" without hiding the UI entry point
+
+---
+
 ## [3.33.32] - 2026-03-03
 
 ### Fixed — Keep Mine Conflict Resolution Infinite Loop (STAK-403)
