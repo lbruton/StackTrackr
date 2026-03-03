@@ -673,8 +673,15 @@ async function changeVaultPassword(newPassword) {
     // The remote metadata is encrypted with the OLD password — decryption would fail
     // and block the push, creating a deadlock where the password can never be changed.
     _syncPasswordJustChanged = true;
+    let pushScheduled = false;
     if (syncIsEnabled() && typeof scheduleSyncPush === 'function') {
       scheduleSyncPush();
+      pushScheduled = true;
+    }
+    // If no push was scheduled (e.g., auto-sync is disabled), do not leave the
+    // flag stuck true indefinitely; it should only apply to the next push.
+    if (!pushScheduled) {
+      _syncPasswordJustChanged = false;
     }
     if (typeof showCloudToast === 'function') showCloudToast('Vault password updated — syncing now', 3000);
     return true;
