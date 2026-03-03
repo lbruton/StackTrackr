@@ -1646,6 +1646,22 @@ async function pollForRemoteChanges() {
       }
     }
 
+    // STAK-414: Before pulling, check if local inventory was modified more
+    // recently than the remote vault. If so, the hash mismatch is because WE
+    // changed — not the remote. Trigger a push instead of a pull to avoid
+    // showing the user's own new items as deletions.
+    var localModStr = localStorage.getItem('cloud_sync_local_modified');
+    if (localModStr && remoteMeta.timestamp) {
+      var localModTime = new Date(localModStr).getTime();
+      var remoteTime = new Date(remoteMeta.timestamp).getTime();
+      if (localModTime > remoteTime) {
+        console.warn('[CloudSync] Poll: local inventory is NEWER than remote (' + localModStr + ' > ' + remoteMeta.timestamp + ') — triggering push instead of pull');
+        logCloudSyncActivity('auto_sync_poll', 'success', 'Local newer than remote — pushing');
+        if (typeof scheduleSyncPush === 'function') scheduleSyncPush();
+        return;
+      }
+    }
+
     console.warn('[CloudSync] Poll: REMOTE CHANGE DETECTED — calling handleRemoteChange. syncId:', remoteMeta.syncId, 'itemCount:', remoteMeta.itemCount);
     logCloudSyncActivity('auto_sync_poll', 'success', 'Remote change detected: ' + remoteMeta.itemCount + ' items');
     await handleRemoteChange(remoteMeta);
