@@ -2,7 +2,7 @@
 title: Cloud Sync
 category: frontend
 owner: staktrakr
-lastUpdated: v3.33.30
+lastUpdated: v3.33.32
 date: 2026-03-03
 sourceFiles:
   - js/cloud-sync.js
@@ -13,7 +13,7 @@ relatedPages:
 ---
 # Cloud Sync
 
-> **Last updated:** v3.33.30 — 2026-03-03
+> **Last updated:** v3.33.32 — 2026-03-03
 > **Source files:** `js/cloud-sync.js`, `js/cloud-storage.js`
 
 ---
@@ -235,10 +235,13 @@ handleRemoteChange(remoteMeta)
   ├─ scheduleSyncPush.cancel()   ← CRITICAL: prevents vault overwrite race
   ├─ syncHasLocalChanges()?
   │    No  → showSyncUpdateModal() → user accepts → pullWithPreview()
+  │                                  user chooses "Push My Data"
+  │                                    → _syncConflictUserOverride = true → pushSyncVault()
   │    Yes → showSyncConflictModal()
-  │             ├─ Keep Mine  → pushSyncVault()
+  │             ├─ Keep Mine  → _syncConflictUserOverride = true → pushSyncVault()
   │             ├─ Keep Theirs → pullWithPreview(remoteMeta)
   │             └─ Skip → close modal
+  │             (appConfirm fallback: keepMine → _syncConflictUserOverride = true → pushSyncVault())
 ```
 
 ### Pull (Dropbox → inventory)
@@ -309,6 +312,39 @@ Choices:
 - **Skip** → close modal, no action (remote change will reappear on next poll)
 
 The override backup (`syncSaveOverrideBackup`) is written before any pull, enabling "Restore This Snapshot" in the Sync History section.
+
+### Keep Mine / Push My Data — conflict bypass flag (STAK-403, v3.33.32)
+
+**Problem:** Choosing "Keep Mine" in the conflict modal or "Push My Data" in the update modal triggered `pushSyncVault()`, which immediately re-ran the Layer 0 pre-push remote check. That check detected the same unacknowledged remote change the user had just explicitly dismissed and re-routed back to `handleRemoteChange()` — creating an infinite conflict-resolution loop.
+
+**Fix:** A module-level one-shot flag `_syncConflictUserOverride` (initialized `false`, line 36 of `cloud-sync.js`) is set `true` at three call sites immediately before `pushSyncVault()` is invoked:
+
+1. `keepMineBtn.onclick` in `showSyncConflictModal`
+2. `showSyncUpdateModal` "Push My Data" branch inside `handleRemoteChange`
+3. `appConfirm` fallback branch in `showSyncConflictModal`
+
+At the start of the Layer 0 pre-push try block, the flag is snapshot-and-cleared atomically:
+
+```js
+var _prePushOverride = _syncConflictUserOverride;
+_syncConflictUserOverride = false;
+```
+
+Clearing before the async fetch ensures the flag cannot survive a network error or early return and affect a subsequent push call.
+
+After the remote metadata is decrypted and the device/syncId comparison runs, the bypass branch is evaluated first:
+
+```js
+if (_prePushOverride) {
+  console.warn('[CloudSync] Pre-push check: BYPASS — user explicitly resolved conflict, overwriting remote');
+  logCloudSyncActivity('auto_sync_push', 'info', 'Pre-push conflict check bypassed — user resolved conflict');
+  // fall through to push
+} else if (prePushMeta.deviceId !== myDeviceId && (!lastPull || lastPull.syncId !== prePushMeta.syncId)) {
+  // normal conflict routing
+}
+```
+
+The flag is purely one-shot: it is consumed (cleared) at the top of the next `pushSyncVault()` call regardless of outcome, so no permanent bypass accumulates.
 
 ---
 
@@ -444,6 +480,16 @@ scheduleSyncPush(); // for inventory changes
 **Fix (v3.32.24):** `handleRemoteChange()` calls `scheduleSyncPush.cancel()` as its first substantive action — before any modal is shown.
 
 **Both devices must be on v3.32.24+.** A device on v3.32.23 will still exhibit the bug on its own debounced push, even if the other device is updated.
+
+---
+
+## Keep Mine Conflict Resolution Infinite Loop (fixed v3.33.32, STAK-403)
+
+**Symptom:** Choosing "Keep Mine" in the conflict modal (or "Push My Data" in the update modal) caused the conflict modal to reappear immediately after every push, preventing the user from ever overwriting the remote vault.
+
+**Root cause:** The Layer 0 pre-push check (added in STAK-398) downloads and inspects remote metadata before every push. When the user chose "Keep Mine", the resulting `pushSyncVault()` call hit Layer 0, detected the same unacknowledged remote change the user had just dismissed, and re-routed to `handleRemoteChange()` — triggering the conflict modal again in a loop.
+
+**Fix (v3.33.32):** A module-level one-shot flag `_syncConflictUserOverride` is set `true` at the three call sites that represent explicit user intent to overwrite (Keep Mine button, Push My Data branch, appConfirm fallback). At the start of the Layer 0 try block the flag is snapshot-and-cleared; if the snapshot is `true` the conflict check is bypassed and the push proceeds. See the "Keep Mine / Push My Data — conflict bypass flag" section under Conflict Resolution for full details.
 
 ---
 

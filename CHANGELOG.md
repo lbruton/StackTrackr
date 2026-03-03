@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.32] - 2026-03-03
+
+### Fixed — Keep Mine Conflict Resolution Infinite Loop (STAK-403)
+
+- **Fixed**: `keepMineBtn.onclick` and "Push My Data" paths now set a one-shot `_syncConflictUserOverride` flag before calling `pushSyncVault()` — the pre-push Layer 0 check bypasses conflict re-detection exactly once, allowing the push to complete instead of looping back to `handleRemoteChange()`
+- **Fixed**: `appConfirm` fallback conflict path also sets the override flag, covering the modal-less conflict resolution case
+
+---
+
 ## [3.33.31] - 2026-03-03
 
 ### Fixed — Manifest-First Pull Shows Real Diff (STAK-402)
