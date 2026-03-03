@@ -1014,9 +1014,28 @@ async function pushSyncVault() {
           // Encrypted metadata exists; decryption must succeed or we abort the push
           // (wrong password ≠ legacy plaintext — do not fail-open)
           // Exception: after a password change, the remote metadata is encrypted with the
-          // OLD password. Skip decryption — the push will overwrite with the new password.
+          // OLD password. In that case we cannot reliably decrypt with the NEW password.
           if (_syncPasswordJustChanged) {
-            console.warn('[CloudSync] Pre-push check: password just changed — skipping metadata decryption (will re-encrypt on push)');
+            console.warn('[CloudSync] Pre-push check: password just changed — remote metadata likely encrypted with old password');
+            var confirmBlindOverwrite = window.confirm(
+              'Your sync password was just changed.\n\n' +
+              'StakTrakr cannot verify whether the cloud copy of your vault is newer than this device. ' +
+              'Continuing may overwrite newer remote data.\n\n' +
+              'Do you want to overwrite the cloud copy with the data from this device now?'
+            );
+            if (!confirmBlindOverwrite) {
+              console.warn('[CloudSync] Pre-push check: user cancelled blind overwrite after password change');
+              logCloudSyncActivity(
+                'auto_sync_push',
+                'cancelled',
+                'User cancelled potential overwrite after vault password change'
+              );
+              _syncPushInFlight = false;
+              updateSyncStatusIndicator('idle', 'Sync cancelled');
+              return;
+            }
+            // User explicitly accepted the risk; treat as no prior metadata and proceed.
+            _syncPasswordJustChanged = false;
             prePushMeta = null; // Treat as no prior metadata — allow push
           } else {
             try {
