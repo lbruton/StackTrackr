@@ -283,11 +283,11 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.33.32 &ndash; Keep Mine Conflict Fix</strong>: Pressing Keep Mine or Push My Data now completes the push &mdash; a one-shot override flag prevents the pre-push check from re-detecting the resolved conflict and looping (STAK-403)</li>
     <li><strong>v3.33.31 &ndash; Sync Diff Preview Fix</strong>: Pull preview now shows real item differences instead of &ldquo;No changes detected&rdquo; when seeded/imported items have no changeLog history. Empty-diff Accept correctly does a full restore (STAK-402)</li>
     <li><strong>v3.33.30 &ndash; Bi-Directional Sync Fix</strong>: Pre-push remote check prevents blind overwrite when another device has pushed. Sync Now polls before pushing. Settings hash and diff preview use synchronous storage reads. 5 bugs fixed (STAK-398)</li>
     <li><strong>v3.33.29 &ndash; Cloud Backup/Restore Pipeline Fix</strong>: Fixed backup path functions, async/sync bugs in settings and migration checks, encrypted sync metadata with AES-256-GCM, restructured cloud card UI with backup count badge (STAK-398, STAK-382)</li>
     <li><strong>v3.33.27 &ndash; Documentation Accuracy Cleanup</strong>: Full audit fix &mdash; script counts, test section names, skill references, wiki page counts, and stale file removal. 24 issues resolved (STAK-397)</li>
-    <li><strong>v3.33.25 &ndash; Browserbase Test Runbook v2</strong>: Modular E2E test runbook with 75+ tests across 8 section files. /bb-test skill reads runbook Markdown at runtime with section and tag filtering (STAK-396)</li>
   `;
 };
 

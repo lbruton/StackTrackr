@@ -32,6 +32,9 @@ var _syncRemoteChangeActive = false;
 /** @type {boolean} Whether vault password was just changed — skip pre-push metadata decryption */
 var _syncPasswordJustChanged = false;
 
+/** @type {boolean} Set true when user explicitly chose Keep Mine or Push My Data — bypasses the pre-push conflict re-detection exactly once. */
+var _syncConflictUserOverride = false;
+
 /** @type {number} Retry backoff multiplier for 429 / network errors */
 var _syncRetryDelay = 2000;
 
@@ -1066,6 +1069,10 @@ async function pushSyncVault() {
     // always beats pollForRemoteChanges (10min interval).
     // -----------------------------------------------------------------------
     try {
+      // [STAK-403] Snapshot + clear override flag before the async fetch so any early
+      // exit (network error, etc.) does not leave the flag stale across calls.
+      var _prePushOverride = _syncConflictUserOverride;
+      _syncConflictUserOverride = false;
       console.warn('[CloudSync] Pre-push check: starting metadata download from', SYNC_META_PATH);
       var prePushApiArg = JSON.stringify({ path: SYNC_META_PATH });
       var prePushResp = await fetch('https://content.dropboxapi.com/2/files/download', {
@@ -1177,7 +1184,11 @@ async function pushSyncVault() {
           console.warn('[CloudSync] Pre-push check: comparing — remote.deviceId:', prePushMeta.deviceId, 'myDeviceId:', myDeviceId, 'remote.syncId:', prePushMeta.syncId, 'lastPull:', lastPull ? lastPull.syncId : 'null');
 
           // If a DIFFERENT device pushed AND we haven't pulled this syncId yet
-          if (prePushMeta.deviceId !== myDeviceId &&
+          if (_prePushOverride) {
+            console.warn('[CloudSync] Pre-push check: BYPASS — user explicitly resolved conflict, overwriting remote');
+            logCloudSyncActivity('auto_sync_push', 'info', 'Pre-push conflict check bypassed — user resolved conflict');
+            // fall through to push
+          } else if (prePushMeta.deviceId !== myDeviceId &&
               (!lastPull || lastPull.syncId !== prePushMeta.syncId)) {
             console.warn('[CloudSync] Pre-push check: BLOCKING — remote change from device', prePushMeta.deviceId.slice(0, 8), '— routing to handleRemoteChange');
             logCloudSyncActivity('auto_sync_push', 'deferred', 'Remote change detected from device ' + prePushMeta.deviceId.slice(0, 8) + ' — showing diff');
@@ -1756,6 +1767,7 @@ async function handleRemoteChange(remoteMeta) {
       if (choice === 'push') {
         // User chose to assert local data as authoritative — push over remote
         console.warn('[CloudSync] handleRemoteChange: user chose Push My Data');
+        _syncConflictUserOverride = true;
         pushSyncVault().catch(function(e) { console.error('[CloudSync] Push My Data failed:', e); });
         return;
       }
@@ -1946,7 +1958,7 @@ function showSyncConflictModal(opts) {
         'Keep YOUR local version? (Cancel to keep the remote version)';
       if (typeof appConfirm === 'function') {
         appConfirm(msg, 'Sync Conflict').then(function (keepMine) {
-          if (keepMine) pushSyncVault();
+          if (keepMine) { _syncConflictUserOverride = true; pushSyncVault(); }
           else pullWithPreview(opts.remoteMeta).catch(function (err) {
             debugLog('[CloudSync] pullWithPreview failed in conflict fallback:', err);
             updateSyncStatusIndicator('error', 'Pull failed — ' + err.message);
@@ -1986,6 +1998,7 @@ function showSyncConflictModal(opts) {
     if (keepMineBtn) {
       keepMineBtn.onclick = function () {
         closeModal();
+        _syncConflictUserOverride = true;
         pushSyncVault();
         resolve();
       };
