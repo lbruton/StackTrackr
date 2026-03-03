@@ -484,10 +484,12 @@ async function cloudExchangeCode(code, state) {
     if (provider === 'dropbox') {
       if (data.account_id) {
         localStorage.setItem('cloud_dropbox_account_id', data.account_id);
-        debugWarn('[CloudStorage] Stored Dropbox account ID from token exchange');
+        // STAK-398 diagnostic: MUST use console.warn (not debugWarn) so it's always visible
+        console.warn('[CloudStorage] Stored Dropbox account_id from token exchange:',
+          data.account_id.slice(0, 8) + '… (' + data.account_id.length + ' chars)');
       } else {
         // Fallback: fetch account ID from API — awaited so syncCloudUI runs after account_id is stored
-        debugWarn('[CloudStorage] Token exchange did not include account_id — fetching from API');
+        console.warn('[CloudStorage] Token exchange did NOT include account_id — fetching from API');
         try {
           var acctResp = await fetch('https://api.dropboxapi.com/2/users/get_current_account', {
             method: 'POST',
@@ -500,9 +502,12 @@ async function cloudExchangeCode(code, state) {
           var info = acctResp.ok ? await acctResp.json() : null;
           if (info && info.account_id) {
             localStorage.setItem('cloud_dropbox_account_id', info.account_id);
-            debugWarn('[CloudStorage] Stored Dropbox account ID from API fallback');
+            console.warn('[CloudStorage] Stored Dropbox account_id from API fallback:',
+              info.account_id.slice(0, 8) + '… (' + info.account_id.length + ' chars)');
+          } else {
+            console.warn('[CloudStorage] API fallback FAILED to get account_id — response:', acctResp.status);
           }
-        } catch (e) { debugWarn('[CloudStorage] Failed to fetch Dropbox account ID', e); }
+        } catch (e) { console.warn('[CloudStorage] Failed to fetch Dropbox account ID:', e.message); }
       }
     }
     sessionStorage.removeItem('cloud_oauth_state');
