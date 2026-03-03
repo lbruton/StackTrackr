@@ -637,9 +637,9 @@ async function cloudUploadVault(provider, fileBytes) {
 
   if (provider === 'dropbox') {
     // Ensure /backups/ subfolder exists (ignore 409 = already exists)
-    var backupsPath = config.folder + '/backups';
+    const backupsPath = config.folder + '/backups';
     try {
-      var ensureResp = await fetch('https://api.dropboxapi.com/2/files/create_folder_v2', {
+      const ensureResp = await fetch('https://api.dropboxapi.com/2/files/create_folder_v2', {
         method: 'POST',
         headers: {
           Authorization: 'Bearer ' + token,

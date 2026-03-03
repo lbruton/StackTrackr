@@ -1123,7 +1123,7 @@ const _cloudRestoreWithCachedPw = async (provider, password, fileBytes) => {
  */
 const cloudUpdateBackupCount = async (provider) => {
   const el = safeGetElement('cloudBackupCount_' + provider);
-  if (!el) return;
+  if (!(el instanceof HTMLElement)) return;
   try {
     const backups = await cloudListBackups(provider);
     const count = Array.isArray(backups) ? backups.length : 0;
