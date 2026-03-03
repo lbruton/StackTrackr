@@ -2,7 +2,7 @@
 title: Backup & Restore
 category: frontend
 owner: staktrakr
-lastUpdated: v3.33.30
+lastUpdated: v3.33.34
 date: 2026-03-03
 sourceFiles:
   - js/cloud-storage.js
@@ -14,7 +14,7 @@ relatedPages:
 ---
 # Backup & Restore
 
-> **Last updated:** v3.33.30 — 2026-03-03
+> **Last updated:** v3.33.34 — 2026-03-03
 > **Source files:** `js/cloud-storage.js`, `js/cloud-sync.js`, `js/utils.js`
 
 ## Overview
@@ -313,7 +313,7 @@ Image blobs are NOT restored via vault — requires a separate ZIP or image vaul
 | Function | Signature | Purpose |
 |----------|-----------|---------|
 | `pushSyncVault` | `async ()` | Encrypt and push sync-scoped vault to Dropbox; includes empty-vault guard, image vault, and manifest |
-| `pullWithPreview` | `async ()` — (calls `pullSyncVault`) | Download and decrypt sync vault; saves override backup before applying |
+| `pullWithPreview` | `async (remoteMeta)` | Primary pull path. Shows DiffModal (manifest-first or vault-first) and awaits user action (Apply or Cancel) before returning. Keeps `_syncRemoteChangeActive=true` for the full duration, blocking concurrent pushes while the user reviews the diff. |
 | `syncSaveOverrideBackup` | `()` | Snapshot all `SYNC_SCOPE_KEYS` raw strings to `cloud_sync_override_backup` |
 | `syncRestoreOverrideBackup` | `async ()` | Restore pre-pull snapshot with confirmation; clears scope keys then rewrites from snapshot |
 | `getSyncPassword` | `()` → `Promise<string\|null>` | Interactively prompt for vault password; stores in localStorage; returns composite key |

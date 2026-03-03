@@ -2144,75 +2144,81 @@ function _applyAndFinalize(newInventory, selectedChanges, settingsChanges, remot
  * @param {object} remoteMeta - Remote sync metadata
  */
 function showRestorePreviewModal(diffResult, settingsDiff, remotePayload, remoteMeta, conflicts) {
-  // Delegate to DiffModal (STAK-184) — falls back to false if unavailable
+  // Delegate to DiffModal (STAK-184) — falls back to null if unavailable.
+  // Returns a Promise that resolves when the user completes their modal action
+  // (Apply or Cancel), so callers can await the full pull before clearing
+  // _syncRemoteChangeActive. Returns null when DiffModal is unavailable.
   if (typeof DiffModal === 'undefined' || !DiffModal.show) {
     debugLog('[CloudSync] DiffModal not available — falling back');
-    return false;
+    return null;
   }
 
   var addedCount = diffResult.added ? diffResult.added.length : 0;
   var removedCount = diffResult.deleted ? diffResult.deleted.length : 0;
   var modifiedCount = diffResult.modified ? diffResult.modified.length : 0;
 
-  DiffModal.show({
-    source: { type: 'sync', label: _syncProvider || 'Cloud' },
-    diff: diffResult,
-    settingsDiff: settingsDiff || null,
-    conflicts: conflicts || null,
-    meta: {
-      deviceId: remoteMeta.deviceId,
-      timestamp: remoteMeta.timestamp,
-      itemCount: remoteMeta.itemCount,
-      appVersion: remoteMeta.appVersion
-    },
-    onApply: function (selectedChanges) {
-      try {
-        // Guard: fall back to full overwrite if DiffEngine unavailable
-        if (typeof DiffEngine === 'undefined' || !DiffEngine.applySelectedChanges) {
-          debugLog('[CloudSync] DiffEngine not available — falling back to full overwrite');
-          syncSaveOverrideBackup();
-          restoreVaultData(remotePayload).then(function () {
-            updateSyncStatusIndicator('idle', 'just now');
-            if (typeof refreshSyncUI === 'function') refreshSyncUI();
-            debugLog('[CloudSync] Full overwrite restore completed via fallback');
-          }).catch(function (restoreErr) {
-            debugLog('[CloudSync] Full overwrite restore failed:', restoreErr);
-            updateSyncStatusIndicator('error', 'Restore failed');
-            if (typeof showCloudToast === 'function') {
-              showCloudToast('Restore failed: ' + (restoreErr.message || 'Unknown error'));
-            }
-          });
-          return;
-        }
-
-        // Apply only the user-selected changes via DiffEngine
-        var newInv = DiffEngine.applySelectedChanges(inventory, selectedChanges);
-
-        // Build settings changes from settingsDiff
-        var settingsChanges = null;
-        if (settingsDiff && settingsDiff.changed && settingsDiff.changed.length > 0) {
-          settingsChanges = [];
-          for (var i = 0; i < settingsDiff.changed.length; i++) {
-            settingsChanges.push({
-              key: settingsDiff.changed[i].key,
-              remoteVal: settingsDiff.changed[i].remoteVal
+  return new Promise(function (resolve) {
+    DiffModal.show({
+      source: { type: 'sync', label: _syncProvider || 'Cloud' },
+      diff: diffResult,
+      settingsDiff: settingsDiff || null,
+      conflicts: conflicts || null,
+      meta: {
+        deviceId: remoteMeta.deviceId,
+        timestamp: remoteMeta.timestamp,
+        itemCount: remoteMeta.itemCount,
+        appVersion: remoteMeta.appVersion
+      },
+      onApply: function (selectedChanges) {
+        var p;
+        try {
+          // Guard: fall back to full overwrite if DiffEngine unavailable
+          if (typeof DiffEngine === 'undefined' || !DiffEngine.applySelectedChanges) {
+            debugLog('[CloudSync] DiffEngine not available — falling back to full overwrite');
+            syncSaveOverrideBackup();
+            p = restoreVaultData(remotePayload).then(function () {
+              updateSyncStatusIndicator('idle', 'just now');
+              if (typeof refreshSyncUI === 'function') refreshSyncUI();
+              debugLog('[CloudSync] Full overwrite restore completed via fallback');
+            }).catch(function (restoreErr) {
+              debugLog('[CloudSync] Full overwrite restore failed:', restoreErr);
+              updateSyncStatusIndicator('error', 'Restore failed');
+              if (typeof showCloudToast === 'function') {
+                showCloudToast('Restore failed: ' + (restoreErr.message || 'Unknown error'));
+              }
             });
+          } else {
+            // Apply only the user-selected changes via DiffEngine
+            var newInv = DiffEngine.applySelectedChanges(inventory, selectedChanges);
+
+            // Build settings changes from settingsDiff
+            var settingsChanges = null;
+            if (settingsDiff && settingsDiff.changed && settingsDiff.changed.length > 0) {
+              settingsChanges = [];
+              for (var i = 0; i < settingsDiff.changed.length; i++) {
+                settingsChanges.push({
+                  key: settingsDiff.changed[i].key,
+                  remoteVal: settingsDiff.changed[i].remoteVal
+                });
+              }
+            }
+
+            // Delegate everything to _applyAndFinalize (backup, save, render, toast, status, broadcast)
+            _applyAndFinalize(newInv, selectedChanges, settingsChanges, remoteMeta, { source: 'sync' });
+            debugLog('[CloudSync] Restore preview: applied selected changes via DiffEngine');
+            p = Promise.resolve();
           }
+        } catch (applyErr) {
+          debugLog('[CloudSync] Restore preview: apply failed:', applyErr);
+          updateSyncStatusIndicator('error', 'Restore failed');
+          if (typeof showCloudToast === 'function') showCloudToast('Restore failed: ' + applyErr.message);
+          p = Promise.resolve();
         }
-
-        // Delegate everything to _applyAndFinalize (backup, save, render, toast, status, broadcast)
-        _applyAndFinalize(newInv, selectedChanges, settingsChanges, remoteMeta, { source: 'sync' });
-        debugLog('[CloudSync] Restore preview: applied selected changes via DiffEngine');
-      } catch (applyErr) {
-        debugLog('[CloudSync] Restore preview: apply failed:', applyErr);
-        updateSyncStatusIndicator('error', 'Restore failed');
-        if (typeof showCloudToast === 'function') showCloudToast('Restore failed: ' + applyErr.message);
-      }
-    },
-    onCancel: function () { /* no-op */ }
+        p.then(resolve).catch(resolve);
+      },
+      onCancel: function () { resolve(); }
+    });
   });
-
-  return true;
 }
 
 /**
@@ -2479,24 +2485,32 @@ async function pullWithPreview(remoteMeta) {
             manifestConflicts = null;
           }
 
-          // Show DiffModal with manifest preview — vault download deferred to onApply
-          DiffModal.show({
-            source: { type: 'sync', label: _syncProvider || 'Cloud' },
-            diff: manifestDiff,
-            conflicts: manifestConflicts || null,
-            meta: {
-              deviceId: manifest.deviceId || (remoteMeta ? remoteMeta.deviceId : null),
-              timestamp: remoteMeta ? remoteMeta.timestamp : null,
-              itemCount: remoteMeta ? remoteMeta.itemCount : null,
-              appVersion: remoteMeta ? remoteMeta.appVersion : null,
-            },
-            onApply: function (selectedChanges) {
-              // Deferred: download full vault, decrypt, selective apply
-              _deferredVaultRestore(token, password, remoteMeta, selectedChanges);
-            },
-            onCancel: function () {
-              debugLog('[CloudSync] Manifest preview cancelled — no vault download');
-            }
+          // STAK-406: Await user decision in DiffModal before returning.
+          // This keeps _syncRemoteChangeActive=true (set by handleRemoteChange)
+          // until the full pull is applied, preventing a concurrent push from
+          // racing and overwriting the remote vault with stale local data.
+          await new Promise(function (resolveModal) {
+            DiffModal.show({
+              source: { type: 'sync', label: _syncProvider || 'Cloud' },
+              diff: manifestDiff,
+              conflicts: manifestConflicts || null,
+              meta: {
+                deviceId: manifest.deviceId || (remoteMeta ? remoteMeta.deviceId : null),
+                timestamp: remoteMeta ? remoteMeta.timestamp : null,
+                itemCount: remoteMeta ? remoteMeta.itemCount : null,
+                appVersion: remoteMeta ? remoteMeta.appVersion : null,
+              },
+              onApply: function (selectedChanges) {
+                // Deferred: download full vault, decrypt, selective apply.
+                // Resolve after _deferredVaultRestore completes so the caller
+                // keeps _syncRemoteChangeActive=true until pull is fully applied.
+                _deferredVaultRestore(token, password, remoteMeta, selectedChanges).finally(resolveModal);
+              },
+              onCancel: function () {
+                debugLog('[CloudSync] Manifest preview cancelled — no vault download');
+                resolveModal();
+              }
+            });
           });
           updateSyncStatusIndicator('idle', 'just now');
           return; // manifest path succeeded — skip vault-first path
@@ -2603,8 +2617,10 @@ async function pullWithPreview(remoteMeta) {
         conflicts = null;
       }
 
-      var shown = showRestorePreviewModal(diffResult, settingsDiff, remotePayload, remoteMeta, conflicts);
-      if (!shown) {
+      // STAK-406: shownPromise resolves only after user completes Apply/Cancel,
+      // keeping _syncRemoteChangeActive=true until the pull is fully applied.
+      var shownPromise = showRestorePreviewModal(diffResult, settingsDiff, remotePayload, remoteMeta, conflicts);
+      if (!shownPromise) {
         // Modal not in DOM — fall back to direct restore (try all key variants)
         debugLog('[CloudSync] Preview modal unavailable — falling back to direct restore');
         syncSaveOverrideBackup();
@@ -2612,6 +2628,8 @@ async function pullWithPreview(remoteMeta) {
         await restoreVaultData(fbPayload2);
         syncSetLastPull(_previewPullMeta);
         _previewPullMeta = null;
+      } else {
+        await shownPromise;
       }
 
     } catch (decryptErr) {
