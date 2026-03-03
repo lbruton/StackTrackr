@@ -1680,22 +1680,26 @@ function showSyncUpdateModal(remoteMeta) {
 
     modal.style.display = 'flex';
 
-    function cleanup(result) {
-      modal.style.display = 'none';
-      acceptBtn.removeEventListener('click', onAccept);
-      dismissBtn.removeEventListener('click', onDismiss);
-      dismissX.removeEventListener('click', onDismiss);
-      resolve(result);
-    }
-
-    function onAccept()  { cleanup(true); }
-    function onDismiss() { cleanup(false); }
-
     var acceptBtn  = safeGetElement('syncUpdateAcceptBtn');
+    var pushBtn    = safeGetElement('syncUpdatePushBtn');
     var dismissBtn = safeGetElement('syncUpdateDismissBtn');
     var dismissX   = safeGetElement('syncUpdateDismissX');
 
+    function cleanup(result) {
+      modal.style.display = 'none';
+      if (acceptBtn)  acceptBtn.removeEventListener('click', onAccept);
+      if (pushBtn)    pushBtn.removeEventListener('click', onPush);
+      if (dismissBtn) dismissBtn.removeEventListener('click', onDismiss);
+      if (dismissX)   dismissX.removeEventListener('click', onDismiss);
+      resolve(result);
+    }
+
+    function onAccept()  { cleanup('accept'); }
+    function onPush()    { cleanup('push'); }
+    function onDismiss() { cleanup('dismiss'); }
+
     if (acceptBtn)  acceptBtn.addEventListener('click', onAccept);
+    if (pushBtn)    pushBtn.addEventListener('click', onPush);
     if (dismissBtn) dismissBtn.addEventListener('click', onDismiss);
     if (dismissX)   dismissX.addEventListener('click', onDismiss);
   });
@@ -1735,12 +1739,18 @@ async function handleRemoteChange(remoteMeta) {
     if (!hasLocal) {
       // Show the update-available modal — let user decide before password prompt
       console.warn('[CloudSync] handleRemoteChange: showing update modal');
-      var accepted = await showSyncUpdateModal(remoteMeta);
-      if (!accepted) {
+      var choice = await showSyncUpdateModal(remoteMeta);
+      if (choice === 'push') {
+        // User chose to assert local data as authoritative — push over remote
+        console.warn('[CloudSync] handleRemoteChange: user chose Push My Data');
+        pushSyncVault();
+        return;
+      }
+      if (!choice || choice === 'dismiss') {
         console.warn('[CloudSync] handleRemoteChange: user dismissed update — will retry next poll');
         return;
       }
-      // Layer 5 — Show restore preview instead of direct pull (REQ-5)
+      // choice === 'accept' — Layer 5: show restore preview instead of direct pull (REQ-5)
       await pullWithPreview(remoteMeta);
       return;
     }
