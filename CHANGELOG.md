@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.36] - 2026-03-03
+
+### Fixed — Cloud Sync Pull Root Cause + UX Cleanup (STAK-412)
+
+- **Fixed**: Vault-first pull path now correctly extracts inventory from `remotePayload.data.metalInventory` (compressed dict of localStorage keys) instead of treating the payload dict as an inventory array — this was the root cause of DiffModal showing only deletions and zero additions, leading to empty inventory on Apply (STAK-412)
+- **Fixed**: Remote settings extraction in vault-first path now reads sync-scoped keys from `remotePayload.data` (excluding metalInventory) instead of the empty `remotePayload.settings` field
+- **Changed**: Removed redundant Sync Conflict dialog (Keep Mine / Keep Theirs / Skip) — remote changes now go directly to the Review Sync Changes DiffModal which shows the full item-level diff
+- **Fixed**: Manifest-first count check now verifies `local + added - deleted == remote` instead of only checking for zero changes — catches incomplete diffs where the manifest changelog misses remote-only additions
+
+---
+
 ## [3.33.35] - 2026-03-03
 
 ### Fixed — Sync DiffModal Apply Data Loss + Empty-Vault Dialog (STAK-409, STAK-410, STAK-411)
