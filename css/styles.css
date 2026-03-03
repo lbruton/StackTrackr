@@ -11885,36 +11885,6 @@ th {
   font-weight: 600;
 }
 
-/* Out-of-stock vendor styling */
-.retail-vendor-row--out-of-stock {
-  opacity: 0.6;
-  background-color: var(--bs-gray-100);
-}
-
-.retail-vendor-row--out-of-stock .retail-vendor-name {
-  color: var(--bs-gray-600);
-}
-
-.retail-vendor-row--out-of-stock .retail-vendor-price del {
-  text-decoration: line-through;
-  color: var(--bs-gray-500);
-}
-
-/* Confidence percentage chip — uses Bootstrap 5.3 semantic emphasis vars that adapt per theme */
-.retail-conf-chip {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.15rem 0.4rem;
-  font-size: 0.75rem;
-  font-weight: 700;
-  border-radius: 999px;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-.retail-conf-chip--low  { background: color-mix(in srgb, var(--danger)  12%, transparent); color: var(--danger); }
-.retail-conf-chip--mid  { background: color-mix(in srgb, var(--warning) 12%, transparent); color: var(--warning); }
-.retail-conf-chip--high { background: color-mix(in srgb, var(--success) 12%, transparent); color: var(--success); }
-
 .retail-vendor-details { margin-top: 0.25rem; }
 
 /* STAK-217: Loading skeleton shimmer */
@@ -12629,22 +12599,6 @@ th {
 .vendor-medal--1 { background: rgba(245,158,11,0.2); color: #f59e0b; }
 .vendor-medal--2 { background: rgba(148,163,184,0.2); color: #94a3b8; }
 .vendor-medal--3 { background: rgba(217,119,6,0.15); color: #d97706; }
-.vendor-chip .vendor-confidence {
-  font-size: 9px;
-  color: var(--text-muted, #6c757d);
-  opacity: 0.7;
-}
-.vendor-chip.oos .vendor-name {
-  color: var(--text-muted, #6c757d) !important;
-  text-decoration: line-through;
-}
-.vendor-chip.oos .vendor-price {
-  color: var(--text-muted, #6c757d);
-  text-decoration: line-through;
-  font-size: 11px;
-}
-.vendor-chip.low-conf .vendor-price { opacity: 0.6; }
-
 /* Trend badge */
 .market-card-trend {
   display: flex;

@@ -90,9 +90,11 @@ const _buildVendorLegend = (slug) => {
       || (typeof RETAIL_VENDOR_URLS !== "undefined" && RETAIL_VENDOR_URLS[vendorId])
       || null;
 
+    // Skip vendors with no price
+    if (price == null) return;
+
     const item = document.createElement(vendorUrl ? "a" : "span");
     item.className = "retail-legend-item";
-    if (isOOS) item.style.opacity = "0.5";
     if (vendorUrl) {
       item.href = "#";
       item.addEventListener("click", (e) => {
@@ -113,25 +115,7 @@ const _buildVendorLegend = (slug) => {
 
     const priceEl = document.createElement("span");
     priceEl.className = "retail-legend-price";
-
-    if (isOOS) {
-      const lkpMap = typeof retailLastKnownPrices !== 'undefined' && retailLastKnownPrices;
-      const ladMap = typeof retailLastAvailableDates !== 'undefined' && retailLastAvailableDates;
-      const lkp = lkpMap && lkpMap[slug] && lkpMap[slug][vendorId];
-      const lad = ladMap && ladMap[slug] && ladMap[slug][vendorId];
-      const priceText = document.createElement("del");
-      priceText.textContent = lkp != null ? `$${Number(lkp).toFixed(2)}` : '\u2014';
-      priceEl.appendChild(priceText);
-      const badge = document.createElement("small");
-      badge.className = "text-danger ms-1";
-      badge.textContent = "OOS";
-      priceEl.appendChild(badge);
-      item.title = lad
-        ? `Out of stock (last seen: ${priceText.textContent} on ${lad})`
-        : "Out of stock";
-    } else {
-      priceEl.textContent = `$${Number(price).toFixed(2)}`;
-    }
+    priceEl.textContent = `$${Number(price).toFixed(2)}`;
 
     item.appendChild(swatch);
     item.appendChild(nameEl);

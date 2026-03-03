@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.40] - 2026-03-03
+
+### Changed — Simplify Market Price Display (STAK-404)
+
+- **Removed**: Confidence score badges (e.g., "70%") from vendor chips on market cards and expanded card vendor rows — all vendors now display equally (STAK-404)
+- **Removed**: Out-of-stock vendor styling — no more grayed-out rows, strikethrough prices, or "OOS" badges; vendors with valid prices display normally regardless of stock flag (STAK-404)
+- **Added**: Median anomaly filter for market list vendor chips — vendors with prices deviating more than 40% from the median are silently excluded instead of shown with warnings (STAK-404)
+- **Fixed**: Monument Metals false OOS detection — page nav "PRE-ORDER" text no longer triggers out-of-stock flag (STAK-404, StakTrakrApi)
+
+---
+
 ## [3.33.39] - 2026-03-03
 
 ### Changed — Summary Bar Items + Weight (STAK-418)
