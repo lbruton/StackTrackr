@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.37] - 2026-03-03
+
+### Changed — Remove Redundant Sync Update Dialog (STAK-413)
+
+- **Changed**: Removed the "Sync Update Available" intermediate dialog (Accept Update / Push My Data / Not Now) — remote changes now go directly to the Review Sync Changes DiffModal for both conflict and non-conflict paths, completing the UX simplification started in STAK-412
+
+---
+
 ## [3.33.36] - 2026-03-03
 
 ### Fixed — Cloud Sync Pull Root Cause + UX Cleanup (STAK-412)

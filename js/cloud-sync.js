@@ -1755,34 +1755,11 @@ async function handleRemoteChange(remoteMeta) {
   }
 
   try {
-    var hasLocal = syncHasLocalChanges();
-    console.warn('[CloudSync] handleRemoteChange: hasLocalChanges:', hasLocal);
-
-    if (!hasLocal) {
-      // Show the update-available modal — let user decide before password prompt
-      console.warn('[CloudSync] handleRemoteChange: showing update modal');
-      var choice = await showSyncUpdateModal(remoteMeta);
-      if (choice === 'push') {
-        // User chose to assert local data as authoritative — push over remote
-        console.warn('[CloudSync] handleRemoteChange: user chose Push My Data');
-        _syncConflictUserOverride = true;
-        pushSyncVault().catch(function(e) { console.error('[CloudSync] Push My Data failed:', e); });
-        return;
-      }
-      if (!choice || choice === 'dismiss') {
-        console.warn('[CloudSync] handleRemoteChange: user dismissed update — will retry next poll');
-        return;
-      }
-      // choice === 'accept' — Layer 5: show restore preview instead of direct pull (REQ-5)
-      await pullWithPreview(remoteMeta);
-      return;
-    }
-
-    // STAK-412: Skip the redundant Sync Conflict dialog (Keep Mine / Keep Theirs)
-    // and go directly to the DiffModal (Review Sync Changes) which shows the full
-    // item-level diff. The conflict dialog was an extra layer that confused users
-    // without adding information the DiffModal doesn't already provide.
-    console.warn('[CloudSync] handleRemoteChange: CONFLICT — going directly to pull preview');
+    // STAK-413: Go directly to the DiffModal (Review Sync Changes) for ALL
+    // remote changes — both conflict and non-conflict. The intermediate dialogs
+    // (Sync Update Available, Sync Conflict) were redundant layers that confused
+    // users without adding information the DiffModal doesn't already provide.
+    console.warn('[CloudSync] handleRemoteChange: going directly to pull preview');
     await pullWithPreview(remoteMeta);
   } finally {
     _syncRemoteChangeActive = false;
