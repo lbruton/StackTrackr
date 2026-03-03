@@ -1958,7 +1958,7 @@ function showSyncConflictModal(opts) {
         'Keep YOUR local version? (Cancel to keep the remote version)';
       if (typeof appConfirm === 'function') {
         appConfirm(msg, 'Sync Conflict').then(function (keepMine) {
-          if (keepMine) { _syncConflictUserOverride = true; pushSyncVault(); }
+          if (keepMine) { _syncConflictUserOverride = true; pushSyncVault().catch(function(e) { console.error('[CloudSync] Keep Mine (fallback) push failed:', e); }); }
           else pullWithPreview(opts.remoteMeta).catch(function (err) {
             debugLog('[CloudSync] pullWithPreview failed in conflict fallback:', err);
             updateSyncStatusIndicator('error', 'Pull failed — ' + err.message);
@@ -1999,7 +1999,7 @@ function showSyncConflictModal(opts) {
       keepMineBtn.onclick = function () {
         closeModal();
         _syncConflictUserOverride = true;
-        pushSyncVault();
+        pushSyncVault().catch(function(e) { console.error('[CloudSync] Keep Mine push failed:', e); });
         resolve();
       };
     }
