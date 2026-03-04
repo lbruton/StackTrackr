@@ -2,8 +2,8 @@
 title: Frontend Overview
 category: frontend
 owner: staktrakr
-lastUpdated: v3.33.25
-date: 2026-03-02
+lastUpdated: v3.33.44
+date: 2026-03-03
 sourceFiles:
   - index.html
   - js/constants.js
@@ -17,7 +17,7 @@ relatedPages:
 ---
 # Frontend Overview
 
-> **Last updated:** v3.33.25 — 2026-03-02
+> **Last updated:** v3.33.44 — 2026-03-03
 > **Source files:** `index.html`, `js/constants.js`, `sw.js`, `js/file-protocol-fix.js`
 
 ## Overview
@@ -53,7 +53,7 @@ index.html  (single-page app — all UI panels, modals, and sections)
   ├── <head> scripts (synchronous, load first)
   │     └── js/file-protocol-fix.js   — localStorage fallback for file:// protocol
   │
-  └── <body> deferred scripts (58 files, strict load order)
+  └── <body> deferred scripts (66 files, strict load order)
         ├── js/debug-log.js           — debug logging utility
         ├── js/constants.js           — APP_VERSION, all constants, ALLOWED_STORAGE_KEYS
         ├── js/field-meta.js          — field metadata definitions
@@ -71,12 +71,12 @@ index.html  (single-page app — all UI panels, modals, and sections)
 `APP_VERSION` in `js/constants.js` follows the `BRANCH.RELEASE.PATCH` format:
 
 ```text
-3   .   33   .   25
+3   .   33   .   44
 ^       ^        ^
 Branch  Release  Patch
 ```
 
-Current version: **3.33.25**
+Current version: **3.33.44**
 
 Optional state suffixes: `a` = alpha, `b` = beta, `rc` = release candidate.
 
@@ -89,12 +89,12 @@ Run `/release patch` after every meaningful committed change — one change, one
 | `index.html` | Single-page shell — all panels, modals, and UI sections live here |
 | `js/constants.js` | Global constants, `APP_VERSION`, `ALLOWED_STORAGE_KEYS`, `FEATURE_FLAGS` |
 | `js/state.js` | Shared mutable state (spot prices, inventory cache, filter state) |
-| `js/utils.js` | Core utilities: `saveData()`, `loadData()`, `safeGetElement()`, `sanitizeHtml()` |
-| `js/init.js` | App bootstrap — runs last, wires everything together after all scripts are deferred-loaded |
+| `js/utils.js` | Core utilities: `saveData()`, `loadData()`, `sanitizeHtml()` |
+| `js/init.js` | App bootstrap, `safeGetElement()` — runs last, wires everything together after all scripts are deferred-loaded |
 
 ### Script load order
 
-The 58 deferred application scripts in `index.html` load in this sequence (abridged):
+The 66 deferred application scripts in `index.html` load in this sequence (abridged):
 
 | Position | File | Why here |
 |---|---|---|
@@ -115,7 +115,7 @@ Full order is canonical in `sw.js` `CORE_ASSETS` and reflected in `index.html`.
 
 `sw.js` provides offline support and PWA installability. Key behaviors:
 
-- **Install phase:** pre-caches all files listed in `CORE_ASSETS` (57 paths: JS, CSS, images, vendor libs, seed data).
+- **Install phase:** pre-caches all files listed in `CORE_ASSETS` (76 paths: JS, CSS, images, vendor libs, seed data). Note: `CORE_ASSETS` is the production/offline cache subset — dev-only scripts like `js/test-loader.js` are intentionally excluded.
 - **Activate phase:** purges any old caches whose name starts with `staktrakr-` but does not match the current `CACHE_NAME`.
 - **Fetch routing strategies:**
   - `file://` or OAuth callback: bypassed (no caching).

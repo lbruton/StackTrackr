@@ -2,20 +2,21 @@
 title: Backup & Restore
 category: frontend
 owner: staktrakr
-lastUpdated: v3.33.25
-date: 2026-03-02
+lastUpdated: v3.33.46
+date: 2026-03-04
 sourceFiles:
   - js/cloud-storage.js
   - js/cloud-sync.js
   - js/utils.js
+  - js/vault.js
 relatedPages:
   - sync-cloud.md
   - storage-patterns.md
 ---
 # Backup & Restore
 
-> **Last updated:** v3.33.25 — 2026-03-02
-> **Source files:** `js/cloud-storage.js`, `js/cloud-sync.js`, `js/utils.js`
+> **Last updated:** v3.33.46 — 2026-03-04
+> **Source files:** `js/cloud-storage.js`, `js/cloud-sync.js`, `js/utils.js`, `js/vault.js`
 
 ## Overview
 
@@ -65,12 +66,14 @@ There is no dedicated `backup.js` or `restore.js`. All backup and restore logic 
 - Cloud activity log: all transactions recorded to `cloud_activity_log` (capped at 500 entries, max 180 days)
 - UI state management via `syncCloudUI()`
 
-**Manual cloud backup flow:**
+**Manual cloud backup flow (updated STAK-419, v3.33.41):**
 
-1. `vaultEncryptToBytes(password)` encrypts all `ALLOWED_STORAGE_KEYS` into a binary `.stvault`
-2. `cloudUploadVault(provider, fileBytes)` uploads the vault as `staktrakr-backup-YYYYMMDD-HHmmss.stvault` to the provider folder
-3. Also writes `staktrakr-latest.json` (pointer with `filename`, `timestamp`, `appVersion`, `itemCount`)
-4. Records `cloud_last_backup` in localStorage
+1. User clicks "Backup" → vault modal opens (always prompts for password; no cached password reuse for manual backups)
+2. `vaultEncryptToBytes(password)` encrypts all `ALLOWED_STORAGE_KEYS` into a binary `.stvault`
+3. `cloudUploadVault(provider, fileBytes, { skipLatestUpdate: true })` uploads the vault as `staktrakr-backup-YYYYMMDD-HHmmss.stvault` to the `/backups/` subfolder
+4. `staktrakr-latest.json` pointer is NOT updated (manual backups do not affect sync state)
+5. `cloud_last_backup` is NOT written (manual backups are independent of sync tracking)
+6. Password is NOT cached to `sessionStorage` (each manual backup requires re-entry)
 
 ### cloud-sync.js Role
 
@@ -93,9 +96,12 @@ There is no dedicated `backup.js` or `restore.js`. All backup and restore logic 
 | Image vault | `/StakTrakr/sync/staktrakr-images.stvault` | `userImages` IDB blobs (base64) |
 | Metadata pointer | `/StakTrakr/sync/staktrakr-sync.json` | `rev`, `itemCount`, `syncId`, `deviceId`, `imageVault` hash |
 | Manifest | `/StakTrakr/sync/staktrakr-manifest.stvault` | Encrypted field-level change log for diff-merge |
-| Pre-push backups | `/StakTrakr/backups/pre-sync-TIMESTAMP.stvault` | Auto-backups before each vault overwrite |
+| Pre-push backups | `/StakTrakr/backups/pre-sync-TIMESTAMP.stvault` | Auto-backups before each vault overwrite (prefix: `SYNC_BACKUP_PREFIX`) |
+| Manual backups | `/StakTrakr/backups/staktrakr-backup-YYYYMMDD-HHmmss.stvault` | User-initiated vault backups (prefix: `MANUAL_BACKUP_PREFIX`) |
 
 > **Legacy paths:** Flat-root paths (`/StakTrakr/staktrakr-sync.*`) are retained as `*_LEGACY` constants in `js/constants.js` for migration only. Active sync uses `/StakTrakr/sync/`. Migration runs once on first push (`cloudMigrateToV2`).
+>
+> **Backup isolation (STAK-419, v3.33.41):** Manual backups and sync snapshots share the `/StakTrakr/backups/` folder but are distinguished by filename prefix. `cloudListBackups(provider, type)` filters by prefix; `cloudPruneBackups` defaults to pruning only sync snapshots. Manual backups are never automatically deleted.
 
 ### utils.js Role
 
@@ -145,7 +151,7 @@ There is no dedicated `backup.js` or `restore.js`. All backup and restore logic 
 | `user_images/` | User-uploaded photo blobs (obverse/reverse per UUID) | IDB `userImages` store |
 | `user_image_manifest.json` | UUID→filename mapping | Used during restore |
 | `pattern_images/` | Pattern rule image blobs | IDB `patternImages` store |
-| `inventory_export.csv` | Human-readable CSV | Not restored (report only) |
+| `inventory_export.csv` | Human-readable CSV (includes Tags and Storage Location columns as of v3.33.44) | Not restored (report only) |
 | `inventory_report.html` | HTML report | Not restored (report only) |
 
 What is NOT included: `coinImages` IDB store (legacy/dead, explicitly skipped), API keys, OAuth tokens, cloud sync state.
@@ -154,11 +160,12 @@ What is NOT included: `coinImages` IDB store (legacy/dead, explicitly skipped), 
 
 **Crypto:** AES-256-GCM, PBKDF2 (600K iterations), 56-byte binary header
 
-**Full scope** (`vaultEncryptToBytes`) includes all `ALLOWED_STORAGE_KEYS` (~80+ keys):
+**Full scope** (`vaultEncryptToBytes`) includes all `ALLOWED_STORAGE_KEYS` (~80+ keys) **minus `VAULT_EXCLUDE_KEYS`** (STAK-425, v3.33.46):
 
 - Inventory items with CDN URLs
-- API keys and Dropbox OAuth tokens
 - Spot history, theme, all settings
+
+**Excluded from full exports** (14 keys in `VAULT_EXCLUDE_KEYS`): OAuth tokens (`cloud_token_dropbox`, `cloud_token_pcloud`, `cloud_token_box`), `cloud_dropbox_account_id`, `cloud_vault_password`, `cloud_sync_device_id`, `cloud_sync_cursor`, `cloud_sync_last_push`, `cloud_sync_last_pull`, `cloud_sync_override_backup`, `cloud_sync_mode`, `cloud_sync_local_modified`, `cloud_sync_migrated`, `staktrakr_oauth_result`. These are device-specific credentials and sync state that should not be included in portable exports.
 
 Does NOT include: `userImages`, `patternImages`, or `coinMetadata` IDB blobs.
 
@@ -166,7 +173,7 @@ Does NOT include: `userImages`, `patternImages`, or `coinMetadata` IDB blobs.
 
 **Sync scope** (`vaultEncryptToBytesScoped`) includes only `SYNC_SCOPE_KEYS`:
 
-- `metalInventory`, `itemTags`, display preferences, `chipMinCount`, `chipMaxCount`
+- `metalInventory`, `itemTags`, display preferences, `chipMinCount`
 
 Intentionally excludes: API keys, OAuth tokens, spot price history.
 
@@ -267,19 +274,20 @@ Image blobs are NOT restored via vault — requires a separate ZIP or image vaul
 
 ### Auto-Sync Pull (`pullSyncVault` in `cloud-sync.js`)
 
-1. `syncSaveOverrideBackup()` — snapshot all `SYNC_SCOPE_KEYS` to `cloud_sync_override_backup` in localStorage (rollback-only backup)
-2. Download inventory vault from `/StakTrakr/sync/staktrakr-sync.stvault`
-3. `vaultDecryptAndRestore(fileBytes, password)` — decrypt and write sync-scoped localStorage keys
-4. Check remote `staktrakr-sync.json` `imageVault.hash` vs last pull hash
-5. If image hash changed: download image vault → `vaultDecryptAndRestoreImages()`
-6. Post-restore sequence: `loadInventory()` → `renderTable()` → `renderActiveFilters()` → `loadSpotHistory()`
+1. Guard: `cloud_dropbox_account_id` must be present — if missing, a toast is shown and the pull aborts before any network call
+2. `syncSaveOverrideBackup()` — snapshot all `SYNC_SCOPE_KEYS` to `cloud_sync_override_backup` in localStorage (rollback-only backup)
+3. Download inventory vault from `/StakTrakr/sync/staktrakr-sync.stvault`
+4. `vaultDecryptAndRestore(fileBytes, password)` — decrypt and write sync-scoped localStorage keys
+5. Check remote `staktrakr-sync.json` `imageVault.hash` vs last pull hash
+6. If image hash changed: download image vault → `vaultDecryptAndRestoreImages()`
+7. Post-restore sequence: `loadInventory()` → `renderTable()` → `renderActiveFilters()` → `loadSpotHistory()`
 
 ### Auto-Sync Push (`pushSyncVault` in `cloud-sync.js`)
 
 1. Empty-vault guard: if local inventory is empty and remote has items, block push and prompt to pull instead
 2. Migration check: run `cloudMigrateToV2()` if not yet migrated (once per device)
 3. `vaultEncryptToBytesScoped(password)` — encrypt sync-scope vault
-4. Cloud-side backup-before-overwrite: copy existing cloud vault to `/StakTrakr/backups/pre-sync-TIMESTAMP.stvault` (non-blocking)
+4. Cloud-side backup-before-overwrite: copy existing cloud vault to `/StakTrakr/backups/pre-sync-TIMESTAMP.stvault` (non-blocking; uses `SYNC_BACKUP_PREFIX`)
 5. Upload inventory vault to `/StakTrakr/sync/staktrakr-sync.stvault` (overwrite)
 6. `collectAndHashImageVault()` — compute image hash; if changed, encrypt and upload image vault (non-fatal on failure)
 7. Upload `staktrakr-sync.json` metadata pointer (`rev`, `itemCount`, `syncId`, `deviceId`, `imageVault`)
@@ -293,17 +301,18 @@ Image blobs are NOT restored via vault — requires a separate ZIP or image vaul
 
 | Function | Signature | Purpose |
 |----------|-----------|---------|
-| `cloudUploadVault` | `async (provider, fileBytes)` | Upload a pre-built `.stvault` to cloud; writes versioned file + `latest.json` pointer |
+| `cloudUploadVault` | `async (provider, fileBytes, opts?)` | Upload a pre-built `.stvault` to cloud; writes versioned file + `latest.json` pointer (unless `opts.skipLatestUpdate` is true — used for manual backups). All 4 provider upload responses (Dropbox vault, Dropbox latest pointer, pCloud, Box) are validated via `.ok` check and throw on failure (STAK-425). |
 | `cloudDownloadVaultByName` | `async (provider, filename)` | Download a named `.stvault` from cloud; returns `Uint8Array` |
 | `cloudDownloadVault` | `async (provider)` | Download the latest vault (reads `latest.json` pointer first, falls back to newest in folder) |
-| `cloudListBackups` | `async (provider)` | List all `.stvault` files in cloud folder; returns array sorted newest-first |
-| `cloudDeleteBackup` | `async (provider, filename)` | Delete a named vault file; clears `cloud_last_backup` if matched |
+| `cloudListBackups` | `async (provider, type?)` | List `.stvault` files in the cloud backups folder; paginates via `files/list_folder/continue` when Dropbox returns `has_more` (STAK-425). Optional `type` filters by prefix: `'manual'`, `'sync'`, or `undefined` (all). Returns array sorted newest-first |
+| `cloudDeleteBackup` | `async (provider, filename)` | Delete a named vault file. If the deleted file was the `cloud_last_backup` pointer target, updates remote `staktrakr-latest.json` to point to the next most recent backup, or deletes the pointer if no backups remain (STAK-425). |
 | `cloudCheckConflict` | `async (provider)` | Compare remote `latest.json` timestamp vs `cloud_last_backup`; returns conflict info object |
 | `cloudGetToken` | `async (provider)` | Get OAuth access token; auto-refreshes if expired; clears token on refresh failure |
 | `cloudIsConnected` | `(provider)` | Returns `true` if a stored token exists for the provider |
 | `cloudAuthStart` | `(provider)` | Opens OAuth popup; initiates PKCE flow for Dropbox |
 | `cloudExchangeCode` | `async (code, state)` | Exchanges OAuth auth code for access token; stores in localStorage |
-| `cloudDisconnect` | `(provider)` | Clears token and `cloud_last_backup` |
+| `cloudPruneBackups` | `async (provider, maxKeep, type?)` | Prune old backups, keeping newest `maxKeep`. Defaults to `type='sync'` — manual backups are never auto-pruned |
+| `cloudDisconnect` | `(provider)` | Full disconnect: clears token + all 13 cloud state keys; cancels pending `scheduleSyncPush` debounce (STAK-425) |
 | `recordCloudActivity` | `(entry)` | Appends to `cloud_activity_log` (max 500 entries, 180-day rolling window) |
 | `syncCloudUI` | `()` | Refreshes cloud card UI state (connected badge, backup status, button states) |
 
@@ -312,7 +321,7 @@ Image blobs are NOT restored via vault — requires a separate ZIP or image vaul
 | Function | Signature | Purpose |
 |----------|-----------|---------|
 | `pushSyncVault` | `async ()` | Encrypt and push sync-scoped vault to Dropbox; includes empty-vault guard, image vault, and manifest |
-| `pullWithPreview` | `async ()` — (calls `pullSyncVault`) | Download and decrypt sync vault; saves override backup before applying |
+| `pullWithPreview` | `async (remoteMeta)` | Primary pull path. Shows DiffModal (manifest-first or vault-first) and awaits user action (Apply or Cancel) before returning. Keeps `_syncRemoteChangeActive=true` for the full duration, blocking concurrent pushes while the user reviews the diff. |
 | `syncSaveOverrideBackup` | `()` | Snapshot all `SYNC_SCOPE_KEYS` raw strings to `cloud_sync_override_backup` |
 | `syncRestoreOverrideBackup` | `async ()` | Restore pre-pull snapshot with confirmation; clears scope keys then rewrites from snapshot |
 | `getSyncPassword` | `()` → `Promise<string\|null>` | Interactively prompt for vault password; stores in localStorage; returns composite key |
@@ -355,6 +364,15 @@ Conflict detection is driven by `syncHasLocalChanges()`, which checks whether bo
 
 **Override backup guard:** `syncRestoreOverrideBackup()` only clears scope keys if the snapshot is non-empty — an empty snapshot is treated as corruption and does not wipe localStorage.
 
+### Cloud restore list UI (STAK-419, v3.33.41)
+
+The cloud restore picker in Settings shows a two-tier list:
+
+1. **Manual backups** (top section) — shown by default, listed newest-first. These are user-initiated backups with the `staktrakr-backup-` prefix.
+2. **Sync snapshots** (collapsible section) — collapsed by default. These are automatic `pre-sync-` backups created by the sync system.
+
+The backup count badge on the restore button shows the count of **manual backups only**, not total backups. This gives the user a clear signal of how many deliberate restore points exist.
+
 ### Merge strategy during import
 
 All JSON/CSV/vault imports use a **merge strategy** (not replace-all):
@@ -372,9 +390,13 @@ All JSON/CSV/vault imports use a **merge strategy** (not replace-all):
 |--------|----------------------------------|---------------------------|
 | Trigger | User clicks "Backup" button | Debounced on every inventory change |
 | Vault scope | Full (`ALLOWED_STORAGE_KEYS`) | Sync-scope (`SYNC_SCOPE_KEYS`) only |
-| What's included | All localStorage keys including API keys and spot history | Inventory + display prefs only |
-| Filename | Versioned: `staktrakr-backup-YYYYMMDD-HHmmss.stvault` | Fixed: `staktrakr-sync.stvault` |
-| Pointer file | `staktrakr-latest.json` | `staktrakr-sync.json` (rev + hash + syncId) |
+| What's included | All `ALLOWED_STORAGE_KEYS` minus `VAULT_EXCLUDE_KEYS` (API keys and spot history included; OAuth tokens and cloud sync state excluded) | Inventory + display prefs only |
+| Filename prefix | `MANUAL_BACKUP_PREFIX` (`staktrakr-backup-`) | `SYNC_BACKUP_PREFIX` (`pre-sync-`) for pre-push snapshots |
+| Filename | Versioned: `staktrakr-backup-YYYYMMDD-HHmmss.stvault` | Fixed: `staktrakr-sync.stvault` (live); `pre-sync-TIMESTAMP.stvault` (snapshots) |
+| Pointer file | None (manual backups skip `staktrakr-latest.json` update) | `staktrakr-sync.json` (rev + hash + syncId) |
+| `cloud_last_backup` | Not written (`skipLatestUpdate: true`) | Written on each sync push |
+| Password caching | Disabled — always prompts for password | Cached in `sessionStorage` via `cloudCachePassword` |
+| Auto-pruning | Never auto-pruned | Pruned by `cloudPruneBackups(provider, max, 'sync')` |
 | Image vault | Not part of manual backup | Pushed when `userImages` hash changes |
 | Conflict check | `cloudCheckConflict()` on manual download | `syncHasLocalChanges()` on pull |
 | Pre-restore snapshot | No | Yes: `syncSaveOverrideBackup()` before every pull |
@@ -391,12 +413,13 @@ All JSON/CSV/vault imports use a **merge strategy** (not replace-all):
 | User-uploaded photo blobs | Yes `user_images/` | No | Yes | Yes (conditional) |
 | Pattern rule image blobs | Yes `pattern_images/` | No | No | No |
 | Numista metadata cache | Yes `image_metadata.json` | No | No | No |
-| API keys / OAuth tokens | No | Yes (full scope) | No | No |
+| API keys | No | Yes (full scope) | No | No |
+| OAuth tokens / cloud sync state | No | No (excluded by `VAULT_EXCLUDE_KEYS`) | No | No |
 | Spot price history | Yes | Yes (full scope) | No | No |
 | Settings / theme / prefs | Yes | Yes | No | Yes (display prefs only) |
 | `coinImages` (legacy) | No (SKIPPED) | No | No | No |
 
-**Key takeaway:** Full recovery requires BOTH a ZIP backup (for IDB blobs) AND a vault (for localStorage including API keys). Cloud sync alone does not cover pattern images or Numista metadata.
+**Key takeaway:** Full recovery requires BOTH a ZIP backup (for IDB blobs) AND a vault (for localStorage including API keys). Cloud sync alone does not cover pattern images or Numista metadata. As of v3.33.46, full vault exports no longer include OAuth tokens or cloud sync state (`VAULT_EXCLUDE_KEYS`).
 
 ---
 

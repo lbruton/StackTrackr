@@ -59,7 +59,7 @@ When generating mockups that include these elements, use StakTrakr's patterns:
 
 | Element | Pattern |
 |---------|---------|
-| Button (modal actions) | Pill buttons: `.btn secondary`, `.btn`, `.btn premium` with `border-radius: 999px` scoped CSS — see `ui-standards/style.html` |
+| Button (modal actions) | Pill buttons: `.btn secondary`, `.btn`, `.btn premium` with `border-radius: 999px` scoped CSS — see `style.html` |
 | Button (page-level) | `.btn` or `.btn-sm` — never `.btn-primary` or `.btn-lg` |
 | Modal header | Glass style: `background: var(--bg-secondary); border-bottom: 1px solid var(--border)` — NOT gradient banner |
 | Modal | `.modal` > `.modal-content` with flex header/body/footer + pill action buttons |
@@ -67,7 +67,7 @@ When generating mockups that include these elements, use StakTrakr's patterns:
 | Boolean toggle | `.chip-sort-toggle` > `.chip-sort-btn` — never `<input type="checkbox">` |
 | Card | `background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-lg)` |
 
-**Migration reference:** `ui-standards/style.html` has a Migration Checklist section listing old patterns and what to replace them with. Check it when building modal mockups.
+**Migration reference:** `style.html` has a Migration Checklist section listing old patterns and what to replace them with. Check it when building modal mockups.
 
 ### File protocol safe
 

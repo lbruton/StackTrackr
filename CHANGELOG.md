@@ -9,6 +9,232 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.48] - 2026-03-04
+
+### Fixed — DiffModal Settings Fix & Empty-Diff Silent Pull (STAK-387)
+
+- **Fixed**: DiffModal Apply button now correctly detects pending settings changes — was checking `.length` on an object instead of `.changed.length` (STAK-401, STAK-415)
+- **Fixed**: DiffModal Apply handler now includes settings entries in selectedChanges, preventing settings from being silently dropped on restore (STAK-387)
+- **Fixed**: Manifest-first pull returns silently when both item diff and settings diff are empty — no unnecessary vault download or DiffModal (STAK-417)
+
+---
+
+## [3.33.47] - 2026-03-04
+
+### Changed — Sync Scope & Serialization (STAK-426)
+
+- **Changed**: Expanded cloud sync scope from 8 to 44 keys — all user preferences, header button config, feature toggles, Numista/PCGS settings, provider order, and API credentials now sync across devices (STAK-426)
+- **Fixed**: Manifest-first pull now compares and applies settings changes via DiffEngine, showing them in the DiffModal instead of silently skipping them (STAK-426)
+- **Fixed**: Manifest-first pull now downloads and restores the image vault when the hash differs, instead of silently skipping photo sync (STAK-426)
+- **Added**: Image deletion propagation — deleting all photos locally now removes the remote image vault so other devices don't restore deleted photos (STAK-426)
+
+---
+
+## [3.33.46] - 2026-03-04
+
+### Fixed — Cloud Storage API Hardening (STAK-425)
+
+- **Fixed**: Upload response validation — `cloudUploadVault()` now checks `.ok` on all four provider upload responses (Dropbox vault, Dropbox latest.json, pCloud, Box) and throws on failure instead of silently recording success (STAK-425)
+- **Fixed**: Backup list pagination — `cloudListBackups()` now fetches all pages from Dropbox via `files/list_folder/continue`, returning partial results on pagination failure (STAK-425)
+- **Fixed**: Disconnect cleanup — `cloudDisconnect()` now removes all 13 cloud state keys and cancels pending sync push, preventing stale sync metadata on reconnect (STAK-425)
+- **Fixed**: Delete backup latest pointer — deleting the latest backup now updates remote `staktrakr-latest.json` to point to the next most recent, or deletes it if none remain (STAK-425)
+- **Security**: Vault export credential exclusion — `collectVaultData('full')` now filters out OAuth tokens, vault password, and device-specific sync state via `VAULT_EXCLUDE_KEYS` constant (STAK-425)
+
+---
+
+## [3.33.45] - 2026-03-04
+
+### Fixed — FAQ Cloudflare Cookie Disclosure (STAK-428)
+
+- **Fixed**: FAQ now accurately discloses that Cloudflare may set a temporary infrastructure cookie (e.g. `__cf_bm`) for bot protection on the hosted site — previously claimed "No cookies" without distinguishing app code from CDN infrastructure (STAK-428)
+- **Fixed**: FAQ technical detail section updated from "Does not: set cookies" to explicitly note the infrastructure cookie is safe to block (STAK-428)
+
+---
+
+## [3.33.44] - 2026-03-04
+
+### Fixed — Data Portability Quickfixes (STAK-424)
+
+- **Fixed**: `chipMaxCount` added to `ALLOWED_STORAGE_KEYS` — previously silently deleted by `cleanupStorage()` on every session (STAK-424)
+- **Removed**: Dead `cloudBackupEnabled` flag, `MAX_LOCAL_FILE_SIZE` 2 MB limit, and `checkFileSize()` — import files of any size are now accepted, with QuotaExceeded toast as the safety net (STAK-424)
+- **Added**: Storage Location and Tags columns to CSV export; `tags` array to JSON export — re-imports now preserve more data (STAK-424)
+- **Fixed**: CSV import tag persistence deferred until user confirms — cancelling an import no longer leaves orphaned tags in localStorage (STAK-424)
+- **Fixed**: ZIP image import now handles reverse-only user photos — previously dropped images with no obverse (STAK-424)
+
+---
+
+## [3.33.43] - 2026-03-04
+
+### Fixed — Cloud Sync Storage Blowout and Import Race (STAK-421)
+
+- **Fixed**: `restoreVaultData()` now compresses data before writing to localStorage — previously wrote raw vault payloads, causing metalSpotHistory (9 MB) to blow out localStorage quota on every sync pull (STAK-421)
+- **Fixed**: Override imports (CSV/JSON) now cancel the debounced sync push — previously `saveInventory()` would trigger a push that overwrote remote vault with freshly imported local data (STAK-421)
+- **Fixed**: `QuotaExceededError` in `saveData()` now shows a toast notification instead of silently logging to console (STAK-421)
+
+---
+
+## [3.33.42] - 2026-03-03
+
+### Fixed — Full Backup for Sync Snapshots (STAK-419)
+
+- **Fixed**: Pre-sync snapshots now contain the FULL encrypted backup (all localStorage keys) instead of a partial sync-scoped copy — previously only contained 8 keys (inventory + display prefs), causing ghost items and data corruption when restored (STAK-419)
+- **Fixed**: Restore list now shows all backups (manual + sync) in a single flat list sorted newest first, each labeled "Manual" or "Sync" — previously showed partial sync files in a separate collapsible section (STAK-419)
+- **Fixed**: Backup count badge shows total backup count instead of manual-only count (STAK-419)
+
+---
+
+## [3.33.41] - 2026-03-03
+
+### Fixed — Cloud Backup Manual vs Sync Separation (STAK-419)
+
+- **Fixed**: Auto-prune now only deletes sync snapshots (`pre-sync-*`), never user manual backups (`staktrakr-backup-*`) — previously pruned all backups indiscriminately causing data loss (STAK-419)
+- **Fixed**: Restore list now shows only manual backups by default with sync snapshots in a collapsible section — previously flooded with identical sync metadata copies (STAK-419)
+- **Fixed**: "Backup history" dropdown renamed to "Sync history" and now controls only sync snapshot retention, not total backup count (STAK-419)
+- **Fixed**: Manual Backup button now always prompts for password via vault modal — previously silently reused the sync password cache (STAK-419)
+- **Fixed**: Manual backups no longer update `cloud_last_backup` sync tracking state or cache the password for auto-sync use (STAK-419)
+- **Added**: `MANUAL_BACKUP_PREFIX` and `SYNC_BACKUP_PREFIX` constants for filename-based backup type discrimination (STAK-419)
+
+---
+
+## [3.33.40] - 2026-03-03
+
+### Changed — Simplify Market Price Display (STAK-404)
+
+- **Removed**: Confidence score badges (e.g., "70%") from vendor chips on market cards and expanded card vendor rows — all vendors now display equally (STAK-404)
+- **Removed**: Out-of-stock vendor styling — no more grayed-out rows, strikethrough prices, or "OOS" badges; vendors with valid prices display normally regardless of stock flag (STAK-404)
+- **Added**: Median anomaly filter for market list vendor chips — vendors with prices deviating more than 40% from the median are silently excluded instead of shown with warnings (STAK-404)
+- **Fixed**: Monument Metals false OOS detection — page nav "PRE-ORDER" text no longer triggers out-of-stock flag (STAK-404, StakTrakrApi)
+
+---
+
+## [3.33.39] - 2026-03-03
+
+### Changed — Summary Bar Items + Weight (STAK-418)
+
+- **Changed**: Item count and total weight now display in the portfolio summary bar (ITEMS/WEIGHT alongside Buy/Melt/Market/G/L) instead of a separate bottom footer — shows filtered/total format when filters active (e.g., 172/189), total weight in troy ounces for currently visible items (STAK-418)
+
+---
+
+## [3.33.38] - 2026-03-03
+
+### Fixed — Sync Poll, Settings Sync, DiffModal (STAK-414, STAK-415, STAK-416, STAK-417)
+
+- **Fixed**: Sync poll no longer triggers a pull when local inventory is newer than the remote vault — now compares `lastLocalModified` timestamp (set on every inventory save) against `remoteMeta.timestamp` and triggers a push instead, preventing the user's newly added items from appearing as deletions in the DiffModal (STAK-414)
+- **Fixed**: DiffModal Apply button stays enabled when settings changes are pending even if all item checkboxes are unchecked — previously the button disabled with zero item selections, blocking settings-only apply (STAK-415)
+- **Fixed**: Sync poll now compares both `inventoryHash` AND `settingsHash` — previously only checked inventory, causing settings-only changes (theme, chip config, etc.) to be silently swallowed on the receiving device (STAK-416)
+- **Fixed**: "No changes detected" DiffModal no longer pops up when both inventories and settings are already in sync — empty diffs are now silently recorded without user interaction (STAK-417)
+
+---
+
+## [3.33.37] - 2026-03-03
+
+### Changed — Remove Redundant Sync Update Dialog (STAK-413)
+
+- **Changed**: Removed the "Sync Update Available" intermediate dialog (Accept Update / Push My Data / Not Now) — remote changes now go directly to the Review Sync Changes DiffModal for both conflict and non-conflict paths, completing the UX simplification started in STAK-412
+
+---
+
+## [3.33.36] - 2026-03-03
+
+### Fixed — Cloud Sync Pull Root Cause + UX Cleanup (STAK-412)
+
+- **Fixed**: Vault-first pull path now correctly extracts inventory from `remotePayload.data.metalInventory` (compressed dict of localStorage keys) instead of treating the payload dict as an inventory array — this was the root cause of DiffModal showing only deletions and zero additions, leading to empty inventory on Apply (STAK-412)
+- **Fixed**: Remote settings extraction in vault-first path now reads sync-scoped keys from `remotePayload.data` (excluding metalInventory) instead of the empty `remotePayload.settings` field
+- **Changed**: Removed redundant Sync Conflict dialog (Keep Mine / Keep Theirs / Skip) — remote changes now go directly to the Review Sync Changes DiffModal which shows the full item-level diff
+- **Fixed**: Manifest-first count check now verifies `local + added - deleted == remote` instead of only checking for zero changes — catches incomplete diffs where the manifest changelog misses remote-only additions
+
+---
+
+## [3.33.35] - 2026-03-03
+
+### Fixed — Sync DiffModal Apply Data Loss + Empty-Vault Dialog (STAK-409, STAK-410, STAK-411)
+
+- **Fixed**: DiffModal Apply no longer empties the vault when the manifest-first diff shows only deletions — `_deferredVaultRestore` now falls back to full overwrite when selective apply would produce an empty result but the remote has items, preventing silent data loss when remote-only additions are missed by the local manifest (STAK-409)
+- **Fixed**: Empty-vault push guard dialog now correctly calls `pullWithPreview()` on OK — the `showAppConfirm` call was using an old callback-style API, passing the callback as the `title` argument, causing the dialog heading to display `function () { pullWithPreview(); }` and OK to do nothing (STAK-410)
+- **Fixed**: Double conflict modal prevented — pre-push check now sets `_syncRemoteChangeActive = true` before `await handleRemoteChange()` so a concurrent auto-poll that fires between the routing decision and the flag being set inside `handleRemoteChange` sees the flag and skips its own modal (STAK-411)
+
+---
+
+## [3.33.34] - 2026-03-03
+
+### Fixed — Cloud Sync Push Race with DiffModal (STAK-406)
+
+- **Fixed**: `pullWithPreview()` now awaits the user's DiffModal decision (Apply or Cancel) before returning — previously it returned immediately after showing the modal, clearing `_syncRemoteChangeActive` while the user was still reading the diff, allowing a concurrent `pushSyncVault()` call to overwrite Dropbox with stale local data before the pull was applied
+- **Fixed**: `showRestorePreviewModal()` (vault-first path) now returns a Promise that resolves after the user completes the modal, so the vault-first pull is also fully awaited
+- **Fixed**: `_deferredVaultRestore()` is now awaited in the manifest-first `onApply` callback before the modal Promise resolves, ensuring the full vault download and apply completes before any push can proceed
+
+---
+
+## [3.33.33] - 2026-03-03
+
+### Fixed — Cloud Button and Settings Tab Always Visible (STAK-405)
+
+- **Fixed**: Cloud header button is now always visible — removed the `!connected` early-return that hid the button when no OAuth token was stored, blocking access to cloud setup
+- **Fixed**: Cloud tab in Settings is now always visible — removed the STAK-317 hide block that suppressed the nav item when no provider was connected; the gray dot state communicates "not connected" without hiding the UI entry point
+
+---
+
+## [3.33.32] - 2026-03-03
+
+### Fixed — Keep Mine Conflict Resolution Infinite Loop (STAK-403)
+
+- **Fixed**: `keepMineBtn.onclick` and "Push My Data" paths now set a one-shot `_syncConflictUserOverride` flag before calling `pushSyncVault()` — the pre-push Layer 0 check bypasses conflict re-detection exactly once, allowing the push to complete instead of looping back to `handleRemoteChange()`
+- **Fixed**: `appConfirm` fallback conflict path also sets the override flag, covering the modal-less conflict resolution case
+
+---
+
+## [3.33.31] - 2026-03-03
+
+### Fixed — Manifest-First Pull Shows Real Diff (STAK-402)
+
+- **Fixed**: `pullWithPreview` manifest-first path now falls through to vault-first when manifest reports zero changes but remote item count differs from local — seeded/imported items have no changeLog entries, so the manifest was always empty for first-time sync
+- **Fixed**: `DiffModal._onApply` passes `null` (not `[]`) when no diff items were shown, signaling callers to do a full restore rather than apply zero changes
+
+---
+
+## [3.33.30] - 2026-03-03
+
+### Fixed — Bi-Directional Sync Fix (STAK-398)
+
+- **Fixed**: Pre-push remote check — `pushSyncVault()` now checks remote metadata before pushing; if another device pushed since last pull, routes to `handleRemoteChange()` instead of silently overwriting
+- **Fixed**: "Sync Now" button calls `syncNow()` (poll-then-push) instead of blind `pushSyncVault()`
+- **Fixed**: `enableCloudSync()` polls for existing remote data before initial push, preventing second browser from overwriting first browser's data
+- **Fixed**: `computeSettingsHash()` was using async `loadData()` without await — settings hash compared Promise objects instead of strings (now uses `loadDataSync`)
+- **Fixed**: `pullWithPreview` vault-first path was using async `loadData()` without await for local settings comparison (now uses `loadDataSync`)
+
+---
+
+## [3.33.29] - 2026-03-03
+
+### Fixed — Cloud Backup/Restore Pipeline Fix (STAK-398, STAK-382)
+
+- **Fixed**: All 4 backup path functions now target `/StakTrakr/backups/` subfolder instead of root (STAK-398)
+- **Fixed**: Backup history dropdown async/sync mismatch — was showing `[object Promise]` instead of saved value
+- **Fixed**: Prune depth read async/sync mismatch — was getting `NaN` from Promise
+- **Fixed**: Migration check async/sync mismatch — `loadData` → `loadDataSync` for `cloud_sync_migrated` flag
+- **Fixed**: Conflict check reads `latest.json` from `/backups/` with legacy root fallback
+- **Security**: Sync metadata file encrypted with AES-256-GCM, backward-compatible plaintext fallback (STAK-382)
+- **Changed**: Cloud card restructured — auto-sync first, manual backup section with count badge, View Sync Log on main card
+- **Changed**: Export button descriptions converted to native `title` tooltips
+- **Changed**: `CLOUD_LATEST_FILENAME` promoted to `constants.js` global
+
+---
+
+## [3.33.27] - 2026-03-03
+
+### Fixed — Documentation & Instruction Accuracy Cleanup (STAK-397)
+
+- **Fixed**: Script count corrected from 67/57 to 70 across all instruction files (CLAUDE.md, AGENTS.md, GEMINI.md, copilot-instructions.md)
+- **Fixed**: Test runbook section names corrected in instruction files (03-backup-restore, 05-market, 08-spot-prices)
+- **Fixed**: safeGetElement location corrected in GEMINI.md (js/init.js, not js/utils.js)
+- **Fixed**: Stale StakTrakrWiki references replaced with in-repo wiki/ in 3 skill files
+- **Fixed**: smoke-test spec inventory rebuilt — 123 tests across 19 spec files (was 27 across 8)
+- **Fixed**: CORE_ASSETS count corrected in wiki/frontend-overview.md (57 to 76)
+- **Fixed**: Skills list in CLAUDE.md updated to 25 entries (added sync-poller, wiki-nightwatch)
+- **Removed**: 6 stale devops files (design-explorer.html, design-preview.html, firebase-debug.log, claude-backup/, screenshots/, test-results/)
+
+---
+
 ## [3.33.25] - 2026-03-02
 
 ### Added — Browserbase Test Runbook v2 (STAK-396)

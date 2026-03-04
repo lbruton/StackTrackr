@@ -10,13 +10,15 @@ relatedPages: []
 
 # Poller Parity — Fly.io vs Home Poller
 
-> **Last verified:** 2026-03-02 — all 5 core JS files have identical MD5 hashes across both pollers. Both read from the same Turso database. Proxy config updated: Webshare removed, tinyproxy + Tailscale exit node active on Fly.io.
+> **Last verified:** 2026-03-02 — core JS files have **intentionally diverged** after API-3 (reorder-scrape-pipeline). Fly.io uses Playwright-direct-first pipeline; home poller still uses Firecrawl-first. Both read from the same Turso database.
 
 ---
 
 ## Goal
 
-Both pollers should produce identical scrape results for the same coin/vendor target, offset only by their cron schedule (Fly.io at `:00`, home at `:30`). Any configuration drift between them is a bug.
+Both pollers should produce **equivalent scrape results** for the same coin/vendor targets, offset by their cron schedule (Fly.io at `:00`, home at `:30`). However, as of API-3 (2026-03-02), the pollers use **different scrape pipeline orders** — this is intentional, not drift.
+
+> **Key architectural difference:** Fly.io scrapes with Playwright direct first (Phase 0, no proxy, ~5s per target), falling back to Firecrawl with proxy (Phase 1). The home poller scrapes with Firecrawl first (no proxy needed — already on residential IP), falling back to Playwright. The end result is the same (prices in Turso), but the path differs.
 
 ---
 
@@ -39,7 +41,9 @@ Both pollers should produce identical scrape results for the same coin/vendor ta
 | **RabbitMQ** | In-container | systemd |
 | **Proxy (HOME_PROXY_URL)** | `http://100.112.198.50:8888` (tinyproxy on home VM) — set as `PROXY_SERVER` on Playwright, Firecrawl API, Firecrawl Worker | Not set (home poller doesn't proxy to itself) |
 | **Cron schedule** | `:00` every hour (`CRON_SCHEDULE=0`) | `:30` every hour |
-| **Vision pipeline** | Yes (GEMINI_API_KEY set) | Yes (if GEMINI_API_KEY set in .env) |
+| **Scrape pipeline order** | **Playwright direct first** (Phase 0) → Firecrawl with proxy (Phase 1) | **Firecrawl first** → Playwright fallback |
+| **Vision pipeline** | Soft-disabled by default (`VISION_ENABLED=0`); enable via `fly secrets set VISION_ENABLED=1` | Yes (if GEMINI_API_KEY set in .env) |
+| **Expected run time** | ~16 min (no vision) / ~28 min (with vision) | ~45-60 min (Firecrawl-first is slower) |
 | **Run script** | `run-local.sh` | `run-home.sh` |
 | **Git push** | Yes (`run-publish.sh` at `:08/:23/:38/:53`) | No (Turso only) |
 | **Tailscale** | Client (connects to home exit node) | Server (advertises exit node) |
@@ -50,6 +54,10 @@ Both pollers should produce identical scrape results for the same coin/vendor ta
 
 | Issue | Impact | Resolution |
 |-------|--------|------------|
+| **Scrape pipeline order** (API-3) | Fly.io: Playwright direct → Firecrawl proxy. Home: Firecrawl → Playwright. | **Intentional** — Fly.io benefits from fast direct scrape; home is already on residential IP |
+| **Vision gate** (API-3) | Fly.io: requires `VISION_ENABLED=1`. Home: runs if `GEMINI_API_KEY` present. | **Intentional** — Fly.io vision disabled by default for speed |
+| **`price-extract.js` diverged** (API-3) | Fly.io has `scrapeWithPlaywrightDirect()`, `skipRetry` on abort/timeout. Home does not. | **Intentional** — home poller does not need direct-scrape functions |
+| **`capture.js` diverged** (API-3) | Fly.io has `captureCoinDirectFirst()` with dual browser contexts. Home uses single context. | **Intentional** — direct-first capture only makes sense from datacenter IP |
 | Node 20 (Fly) vs Node 22 (Home) | Minimal — ESM and all APIs are compatible | Pin home to Node 20 or accept minor runtime differences |
 | `playwright-core` (Fly) vs `playwright` (Home) | Fly uses Playwright Service on port 3003; home launches Chromium directly | Both produce equivalent Chromium sessions — same browser version is key |
 | Chromium version drift | Fly rebuilds from `ghcr.io/firecrawl/playwright-service:latest`; home updates via `npx playwright install` | After `fly deploy`, run `npx playwright install chromium` on home poller |
@@ -57,17 +65,28 @@ Both pollers should produce identical scrape results for the same coin/vendor ta
 
 ---
 
-## Shared Source Files (verified identical)
+## Source File Status
 
-All 5 core JS files have **matching MD5 hashes** between the repo (`StakTrakrApi/devops/fly-poller/`) and the home poller (`/opt/poller/`):
+> **Post API-3:** `price-extract.js` and `capture.js` on Fly.io contain new functions (`scrapeWithPlaywrightDirect`, `captureCoinDirectFirst`, proxy health probes) that do **not** exist on the home poller. This is intentional — the home poller does not need direct-scrape logic because it already has a residential IP.
 
-| File | Purpose | Hash |
-|------|---------|------|
-| `price-extract.js` | Firecrawl + Playwright scraper | `aa5422f0...` |
-| `capture.js` | Vision screenshot pipeline | `49b3587e...` |
-| `provider-db.js` | Turso provider CRUD + bulk ops + coverage stats | *(updated 2026-02-26 — re-hash after next deploy)* |
-| `db.js` | Turso write operations | `1fc71a0b...` |
-| `turso-client.js` | Turso connection + schema | `2d01c8c7...` |
+### Files that have diverged (intentional)
+
+| File | Fly.io (repo) | Home Poller | Divergence |
+|------|---------------|-------------|------------|
+| `price-extract.js` | Playwright-direct Phase 0 + Firecrawl Phase 1 + `skipRetry` on abort/timeout | Firecrawl first → Playwright fallback (old pipeline) | **Intentional** — different scrape strategies |
+| `capture.js` | `captureCoinDirectFirst()` with dual browser contexts (direct + proxy fallback) + proxy health probe | Single browser context, proxy-only on Fly / direct on home | **Intentional** — direct-first capture on Fly.io |
+| `run-local.sh` | `VISION_ENABLED` gate, new pipeline entry point | Not used on home (uses `run-home.sh`) | **Intentional** |
+
+### Files that should remain identical
+
+| File | Purpose | Status |
+|------|---------|--------|
+| `provider-db.js` | Turso provider CRUD + bulk ops + coverage stats | Should match |
+| `db.js` | Turso write operations | Should match |
+| `turso-client.js` | Turso connection + schema | Should match |
+| `merge-prices.js` | Price merging logic | Should match |
+| `api-export.js` | Turso → JSON export | Should match |
+| `extract-vision.js` | Gemini Vision extraction | Should match |
 
 Both pollers read from the **same Turso database** — provider configuration, URLs, and enabled flags are always in sync.
 
@@ -80,14 +99,14 @@ Both pollers read from the **same Turso database** — provider configuration, U
 | File | Repo | Home | Status |
 |------|------|------|--------|
 | `api-export.js` | Y | Y | **Identical** |
-| `capture.js` | Y | Y | **Identical** |
+| `capture.js` | Y | Y | **DIVERGED** (API-3: Fly.io has `captureCoinDirectFirst()` + dual browser + proxy probe) |
 | `db.js` | Y | Y | **Identical** |
 | `export-providers-json.js` | Y | Y | **Identical** |
 | `extract-vision.js` | Y | Y | **Identical** |
 | `goldback-scraper.js` | Y | Y | **Identical** |
 | `import-from-log.js` | Y | Y | **Identical** |
 | `merge-prices.js` | Y | Y | **Identical** |
-| `price-extract.js` | Y | Y | **Identical** |
+| `price-extract.js` | Y | Y | **DIVERGED** (API-3: Fly.io has `scrapeWithPlaywrightDirect()` Phase 0 + `skipRetry` on abort/timeout) |
 | `provider-db.js` | Y | Y | **Identical** |
 | `serve.js` | Y | Y | **Identical** |
 | `turso-client.js` | Y | Y | **Identical** |
@@ -147,7 +166,7 @@ The **home poller copy** has diverged from the repo. Key differences:
 | Chromium version | `chromium-1208` (from Docker stage) | `chromium-1208` (from `npx playwright install`) |
 | Log output | `/dev/stdout` (Docker) | `/var/log/supervisor/playwright-service.log` |
 
-> **Key difference:** Fly.io Playwright Service uses `HOME_PROXY_URL` (home tinyproxy via Tailscale) as its proxy via `PROXY_SERVER` env var. Home poller Playwright Service has no proxy configured (it's already on the residential IP). `price-extract.js` Playwright fallback (Phase 2) handles its own proxy chain independently of the Playwright Service.
+> **Key difference:** Fly.io Playwright Service uses `HOME_PROXY_URL` (home tinyproxy via Tailscale) as its proxy via `PROXY_SERVER` env var. Home poller Playwright Service has no proxy configured (it's already on the residential IP). Post API-3, `price-extract.js` Phase 0 (`scrapeWithPlaywrightDirect`) launches Chromium directly without the Playwright Service and without proxy. The Playwright Service is still used by Firecrawl internally.
 
 ### Firecrawl API (supervisord)
 
@@ -269,6 +288,8 @@ Currently **empty** (`new Set([])`). No vendors skip Firecrawl entirely.
 
 ## Hardcoded Per-Vendor Rules (capture.js)
 
+> **Post API-3:** Fly.io `capture.js` uses `captureCoinDirectFirst()` with dual browser contexts (direct first, proxy fallback on 403). Home poller `capture.js` still uses a single browser context. The per-vendor wait times below apply to both.
+
 ### PROVIDER_PAGE_LOAD_WAIT (vision capture)
 
 | Vendor | Wait (ms) | Default | Line |
@@ -358,50 +379,77 @@ Disabled vendors (jmbullion, bullionexchanges, sdbullion for gold) are omitted.
 
 ## Scraper Flow Per Target
 
+### Fly.io Pipeline (post API-3)
+
+```
+For each enabled coin/vendor target:
+  1. Phase 0: Playwright direct (scrapeWithPlaywrightDirect)
+     - Launch Chromium directly (Fly.io IP, no proxy)
+     - 15-second timeout, no retries
+     - Block images/fonts/styles/media
+     - preprocessMarkdown() + detectStockStatus() + extractPrice()
+     - If price found → done
+     - If OOS → done
+     - If 403/timeout/AbortError → skipRetry=true, fall to Phase 1
+     - If no price → jitter, try next URL
+
+  2. Phase 1: Firecrawl with proxy (if Phase 0 exhausted)
+     - POST to localhost:3002/v1/scrape
+     - Routes through HOME_PROXY_URL (tinyproxy, residential IP)
+     - onlyMainContent: true (false for jmbullion)
+     - waitFor: 8000ms if SLOW_PROVIDERS, else none
+     - preprocessMarkdown() + detectStockStatus() + extractPrice()
+     - If price found → done
+     - If OOS → done
+     - If failed → queued for T3 retry
+
+  3. Record to Turso: price_snapshots + provider_failures (if failed)
+```
+
+### Home Poller Pipeline (unchanged)
+
 ```
 For each enabled coin/vendor target:
   1. Is vendor in PLAYWRIGHT_ONLY_PROVIDERS?
-     YES → skip to step 4
+     YES → skip to step 3
      NO  → step 2
 
-  2. Phase 1: Firecrawl
+  2. Firecrawl (no proxy — already on residential IP)
      - POST to localhost:3002/v1/scrape
      - onlyMainContent: true (false for jmbullion)
      - waitFor: 8000ms if SLOW_PROVIDERS, else none
      - Retry up to 2x on failure
-     - preprocessMarkdown() strips header/nav + tail sections
-     - detectStockStatus() checks OOS patterns
-     - extractPrice() tries per-vendor strategy
+     - preprocessMarkdown() + detectStockStatus() + extractPrice()
      - If price found → done
      - If OOS → done (no Playwright retry)
-     - If no price + in stock → step 4
+     - If no price + in stock → step 3
 
-  3. Jitter 2-8s between targets
-
-  4. Phase 2: Playwright (if Firecrawl failed or skipped)
+  3. Playwright fallback (if Firecrawl failed or skipped)
      - Launch Chromium (PLAYWRIGHT_LAUNCH=1)
      - Block images/fonts/styles/media
      - Wait networkidle + 8s extra for SLOW_PROVIDERS
-     - Proxy chain: direct → HOME_PROXY_URL (tinyproxy) (on 403/geo-block)
      - Same preprocessMarkdown + detectStockStatus + extractPrice
 
-  5. Record to Turso: price_snapshots + provider_failures (if failed)
+  4. Record to Turso: price_snapshots + provider_failures (if failed)
 ```
 
 ---
 
 ## Keeping Pollers in Sync
 
-### After any code change to `devops/fly-poller/`
+> **Post API-3:** `price-extract.js` and `capture.js` have intentionally diverged. Only sync the **shared files** listed below. Do NOT overwrite the home poller's `price-extract.js` or `capture.js` with the Fly.io versions — they contain Fly.io-specific functions that do not apply to the home poller.
+
+### After a code change to shared files in `devops/fly-poller/`
 
 1. **Fly.io:** `cd devops/fly-poller && fly deploy`
-2. **Home poller:** Run the update script from [home-poller.md](home-poller.md#updating-poller-code)
-3. **Verify hashes:**
+2. **Home poller:** Selectively update shared files only — see [home-poller.md](home-poller.md#updating-poller-code)
+3. **Verify shared file hashes:**
    ```bash
+   # Shared files only (not price-extract.js or capture.js)
    # Repo
-   md5 -q devops/fly-poller/{price-extract,capture,provider-db,db,turso-client}.js
+   md5 -q devops/fly-poller/{provider-db,db,turso-client,merge-prices,api-export,extract-vision}.js
    # Home poller
-   ssh -T homepoller 'md5sum /opt/poller/{price-extract,capture,provider-db,db,turso-client}.js'
+   ssh -T homepoller 'md5sum /opt/poller/{provider-db,db,turso-client,merge-prices,api-export,extract-vision}.js'
    ```
 
 ### After `fly deploy` bumps Playwright version
@@ -418,12 +466,12 @@ No deploy needed — both pollers read from Turso on every run. Use the dashboar
 
 ## Parity Checklist
 
-Run this after any deploy to verify both pollers are equivalent:
+Run this after any deploy to verify shared files are in sync (post API-3, `price-extract.js` and `capture.js` are intentionally different):
 
 ```bash
-# 1. File hashes match
+# 1. Shared file hashes match (price-extract.js and capture.js excluded — intentionally diverged)
 REPO=devops/fly-poller
-for f in price-extract.js capture.js provider-db.js db.js turso-client.js run-home.sh; do
+for f in provider-db.js db.js turso-client.js merge-prices.js api-export.js extract-vision.js run-home.sh; do
   LOCAL=$(md5 -q "$REPO/$f" 2>/dev/null)
   REMOTE=$(ssh -T homepoller "md5sum /opt/poller/$f 2>/dev/null" | awk '{print $1}')
   STATUS=$([[ "$LOCAL" == "$REMOTE" ]] && echo "OK" || echo "DRIFT")
