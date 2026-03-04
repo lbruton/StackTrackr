@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.45] - 2026-03-04
+
+### Fixed — FAQ Cloudflare Cookie Disclosure (STAK-428)
+
+- **Fixed**: FAQ now accurately discloses that Cloudflare may set a temporary infrastructure cookie (e.g. `__cf_bm`) for bot protection on the hosted site — previously claimed "No cookies" without distinguishing app code from CDN infrastructure (STAK-428)
+- **Fixed**: FAQ technical detail section updated from "Does not: set cookies" to explicitly note the infrastructure cookie is safe to block (STAK-428)
+
+---
+
 ## [3.33.44] - 2026-03-04
 
 ### Fixed — Data Portability Quickfixes (STAK-424)
