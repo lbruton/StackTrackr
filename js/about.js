@@ -283,6 +283,7 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.33.42 &ndash; Full Backup for Sync Snapshots</strong>: Pre-sync snapshots now contain the full encrypted backup instead of partial sync-scoped data. Restore list shows all backups (manual + sync) in one sorted list. Fixes ghost items caused by restoring partial sync snapshots (STAK-419)</li>
     <li><strong>v3.33.41 &ndash; Cloud Backup/Restore Fix</strong>: Manual backups and sync snapshots now separated &mdash; auto-prune only deletes sync snapshots, restore list shows manual backups by default, Backup button always prompts for password. Prevents accidental deletion of user manual backups (STAK-419)</li>
     <li><strong>v3.33.40 &ndash; Simplify Market Price Display</strong>: Removed confidence score badges and out-of-stock styling from market vendor chips. Vendors with valid prices display equally. Anomalous prices silently filtered via 40% median deviation threshold. Monument Metals false OOS fixed (STAK-404)</li>
     <li><strong>v3.33.39 &ndash; Summary Bar Items + Weight</strong>: Item count and total weight now display in the portfolio summary bar alongside Buy/Melt/Market/G/L &mdash; shows filtered/total format when filters active, total weight in troy ounces. Bottom footer item count removed (STAK-418)</li>
