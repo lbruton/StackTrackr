@@ -638,7 +638,7 @@ function cloudSafeAppVersion() {
 // Upload vault to cloud (accepts pre-built fileBytes)
 // ---------------------------------------------------------------------------
 
-async function cloudUploadVault(provider, fileBytes) {
+async function cloudUploadVault(provider, fileBytes, opts) {
   var uploadStart = Date.now();
   var token = await cloudGetToken(provider);
   if (!token) throw new Error('Not connected to ' + CLOUD_PROVIDERS[provider].name);
@@ -739,7 +739,9 @@ async function cloudUploadVault(provider, fileBytes) {
     appVersion: cloudSafeAppVersion(),
     itemCount: safeCount,
   };
-  localStorage.setItem('cloud_last_backup', JSON.stringify(backupMeta));
+  if (!(opts && opts.skipLatestUpdate)) {
+    localStorage.setItem('cloud_last_backup', JSON.stringify(backupMeta));
+  }
 
   recordCloudActivity({ action: 'backup', provider: provider, result: 'success', detail: filename + ' (' + safeCount + ' items)', duration: Date.now() - uploadStart });
 
@@ -795,7 +797,7 @@ async function cloudGetRemoteLatest(provider) {
 // List backups in cloud folder
 // ---------------------------------------------------------------------------
 
-async function cloudListBackups(provider) {
+async function cloudListBackups(provider, type) {
   var listStart = Date.now();
   var token = await cloudGetToken(provider);
   if (!token) throw new Error('Not connected to ' + CLOUD_PROVIDERS[provider].name);
@@ -835,6 +837,13 @@ async function cloudListBackups(provider) {
   backups.sort(function (a, b) {
     return new Date(b.server_modified) - new Date(a.server_modified);
   });
+
+  // Filter by backup type if requested (STAK-419)
+  if (type === 'manual') {
+    backups = backups.filter(function (b) { return b.name.indexOf(MANUAL_BACKUP_PREFIX) === 0; });
+  } else if (type === 'sync') {
+    backups = backups.filter(function (b) { return b.name.indexOf(SYNC_BACKUP_PREFIX) === 0; });
+  }
 
   recordCloudActivity({ action: 'list', provider: provider, result: 'success', detail: backups.length + ' backups found', duration: Date.now() - listStart });
 
@@ -1327,9 +1336,10 @@ async function cloudMigrateToV2(provider) {
 // Prune old backups — keeps only the newest `maxKeep` backups
 // ---------------------------------------------------------------------------
 
-async function cloudPruneBackups(provider, maxKeep) {
+async function cloudPruneBackups(provider, maxKeep, type) {
   try {
-    var backups = await cloudListBackups(provider);
+    var effectiveType = type || 'sync';
+    var backups = await cloudListBackups(provider, effectiveType);
     if (!backups || backups.length <= maxKeep) return;
 
     // cloudListBackups returns newest-first; delete from the end (oldest)
