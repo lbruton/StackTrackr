@@ -1013,8 +1013,8 @@ const bindImageSettingsListeners = () => {
  * Render the backup list for a cloud provider.
  */
 const renderCloudBackupList = (provider, backups) => {
-  const listEl = document.getElementById('cloudBackupList_' + provider);
-  if (!listEl) return;
+  const listEl = safeGetElement('cloudBackupList_' + provider);
+  if (!(listEl instanceof HTMLElement)) return;
 
   listEl.style.display = '';
 
@@ -1041,7 +1041,7 @@ const renderCloudBackupList = (provider, backups) => {
           '<span class="cloud-backup-type">Manual backup</span>' +
         '</button>' +
         '<button class="cloud-backup-delete-btn" data-provider="' + safeProvider +
-          '" data-filename="' + safeFilename + '" title="Delete this backup from Dropbox" aria-label="Delete ' + safeFilename + '">' +
+          '" data-filename="' + safeFilename + '" title="Delete this backup from cloud storage" aria-label="Delete ' + safeFilename + '">' +
           '&times;' +
         '</button>' +
       '</div>';
@@ -1049,10 +1049,10 @@ const renderCloudBackupList = (provider, backups) => {
   }
 
   // Add collapsible sync snapshots section
-  html += '<div class="cloud-backup-sync-toggle" style="cursor:pointer;margin-top:0.5rem;padding:0.3rem 0;font-size:0.7rem;color:var(--text-secondary);user-select:none" data-provider="' + sanitizeHtml(provider) + '">' +
+  html += '<button type="button" class="cloud-backup-sync-toggle" role="button" aria-expanded="false" aria-controls="cloudSyncList_' + sanitizeHtml(provider) + '" style="background:none;border:none;cursor:pointer;margin-top:0.5rem;padding:0.3rem 0;font-size:0.7rem;color:var(--text-secondary);user-select:none;width:100%;text-align:left" data-provider="' + sanitizeHtml(provider) + '">' +
     '<span class="cloud-backup-sync-arrow" style="display:inline-block;transition:transform 0.2s;margin-right:0.3rem">&#9654;</span>Sync Snapshots' +
-  '</div>' +
-  '<div class="cloud-backup-sync-list" data-provider="' + sanitizeHtml(provider) + '" style="display:none"></div>';
+  '</button>' +
+  '<div class="cloud-backup-sync-list" id="cloudSyncList_' + sanitizeHtml(provider) + '" data-provider="' + sanitizeHtml(provider) + '" style="display:none"></div>';
 
   // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml
   listEl.innerHTML = html;
@@ -1068,11 +1068,13 @@ const renderCloudBackupList = (provider, backups) => {
       if (syncList.style.display !== 'none') {
         syncList.style.display = 'none';
         if (arrow) arrow.style.transform = '';
+        syncToggle.setAttribute('aria-expanded', 'false');
         return;
       }
 
       syncList.style.display = '';
       if (arrow) arrow.style.transform = 'rotate(90deg)';
+      syncToggle.setAttribute('aria-expanded', 'true');
 
       // Lazy-load sync snapshots
       if (!syncList.dataset.loaded) {
@@ -1102,7 +1104,7 @@ const renderCloudBackupList = (provider, backups) => {
                   '<span class="cloud-backup-type">Sync snapshot</span>' +
                 '</button>' +
                 '<button class="cloud-backup-delete-btn" data-provider="' + safeProvider +
-                  '" data-filename="' + safeFilename + '" title="Delete this snapshot from Dropbox" aria-label="Delete ' + safeFilename + '">' +
+                  '" data-filename="' + safeFilename + '" title="Delete this snapshot from cloud storage" aria-label="Delete ' + safeFilename + '">' +
                   '&times;' +
                 '</button>' +
               '</div>';
@@ -1291,7 +1293,7 @@ const bindCloudStorageListeners = () => {
       }, 'Download failed: ', async () => {
         var parentList = btn.closest('.cloud-backup-list');
         if (parentList) {
-          var refreshed = await cloudListBackups(provider);
+          var refreshed = await cloudListBackups(provider, 'manual');
           renderCloudBackupList(provider, refreshed);
         }
       });
@@ -1305,7 +1307,7 @@ const bindCloudStorageListeners = () => {
       }, 'Delete failed: ', async () => {
         var parentList = btn.closest('.cloud-backup-list');
         if (parentList) {
-          var refreshed = await cloudListBackups(provider);
+          var refreshed = await cloudListBackups(provider, 'manual');
           renderCloudBackupList(provider, refreshed);
         }
       });
