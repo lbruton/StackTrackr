@@ -300,6 +300,12 @@ function parseVaultFile(fileBytes) {
  *   'sync' collects only SYNC_SCOPE_KEYS (inventory + display prefs, no API keys or tokens)
  * @returns {object|null} Payload object or null if empty
  */
+/**
+ * Collects vault data for export or sync.
+ * When scope is 'full', collects all ALLOWED_STORAGE_KEYS except those in
+ * VAULT_EXCLUDE_KEYS (OAuth tokens, vault password, device-specific sync state).
+ * When scope is 'sync', collects only SYNC_SCOPE_KEYS (unaffected by exclusions).
+ */
 function collectVaultData(scope) {
   scope = scope || 'full';
 
