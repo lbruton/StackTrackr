@@ -2,8 +2,8 @@
 title: Storage Patterns
 category: frontend
 owner: staktrakr
-lastUpdated: v3.33.44
-date: 2026-03-03
+lastUpdated: v3.33.46
+date: 2026-03-04
 sourceFiles:
   - js/utils.js
   - js/constants.js
@@ -13,7 +13,7 @@ relatedPages:
 ---
 # Storage Patterns
 
-> **Last updated:** v3.33.44 — 2026-03-03
+> **Last updated:** v3.33.46 — 2026-03-04
 > **Source files:** `js/utils.js`, `js/constants.js`
 
 ## Overview
@@ -373,6 +373,31 @@ const saveDisplayCurrency = (code) => {
 Check that `scheduleSyncPush` is a function before calling — it is defined in `cloud-sync.js` and may not be loaded in all environments.
 
 See [sync-cloud.md](sync-cloud.md) for the full cloud sync architecture.
+
+### Vault Export Exclusions (STAK-425, v3.33.46)
+
+`VAULT_EXCLUDE_KEYS` in `js/constants.js` lists 14 keys that are stripped from portable full-vault exports (`collectVaultData('full')` in `js/vault.js`). These keys remain in `ALLOWED_STORAGE_KEYS` (so `cleanupStorage` does not delete them) but are excluded from `.stvault` exports to prevent shipping live OAuth tokens, vault passwords, and device-specific sync state:
+
+```js
+const VAULT_EXCLUDE_KEYS = [
+  'cloud_token_dropbox',
+  'cloud_token_pcloud',
+  'cloud_token_box',
+  'cloud_dropbox_account_id',
+  'cloud_vault_password',
+  'cloud_sync_device_id',
+  'cloud_sync_cursor',
+  'cloud_sync_last_push',
+  'cloud_sync_last_pull',
+  'cloud_sync_override_backup',
+  'cloud_sync_mode',
+  'cloud_sync_local_modified',
+  'cloud_sync_migrated',
+  'staktrakr_oauth_result',
+];
+```
+
+Sync-scoped exports (`collectVaultData('sync')`) are unaffected -- they use `SYNC_SCOPE_KEYS` which already excludes these keys.
 
 ---
 

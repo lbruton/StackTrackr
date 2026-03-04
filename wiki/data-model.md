@@ -2,8 +2,8 @@
 title: Data Model
 category: frontend
 owner: staktrakr
-lastUpdated: v3.33.44
-date: 2026-03-03
+lastUpdated: v3.33.46
+date: 2026-03-04
 sourceFiles:
   - js/constants.js
   - js/utils.js
@@ -14,7 +14,7 @@ relatedPages:
 ---
 # Data Model
 
-> **Last updated:** v3.33.44 — 2026-03-03
+> **Last updated:** v3.33.46 — 2026-03-04
 > **Source files:** `js/constants.js`, `js/utils.js`, `js/types.js`
 
 ## Overview
@@ -389,6 +389,12 @@ All keys currently registered in `js/constants.js`. `cleanupStorage()` enforces 
 | `SYNC_BACKUP_PREFIX` | `'pre-sync-'` | Filename prefix for automatic sync pre-push snapshots |
 
 These prefixes are used by `cloudListBackups(provider, type)` to filter backups by type and by `cloudPruneBackups(provider, maxKeep, type)` to ensure auto-pruning only targets sync snapshots (manual backups are never auto-pruned).
+
+**Vault export exclusion list** (not localStorage keys — defined in `js/constants.js`, STAK-425):
+
+| Constant | Value | Purpose |
+|---|---|---|
+| `VAULT_EXCLUDE_KEYS` | 14-element string array | Keys excluded from portable full-vault exports (`collectVaultData('full')` in `js/vault.js`). Includes OAuth tokens, vault password, and device-specific cloud sync state. These keys remain in `ALLOWED_STORAGE_KEYS` for runtime use but are stripped from `.stvault` files to prevent leaking credentials in portable exports. |
 
 **One-time migrations:**
 
