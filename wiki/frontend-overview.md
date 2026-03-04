@@ -2,8 +2,8 @@
 title: Frontend Overview
 category: frontend
 owner: staktrakr
-lastUpdated: v3.33.25
-date: 2026-03-02
+lastUpdated: v3.33.44
+date: 2026-03-03
 sourceFiles:
   - index.html
   - js/constants.js
@@ -17,7 +17,7 @@ relatedPages:
 ---
 # Frontend Overview
 
-> **Last updated:** v3.33.25 — 2026-03-02
+> **Last updated:** v3.33.44 — 2026-03-03
 > **Source files:** `index.html`, `js/constants.js`, `sw.js`, `js/file-protocol-fix.js`
 
 ## Overview
@@ -71,12 +71,12 @@ index.html  (single-page app — all UI panels, modals, and sections)
 `APP_VERSION` in `js/constants.js` follows the `BRANCH.RELEASE.PATCH` format:
 
 ```text
-3   .   33   .   25
+3   .   33   .   44
 ^       ^        ^
 Branch  Release  Patch
 ```
 
-Current version: **3.33.25**
+Current version: **3.33.44**
 
 Optional state suffixes: `a` = alpha, `b` = beta, `rc` = release candidate.
 
