@@ -2736,13 +2736,14 @@ const endImportProgress = () => {
 /**
  * Post-import cleanup — registers names, syncs catalog, saves, and re-renders.
  * @param {Array} newItems - Items that were added during import
- * @param {Map|null} pendingTagsByUuid - Optional map of uuid -> tag[] for deferred tag application
+ * @param {Map|null} pendingTagsByUuid - Optional map of itemKey -> tag[] for deferred tag application
  */
 const _postImportCleanup = (newItems, pendingTagsByUuid) => {
-  // Apply deferred tags if needed
+  // Apply deferred tags if needed (keyed by DiffEngine.computeItemKey)
   if (pendingTagsByUuid && typeof addItemTag === 'function') {
     for (const item of newItems) {
-      const tags = pendingTagsByUuid.get(item.uuid);
+      const itemKey = typeof DiffEngine !== 'undefined' ? DiffEngine.computeItemKey(item) : (item.uuid || item.serial || '');
+      const tags = pendingTagsByUuid.get(itemKey);
       if (tags && tags.length) {
         tags.forEach(tag => addItemTag(item.uuid, tag, false));
       }
@@ -2840,12 +2841,14 @@ const showImportDiffReview = (parsedItems, sourceInfo, options, onComplete) => {
 
       inventory = DiffEngine.applySelectedChanges(inventory, selectedChanges);
 
-      // Apply deferred tags for accepted changes (add + modify)
+      // Apply deferred tags for accepted changes (add + modify).
+      // Look up by DiffEngine.computeItemKey to match the key used at build time.
       if (options.pendingTagsByUuid && typeof addItemTag === 'function') {
         const tagEligible = selectedChanges.filter(function(c) { return c.type === 'add' || c.type === 'modify'; });
         for (const change of tagEligible) {
           if (change.item && change.item.uuid) {
-            const tags = options.pendingTagsByUuid.get(change.item.uuid);
+            var tagKey = typeof DiffEngine !== 'undefined' ? DiffEngine.computeItemKey(change.item) : (change.item.uuid || change.item.serial || '');
+            const tags = options.pendingTagsByUuid.get(tagKey);
             if (tags && tags.length) {
               tags.forEach(function(tag) { addItemTag(change.item.uuid, tag, false); });
             }
@@ -3034,10 +3037,15 @@ const importCsv = (file, override = false) => {
 
           imported.push(item);
 
-          // STAK-126 / STAK-424: Collect tags but defer persistence until import confirmed
+          // STAK-126 / STAK-424: Collect tags but defer persistence until import confirmed.
+          // Key by DiffEngine.computeItemKey (uuid → serial → name|date) so legacy
+          // CSV exports without UUIDs still match after serial→uuid enrichment.
           if (csvTags) {
             const tagList = csvTags.split(';').map(t => t.trim()).filter(Boolean);
-            if (tagList.length) pendingTagsByUuid.set(item.uuid, tagList);
+            if (tagList.length) {
+              const tagKey = typeof DiffEngine !== 'undefined' ? DiffEngine.computeItemKey(item) : (item.uuid || item.serial || '');
+              if (tagKey) pendingTagsByUuid.set(tagKey, tagList);
+            }
           }
 
           importedCount++;
@@ -3095,7 +3103,8 @@ const importCsv = (file, override = false) => {
           // STAK-424: Apply deferred tags after override confirmation
           if (pendingTagsByUuid.size > 0 && typeof addItemTag === 'function') {
             for (const item of imported) {
-              const tags = pendingTagsByUuid.get(item.uuid);
+              const itemKey = typeof DiffEngine !== 'undefined' ? DiffEngine.computeItemKey(item) : (item.uuid || item.serial || '');
+              const tags = pendingTagsByUuid.get(itemKey);
               if (tags && tags.length) {
                 tags.forEach(tag => addItemTag(item.uuid, tag, false));
               }
