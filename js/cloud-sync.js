@@ -958,6 +958,18 @@ async function buildAndUploadManifest(token, password, syncId) {
     summary: summary,
   };
 
+  // 4b. STAK-426: Embed settings snapshot so manifest-first pulls can compare
+  // settings without downloading the full vault
+  var settingsSnapshot = {};
+  if (typeof SYNC_SCOPE_KEYS !== 'undefined') {
+    for (var s = 0; s < SYNC_SCOPE_KEYS.length; s++) {
+      if (SYNC_SCOPE_KEYS[s] === 'metalInventory') continue;
+      var sv = loadDataSync(SYNC_SCOPE_KEYS[s], null);
+      if (sv !== null && sv !== undefined) settingsSnapshot[SYNC_SCOPE_KEYS[s]] = sv;
+    }
+  }
+  manifestPayload.settings = settingsSnapshot;
+
   // 5. Encrypt the manifest
   if (typeof encryptManifest !== 'function') {
     throw new Error('encryptManifest not available — cannot build manifest');
@@ -1376,9 +1388,9 @@ async function pushSyncVault() {
     try {
       if (typeof collectAndHashImageVault === 'function') {
         var imgData = await collectAndHashImageVault();
+        var lastPush = syncGetLastPush();
+        var lastImageHash = lastPush ? lastPush.imageHash : null;
         if (imgData) {
-          var lastPush = syncGetLastPush();
-          var lastImageHash = lastPush ? lastPush.imageHash : null;
           if (imgData.hash !== lastImageHash) {
             debugLog('[CloudSync] Image vault changed — uploading', imgData.imageCount, 'photos');
             var imageBytes = await vaultEncryptImageVault(password, imgData.payload);
@@ -1396,6 +1408,27 @@ async function pushSyncVault() {
             imageVaultMeta = lastImageHash ? { imageCount: imgData.imageCount, hash: imgData.hash } : null;
             debugLog('[CloudSync] Image vault unchanged — skipping upload');
           }
+        } else if (lastImageHash) {
+          // STAK-426: All local photos deleted — propagate deletion to remote
+          try {
+            var delArg = JSON.stringify({ path: SYNC_IMAGES_PATH });
+            var delResp = await fetch('https://api.dropboxapi.com/2/files/delete_v2', {
+              method: 'POST',
+              headers: {
+                Authorization: 'Bearer ' + token,
+                'Content-Type': 'application/json',
+              },
+              body: delArg,
+            });
+            if (delResp.ok || delResp.status === 409) {
+              debugLog('[CloudSync] Remote image vault deleted (all local photos removed)');
+            } else {
+              debugLog('[CloudSync] Image vault deletion returned status:', delResp.status);
+            }
+          } catch (delErr) {
+            debugLog('[CloudSync] Image vault deletion failed (non-blocking):', delErr.message);
+          }
+          // imageVaultMeta stays null → imageHash cleared in pushMeta
         }
       }
     } catch (imgErr) {
@@ -2350,11 +2383,53 @@ async function _deferredVaultRestore(token, password, remoteMeta, selectedChange
           debugLog('[CloudSync] Selective apply would empty vault but remote has', remoteItems.length, 'items — falling back to full overwrite');
           // fall through to full-overwrite path below
         } else {
-          // Manifest-first selective apply intentionally applies inventory only.
-          // Sync-scoped settings are not restored via this path (null settingsChanges);
-          // they update only during vault-first pulls which have full payload access.
-          _applyAndFinalize(newInv, selectedChanges, null, remoteMeta, { source: 'sync' });
-          debugLog('[CloudSync] Deferred vault restore complete (selective apply)');
+          // STAK-426: Extract settings from vault payload and compare
+          var _dvSettingsChanges = null;
+          if (payload.data && typeof SYNC_SCOPE_KEYS !== 'undefined' && typeof DiffEngine !== 'undefined' && DiffEngine.compareSettings) {
+            var _dvLocalSettings = {};
+            var _dvRemoteSettings = {};
+            for (var _dvs = 0; _dvs < SYNC_SCOPE_KEYS.length; _dvs++) {
+              if (SYNC_SCOPE_KEYS[_dvs] === 'metalInventory') continue;
+              var _dvlv = loadDataSync(SYNC_SCOPE_KEYS[_dvs], null);
+              if (_dvlv !== null) _dvLocalSettings[SYNC_SCOPE_KEYS[_dvs]] = _dvlv;
+              if (payload.data[SYNC_SCOPE_KEYS[_dvs]] !== undefined) {
+                _dvRemoteSettings[SYNC_SCOPE_KEYS[_dvs]] = payload.data[SYNC_SCOPE_KEYS[_dvs]];
+              }
+            }
+            var _dvsDiff = DiffEngine.compareSettings(_dvLocalSettings, _dvRemoteSettings);
+            if (_dvsDiff && _dvsDiff.changed && _dvsDiff.changed.length > 0) {
+              _dvSettingsChanges = _dvsDiff.changed;
+            }
+          }
+          _applyAndFinalize(newInv, selectedChanges, _dvSettingsChanges, remoteMeta, { source: 'sync' });
+          debugLog('[CloudSync] Deferred vault restore complete (selective apply, settings:', _dvSettingsChanges ? _dvSettingsChanges.length + ' changes' : 'none', ')');
+
+          // STAK-426: Restore image vault on manifest-first path (previously skipped)
+          try {
+            if (remoteMeta && remoteMeta.imageVault && typeof vaultDecryptAndRestoreImages === 'function') {
+              var _dvLastPull = syncGetLastPull();
+              var _dvLocalImageHash = _dvLastPull ? _dvLastPull.imageHash : null;
+              if (remoteMeta.imageVault.hash !== _dvLocalImageHash) {
+                debugLog('[CloudSync] Manifest-path: image vault changed — pulling', remoteMeta.imageVault.imageCount, 'photos');
+                var _dvImgArg = JSON.stringify({ path: SYNC_IMAGES_PATH });
+                var _dvImgResp = await fetch('https://content.dropboxapi.com/2/files/download', {
+                  method: 'POST',
+                  headers: {
+                    Authorization: 'Bearer ' + token,
+                    'Dropbox-API-Arg': _dvImgArg,
+                  },
+                });
+                if (_dvImgResp.ok) {
+                  var _dvImgBytes = new Uint8Array(await _dvImgResp.arrayBuffer());
+                  await vaultDecryptAndRestoreImages(_dvImgBytes, password);
+                  debugLog('[CloudSync] Manifest-path: image vault restored');
+                }
+              }
+            }
+          } catch (_dvImgErr) {
+            debugLog('[CloudSync] Manifest-path image restore failed (non-blocking):', _dvImgErr.message);
+          }
+
           return;
         }
       }
@@ -2438,15 +2513,29 @@ async function pullWithPreview(remoteMeta) {
           // Build diff-like result from manifest data
           var manifestDiff = _buildDiffFromManifest(manifest);
 
-          // STAK-417: If manifest has no item changes, fall through to vault-first
-          // which can also check settings. The manifest path doesn't compare settings,
-          // so an empty manifest diff might hide a settings-only change.
+          // STAK-426: Compare settings from manifest snapshot (if present)
+          var manifestSettingsDiff = null;
+          if (manifest.settings && typeof DiffEngine !== 'undefined' && DiffEngine.compareSettings) {
+            var _mLocalSettings = {};
+            if (typeof SYNC_SCOPE_KEYS !== 'undefined') {
+              for (var ms = 0; ms < SYNC_SCOPE_KEYS.length; ms++) {
+                if (SYNC_SCOPE_KEYS[ms] === 'metalInventory') continue;
+                var msv = loadDataSync(SYNC_SCOPE_KEYS[ms], null);
+                if (msv !== null && msv !== undefined) _mLocalSettings[SYNC_SCOPE_KEYS[ms]] = msv;
+              }
+            }
+            manifestSettingsDiff = DiffEngine.compareSettings(_mLocalSettings, manifest.settings);
+          }
+
+          // STAK-417 + STAK-426: If manifest has no item changes AND no settings
+          // changes, fall through to vault-first for a full comparison.
           var _mNoChanges = (manifestDiff.added || []).length === 0
             && (manifestDiff.deleted || []).length === 0
             && (manifestDiff.modified || []).length === 0;
-          if (_mNoChanges) {
-            console.warn('[CloudSync] Manifest has no item changes — falling through to vault-first (may have settings changes)');
-            throw new Error('Manifest empty: falling through to vault-first for settings check');
+          var _mNoSettingsChanges = !manifestSettingsDiff || !manifestSettingsDiff.changed || manifestSettingsDiff.changed.length === 0;
+          if (_mNoChanges && _mNoSettingsChanges) {
+            console.warn('[CloudSync] Manifest has no item or settings changes — falling through to vault-first');
+            throw new Error('Manifest empty: falling through to vault-first for full check');
           }
 
           // STAK-402 + STAK-412: Verify the manifest diff is complete by checking
@@ -2529,6 +2618,7 @@ async function pullWithPreview(remoteMeta) {
             DiffModal.show({
               source: { type: 'sync', label: _syncProvider || 'Cloud' },
               diff: manifestDiff,
+              settingsDiff: manifestSettingsDiff || null,
               conflicts: manifestConflicts || null,
               meta: {
                 deviceId: manifest.deviceId || (remoteMeta ? remoteMeta.deviceId : null),
