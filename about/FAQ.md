@@ -27,9 +27,14 @@ No. There is no server-side component, no database, and no analytics that transm
 
 **Does this app use cookies or tracking?**
 
-**No cookies. No advertising SDKs. No tracking pixels.** The app uses browser localStorage and IndexedDB solely to store your inventory and preferences on your own device.
+**StakTrakr itself sets no cookies.** No advertising SDKs. No tracking pixels. The app uses browser localStorage and IndexedDB solely to store your inventory and preferences on your own device.
 
-When you use the hosted version at staktrakr.com (served via Cloudflare Pages), Cloudflare Web Analytics is active at the network edge. It collects aggregated, anonymous page-view metrics — visit counts, countries, browser types — without cookies and without building individual user profiles. No inventory data is ever included. If you download and run the app locally from a ZIP file, no analytics run at all.
+When you use the hosted version at staktrakr.com (served via Cloudflare Pages), two things happen at the infrastructure level:
+
+- **Cloudflare Web Analytics** — collects aggregated, anonymous page-view metrics (visit counts, countries, browser types) without cookies and without building individual user profiles.
+- **Cloudflare infrastructure cookie** — Cloudflare may set a temporary cookie (e.g. `__cf_bm`) for bot protection. This is set by Cloudflare's CDN, not by StakTrakr. It contains no inventory data, is not used for tracking, and **can be safely blocked** without affecting the app.
+
+No inventory data is ever included in any of the above. If you download and run the app locally from a ZIP file, none of this applies — no analytics, no cookies, nothing.
 
 ---
 

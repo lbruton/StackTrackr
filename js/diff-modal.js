@@ -281,11 +281,16 @@
     }
 
     // Apply button count
+    // Only disable when there ARE selectable items but none are checked AND
+    // there are no pending settings changes. Settings are always included when
+    // Apply is clicked, so the button should stay enabled for settings-only apply.
     if (applyBtn) {
       var count = _checkedCount();
+      var hasSelectableItems = Object.keys(_checkedItems).length > 0;
+      var hasSettings = _options && _options.settingsDiff && _options.settingsDiff.changed && _options.settingsDiff.changed.length > 0;
       applyBtn.textContent = count > 0 ? 'Apply (' + count + ')' : 'Apply';
-      applyBtn.disabled = count === 0;
-      applyBtn.style.opacity = count === 0 ? '0.4' : '';
+      applyBtn.disabled = hasSelectableItems && count === 0 && !hasSettings;
+      applyBtn.style.opacity = (hasSelectableItems && count === 0 && !hasSettings) ? '0.4' : '';
     }
 
     // Count row (backup import flow only)
@@ -360,7 +365,7 @@
         // Detail line
         var detail = [];
         if (item.metal) detail.push(_esc(item.metal));
-        if (item.weight != null) detail.push(item.weight + (item.weightUnit || 'oz'));
+        if (item.weight != null) detail.push(item.weight + _esc(item.weightUnit || 'oz'));
         if (item.qty != null) detail.push('\u00d7 ' + item.qty);
         if (detail.length > 0) {
           html += '<div style="font-size:0.73rem;opacity:0.5;margin-top:0.1rem">' + detail.join(' \u00b7 ') + '</div>';
@@ -415,9 +420,11 @@
     var applyBtn = safeGetElement('diffReviewApplyBtn');
     if (applyBtn) {
       var count = _checkedCount();
+      var hasSelectableItems = Object.keys(_checkedItems).length > 0;
+      var hasSettings = _options && _options.settingsDiff && _options.settingsDiff.changed && _options.settingsDiff.changed.length > 0;
       applyBtn.textContent = count > 0 ? 'Apply (' + count + ')' : 'Apply';
-      applyBtn.disabled = count === 0;
-      applyBtn.style.opacity = count === 0 ? '0.4' : '';
+      applyBtn.disabled = hasSelectableItems && count === 0 && !hasSettings;
+      applyBtn.style.opacity = (hasSelectableItems && count === 0 && !hasSettings) ? '0.4' : '';
     }
     _updateCountRow();
   }
@@ -509,11 +516,25 @@
       }
     }
 
+    // Settings changes — always included (no per-setting checkboxes)
+    var settingsDiff = _options.settingsDiff || {};
+    var changedSettings = settingsDiff.changed || [];
+    for (var s = 0; s < changedSettings.length; s++) {
+      var setting = changedSettings[s];
+      result.push({ type: 'setting', key: setting.key, value: setting.remoteVal });
+    }
+
     return result;
   }
 
   function _onApply() {
     var selected = _buildSelectedChanges();
+    // STAK-402: When _checkedItems is empty (empty diff — no selectable items were shown),
+    // pass null instead of [] to signal "accept all / full overwrite". Callers that
+    // check `selectedChanges &&` treat null as "no selective picks, do full restore".
+    // This differs from the intentional "deselect all" case where _checkedItems has
+    // entries but they are all false (then selected is [] and apply-nothing is correct).
+    if (Object.keys(_checkedItems).length === 0) selected = null;
     // Capture callback before close() — close() nullifies _options
     var callback = _options && _options.onApply;
     DiffModal.close();

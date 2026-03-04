@@ -1,14 +1,10 @@
 ## What's New
 
-- **Browserbase Test Runbook v2 (v3.33.25)**: Modular E2E test runbook with 75+ tests across 8 section files. `/bb-test` skill now reads runbook Markdown at runtime with section and tag filtering. Manual execution via Chrome DevTools or Claude browser extension documented as $0 alternative (STAK-396).
-- **Backup Integrity Audit (v3.33.24)**: exportOrigin metadata added to all export formats. Pre-import validation, DiffModal count header with Select All, and post-import summary banner. Fixes CSV round-trip breakage from comment header, const reassignment crash, and import target detection bug (STAK-374).
-- **Chip Max Count Setting (v3.33.23)**: New `chipMaxCount` setting caps the filter chip bar to prevent overflow. Search chips always render regardless of cap. Configure in Settings.
-- **Storage Error Modal Suppressed for Intraday Cache (v3.33.22)**: saveRetailIntradayData() failures now log a console warning instead of showing a user-visible Storage Error modal — transient 24h sparkline cache is non-critical
-- **Disposed Items: Restore &amp; View (v3.33.21)**: Three-state disposed filter (Hide/Show All/Disposed Only). Changelog undo now correctly reverses dispositions. "Restore to Inventory" button added to view modal for disposed items
-- **Market Panel Bug Fixes (v3.33.20)**: API-driven item names via getRetailCoinMeta() as source of truth. Grid/list sync status shows "just now" after sync, time-ago when lingering, error state on API failure. Activity log dropdown dynamically populated from API manifest
-- **DiffMerge Integration (v3.33.19)**: Selective apply for cloud sync pull and encrypted vault restore. DiffModal preview replaces full overwrite — users choose which changes to accept. Shared _applyAndFinalize helper consolidates post-apply sequence
-- **Diff/Merge Architecture Foundation (v3.33.18)**: Manifest path constants, pruning threshold storage key, diffReviewModal HTML scaffold, and diff-modal.js script registration for the reusable change-review UI
-- **Realized Gains/Losses (v3.33.17)**: Disposition workflow to mark items as Sold, Traded, Lost, Gifted, or Returned. Calculates realized gain/loss, adds disposition badges, filter toggle, portfolio summary breakdown, and CSV export columns
+- **DiffModal Settings Fix & Empty-Diff Silent Pull (v3.33.48)**: DiffModal Apply button now correctly detects pending settings changes. Settings are included in selectedChanges instead of being silently dropped. Manifest-first pull returns silently when no changes detected (STAK-387, STAK-401, STAK-415, STAK-417).
+- **Sync Scope & Serialization (v3.33.47)**: Cloud sync now syncs 44 keys across devices (up from 8) — all preferences, header buttons, feature toggles, and API credentials. Manifest-first pulls now compare and apply settings changes. Photos sync on all pull paths. Deleting all photos propagates deletion to remote (STAK-426).
+- **Cloud Storage API Hardening (v3.33.46)**: Upload validation catches failed Dropbox/pCloud/Box uploads. Backup list fetches all pages. Disconnect removes all cloud state. Delete-latest updates remote pointer. Full vault exports exclude OAuth tokens and credentials (STAK-425).
+- **FAQ Cloudflare Cookie Disclosure (v3.33.45)**: FAQ now accurately discloses that Cloudflare may set a temporary infrastructure cookie for bot protection on the hosted site. Safe to block — does not affect the app (STAK-428).
+- **Data Portability Quickfixes (v3.33.44)**: Added chipMaxCount to storage allowlist, removed dead 2 MB import limit, added Storage Location and Tags to CSV/JSON exports, deferred CSV import tags until confirmation, fixed reverse-only image import from ZIP (STAK-424).
 
 ## Development Roadmap
 

@@ -269,6 +269,12 @@ When `DEV_MODE = true`, the `fetch` handler returns immediately on every request
 
 ---
 
+## Intentional CORE_ASSETS Exclusions
+
+- **`js/test-loader.js`** — intentionally excluded from `CORE_ASSETS`. This is a dev-only test harness that conditionally loads Playwright test specs when a `?test` query parameter is present. It is not needed in the production cache and should never be added to `CORE_ASSETS`.
+
+---
+
 ## Related Pages
 
 - [frontend-overview.md](frontend-overview.md) — full JS file list and load order

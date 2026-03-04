@@ -283,11 +283,11 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
-    <li><strong>v3.33.25 &ndash; Browserbase Test Runbook v2</strong>: Modular E2E test runbook with 75+ tests across 8 section files. /bb-test skill reads runbook Markdown at runtime with section and tag filtering. Manual execution via Chrome DevTools or Claude browser extension documented as $0 alternative (STAK-396)</li>
-    <li><strong>v3.33.24 &ndash; Backup Integrity Audit</strong>: exportOrigin metadata added to all export formats. Pre-import validation, DiffModal count header with Select All, and post-import summary banner (STAK-374)</li>
-    <li><strong>v3.33.23 &ndash; Chip Max Count Setting</strong>: New chipMaxCount setting caps the filter chip bar to prevent overflow. Search chips always render regardless of cap. Configure in Settings</li>
-    <li><strong>v3.33.22 &ndash; Storage Error Modal Suppressed for Intraday Cache</strong>: saveRetailIntradayData() failures now log a console warning instead of showing a user-visible Storage Error modal &mdash; transient 24h sparkline cache is non-critical</li>
-    <li><strong>v3.33.20 &ndash; Market Panel Bug Fixes</strong>: API-driven item names via getRetailCoinMeta() as source of truth. Grid/list sync status shows &ldquo;just now&rdquo; after sync, time-ago when lingering, error state on API failure. Activity log dropdown dynamically populated from API manifest</li>
+    <li><strong>v3.33.48 &ndash; DiffModal Settings Fix &amp; Empty-Diff Silent Pull</strong>: DiffModal Apply button now correctly detects pending settings changes. Settings are included in selectedChanges instead of being silently dropped. Manifest-first pull returns silently when no changes detected (STAK-387, STAK-401, STAK-415, STAK-417)</li>
+    <li><strong>v3.33.47 &ndash; Sync Scope &amp; Serialization</strong>: Cloud sync now syncs 44 keys across devices (up from 8) &mdash; all preferences, header buttons, feature toggles, and API credentials. Manifest-first pulls now compare and apply settings changes. Photos sync on all pull paths. Deleting all photos propagates deletion to remote (STAK-426)</li>
+    <li><strong>v3.33.46 &ndash; Cloud Storage API Hardening</strong>: Upload validation catches failed Dropbox/pCloud/Box uploads. Backup list fetches all pages. Disconnect removes all cloud state. Delete-latest updates remote pointer. Full vault exports exclude OAuth tokens and credentials (STAK-425)</li>
+    <li><strong>v3.33.45 &ndash; FAQ Cloudflare Cookie Disclosure</strong>: FAQ now accurately discloses that Cloudflare may set a temporary infrastructure cookie for bot protection on the hosted site. Safe to block &mdash; does not affect the app (STAK-428)</li>
+    <li><strong>v3.33.44 &ndash; Data Portability Quickfixes</strong>: Added chipMaxCount to storage allowlist, removed dead 2 MB import limit, added Storage Location and Tags to CSV/JSON exports, deferred CSV import tags until confirmation, fixed reverse-only image import from ZIP (STAK-424)</li>
   `;
 };
 

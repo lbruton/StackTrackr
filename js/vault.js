@@ -300,6 +300,12 @@ function parseVaultFile(fileBytes) {
  *   'sync' collects only SYNC_SCOPE_KEYS (inventory + display prefs, no API keys or tokens)
  * @returns {object|null} Payload object or null if empty
  */
+/**
+ * Collects vault data for export or sync.
+ * When scope is 'full', collects all ALLOWED_STORAGE_KEYS except those in
+ * VAULT_EXCLUDE_KEYS (OAuth tokens, vault password, device-specific sync state).
+ * When scope is 'sync', collects only SYNC_SCOPE_KEYS (unaffected by exclusions).
+ */
 function collectVaultData(scope) {
   scope = scope || 'full';
 
@@ -321,6 +327,11 @@ function collectVaultData(scope) {
 
   for (var i = 0; i < keysToCollect.length; i++) {
     var key = keysToCollect[i];
+    // Skip credentials and device-specific state in portable full exports
+    if (scope === 'full' && typeof VAULT_EXCLUDE_KEYS !== 'undefined' &&
+        VAULT_EXCLUDE_KEYS.indexOf(key) !== -1) {
+      continue;
+    }
     try {
       var val = localStorage.getItem(key);
       if (val !== null) {
@@ -372,7 +383,18 @@ async function restoreVaultData(payload) {
     // Only restore recognized keys
     if (ALLOWED_STORAGE_KEYS.indexOf(key) !== -1) {
       try {
-        localStorage.setItem(key, data[key]);
+        // STAK-421: Compress before writing — raw vault payloads can exceed
+        // localStorage quota (e.g. metalSpotHistory at 9 MB uncompressed).
+        // Skip if already CMP1-compressed to avoid double-wrapping.
+        var value = data[key];
+        if (
+          typeof value === 'string' &&
+          typeof __compressIfNeeded === 'function' &&
+          !value.startsWith('CMP1:')
+        ) {
+          value = __compressIfNeeded(value);
+        }
+        localStorage.setItem(key, value);
       } catch (e) {
         debugLog("Vault: could not write key", key, e);
       }
@@ -1154,10 +1176,10 @@ async function handleVaultAction() {
         // Cloud export: encrypt then upload
         var fileBytes = await vaultEncryptToBytes(password);
         showVaultStatus("info", "Uploading\u2026");
-        await cloudUploadVault(_cloudContext.provider, fileBytes);
+        await cloudUploadVault(_cloudContext.provider, fileBytes, _cloudContext.isManualBackup ? { skipLatestUpdate: true } : undefined);
         showVaultStatus("success", "Backup uploaded successfully.");
         // Cache password for this browser session
-        if (typeof cloudCachePassword === 'function') {
+        if (typeof cloudCachePassword === 'function' && !(_cloudContext && _cloudContext.isManualBackup)) {
           cloudCachePassword(_cloudContext.provider, password);
         }
         if (typeof showKrakenToastIfFirst === 'function') showKrakenToastIfFirst();

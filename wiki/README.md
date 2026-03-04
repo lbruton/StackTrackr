@@ -33,7 +33,7 @@ Pages covering the StakTrakr single-page app — architecture, patterns, and wor
 
 | Page | Contents | Last Updated |
 |------|----------|--------------|
-| [Frontend Overview](frontend-overview.md) | Zero-build SPA architecture, 70-script load order, service worker, PWA, file-protocol support | v3.33.25 |
+| [Frontend Overview](frontend-overview.md) | Zero-build SPA architecture, 67-script load order, service worker, PWA, file-protocol support | v3.33.25 |
 | [Data Model](data-model.md) | Full 30+ field InventoryItem schema, portfolio model (Purchase/Melt/Retail), `computeMeltValue()` formula, feature flags | v3.33.25 |
 | [Storage Patterns](storage-patterns.md) | `saveData`/`loadData` wrappers, LZString compression, full ~90-key `ALLOWED_STORAGE_KEYS` registry, cloud sync integration | v3.33.25 |
 | [DOM Patterns](dom-patterns.md) | `safeGetElement`, `sanitizeHtml`, `escapeHtml`, `safeAttachListener`, startup exception in init.js/about.js | v3.33.25 |

@@ -290,7 +290,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-12 - STACK-38/STACK-31: Responsive card view + mobile layout
  */
 
-const APP_VERSION = "3.33.25";
+const APP_VERSION = "3.33.48";
 
 /**
  * Numista metadata cache TTL: 30 days in milliseconds.
@@ -393,12 +393,6 @@ const replaceTemplateVariables = (text) => {
     return variables[key] || match;
   });
 };
-
-/** Maximum upload size in bytes for local imports (2MB) */
-const MAX_LOCAL_FILE_SIZE = 2 * 1024 * 1024;
-
-/** Flag indicating whether cloud backup is enabled */
-let cloudBackupEnabled = false;
 
 /**
  * Inserts formatted version string into a target element
@@ -785,24 +779,90 @@ const SYNC_MANIFEST_PATH_LEGACY = '/StakTrakr/staktrakr-sync.stmanifest';
 /** Dropbox folder for cloud-side backups */
 const SYNC_BACKUP_FOLDER = '/StakTrakr/backups';
 
+/** Filename used for the "latest" cloud backup snapshot */
+const CLOUD_LATEST_FILENAME = 'staktrakr-latest.json';
+
 /** Cloud backup history depth — how many backups to retain */
 const CLOUD_BACKUP_HISTORY_KEY = 'cloud_backup_history_depth';
 const CLOUD_BACKUP_HISTORY_DEFAULT = 5;
 const CLOUD_BACKUP_HISTORY_OPTIONS = [3, 5, 10, 20];
 
+/** Filename prefix for user-initiated manual backups */
+const MANUAL_BACKUP_PREFIX = 'staktrakr-backup-';
+
+/** Filename prefix for auto-sync pre-push snapshot backups */
+const SYNC_BACKUP_PREFIX = 'pre-sync-';
+
 /**
- * Keys included in a sync vault (excludes API keys, tokens, spot history).
- * Only inventory data + display preferences that are meaningful across devices.
+ * Keys included in a sync vault — inventory data + all user preferences that are
+ * meaningful across devices. Expanded in STAK-426 from 8 → ~36 keys.
+ * Excludes: OAuth tokens, transient caches, server-sourced data, device-local state.
  */
 const SYNC_SCOPE_KEYS = [
-  'metalInventory',   // LS_KEY — inventory items
-  'itemTags',         // ITEM_TAGS_KEY — per-item tags
-  'displayCurrency',  // DISPLAY_CURRENCY_KEY — active display currency
-  'appTheme',         // THEME_KEY — light/dark/sepia/system theme
-  'inlineChipConfig', // inline chip config (grade, year, etc.)
-  'filterChipCategoryConfig', // filter chip category config
-  'viewModalSectionConfig',   // view modal section visibility
-  'chipMinCount',     // minimum count for filter chips
+  // ── Core data ──
+  'metalInventory',            // LS_KEY — inventory items
+  'itemTags',                  // ITEM_TAGS_KEY — per-item tags
+
+  // ── Display preferences ──
+  'displayCurrency',           // DISPLAY_CURRENCY_KEY — active display currency
+  'appTheme',                  // THEME_KEY — light/dark/sepia/system theme
+  'cardViewStyle',             // CARD_STYLE_KEY
+  'desktopCardView',           // DESKTOP_CARD_VIEW_KEY
+  'defaultSortColumn',         // DEFAULT_SORT_COL_KEY
+  'defaultSortDir',            // DEFAULT_SORT_DIR_KEY
+  'showRealizedGainLoss',      // SHOW_REALIZED_KEY
+  'metalOrderConfig',          // METAL_ORDER_KEY
+  'settingsItemsPerPage',      // ITEMS_PER_PAGE_KEY
+  'appTimeZone',               // TIMEZONE_KEY
+
+  // ── Chip & filter config ──
+  'inlineChipConfig',          // inline chip config (grade, year, etc.)
+  'filterChipCategoryConfig',  // filter chip category config
+  'viewModalSectionConfig',    // view modal section visibility
+  'chipMinCount',              // minimum count for filter chips
+  'chipMaxCount',              // maximum count for filter chips
+  'chipCustomGroups',          // custom chip groupings
+  'chipBlacklist',             // hidden chips
+  'chipSortOrder',             // chip sort preference
+
+  // ── Layout & table ──
+  'layoutSectionConfig',       // section layout config
+  'tableImagesEnabled',        // show images in table
+  'tableImageSides',           // which image sides to show
+
+  // ── Tag config ──
+  'tagBlacklist',              // hidden tags
+
+  // ── Header button preferences ──
+  'headerThemeBtnVisible',     // theme toggle button
+  'headerCurrencyBtnVisible',  // currency toggle button
+  'headerTrendBtnVisible',     // HEADER_TREND_BTN_KEY
+  'headerSyncBtnVisible',      // HEADER_SYNC_BTN_KEY
+  'headerMarketBtnVisible',    // HEADER_MARKET_BTN_KEY
+  'headerVaultBtnVisible',     // HEADER_VAULT_BTN_KEY
+  'headerRestoreBtnVisible',   // HEADER_RESTORE_BTN_KEY
+  'headerCloudSyncBtnVisible', // HEADER_CLOUD_SYNC_BTN_KEY
+  'headerBtnShowText',         // HEADER_BTN_SHOW_TEXT_KEY
+  'headerBtnOrder',            // button ordering
+  'headerAboutBtnVisible',     // about button
+
+  // ── Feature toggles ──
+  'goldback-enabled',          // GOLDBACK_ENABLED_KEY
+  'goldback-estimate-enabled', // GOLDBACK_ESTIMATE_ENABLED_KEY
+  'goldback-estimate-modifier', // GB_ESTIMATE_MODIFIER_KEY
+
+  // ── Numista config ──
+  'numista_tags_auto',         // auto-tag on Numista lookup
+  'numistaLookupRules',        // lookup rule config
+  'numistaViewFields',         // view modal field config
+
+  // ── Seed & provider config ──
+  'enabledSeedRules',          // seed data rules
+  'apiProviderOrder',          // spot provider order
+  'providerPriority',          // provider priority config
+
+  // ── API credentials ──
+  'metalApiConfig',            // API_KEY_STORAGE_KEY — Numista/PCGS/spot provider keys
 ];
 
 const ALLOWED_STORAGE_KEYS = [
@@ -825,6 +885,7 @@ const ALLOWED_STORAGE_KEYS = [
   "spotPlatinum",
   "spotPalladium",
   "chipMinCount",
+  "chipMaxCount",
   "changeLog",
   "autocomplete_lookup_cache",
   "autocomplete_cache_timestamp",
@@ -916,9 +977,34 @@ const ALLOWED_STORAGE_KEYS = [
   "headerAboutBtnVisible",                             // boolean string: "true"/"false" — about button visibility (STAK-320)
   "tagBlacklist",                                      // JSON array: tags excluded from auto-tagging
   "numista_tags_auto",                                 // boolean string: "true"/"false" — auto-tag from Numista data
+  "cloud_sync_local_modified",                           // ISO string: timestamp of last local metalInventory save (STAK-414)
   "cloud_sync_migrated",                               // string: "v2" — cloud folder migration flag (flat → /sync/ + /backups/)
   "cloud_backup_history_depth",                        // string: "3"|"5"|"10"|"20" — max cloud backups to retain
   "manifestPruningThreshold",                          // number string: max sync cycles to retain in manifest before pruning older entries (STAK-184)
+];
+
+/**
+ * Keys excluded from portable full-vault exports.
+ * These remain in ALLOWED_STORAGE_KEYS (so cleanupStorage doesn't delete them)
+ * but are stripped from collectVaultData('full') to prevent shipping live
+ * OAuth tokens, vault passwords, and device-specific sync state.
+ * @constant {string[]}
+ */
+const VAULT_EXCLUDE_KEYS = [
+  'cloud_token_dropbox',
+  'cloud_token_pcloud',
+  'cloud_token_box',
+  'cloud_dropbox_account_id',
+  'cloud_vault_password',
+  'cloud_sync_device_id',
+  'cloud_sync_cursor',
+  'cloud_sync_last_push',
+  'cloud_sync_last_pull',
+  'cloud_sync_override_backup',
+  'cloud_sync_mode',
+  'cloud_sync_local_modified',
+  'cloud_sync_migrated',
+  'staktrakr_oauth_result',
 ];
 
 // =============================================================================
@@ -1705,7 +1791,7 @@ if (typeof window !== "undefined") {
   window.METALS = METALS;
   window.DEBUG = DEBUG;
   window.DEFAULT_CURRENCY = DEFAULT_CURRENCY;
-  window.MAX_LOCAL_FILE_SIZE = MAX_LOCAL_FILE_SIZE;
+
   window.BRANDING_DOMAIN_OPTIONS = BRANDING_DOMAIN_OPTIONS;
   window.BRANDING_DOMAIN_OVERRIDE = BRANDING_DOMAIN_OVERRIDE;
   window.getTemplateVariables = getTemplateVariables;
@@ -1731,10 +1817,14 @@ if (typeof window !== "undefined") {
   window.SYNC_MANIFEST_PATH = SYNC_MANIFEST_PATH;
   window.SYNC_MANIFEST_PATH_LEGACY = SYNC_MANIFEST_PATH_LEGACY;
   window.SYNC_BACKUP_FOLDER = SYNC_BACKUP_FOLDER;
+  window.MANUAL_BACKUP_PREFIX = MANUAL_BACKUP_PREFIX;
+  window.SYNC_BACKUP_PREFIX = SYNC_BACKUP_PREFIX;
+  window.CLOUD_LATEST_FILENAME = CLOUD_LATEST_FILENAME;
   window.CLOUD_BACKUP_HISTORY_KEY = CLOUD_BACKUP_HISTORY_KEY;
   window.CLOUD_BACKUP_HISTORY_DEFAULT = CLOUD_BACKUP_HISTORY_DEFAULT;
   window.CLOUD_BACKUP_HISTORY_OPTIONS = CLOUD_BACKUP_HISTORY_OPTIONS;
   window.SYNC_SCOPE_KEYS = SYNC_SCOPE_KEYS;
+  window.VAULT_EXCLUDE_KEYS = VAULT_EXCLUDE_KEYS;
   window.CERT_LOOKUP_URLS = CERT_LOOKUP_URLS;
   // Inline chip config
   window.INLINE_CHIP_DEFAULTS = INLINE_CHIP_DEFAULTS;
