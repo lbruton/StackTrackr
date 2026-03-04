@@ -300,6 +300,12 @@ function parseVaultFile(fileBytes) {
  *   'sync' collects only SYNC_SCOPE_KEYS (inventory + display prefs, no API keys or tokens)
  * @returns {object|null} Payload object or null if empty
  */
+/**
+ * Collects vault data for export or sync.
+ * When scope is 'full', collects all ALLOWED_STORAGE_KEYS except those in
+ * VAULT_EXCLUDE_KEYS (OAuth tokens, vault password, device-specific sync state).
+ * When scope is 'sync', collects only SYNC_SCOPE_KEYS (unaffected by exclusions).
+ */
 function collectVaultData(scope) {
   scope = scope || 'full';
 
@@ -321,6 +327,11 @@ function collectVaultData(scope) {
 
   for (var i = 0; i < keysToCollect.length; i++) {
     var key = keysToCollect[i];
+    // Skip credentials and device-specific state in portable full exports
+    if (scope === 'full' && typeof VAULT_EXCLUDE_KEYS !== 'undefined' &&
+        VAULT_EXCLUDE_KEYS.indexOf(key) !== -1) {
+      continue;
+    }
     try {
       var val = localStorage.getItem(key);
       if (val !== null) {
