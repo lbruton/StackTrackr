@@ -2,7 +2,7 @@
 title: Data Model
 category: frontend
 owner: staktrakr
-lastUpdated: v3.33.41
+lastUpdated: v3.33.44
 date: 2026-03-03
 sourceFiles:
   - js/constants.js
@@ -14,7 +14,7 @@ relatedPages:
 ---
 # Data Model
 
-> **Last updated:** v3.33.41 — 2026-03-03
+> **Last updated:** v3.33.44 — 2026-03-03
 > **Source files:** `js/constants.js`, `js/utils.js`, `js/types.js`
 
 ## Overview
@@ -326,6 +326,7 @@ All keys currently registered in `js/constants.js`. `cleanupStorage()` enforces 
 | `showRealizedGainLoss` | Boolean string | Show realized G/L in summary cards (STAK-72) |
 | `tagBlacklist` | JSON array | Tags excluded from auto-tagging |
 | `chipMinCount` | Number string | Minimum item count for chip display |
+| `chipMaxCount` | Number string | Maximum item count for chip display |
 | `chipCustomGroups` | JSON array | Custom chip grouping definitions |
 | `chipBlacklist` | JSON array | Hidden chip values |
 | `inlineChipConfig` | JSON object | Inline chip display configuration |

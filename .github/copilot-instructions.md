@@ -43,7 +43,7 @@ Scripts load via `<script>` tags in `index.html` in strict dependency order. `fi
 - `displayCurrency`, `exchangeRate`, `currencySymbol` -- currency settings
 - `elements` (object) -- cached DOM references
 - `itemTags` (object) -- per-item tag data
-- `cloudBackupEnabled` (boolean) -- cloud backup feature flag
+
 
 **From `js/debug-log.js`:**
 
