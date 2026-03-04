@@ -2,7 +2,7 @@
 title: Backup & Restore
 category: frontend
 owner: staktrakr
-lastUpdated: v3.33.46
+lastUpdated: v3.33.49
 date: 2026-03-04
 sourceFiles:
   - js/cloud-storage.js
@@ -15,7 +15,7 @@ relatedPages:
 ---
 # Backup & Restore
 
-> **Last updated:** v3.33.46 — 2026-03-04
+> **Last updated:** v3.33.49 — 2026-03-04
 > **Source files:** `js/cloud-storage.js`, `js/cloud-sync.js`, `js/utils.js`, `js/vault.js`
 
 ## Overview
@@ -35,6 +35,17 @@ There is no dedicated `backup.js` or `restore.js`. All backup and restore logic 
 | Encrypted Vault | `.stvault` | Yes (AES-256-GCM) | Settings → Vault → "Export Vault" |
 | Image Vault | `.stvault` | Yes (AES-256-GCM) | Cloud auto-sync (automatic) |
 | Cloud Sync | Dropbox | Yes (vault-wrapped) | Settings → Cloud → Auto-sync toggle |
+
+---
+
+## Snapshot Terminology
+
+| Term | Description |
+|------|-------------|
+| **Override backup** | Pre-pull localStorage snapshot saved before applying remote changes. Used for rollback if a pull goes wrong. Stored in IDB as `cloud_sync_override_backup`. |
+| **Pre-push backup** | Full encrypted vault uploaded to `/backups/pre-sync-TIMESTAMP.stvault` before each push. Provides disaster recovery if a push corrupts remote state. |
+| **Image vault** | Companion file to the sync vault containing user-uploaded coin photos (`userImages` IDB). Uploaded alongside inventory during auto-sync push (conditional). |
+| **Manual vault** | Encrypted backup created on-demand from the Settings → Cloud → Backup button. Covers all localStorage keys except credentials. Optional "Include photos" checkbox uploads the image vault alongside the manual backup (STAK-427). |
 
 ---
 
@@ -74,6 +85,8 @@ There is no dedicated `backup.js` or `restore.js`. All backup and restore logic 
 4. `staktrakr-latest.json` pointer is NOT updated (manual backups do not affect sync state)
 5. `cloud_last_backup` is NOT written (manual backups are independent of sync tracking)
 6. Password is NOT cached to `sessionStorage` (each manual backup requires re-entry)
+
+> **Photos optional (STAK-427):** When the `userImages` IDB store has entries, the vault modal shows an "Include photos" checkbox. If checked, `collectAndHashImageVault()` + `vaultEncryptImageVault()` uploads the image vault to `/StakTrakr/sync/staktrakr-images.stvault` after the inventory vault succeeds. Image upload failure shows a warning toast but does not fail the overall backup. Without checking this box, user-uploaded coin photos (`userImages`), pattern rule images (`patternImages`), and Numista metadata (`coinMetadata`) are NOT included — use ZIP backup for full coverage.
 
 ### cloud-sync.js Role
 
@@ -246,6 +259,8 @@ The backup/export panel shows a `<small class="format-desc">` beneath each optio
 
 ### ZIP Restore (`restoreBackupZip`)
 
+> **Destructive restore:** ZIP restore replaces all data — all localStorage keys are overwritten with backup values, and all IDB image stores (`userImages`, `patternImages`, `coinMetadata`) are replaced. There is no merge option. If cloud sync is active when you initiate a ZIP restore, the restore will be blocked until sync completes (STAK-427).
+
 1. Unzip all files
 2. Restore localStorage keys from `inventory_data.json`, `settings.json`, `spot_price_history.json`, etc.
 3. Restore `userImages` IDB from `user_images/` using `user_image_manifest.json`; falls back to filename parsing for old ZIPs pre-STAK-226
@@ -397,7 +412,7 @@ All JSON/CSV/vault imports use a **merge strategy** (not replace-all):
 | `cloud_last_backup` | Not written (`skipLatestUpdate: true`) | Written on each sync push |
 | Password caching | Disabled — always prompts for password | Cached in `sessionStorage` via `cloudCachePassword` |
 | Auto-pruning | Never auto-pruned | Pruned by `cloudPruneBackups(provider, max, 'sync')` |
-| Image vault | Not part of manual backup | Pushed when `userImages` hash changes |
+| Image vault | Optional via "Include photos" checkbox (STAK-427) | Pushed when `userImages` hash changes |
 | Conflict check | `cloudCheckConflict()` on manual download | `syncHasLocalChanges()` on pull |
 | Pre-restore snapshot | No | Yes: `syncSaveOverrideBackup()` before every pull |
 | Provider support | Dropbox, pCloud, Box | Dropbox only |
