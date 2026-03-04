@@ -290,7 +290,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-12 - STACK-38/STACK-31: Responsive card view + mobile layout
  */
 
-const APP_VERSION = "3.33.46";
+const APP_VERSION = "3.33.47";
 
 /**
  * Numista metadata cache TTL: 30 days in milliseconds.
@@ -794,18 +794,75 @@ const MANUAL_BACKUP_PREFIX = 'staktrakr-backup-';
 const SYNC_BACKUP_PREFIX = 'pre-sync-';
 
 /**
- * Keys included in a sync vault (excludes API keys, tokens, spot history).
- * Only inventory data + display preferences that are meaningful across devices.
+ * Keys included in a sync vault — inventory data + all user preferences that are
+ * meaningful across devices. Expanded in STAK-426 from 8 → ~36 keys.
+ * Excludes: OAuth tokens, transient caches, server-sourced data, device-local state.
  */
 const SYNC_SCOPE_KEYS = [
-  'metalInventory',   // LS_KEY — inventory items
-  'itemTags',         // ITEM_TAGS_KEY — per-item tags
-  'displayCurrency',  // DISPLAY_CURRENCY_KEY — active display currency
-  'appTheme',         // THEME_KEY — light/dark/sepia/system theme
-  'inlineChipConfig', // inline chip config (grade, year, etc.)
-  'filterChipCategoryConfig', // filter chip category config
-  'viewModalSectionConfig',   // view modal section visibility
-  'chipMinCount',     // minimum count for filter chips
+  // ── Core data ──
+  'metalInventory',            // LS_KEY — inventory items
+  'itemTags',                  // ITEM_TAGS_KEY — per-item tags
+
+  // ── Display preferences ──
+  'displayCurrency',           // DISPLAY_CURRENCY_KEY — active display currency
+  'appTheme',                  // THEME_KEY — light/dark/sepia/system theme
+  'cardViewStyle',             // CARD_STYLE_KEY
+  'desktopCardView',           // DESKTOP_CARD_VIEW_KEY
+  'defaultSortColumn',         // DEFAULT_SORT_COL_KEY
+  'defaultSortDir',            // DEFAULT_SORT_DIR_KEY
+  'showRealizedGainLoss',      // SHOW_REALIZED_KEY
+  'metalOrderConfig',          // METAL_ORDER_KEY
+  'settingsItemsPerPage',      // ITEMS_PER_PAGE_KEY
+  'appTimeZone',               // TIMEZONE_KEY
+
+  // ── Chip & filter config ──
+  'inlineChipConfig',          // inline chip config (grade, year, etc.)
+  'filterChipCategoryConfig',  // filter chip category config
+  'viewModalSectionConfig',    // view modal section visibility
+  'chipMinCount',              // minimum count for filter chips
+  'chipMaxCount',              // maximum count for filter chips
+  'chipCustomGroups',          // custom chip groupings
+  'chipBlacklist',             // hidden chips
+  'chipSortOrder',             // chip sort preference
+
+  // ── Layout & table ──
+  'layoutSectionConfig',       // section layout config
+  'tableImagesEnabled',        // show images in table
+  'tableImageSides',           // which image sides to show
+
+  // ── Tag config ──
+  'tagBlacklist',              // hidden tags
+
+  // ── Header button preferences ──
+  'headerThemeBtnVisible',     // theme toggle button
+  'headerCurrencyBtnVisible',  // currency toggle button
+  'headerTrendBtnVisible',     // HEADER_TREND_BTN_KEY
+  'headerSyncBtnVisible',      // HEADER_SYNC_BTN_KEY
+  'headerMarketBtnVisible',    // HEADER_MARKET_BTN_KEY
+  'headerVaultBtnVisible',     // HEADER_VAULT_BTN_KEY
+  'headerRestoreBtnVisible',   // HEADER_RESTORE_BTN_KEY
+  'headerCloudSyncBtnVisible', // HEADER_CLOUD_SYNC_BTN_KEY
+  'headerBtnShowText',         // HEADER_BTN_SHOW_TEXT_KEY
+  'headerBtnOrder',            // button ordering
+  'headerAboutBtnVisible',     // about button
+
+  // ── Feature toggles ──
+  'goldback-enabled',          // GOLDBACK_ENABLED_KEY
+  'goldback-estimate-enabled', // GOLDBACK_ESTIMATE_ENABLED_KEY
+  'goldback-estimate-modifier', // GB_ESTIMATE_MODIFIER_KEY
+
+  // ── Numista config ──
+  'numista_tags_auto',         // auto-tag on Numista lookup
+  'numistaLookupRules',        // lookup rule config
+  'numistaViewFields',         // view modal field config
+
+  // ── Seed & provider config ──
+  'enabledSeedRules',          // seed data rules
+  'apiProviderOrder',          // spot provider order
+  'providerPriority',          // provider priority config
+
+  // ── API credentials ──
+  'metalApiConfig',            // API_KEY_STORAGE_KEY — Numista/PCGS/spot provider keys
 ];
 
 const ALLOWED_STORAGE_KEYS = [

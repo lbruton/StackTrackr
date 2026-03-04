@@ -283,11 +283,11 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.33.47 &ndash; Sync Scope &amp; Serialization</strong>: Cloud sync now syncs 44 keys across devices (up from 8) &mdash; all preferences, header buttons, feature toggles, and API credentials. Manifest-first pulls now compare and apply settings changes. Photos sync on all pull paths. Deleting all photos propagates deletion to remote (STAK-426)</li>
     <li><strong>v3.33.46 &ndash; Cloud Storage API Hardening</strong>: Upload validation catches failed Dropbox/pCloud/Box uploads. Backup list fetches all pages. Disconnect removes all cloud state. Delete-latest updates remote pointer. Full vault exports exclude OAuth tokens and credentials (STAK-425)</li>
     <li><strong>v3.33.45 &ndash; FAQ Cloudflare Cookie Disclosure</strong>: FAQ now accurately discloses that Cloudflare may set a temporary infrastructure cookie for bot protection on the hosted site. Safe to block &mdash; does not affect the app (STAK-428)</li>
     <li><strong>v3.33.44 &ndash; Data Portability Quickfixes</strong>: Added chipMaxCount to storage allowlist, removed dead 2 MB import limit, added Storage Location and Tags to CSV/JSON exports, deferred CSV import tags until confirmation, fixed reverse-only image import from ZIP (STAK-424)</li>
     <li><strong>v3.33.43 &ndash; Cloud Sync Storage Fix</strong>: Vault restore now compresses data before writing to localStorage, preventing storage blowout from 9 MB metalSpotHistory. Override imports cancel debounced sync push to prevent overwriting remote data. QuotaExceededError now shows a toast instead of failing silently (STAK-421)</li>
-    <li><strong>v3.33.42 &ndash; Full Backup for Sync Snapshots</strong>: Pre-sync snapshots now contain the full encrypted backup instead of partial sync-scoped data. Restore list shows all backups (manual + sync) in one sorted list. Fixes ghost items caused by restoring partial sync snapshots (STAK-419)</li>
   `;
 };
 
