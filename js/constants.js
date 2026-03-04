@@ -394,12 +394,6 @@ const replaceTemplateVariables = (text) => {
   });
 };
 
-/** Maximum upload size in bytes for local imports (2MB) */
-const MAX_LOCAL_FILE_SIZE = 2 * 1024 * 1024;
-
-/** Flag indicating whether cloud backup is enabled */
-let cloudBackupEnabled = false;
-
 /**
  * Inserts formatted version string into a target element
  *
@@ -834,6 +828,7 @@ const ALLOWED_STORAGE_KEYS = [
   "spotPlatinum",
   "spotPalladium",
   "chipMinCount",
+  "chipMaxCount",
   "changeLog",
   "autocomplete_lookup_cache",
   "autocomplete_cache_timestamp",
@@ -1715,7 +1710,7 @@ if (typeof window !== "undefined") {
   window.METALS = METALS;
   window.DEBUG = DEBUG;
   window.DEFAULT_CURRENCY = DEFAULT_CURRENCY;
-  window.MAX_LOCAL_FILE_SIZE = MAX_LOCAL_FILE_SIZE;
+
   window.BRANDING_DOMAIN_OPTIONS = BRANDING_DOMAIN_OPTIONS;
   window.BRANDING_DOMAIN_OVERRIDE = BRANDING_DOMAIN_OVERRIDE;
   window.getTemplateVariables = getTemplateVariables;

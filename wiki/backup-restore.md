@@ -2,7 +2,7 @@
 title: Backup & Restore
 category: frontend
 owner: staktrakr
-lastUpdated: v3.33.41
+lastUpdated: v3.33.44
 date: 2026-03-03
 sourceFiles:
   - js/cloud-storage.js
@@ -14,7 +14,7 @@ relatedPages:
 ---
 # Backup & Restore
 
-> **Last updated:** v3.33.41 — 2026-03-03
+> **Last updated:** v3.33.44 — 2026-03-03
 > **Source files:** `js/cloud-storage.js`, `js/cloud-sync.js`, `js/utils.js`
 
 ## Overview
@@ -150,7 +150,7 @@ There is no dedicated `backup.js` or `restore.js`. All backup and restore logic 
 | `user_images/` | User-uploaded photo blobs (obverse/reverse per UUID) | IDB `userImages` store |
 | `user_image_manifest.json` | UUID→filename mapping | Used during restore |
 | `pattern_images/` | Pattern rule image blobs | IDB `patternImages` store |
-| `inventory_export.csv` | Human-readable CSV | Not restored (report only) |
+| `inventory_export.csv` | Human-readable CSV (includes Tags and Storage Location columns as of v3.33.44) | Not restored (report only) |
 | `inventory_report.html` | HTML report | Not restored (report only) |
 
 What is NOT included: `coinImages` IDB store (legacy/dead, explicitly skipped), API keys, OAuth tokens, cloud sync state.
@@ -171,7 +171,7 @@ Does NOT include: `userImages`, `patternImages`, or `coinMetadata` IDB blobs.
 
 **Sync scope** (`vaultEncryptToBytesScoped`) includes only `SYNC_SCOPE_KEYS`:
 
-- `metalInventory`, `itemTags`, display preferences, `chipMinCount`, `chipMaxCount`
+- `metalInventory`, `itemTags`, display preferences, `chipMinCount`
 
 Intentionally excludes: API keys, OAuth tokens, spot price history.
 

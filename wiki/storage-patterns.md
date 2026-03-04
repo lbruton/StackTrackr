@@ -2,7 +2,7 @@
 title: Storage Patterns
 category: frontend
 owner: staktrakr
-lastUpdated: v3.33.41
+lastUpdated: v3.33.44
 date: 2026-03-03
 sourceFiles:
   - js/utils.js
@@ -13,7 +13,7 @@ relatedPages:
 ---
 # Storage Patterns
 
-> **Last updated:** v3.33.41 — 2026-03-03
+> **Last updated:** v3.33.44 — 2026-03-03
 > **Source files:** `js/utils.js`, `js/constants.js`
 
 ## Overview
@@ -188,7 +188,7 @@ function __decompressIfNeeded(stored) {
 
 ## Storage Keys Registry
 
-All permitted keys are defined in `ALLOWED_STORAGE_KEYS` in `js/constants.js`. As of v3.33.25 the list contains ~90 entries. Keys are grouped by function:
+All permitted keys are defined in `ALLOWED_STORAGE_KEYS` in `js/constants.js`. As of v3.33.44 the list contains ~90 entries. Keys are grouped by function:
 
 ### Core inventory
 
@@ -243,6 +243,7 @@ All permitted keys are defined in `ALLOWED_STORAGE_KEYS` in `js/constants.js`. A
 | `"filterChipCategoryConfig"` | JSON array | Filter chip category config |
 | `"chipSortOrder"` | string | Chip sort order |
 | `"chipMinCount"` | number string | Min count for filter chips |
+| `"chipMaxCount"` | number string | Max count for filter chips |
 | `"chipCustomGroups"` | JSON object | Custom chip groupings |
 | `"chipBlacklist"` | JSON array | Chips excluded from display |
 | `"layoutSectionConfig"` | JSON array | Ordered layout section config |
@@ -325,6 +326,7 @@ All permitted keys are defined in `ALLOWED_STORAGE_KEYS` in `js/constants.js`. A
 | `ACK_DISMISSED_KEY` | _(defined in constants)_ | string | Acknowledgment dismissal state |
 | `"changeLog"` | _(raw string)_ | JSON | Changelog data |
 | `"chipMinCount"` | _(raw string)_ | number string | Minimum chip count |
+| `"chipMaxCount"` | _(raw string)_ | number string | Maximum chip count |
 | `"apiProviderOrder"` | _(raw string)_ | JSON array | API provider display order |
 | `"providerPriority"` | _(raw string)_ | JSON object | Provider priority weighting |
 | `"staktrakr.debug"` | _(raw string)_ | boolean string | Debug mode (staktrakr.com) |
