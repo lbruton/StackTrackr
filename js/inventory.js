@@ -3095,6 +3095,12 @@ const importCsv = (file, override = false) => {
           }
 
           saveInventory();
+          // STAK-421: Cancel the debounced sync push that saveInventory() just
+          // scheduled — override imports replace all local data, so pushing
+          // immediately would overwrite the remote vault before the user can review.
+          if (typeof scheduleSyncPush === 'function' && typeof scheduleSyncPush.cancel === 'function') {
+            scheduleSyncPush.cancel();
+          }
           renderTable();
           if (typeof renderActiveFilters === 'function') {
             renderActiveFilters();
@@ -3334,6 +3340,10 @@ const importNumistaCsv = (file, override = false) => {
             inventory = catalogManager.syncInventory(inventory);
           }
           saveInventory();
+          // STAK-421: Cancel debounced sync push after override import
+          if (typeof scheduleSyncPush === 'function' && typeof scheduleSyncPush.cancel === 'function') {
+            scheduleSyncPush.cancel();
+          }
           renderTable();
           if (typeof renderActiveFilters === 'function') renderActiveFilters();
           if (typeof updateStorageStats === 'function') updateStorageStats();
@@ -3760,6 +3770,11 @@ const importJson = (file, override = false) => {
           inventory = catalogManager.syncInventory(inventory);
         }
         saveInventory();
+        // STAK-421: Cancel debounced sync push — override import replaces all
+        // local data; pushing now would overwrite remote before user can review.
+        if (typeof scheduleSyncPush === 'function' && typeof scheduleSyncPush.cancel === 'function') {
+          scheduleSyncPush.cancel();
+        }
         renderTable();
         if (typeof renderActiveFilters === 'function') renderActiveFilters();
         if (typeof updateStorageStats === 'function') updateStorageStats();
