@@ -283,11 +283,11 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.33.50 &ndash; Spot Health Dot UX, 7-Day Trend, Timezone Formatting</strong>: Spot dot shows orange (syncing) instead of red on fresh installs. Dot respects cache TTL for green status. 7-day trend sorts by date for correct direction. Sync log timestamps respect timezone preference (STAK-429)</li>
     <li><strong>v3.33.49 &ndash; Import/Restore Completeness &amp; Cloud Backup Photos</strong>: Manual cloud backup now has an optional &ldquo;Include photos&rdquo; checkbox. ZIP and vault restore blocked during active sync. Wiki updated with snapshot terminology and restore warnings (STAK-427)</li>
     <li><strong>v3.33.48 &ndash; DiffModal Settings Fix &amp; Empty-Diff Silent Pull</strong>: DiffModal Apply button now correctly detects pending settings changes. Settings are included in selectedChanges instead of being silently dropped. Manifest-first pull returns silently when no changes detected (STAK-387, STAK-401, STAK-415, STAK-417)</li>
     <li><strong>v3.33.47 &ndash; Sync Scope &amp; Serialization</strong>: Cloud sync now syncs 44 keys across devices (up from 8) &mdash; all preferences, header buttons, feature toggles, and API credentials. Manifest-first pulls now compare and apply settings changes. Photos sync on all pull paths. Deleting all photos propagates deletion to remote (STAK-426)</li>
     <li><strong>v3.33.46 &ndash; Cloud Storage API Hardening</strong>: Upload validation catches failed Dropbox/pCloud/Box uploads. Backup list fetches all pages. Disconnect removes all cloud state. Delete-latest updates remote pointer. Full vault exports exclude OAuth tokens and credentials (STAK-425)</li>
-    <li><strong>v3.33.45 &ndash; FAQ Cloudflare Cookie Disclosure</strong>: FAQ now accurately discloses that Cloudflare may set a temporary infrastructure cookie for bot protection on the hosted site. Safe to block &mdash; does not affect the app (STAK-428)</li>
   `;
 };
 
