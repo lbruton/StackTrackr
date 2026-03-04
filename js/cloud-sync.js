@@ -3127,6 +3127,11 @@ window.showSyncUpdateModal = showSyncUpdateModal;
 window.showRestorePreviewModal = showRestorePreviewModal;
 window.pullWithPreview = pullWithPreview;
 window.computeInventoryHash = computeInventoryHash;
+
+// STAK-427: Read-only sync state accessor for restore isolation guards
+function isSyncActive() { return _syncRemoteChangeActive; }
+window.CloudSync = window.CloudSync || {};
+window.CloudSync.isSyncActive = isSyncActive;
 window.summarizeMetals = summarizeMetals;
 window.computeTotalWeight = computeTotalWeight;
 window.computeSettingsHash = computeSettingsHash;
