@@ -4003,12 +4003,16 @@
                 <details class="faq-item">
                   <summary class="faq-question">Does this app use cookies or tracking?</summary>
                   <div class="faq-answer">
-                    <p><strong>No cookies. No advertising SDKs. No tracking pixels.</strong> The app itself uses browser localStorage and IndexedDB solely to store your inventory and preferences on your own device.</p>
-                    <p>However, when you use the <strong>hosted version</strong> at staktrakr.com (served via Cloudflare Pages), <a href="https://www.cloudflare.com/web-analytics/" target="_blank" rel="noopener">Cloudflare Web Analytics</a> is active at the network edge. It collects aggregated, anonymous page view metrics — things like visit counts, countries, and browser types — to help the developer understand usage. Cloudflare does this without cookies and without building individual user profiles.</p>
-                    <p>No inventory data is ever included. If you download and run the app locally from a ZIP file, no analytics run at all.</p>
+                    <p><strong>StakTrakr itself sets no cookies.</strong> No advertising SDKs. No tracking pixels. The app uses browser localStorage and IndexedDB solely to store your inventory and preferences on your own device.</p>
+                    <p>However, when you use the <strong>hosted version</strong> at staktrakr.com (served via Cloudflare Pages), two things happen at the infrastructure level:</p>
+                    <ul>
+                      <li><strong>Cloudflare Web Analytics</strong> — collects aggregated, anonymous page view metrics (visit counts, countries, browser types) without cookies and without building individual user profiles. <a href="https://www.cloudflare.com/web-analytics/" target="_blank" rel="noopener">Learn more</a>.</li>
+                      <li><strong>Cloudflare infrastructure cookie</strong> — Cloudflare may set a temporary cookie (e.g. <code>__cf_bm</code>) for bot protection. This is set by Cloudflare's CDN, not by StakTrakr. It contains no inventory data, is not used for tracking, and <strong>can be safely blocked</strong> without affecting the app.</li>
+                    </ul>
+                    <p>No inventory data is ever included in any of the above. If you download and run the app locally from a ZIP file, none of this applies — no analytics, no cookies, nothing.</p>
                     <details class="faq-technical">
-                      <summary>What Cloudflare Web Analytics does and does not do</summary>
-                      <p><strong>Does not:</strong> set cookies · use localStorage · fingerprint individuals · share data with advertisers · track you across sites<br><strong>Does:</strong> log page views at the network edge · process IP addresses server-side (not stored individually) · report aggregated metrics to the site owner only</p>
+                      <summary>What Cloudflare does and does not do on the hosted site</summary>
+                      <p><strong>Does not:</strong> use localStorage · fingerprint individuals · share data with advertisers · track you across sites · access your inventory<br><strong>Does:</strong> log page views at the network edge · process IP addresses server-side (not stored individually) · report aggregated metrics to the site owner only · may set a temporary infrastructure cookie for bot protection (safe to block)</p>
                     </details>
                   </div>
                 </details>
