@@ -2840,11 +2840,11 @@ const showImportDiffReview = (parsedItems, sourceInfo, options, onComplete) => {
 
       inventory = DiffEngine.applySelectedChanges(inventory, selectedChanges);
 
-      // Apply tags for added items if pendingTagsByUuid provided
+      // Apply deferred tags for accepted changes (add + modify)
       if (options.pendingTagsByUuid && typeof addItemTag === 'function') {
-        const addedItems = selectedChanges.filter(function(c) { return c.type === 'add'; });
-        for (const change of addedItems) {
-          if (change.item) {
+        const tagEligible = selectedChanges.filter(function(c) { return c.type === 'add' || c.type === 'modify'; });
+        for (const change of tagEligible) {
+          if (change.item && change.item.uuid) {
             const tags = options.pendingTagsByUuid.get(change.item.uuid);
             if (tags && tags.length) {
               tags.forEach(function(tag) { addItemTag(change.item.uuid, tag, false); });
