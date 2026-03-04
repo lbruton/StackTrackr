@@ -565,10 +565,32 @@ if (document.readyState === 'complete') {
 
 function cloudDisconnect(provider) {
   cloudClearToken(provider);
-  localStorage.removeItem('cloud_last_backup');
-  if (provider === 'dropbox') {
-    localStorage.removeItem('cloud_dropbox_account_id');
+
+  // Clear all cloud state keys
+  var keysToRemove = [
+    'cloud_last_backup',
+    'cloud_dropbox_account_id',
+    'cloud_vault_password',
+    'cloud_sync_enabled',
+    'cloud_sync_device_id',
+    'cloud_sync_cursor',
+    'cloud_sync_last_push',
+    'cloud_sync_last_pull',
+    'cloud_sync_override_backup',
+    'cloud_sync_mode',
+    'cloud_sync_local_modified',
+    'cloud_sync_migrated',
+    'staktrakr_oauth_result',
+  ];
+  for (var i = 0; i < keysToRemove.length; i++) {
+    localStorage.removeItem(keysToRemove[i]);
   }
+
+  // Cancel any pending sync push
+  if (typeof scheduleSyncPush === 'function' && typeof scheduleSyncPush.cancel === 'function') {
+    scheduleSyncPush.cancel();
+  }
+
   var providerName = (CLOUD_PROVIDERS[provider] && CLOUD_PROVIDERS[provider].name) || provider;
   recordCloudActivity({ action: 'disconnect', provider: provider, result: 'success', detail: 'Disconnected from ' + providerName });
   if (typeof syncCloudUI === 'function') syncCloudUI();
@@ -677,7 +699,7 @@ async function cloudUploadVault(provider, fileBytes, opts) {
       autorename: true,
       mute: true,
     });
-    await fetch('https://content.dropboxapi.com/2/files/upload', {
+    var vaultResp = await fetch('https://content.dropboxapi.com/2/files/upload', {
       method: 'POST',
       headers: {
         Authorization: 'Bearer ' + token,
@@ -686,6 +708,7 @@ async function cloudUploadVault(provider, fileBytes, opts) {
       },
       body: fileBytes,
     });
+    if (!vaultResp.ok) throw new Error('Vault upload failed: ' + vaultResp.status);
 
     // Upload latest.json pointer (skip for manual backups — STAK-419)
     if (!(opts && opts.skipLatestUpdate)) {
@@ -702,7 +725,7 @@ async function cloudUploadVault(provider, fileBytes, opts) {
         autorename: false,
         mute: true,
       });
-      await fetch('https://content.dropboxapi.com/2/files/upload', {
+      var latestResp = await fetch('https://content.dropboxapi.com/2/files/upload', {
         method: 'POST',
         headers: {
           Authorization: 'Bearer ' + token,
@@ -711,26 +734,29 @@ async function cloudUploadVault(provider, fileBytes, opts) {
         },
         body: latestBytes,
       });
+      if (!latestResp.ok) throw new Error('Latest pointer upload failed: ' + latestResp.status);
     }
   } else if (provider === 'pcloud') {
     var formData = new FormData();
     formData.append('file', new Blob([fileBytes]), filename);
-    await fetch('https://api.pcloud.com/uploadfile?path=' +
+    var pcloudResp = await fetch('https://api.pcloud.com/uploadfile?path=' +
       encodeURIComponent(config.folder) +
       '&renameifexists=1&nopartial=1&access_token=' + encodeURIComponent(token), {
       method: 'POST',
       body: formData,
     });
+    if (!pcloudResp.ok) throw new Error('pCloud upload failed: ' + pcloudResp.status);
   } else if (provider === 'box') {
     var folderId = await cloudEnsureFolder(provider, token);
     var fd = new FormData();
     fd.append('file', new Blob([fileBytes]), filename);
     fd.append('attributes', JSON.stringify({ name: filename, parent: { id: folderId } }));
-    await fetch('https://upload.box.com/api/2.0/files/content', {
+    var boxResp = await fetch('https://upload.box.com/api/2.0/files/content', {
       method: 'POST',
       headers: { Authorization: 'Bearer ' + token },
       body: fd,
     });
+    if (!boxResp.ok) throw new Error('Box upload failed: ' + boxResp.status);
   }
 
   var safeCount = cloudSafeItemCount();
@@ -823,6 +849,30 @@ async function cloudListBackups(provider, type) {
     }
     var data = await resp.json();
     var entries = data.entries || [];
+
+    // Pagination: fetch remaining pages if Dropbox has more
+    while (data.has_more) {
+      try {
+        var contResp = await fetch('https://api.dropboxapi.com/2/files/list_folder/continue', {
+          method: 'POST',
+          headers: {
+            Authorization: 'Bearer ' + token,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ cursor: data.cursor }),
+        });
+        if (!contResp.ok) {
+          debugLog('[CloudStorage] Pagination failed at', entries.length, 'entries:', contResp.status);
+          break;
+        }
+        data = await contResp.json();
+        entries = entries.concat(data.entries || []);
+      } catch (pageErr) {
+        debugLog('[CloudStorage] Pagination error:', pageErr.message);
+        break;
+      }
+    }
+
     for (var i = 0; i < entries.length; i++) {
       var entry = entries[i];
       if (entry['.tag'] === 'file' && entry.name.endsWith('.stvault')) {
@@ -911,6 +961,60 @@ async function cloudDeleteBackup(provider, filename) {
     } catch (_) { /* ignore */ }
     if (latest && latest.filename === filename) {
       localStorage.removeItem('cloud_last_backup');
+
+      // Update remote latest pointer: point to next most recent, or delete
+      try {
+        var remaining = await cloudListBackups(provider);
+        if (remaining.length > 0) {
+          var newest = remaining[0];
+          var updatedLatest = {
+            filename: newest.name,
+            timestamp: new Date(newest.server_modified).getTime(),
+            appVersion: cloudSafeAppVersion(),
+            itemCount: cloudSafeItemCount(),
+          };
+          var updatedBytes = new TextEncoder().encode(JSON.stringify(updatedLatest));
+          var updatedArg = JSON.stringify({
+            path: config.folder + '/backups/' + CLOUD_LATEST_FILENAME,
+            mode: 'overwrite',
+            autorename: false,
+            mute: true,
+          });
+          var latResp = await fetch('https://content.dropboxapi.com/2/files/upload', {
+            method: 'POST',
+            headers: {
+              Authorization: 'Bearer ' + token,
+              'Content-Type': 'application/octet-stream',
+              'Dropbox-API-Arg': updatedArg,
+            },
+            body: updatedBytes,
+          });
+          if (latResp.ok) {
+            localStorage.setItem('cloud_last_backup', JSON.stringify({
+              provider: provider,
+              timestamp: updatedLatest.timestamp,
+              filename: updatedLatest.filename,
+              appVersion: updatedLatest.appVersion,
+              itemCount: updatedLatest.itemCount,
+            }));
+          } else {
+            debugLog('[CloudStorage] Latest pointer update failed:', latResp.status);
+          }
+        } else {
+          // No backups remain — delete the latest.json pointer
+          await fetch('https://api.dropboxapi.com/2/files/delete_v2', {
+            method: 'POST',
+            headers: {
+              Authorization: 'Bearer ' + token,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ path: config.folder + '/backups/' + CLOUD_LATEST_FILENAME }),
+          });
+        }
+      } catch (latestErr) {
+        debugLog('[CloudStorage] Latest pointer update after delete failed:', latestErr.message);
+      }
+
       if (typeof syncCloudUI === 'function') syncCloudUI();
     }
 

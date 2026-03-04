@@ -290,7 +290,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-12 - STACK-38/STACK-31: Responsive card view + mobile layout
  */
 
-const APP_VERSION = "3.33.45";
+const APP_VERSION = "3.33.46";
 
 /**
  * Numista metadata cache TTL: 30 days in milliseconds.
@@ -924,6 +924,30 @@ const ALLOWED_STORAGE_KEYS = [
   "cloud_sync_migrated",                               // string: "v2" — cloud folder migration flag (flat → /sync/ + /backups/)
   "cloud_backup_history_depth",                        // string: "3"|"5"|"10"|"20" — max cloud backups to retain
   "manifestPruningThreshold",                          // number string: max sync cycles to retain in manifest before pruning older entries (STAK-184)
+];
+
+/**
+ * Keys excluded from portable full-vault exports.
+ * These remain in ALLOWED_STORAGE_KEYS (so cleanupStorage doesn't delete them)
+ * but are stripped from collectVaultData('full') to prevent shipping live
+ * OAuth tokens, vault passwords, and device-specific sync state.
+ * @constant {string[]}
+ */
+const VAULT_EXCLUDE_KEYS = [
+  'cloud_token_dropbox',
+  'cloud_token_pcloud',
+  'cloud_token_box',
+  'cloud_dropbox_account_id',
+  'cloud_vault_password',
+  'cloud_sync_device_id',
+  'cloud_sync_cursor',
+  'cloud_sync_last_push',
+  'cloud_sync_last_pull',
+  'cloud_sync_override_backup',
+  'cloud_sync_mode',
+  'cloud_sync_local_modified',
+  'cloud_sync_migrated',
+  'staktrakr_oauth_result',
 ];
 
 // =============================================================================
