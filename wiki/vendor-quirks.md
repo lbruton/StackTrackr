@@ -2,8 +2,8 @@
 title: Vendor Quirks
 category: infrastructure
 owner: staktrakr
-lastUpdated: v3.33.25
-date: 2026-03-02
+lastUpdated: v3.33.50
+date: 2026-03-04
 sourceFiles:
   - js/retail.js
   - js/api.js
@@ -112,6 +112,14 @@ Threshold constants:
 In the daily history chart (`openRetailViewModal`), when a vendor entry has `inStock: false`, the chart dataset returns `null` for that day. `spanGaps: false` is used so Chart.js renders an actual gap in the line, not an interpolated bridge. This is the correct behavior — carried values would misrepresent availability.
 
 The intraday chart uses `spanGaps: true` because short polling gaps are expected and bridging is preferred visually.
+
+### Retail Trend Direction
+
+`_computeRetailTrend(slug)` in `retail.js` computes the trend arrow shown on retail cards. It sorts the history array by date descending before comparing the two most recent entries, ensuring correct trend direction regardless of how `retailPriceHistory[slug]` is ordered in memory. Prior to v3.33.50, the function assumed `history[0]` was always the latest entry, which produced incorrect trend arrows when the array arrived in ascending order.
+
+### Sync Log Time Formatting
+
+The retail sync log table's Time column uses timezone-aware formatting via `TIMEZONE_KEY` from `localStorage`, matching the `_fmtIntradayTime` pattern used in `retail-view-modal.js`. If the stored timezone is invalid, it falls back to the browser's default locale formatting. This ensures consistent time display across the sync log and the retail view modal's intraday table.
 
 ### Price Field Shape Differences by Context
 
