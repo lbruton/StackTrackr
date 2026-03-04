@@ -2,7 +2,7 @@
 title: Cloud Sync
 category: frontend
 owner: staktrakr
-lastUpdated: v3.33.34
+lastUpdated: v3.33.41
 date: 2026-03-03
 sourceFiles:
   - js/cloud-sync.js
@@ -13,7 +13,7 @@ relatedPages:
 ---
 # Cloud Sync
 
-> **Last updated:** v3.33.34 — 2026-03-03
+> **Last updated:** v3.33.41 — 2026-03-03
 > **Source files:** `js/cloud-sync.js`, `js/cloud-storage.js`
 
 ---
@@ -168,10 +168,10 @@ getSyncPasswordSilent()
 | `cloudStoreToken(provider, tokenData)` | `(string, object) → void` | Persist token to localStorage under `cloud_token_<provider>`. |
 | `cloudClearToken(provider)` | `(string) → void` | Remove stored token. |
 | `cloudDisconnect(provider)` | `(string) → void` | Clear token + account ID + last backup; update UI. |
-| `cloudUploadVault(provider, fileBytes)` | `(string, ArrayBuffer) → Promise<void>` | Manual backup upload. Writes versioned `.stvault` file + `staktrakr-latest.json` pointer. Records to activity log. |
+| `cloudUploadVault(provider, fileBytes, opts)` | `(string, ArrayBuffer, object?) → Promise<void>` | Manual backup upload. Writes versioned `.stvault` file + `staktrakr-latest.json` pointer (unless `opts.skipLatestUpdate` is true). Records to activity log. |
 | `cloudDownloadVault(provider)` | `(string) → Promise<Uint8Array>` | Download latest backup by pointer, or by listing if no pointer. |
 | `cloudDownloadVaultByName(provider, filename)` | `(string, string) → Promise<Uint8Array>` | Download a specific named backup file. |
-| `cloudListBackups(provider)` | `(string) → Promise<object[]>` | List `.stvault` files in the provider folder, sorted newest-first. |
+| `cloudListBackups(provider, type)` | `(string, string?) → Promise<object[]>` | List `.stvault` files in the provider's backups folder, sorted newest-first. Optional `type` param filters by prefix: `'manual'` (matches `MANUAL_BACKUP_PREFIX`), `'sync'` (matches `SYNC_BACKUP_PREFIX`), or `undefined` (all backups). |
 | `cloudDeleteBackup(provider, filename)` | `(string, string) → Promise<void>` | Delete a specific backup file; clears `cloud_last_backup` if it matches. |
 | `cloudCheckConflict(provider)` | `(string) → Promise<object>` | Compare remote `staktrakr-latest.json` timestamp against local last-backup record. Returns `{conflict: bool, ...}`. |
 | `recordCloudActivity(entry)` | `(object) → void` | Append an entry to the cloud activity log (capped at 500 entries, purges >180 days old). |
@@ -181,6 +181,7 @@ getSyncPasswordSilent()
 | `cloudCachePassword(provider, password)` | `(string, string) → void` | XOR-obfuscated session-only password cache (sessionStorage). Starts idle lock timer. |
 | `cloudGetCachedPassword(provider)` | `(string) → string\|null` | Retrieve session-cached password. |
 | `cloudClearCachedPassword()` | `() → void` | Clear session cache and stop idle lock timer. |
+| `cloudPruneBackups(provider, maxKeep, type)` | `(string, number, string?) → Promise<void>` | Prune old backups, keeping only the newest `maxKeep`. Defaults to `type='sync'` so manual backups are never auto-pruned. |
 | `showCloudToast(message, durationMs?)` | `(string, number?) → void` | Display a transient toast notification. |
 
 ---
@@ -205,7 +206,7 @@ saveInventory()
             ├─ Upload: /sync/staktrakr-sync.json (metadata pointer, includes inventoryHash, settingsHash)
             ├─ buildAndUploadManifest() — field-level changelog (non-fatal)
             ├─ syncSetLastPush() + syncSetCursor()
-            ├─ Auto-prune old backups (fire-and-forget)
+            ├─ Auto-prune old sync backups: cloudPruneBackups(provider, max, 'sync') (fire-and-forget)
             └─ Broadcast sync-push-complete to other tabs
 ```
 
@@ -358,14 +359,28 @@ The flag is purely one-shot: it is consumed (cleared) at the top of the next `pu
 
 ## Backup/Restore Relationship
 
-Cloud sync and manual backups are parallel systems:
+Cloud sync and manual backups are parallel systems with distinct file prefixes and independent lifecycles (STAK-419, v3.33.41):
 
-| Operation | File location | Who calls |
-|---|---|---|
-| Auto-sync push | `/StakTrakr/sync/staktrakr-sync.stvault` | `pushSyncVault()` — triggered by `saveInventory()` debounce |
-| Backup-before-overwrite | `/StakTrakr/backups/pre-sync-<ts>.stvault` | Inside `pushSyncVault()`, each push cycle |
-| Manual backup | `/StakTrakr/staktrakr-backup-<ts>.stvault` + `staktrakr-latest.json` | `cloudUploadVault()` — user-initiated |
-| Override backup (pre-pull snapshot) | `cloud_sync_override_backup` localStorage key | `syncSaveOverrideBackup()` — before every pull |
+| Operation | File location | Prefix | Who calls |
+|---|---|---|---|
+| Auto-sync push | `/StakTrakr/sync/staktrakr-sync.stvault` | — | `pushSyncVault()` — triggered by `saveInventory()` debounce |
+| Backup-before-overwrite | `/StakTrakr/backups/pre-sync-<ts>.stvault` | `SYNC_BACKUP_PREFIX` | Inside `pushSyncVault()`, each push cycle |
+| Manual backup | `/StakTrakr/backups/staktrakr-backup-<ts>.stvault` | `MANUAL_BACKUP_PREFIX` | `cloudUploadVault()` — user-initiated |
+| Override backup (pre-pull snapshot) | `cloud_sync_override_backup` localStorage key | — | `syncSaveOverrideBackup()` — before every pull |
+
+### Two-tier backup isolation (STAK-419, v3.33.41)
+
+Manual backups and sync snapshots are separated by filename prefix and treated independently:
+
+- **`MANUAL_BACKUP_PREFIX` (`staktrakr-backup-`)** — user-initiated backups via the "Backup" button. These are never auto-pruned by the sync system. The user must delete them explicitly.
+- **`SYNC_BACKUP_PREFIX` (`pre-sync-`)** — automatic pre-push snapshots created by `pushSyncVault()`. These are pruned by `cloudPruneBackups()` which defaults to `type='sync'`.
+
+**Key behavioral changes:**
+
+- `cloudListBackups(provider, type)` accepts an optional `type` parameter (`'manual'` | `'sync'` | `undefined`) for client-side prefix filtering.
+- `cloudPruneBackups(provider, maxKeep, type)` defaults to `type='sync'`, so auto-pruning only touches sync snapshots. Manual backups are preserved regardless of the backup history depth setting.
+- `cloudUploadVault(provider, fileBytes, opts)` accepts an `opts` parameter. When `opts.skipLatestUpdate` is true, the `cloud_last_backup` pointer is not updated — this prevents manual backups from interfering with sync state tracking.
+- The vault modal password is not cached for manual backups (password caching via `cloudCachePassword` is skipped for `isManualBackup: true` contexts). Each manual backup requires the user to re-enter their vault password.
 
 The override backup is the safety net for "Keep Theirs" conflicts or unwanted sync pulls. It restores raw localStorage strings (not Dropbox files) directly back to the pre-pull state.
 
@@ -386,7 +401,7 @@ The override backup is the safety net for "Keep Theirs" conflicts or unwanted sy
 | `cloud_sync_override_backup` | JSON snapshot of `SYNC_SCOPE_KEYS` taken before a pull |
 | `cloud_sync_migrated` | `'v2'` when flat-layout migration is complete |
 | `cloud_token_<provider>` | JSON: `{access_token, refresh_token, expires_at}` |
-| `cloud_last_backup` | JSON: last manual backup metadata (for manual backup UI) |
+| `cloud_last_backup` | JSON: last backup metadata (only written by sync operations; manual backups with `skipLatestUpdate` do not update this key) |
 | `cloud_activity_log` | JSON array: cloud activity entries (max 500, 180-day TTL) |
 | `cloud_kraken_seen` | `'true'` after first successful backup (suppresses easter-egg toast) |
 

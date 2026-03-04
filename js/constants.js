@@ -290,7 +290,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-12 - STACK-38/STACK-31: Responsive card view + mobile layout
  */
 
-const APP_VERSION = "3.33.40";
+const APP_VERSION = "3.33.41";
 
 /**
  * Numista metadata cache TTL: 30 days in milliseconds.
@@ -792,6 +792,12 @@ const CLOUD_LATEST_FILENAME = 'staktrakr-latest.json';
 const CLOUD_BACKUP_HISTORY_KEY = 'cloud_backup_history_depth';
 const CLOUD_BACKUP_HISTORY_DEFAULT = 5;
 const CLOUD_BACKUP_HISTORY_OPTIONS = [3, 5, 10, 20];
+
+/** Filename prefix for user-initiated manual backups */
+const MANUAL_BACKUP_PREFIX = 'staktrakr-backup-';
+
+/** Filename prefix for auto-sync pre-push snapshot backups */
+const SYNC_BACKUP_PREFIX = 'pre-sync-';
 
 /**
  * Keys included in a sync vault (excludes API keys, tokens, spot history).
@@ -1735,6 +1741,8 @@ if (typeof window !== "undefined") {
   window.SYNC_MANIFEST_PATH = SYNC_MANIFEST_PATH;
   window.SYNC_MANIFEST_PATH_LEGACY = SYNC_MANIFEST_PATH_LEGACY;
   window.SYNC_BACKUP_FOLDER = SYNC_BACKUP_FOLDER;
+  window.MANUAL_BACKUP_PREFIX = MANUAL_BACKUP_PREFIX;
+  window.SYNC_BACKUP_PREFIX = SYNC_BACKUP_PREFIX;
   window.CLOUD_LATEST_FILENAME = CLOUD_LATEST_FILENAME;
   window.CLOUD_BACKUP_HISTORY_KEY = CLOUD_BACKUP_HISTORY_KEY;
   window.CLOUD_BACKUP_HISTORY_DEFAULT = CLOUD_BACKUP_HISTORY_DEFAULT;

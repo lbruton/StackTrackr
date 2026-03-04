@@ -1,5 +1,6 @@
 ## What's New
 
+- **Cloud Backup/Restore Fix (v3.33.41)**: Manual backups and sync snapshots now separated — auto-prune only deletes sync snapshots, restore list shows manual backups by default, Backup button always prompts for password. Prevents accidental deletion of user manual backups (STAK-419).
 - **Simplify Market Price Display (v3.33.40)**: Removed confidence score badges and out-of-stock styling from market vendor chips. Vendors with valid prices display equally. Anomalous prices silently filtered via 40% median deviation threshold. Monument Metals false OOS fixed (STAK-404).
 - **Summary Bar Items + Weight (v3.33.39)**: Item count and total weight now display in the portfolio summary bar alongside Buy/Melt/Market/G/L — shows filtered/total format when filters active, total weight in troy ounces. Bottom footer item count removed (STAK-418).
 - **Sync Poll, Settings Sync, DiffModal Fixes (v3.33.38)**: Sync poll detects local-newer inventory and pushes instead of pulling. Settings changes (theme, etc.) now sync between devices — poll compares both inventory and settings hashes. "No changes detected" popup eliminated. DiffModal Apply stays enabled for settings-only apply (STAK-414, STAK-415, STAK-416, STAK-417).
