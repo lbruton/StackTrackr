@@ -2245,14 +2245,23 @@ function showRestorePreviewModal(diffResult, settingsDiff, remotePayload, remote
             // Apply only the user-selected changes via DiffEngine
             var newInv = DiffEngine.applySelectedChanges(inventory, selectedChanges);
 
-            // Build settings changes from settingsDiff
+            // Build settings changes from selectedChanges (DiffModal includes them as type:'setting')
             var settingsChanges = null;
-            if (settingsDiff && settingsDiff.changed && settingsDiff.changed.length > 0) {
+            if (selectedChanges) {
+              var extracted = [];
+              for (var i = 0; i < selectedChanges.length; i++) {
+                if (selectedChanges[i].type === 'setting') {
+                  extracted.push({ key: selectedChanges[i].key, remoteVal: selectedChanges[i].value });
+                }
+              }
+              if (extracted.length > 0) settingsChanges = extracted;
+            } else if (settingsDiff && settingsDiff.changed && settingsDiff.changed.length > 0) {
+              // Fallback for null selectedChanges (full overwrite / empty diff case)
               settingsChanges = [];
-              for (var i = 0; i < settingsDiff.changed.length; i++) {
+              for (var j = 0; j < settingsDiff.changed.length; j++) {
                 settingsChanges.push({
-                  key: settingsDiff.changed[i].key,
-                  remoteVal: settingsDiff.changed[i].remoteVal
+                  key: settingsDiff.changed[j].key,
+                  remoteVal: settingsDiff.changed[j].remoteVal
                 });
               }
             }
@@ -2549,8 +2558,15 @@ async function pullWithPreview(remoteMeta) {
             && (manifestDiff.modified || []).length === 0;
           var _mNoSettingsChanges = !manifestSettingsDiff || !manifestSettingsDiff.changed || manifestSettingsDiff.changed.length === 0;
           if (_mNoChanges && _mNoSettingsChanges) {
-            console.warn('[CloudSync] Manifest has no item or settings changes — falling through to vault-first');
-            throw new Error('Manifest empty: falling through to vault-first for full check');
+            // STAK-387: Silent return — no vault download needed when manifest confirms no changes
+            syncSetLastPull({
+              syncId: remoteMeta ? remoteMeta.syncId : null,
+              timestamp: remoteMeta ? remoteMeta.timestamp : Date.now(),
+              rev: remoteMeta ? remoteMeta.rev : null,
+            });
+            logCloudSyncActivity('auto_sync_pull', 'success', 'No changes — pull recorded silently (manifest)');
+            updateSyncStatusIndicator('idle', 'just now');
+            return;
           }
 
           // STAK-402 + STAK-412: Verify the manifest diff is complete by checking
