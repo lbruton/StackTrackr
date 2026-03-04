@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.49] - 2026-03-04
+
+### Fixed — Import/Restore Completeness & Cloud Backup Photos (STAK-427)
+
+- **Added**: "Include photos" checkbox in manual cloud backup — uploads encrypted image vault alongside inventory when checked; failure is non-fatal (STAK-427)
+- **Added**: `window.CloudSync.isSyncActive()` read-only accessor for restore isolation guards (STAK-427)
+- **Fixed**: ZIP restore and vault restore now blocked while cloud sync pull is active — shows warning toast instead of corrupting mid-sync state (STAK-427)
+- **Docs**: Wiki updated with Snapshot Terminology table, ZIP restore destructiveness warning, and manual backup image gap callout (STAK-427)
+
+---
+
 ## [3.33.48] - 2026-03-04
 
 ### Fixed — DiffModal Settings Fix & Empty-Diff Silent Pull (STAK-387)

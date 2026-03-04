@@ -497,6 +497,11 @@ async function vaultEncryptToBytesScoped(password) {
  * @returns {Promise<void>}
  */
 async function vaultDecryptAndRestore(fileBytes, password) {
+  // STAK-427: Block restore while cloud sync is applying remote changes
+  if (window.CloudSync && window.CloudSync.isSyncActive()) {
+    showToast('Cloud sync is in progress — please wait a moment and try again.', 'warning');
+    return;
+  }
   var payload = await vaultDecryptToData(fileBytes, password);
   await restoreVaultData(payload);
 }
@@ -1027,7 +1032,10 @@ function openVaultModal(mode, fileOrOpts) {
 
   if (mode === 'cloud-export') {
     effectiveMode = 'export';
-    _cloudContext = { provider: fileOrOpts && fileOrOpts.provider ? fileOrOpts.provider : 'dropbox' };
+    _cloudContext = {
+      provider: fileOrOpts && fileOrOpts.provider ? fileOrOpts.provider : 'dropbox',
+      isManualBackup: fileOrOpts && fileOrOpts.isManualBackup ? true : false,
+    };
   } else if (mode === 'cloud-import') {
     effectiveMode = 'import';
     if (fileOrOpts && fileOrOpts.fileBytes) {
@@ -1065,6 +1073,40 @@ function openVaultModal(mode, fileOrOpts) {
       actionBtn.className = "btn";
     }
     _vaultPendingFile = null;
+
+    // STAK-427: "Include photos" checkbox for manual cloud backup
+    var existingPhotoRow = safeGetElement("vaultIncludePhotosRow");
+    if (existingPhotoRow) existingPhotoRow.remove();
+    if (_cloudContext && _cloudContext.isManualBackup) {
+      // Async check for user photos — inject checkbox if any exist
+      (function () {
+        try {
+          var req = indexedDB.open('StakTrakrImages', 1);
+          req.onsuccess = function (ev) {
+            var db = ev.target.result;
+            if (!db.objectStoreNames.contains('userImages')) { db.close(); return; }
+            var tx = db.transaction('userImages', 'readonly');
+            var countReq = tx.objectStore('userImages').count();
+            countReq.onsuccess = function () {
+              db.close();
+              if (countReq.result > 0) {
+                var row = document.createElement('div');
+                row.id = 'vaultIncludePhotosRow';
+                row.style.cssText = 'margin:8px 0;display:flex;align-items:center;gap:8px;';
+                row.innerHTML = '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.9em;">' +
+                  '<input type="checkbox" id="vaultIncludePhotos"> Include photos (' + countReq.result + ' image' + (countReq.result === 1 ? '' : 's') + ')</label>';
+                // Insert before action button row
+                var actionsEl = actionBtn ? actionBtn.parentElement : null;
+                if (actionsEl && actionsEl.parentElement) {
+                  actionsEl.parentElement.insertBefore(row, actionsEl);
+                }
+              }
+            };
+          };
+          req.onerror = function () {}; // IDB unavailable — skip checkbox
+        } catch (_) {}
+      })();
+    }
   } else {
     var importTitle = _cloudContext ? "Cloud Restore — Enter Password" : "Import Encrypted Backup";
     if (titleEl) titleEl.textContent = importTitle;
@@ -1121,6 +1163,9 @@ function closeVaultModal() {
   _vaultPendingFile = null;
   _vaultPendingImageFile = null;
   _cloudContext = null;
+  // STAK-427: Remove dynamic photo checkbox
+  var photoRow = document.getElementById('vaultIncludePhotosRow');
+  if (photoRow) photoRow.remove();
   closeModalById("vaultModal");
 }
 
@@ -1177,7 +1222,43 @@ async function handleVaultAction() {
         var fileBytes = await vaultEncryptToBytes(password);
         showVaultStatus("info", "Uploading\u2026");
         await cloudUploadVault(_cloudContext.provider, fileBytes, _cloudContext.isManualBackup ? { skipLatestUpdate: true } : undefined);
-        showVaultStatus("success", "Backup uploaded successfully.");
+
+        // STAK-427: Upload image vault if "Include photos" checkbox is checked
+        var includePhotos = false;
+        var photoCheckbox = document.getElementById('vaultIncludePhotos');
+        if (photoCheckbox && photoCheckbox.checked) includePhotos = true;
+        var photoMsg = '';
+        if (includePhotos) {
+          try {
+            showVaultStatus("info", "Uploading photos\u2026");
+            var imgData = typeof collectAndHashImageVault === 'function' ? await collectAndHashImageVault() : null;
+            if (imgData && imgData.payload) {
+              var imageBytes = await vaultEncryptImageVault(password, imgData.payload);
+              var token = typeof cloudGetToken === 'function' ? await cloudGetToken(_cloudContext.provider) : null;
+              if (token && typeof SYNC_IMAGES_PATH !== 'undefined') {
+                var imgArg = JSON.stringify({ path: SYNC_IMAGES_PATH, mode: 'overwrite', autorename: false, mute: true });
+                var imgResp = await fetch('https://content.dropboxapi.com/2/files/upload', {
+                  method: 'POST',
+                  headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/octet-stream', 'Dropbox-API-Arg': imgArg },
+                  body: imageBytes,
+                });
+                if (imgResp.ok) {
+                  photoMsg = ' (with ' + imgData.imageCount + ' photo' + (imgData.imageCount === 1 ? '' : 's') + ')';
+                } else {
+                  throw new Error('Image upload returned ' + imgResp.status);
+                }
+              }
+            }
+          } catch (imgErr) {
+            console.warn('[Vault] Image vault upload failed (non-fatal):', imgErr.message || imgErr);
+            photoMsg = '';
+            if (typeof showToast === 'function') {
+              showToast('Backup saved, but photos could not be uploaded. Use ZIP backup for full photo coverage.', 'warning');
+            }
+          }
+        }
+
+        showVaultStatus("success", "Backup uploaded successfully" + photoMsg + ".");
         // Cache password for this browser session
         if (typeof cloudCachePassword === 'function' && !(_cloudContext && _cloudContext.isManualBackup)) {
           cloudCachePassword(_cloudContext.provider, password);
