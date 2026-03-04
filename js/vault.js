@@ -372,7 +372,13 @@ async function restoreVaultData(payload) {
     // Only restore recognized keys
     if (ALLOWED_STORAGE_KEYS.indexOf(key) !== -1) {
       try {
-        localStorage.setItem(key, data[key]);
+        // STAK-421: Compress before writing — raw vault payloads can exceed
+        // localStorage quota (e.g. metalSpotHistory at 9 MB uncompressed).
+        var value = data[key];
+        if (typeof __compressIfNeeded === 'function') {
+          value = __compressIfNeeded(value);
+        }
+        localStorage.setItem(key, value);
       } catch (e) {
         debugLog("Vault: could not write key", key, e);
       }
