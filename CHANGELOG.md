@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.48] - 2026-03-04
+
+### Fixed — DiffModal Settings Fix & Empty-Diff Silent Pull (STAK-387)
+
+- **Fixed**: DiffModal Apply button now correctly detects pending settings changes — was checking `.length` on an object instead of `.changed.length` (STAK-401, STAK-415)
+- **Fixed**: DiffModal Apply handler now includes settings entries in selectedChanges, preventing settings from being silently dropped on restore (STAK-387)
+- **Fixed**: Manifest-first pull returns silently when both item diff and settings diff are empty — no unnecessary vault download or DiffModal (STAK-417)
+
+---
+
 ## [3.33.47] - 2026-03-04
 
 ### Changed — Sync Scope & Serialization (STAK-426)
