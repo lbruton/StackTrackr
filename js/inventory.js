@@ -2931,6 +2931,7 @@ const importCsv = (file, override = false) => {
 
         const supportedMetals = ['Silver', 'Gold', 'Platinum', 'Palladium'];
         const skippedNonPM = [];
+        const pendingTagsByUuid = new Map();
 
         for (const row of results.data) {
           processed++;
@@ -3033,19 +3034,15 @@ const importCsv = (file, override = false) => {
 
           imported.push(item);
 
-          // STAK-126: Import tags from CSV
-          if (csvTags && typeof addItemTag === 'function') {
-            csvTags.split(';').map(t => t.trim()).filter(Boolean).forEach(tag => {
-              addItemTag(item.uuid, tag, false);
-            });
+          // STAK-126 / STAK-424: Collect tags but defer persistence until import confirmed
+          if (csvTags) {
+            const tagList = csvTags.split(';').map(t => t.trim()).filter(Boolean);
+            if (tagList.length) pendingTagsByUuid.set(item.uuid, tagList);
           }
 
           importedCount++;
           updateImportProgress(processed, importedCount, totalRows);
         }
-
-        // STAK-126: Persist any imported tags
-        if (typeof saveItemTags === 'function') saveItemTags();
 
         endImportProgress();
 
@@ -3095,6 +3092,16 @@ const importCsv = (file, override = false) => {
           }
 
           saveInventory();
+          // STAK-424: Apply deferred tags after override confirmation
+          if (pendingTagsByUuid.size > 0 && typeof addItemTag === 'function') {
+            for (const item of imported) {
+              const tags = pendingTagsByUuid.get(item.uuid);
+              if (tags && tags.length) {
+                tags.forEach(tag => addItemTag(item.uuid, tag, false));
+              }
+            }
+            if (typeof saveItemTags === 'function') saveItemTags();
+          }
           // STAK-421: Cancel the debounced sync push that saveInventory() just
           // scheduled — override imports replace all local data, so pushing
           // immediately would overwrite the remote vault before the user can review.
@@ -3118,6 +3125,7 @@ const importCsv = (file, override = false) => {
         // --- Merge path: use shared DiffEngine + DiffModal helper ---
         showImportDiffReview(imported, { type: 'csv', label: file.name }, {
           validationResult: _validationResult,
+          pendingTagsByUuid: pendingTagsByUuid,
         }, function(summary) {
           debugLog('importCsv DiffEngine complete', summary.added, 'added', summary.modified, 'modified', summary.deleted, 'deleted');
         });
@@ -3474,7 +3482,7 @@ const exportCsv = () => {
   const headers = [
     "Date","Metal","Type","Name","Year","Qty","Weight(oz)","Weight Unit","Purity",
     "Purchase Price","Melt Value","Retail Price","Gain/Loss",
-    "Purchase Location","N#","PCGS #","Grade","Grading Authority","Cert #","Serial Number","Notes","UUID",
+    "Purchase Location","Storage Location","N#","PCGS #","Grade","Grading Authority","Cert #","Serial Number","Notes","Tags","UUID",
     "Obverse Image URL","Reverse Image URL",
     "Disposition Type","Disposition Date","Disposition Amount","Realized Gain/Loss"
   ];
@@ -3506,6 +3514,7 @@ const exportCsv = () => {
       formatCurrency(i.marketValue || 0),
       gainLoss !== null ? formatCurrency(gainLoss) : '—',
       i.purchaseLocation,
+      i.storageLocation || '',
       i.numistaId || '',
       i.pcgsNumber || '',
       i.grade || '',
@@ -3513,6 +3522,7 @@ const exportCsv = () => {
       i.certNumber || '',
       i.serialNumber || '',
       i.notes || '',
+      typeof getItemTags === 'function' ? getItemTags(i.uuid).join('; ') : '',
       i.uuid || '',
       i.obverseImageUrl || '',
       i.reverseImageUrl || '',
@@ -3852,6 +3862,7 @@ const exportJson = () => {
     marketValue: item.marketValue || 0,
     purchaseLocation: item.purchaseLocation,
     storageLocation: item.storageLocation,
+    tags: typeof getItemTags === 'function' ? getItemTags(item.uuid) : [],
     notes: item.notes,
     numistaId: item.numistaId,
     grade: item.grade || '',

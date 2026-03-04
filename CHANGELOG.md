@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.44] - 2026-03-04
+
+### Fixed — Data Portability Quickfixes (STAK-424)
+
+- **Fixed**: `chipMaxCount` added to `ALLOWED_STORAGE_KEYS` — previously silently deleted by `cleanupStorage()` on every session (STAK-424)
+- **Removed**: Dead `cloudBackupEnabled` flag, `MAX_LOCAL_FILE_SIZE` 2 MB limit, and `checkFileSize()` — import files of any size are now accepted, with QuotaExceeded toast as the safety net (STAK-424)
+- **Added**: Storage Location and Tags columns to CSV export; `tags` array to JSON export — re-imports now preserve more data (STAK-424)
+- **Fixed**: CSV import tag persistence deferred until user confirms — cancelling an import no longer leaves orphaned tags in localStorage (STAK-424)
+- **Fixed**: ZIP image import now handles reverse-only user photos — previously dropped images with no obverse (STAK-424)
+
+---
+
 ## [3.33.43] - 2026-03-04
 
 ### Fixed — Cloud Sync Storage Blowout and Import Race (STAK-421)
