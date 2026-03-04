@@ -1018,27 +1018,28 @@ const renderCloudBackupList = (provider, backups) => {
 
   listEl.style.display = '';
 
-  // Build manual backups section
+  // Single flat list — manual + sync merged, sorted newest first
   var html = '';
   if (!backups || backups.length === 0) {
-    html += '<div class="cloud-backup-empty">No manual backups</div>';
+    html += '<div class="cloud-backup-empty">No backups found</div>';
   } else {
-    html += '<div class="cloud-backup-section-header" style="font-size:0.7rem;color:var(--text-secondary);margin-bottom:0.3rem;font-weight:600">Manual Backups</div>';
     html += backups.map(function (b) {
-      const d = new Date(b.server_modified);
-      const dateStr = d.toLocaleDateString([], { month: 'short', day: 'numeric' }) +
+      var d = new Date(b.server_modified);
+      var dateStr = d.toLocaleDateString([], { month: 'short', day: 'numeric' }) +
         ' ' + d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-      const sizeStr = b.size < 1024 ? b.size + ' B' :
+      var sizeStr = b.size < 1024 ? b.size + ' B' :
         b.size < 1048576 ? (b.size / 1024).toFixed(0) + ' KB' :
           (b.size / 1048576).toFixed(1) + ' MB';
-      const safeProvider = sanitizeHtml(provider);
-      const safeFilename = sanitizeHtml(b.name);
+      var isManual = b.name.indexOf(MANUAL_BACKUP_PREFIX) === 0;
+      var typeLabel = isManual ? 'Manual' : 'Sync';
+      var safeProvider = sanitizeHtml(provider);
+      var safeFilename = sanitizeHtml(b.name);
       return '<div class="cloud-backup-row">' +
         '<button class="cloud-backup-entry" data-provider="' + safeProvider +
           '" data-filename="' + safeFilename + '" data-size="' + b.size + '">' +
+          '<span class="cloud-backup-type" style="min-width:3rem">' + typeLabel + '</span>' +
           '<span class="cloud-backup-name" title="' + safeFilename + '">' + sanitizeHtml(dateStr) + '</span>' +
           '<span class="cloud-backup-size">' + sanitizeHtml(sizeStr) + '</span>' +
-          '<span class="cloud-backup-type">Manual backup</span>' +
         '</button>' +
         '<button class="cloud-backup-delete-btn" data-provider="' + safeProvider +
           '" data-filename="' + safeFilename + '" title="Delete this backup from cloud storage" aria-label="Delete ' + safeFilename + '">' +
@@ -1048,76 +1049,8 @@ const renderCloudBackupList = (provider, backups) => {
     }).join('');
   }
 
-  // Add collapsible sync snapshots section
-  html += '<button type="button" class="cloud-backup-sync-toggle" role="button" aria-expanded="false" aria-controls="cloudSyncList_' + sanitizeHtml(provider) + '" style="background:none;border:none;cursor:pointer;margin-top:0.5rem;padding:0.3rem 0;font-size:0.7rem;color:var(--text-secondary);user-select:none;width:100%;text-align:left" data-provider="' + sanitizeHtml(provider) + '">' +
-    '<span class="cloud-backup-sync-arrow" style="display:inline-block;transition:transform 0.2s;margin-right:0.3rem">&#9654;</span>Sync Snapshots' +
-  '</button>' +
-  '<div class="cloud-backup-sync-list" id="cloudSyncList_' + sanitizeHtml(provider) + '" data-provider="' + sanitizeHtml(provider) + '" style="display:none"></div>';
-
   // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml
   listEl.innerHTML = html;
-
-  // Wire up sync snapshots toggle
-  var syncToggle = listEl.querySelector('.cloud-backup-sync-toggle');
-  if (syncToggle) {
-    syncToggle.addEventListener('click', async function () {
-      var syncList = listEl.querySelector('.cloud-backup-sync-list');
-      var arrow = syncToggle.querySelector('.cloud-backup-sync-arrow');
-      if (!syncList) return;
-
-      if (syncList.style.display !== 'none') {
-        syncList.style.display = 'none';
-        if (arrow) arrow.style.transform = '';
-        syncToggle.setAttribute('aria-expanded', 'false');
-        return;
-      }
-
-      syncList.style.display = '';
-      if (arrow) arrow.style.transform = 'rotate(90deg)';
-      syncToggle.setAttribute('aria-expanded', 'true');
-
-      // Lazy-load sync snapshots
-      if (!syncList.dataset.loaded) {
-        // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml
-        syncList.innerHTML = '<div class="cloud-backup-empty" style="font-size:0.72rem">Loading…</div>';
-        try {
-          var syncBackups = await cloudListBackups(provider, 'sync');
-          if (!syncBackups || syncBackups.length === 0) {
-            // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml
-            syncList.innerHTML = '<div class="cloud-backup-empty" style="font-size:0.72rem">No sync snapshots</div>';
-          } else {
-            // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml
-            syncList.innerHTML = syncBackups.map(function (b) {
-              var d = new Date(b.server_modified);
-              var dateStr = d.toLocaleDateString([], { month: 'short', day: 'numeric' }) +
-                ' ' + d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-              var sizeStr = b.size < 1024 ? b.size + ' B' :
-                b.size < 1048576 ? (b.size / 1024).toFixed(0) + ' KB' :
-                  (b.size / 1048576).toFixed(1) + ' MB';
-              var safeProvider = sanitizeHtml(provider);
-              var safeFilename = sanitizeHtml(b.name);
-              return '<div class="cloud-backup-row">' +
-                '<button class="cloud-backup-entry" data-provider="' + safeProvider +
-                  '" data-filename="' + safeFilename + '" data-size="' + b.size + '">' +
-                  '<span class="cloud-backup-name" title="' + safeFilename + '">' + sanitizeHtml(dateStr) + '</span>' +
-                  '<span class="cloud-backup-size">' + sanitizeHtml(sizeStr) + '</span>' +
-                  '<span class="cloud-backup-type">Sync snapshot</span>' +
-                '</button>' +
-                '<button class="cloud-backup-delete-btn" data-provider="' + safeProvider +
-                  '" data-filename="' + safeFilename + '" title="Delete this snapshot from cloud storage" aria-label="Delete ' + safeFilename + '">' +
-                  '&times;' +
-                '</button>' +
-              '</div>';
-            }).join('');
-          }
-          syncList.dataset.loaded = 'true';
-        } catch (err) {
-          // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml
-          syncList.innerHTML = '<div class="cloud-backup-empty" style="font-size:0.72rem;color:var(--danger)">Failed to load sync snapshots</div>';
-        }
-      }
-    });
-  }
 };
 
 /**
@@ -1196,9 +1129,9 @@ const cloudUpdateBackupCount = async (provider) => {
   const el = safeGetElement('cloudBackupCount_' + provider);
   if (!(el instanceof HTMLElement)) return;
   try {
-    const backups = await cloudListBackups(provider, 'manual');
+    const backups = await cloudListBackups(provider);
     const count = Array.isArray(backups) ? backups.length : 0;
-    el.textContent = count + ' manual backup' + (count !== 1 ? 's' : '');
+    el.textContent = count + ' backup' + (count !== 1 ? 's' : '');
   } catch {
     el.textContent = '\u2014';
   }
@@ -1264,7 +1197,7 @@ const bindCloudStorageListeners = () => {
         return;
       }
       await _cloudBtnAction(btn, 'Loading\u2026', async () => {
-        var backups = await cloudListBackups(provider, 'manual');
+        var backups = await cloudListBackups(provider);
         renderCloudBackupList(provider, backups);
       }, 'Failed to list backups: ');
 
@@ -1293,7 +1226,7 @@ const bindCloudStorageListeners = () => {
       }, 'Download failed: ', async () => {
         var parentList = btn.closest('.cloud-backup-list');
         if (parentList) {
-          var refreshed = await cloudListBackups(provider, 'manual');
+          var refreshed = await cloudListBackups(provider);
           renderCloudBackupList(provider, refreshed);
         }
       });
@@ -1307,7 +1240,7 @@ const bindCloudStorageListeners = () => {
       }, 'Delete failed: ', async () => {
         var parentList = btn.closest('.cloud-backup-list');
         if (parentList) {
-          var refreshed = await cloudListBackups(provider, 'manual');
+          var refreshed = await cloudListBackups(provider);
           renderCloudBackupList(provider, refreshed);
         }
       });

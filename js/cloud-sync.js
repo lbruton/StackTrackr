@@ -1295,33 +1295,40 @@ async function pushSyncVault() {
     debugLog('[CloudSync] Encrypted:', fileBytes.byteLength, 'bytes');
 
     // -----------------------------------------------------------------------
-    // Layer 2 — Cloud-side backup-before-overwrite (REQ-2)
-    // Copy the existing cloud vault to /backups/ before overwriting.
-    // Non-blocking: if copy fails (first push, no existing file), log and continue.
+    // Layer 2 — Full backup-before-overwrite (STAK-419)
+    // Create a FULL encrypted backup (all localStorage keys) and upload to
+    // /backups/ before overwriting the sync vault. This ensures every pre-sync
+    // snapshot is a complete restore point, not a partial sync-scoped copy.
+    // Non-blocking: if backup fails (first push, encryption error), log and continue.
     // -----------------------------------------------------------------------
     try {
       var backupTimestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      var backupPath = SYNC_BACKUP_FOLDER + '/pre-sync-' + backupTimestamp + '.stvault';
-      debugLog('[CloudSync] Backup-before-overwrite: copying vault to', backupPath);
-      var backupResp = await fetch('https://api.dropboxapi.com/2/files/copy_v2', {
+      var backupPath = SYNC_BACKUP_FOLDER + '/' + SYNC_BACKUP_PREFIX + backupTimestamp + '.stvault';
+      debugLog('[CloudSync] Full backup-before-overwrite: encrypting…');
+      var fullBackupBytes = await vaultEncryptToBytes(password);
+      debugLog('[CloudSync] Full backup-before-overwrite: uploading', fullBackupBytes.byteLength, 'bytes to', backupPath);
+      var backupArg = JSON.stringify({
+        path: backupPath,
+        mode: 'add',
+        autorename: true,
+        mute: true,
+      });
+      var backupResp = await fetch('https://content.dropboxapi.com/2/files/upload', {
         method: 'POST',
         headers: {
           Authorization: 'Bearer ' + token,
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/octet-stream',
+          'Dropbox-API-Arg': backupArg,
         },
-        body: JSON.stringify({
-          from_path: SYNC_FILE_PATH,
-          to_path: backupPath,
-        }),
+        body: fullBackupBytes,
       });
       if (backupResp.ok) {
-        debugLog('[CloudSync] Backup-before-overwrite: created', backupPath);
+        debugLog('[CloudSync] Full backup-before-overwrite: created', backupPath);
       } else {
-        var backupStatus = backupResp.status;
-        debugLog('[CloudSync] Backup-before-overwrite: copy returned', backupStatus, '(expected on first push)');
+        debugLog('[CloudSync] Full backup-before-overwrite: upload returned', backupResp.status);
       }
     } catch (backupErr) {
-      debugLog('[CloudSync] Backup-before-overwrite: failed (non-blocking):', backupErr.message);
+      debugLog('[CloudSync] Full backup-before-overwrite: failed (non-blocking):', backupErr.message);
     }
 
     var syncId = typeof generateUUID === 'function' ? generateUUID() : _syncFallbackUUID();
