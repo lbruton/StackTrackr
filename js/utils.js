@@ -169,17 +169,6 @@ const debounce = (func, wait) => {
 };
 
 /**
- * Checks if a file exceeds the local upload size limit
- *
- * @param {File} file - File to validate
- * @returns {boolean} True if file is within allowed size
- */
-const checkFileSize = (file) => {
-  const limit = cloudBackupEnabled ? Infinity : MAX_LOCAL_FILE_SIZE;
-  return file.size <= limit;
-};
-
-/**
  * Refreshes composition dropdown options in add/edit modals
  */
 const refreshCompositionOptions = () => {
@@ -3146,7 +3135,6 @@ if (typeof window !== 'undefined') {
   };
 
   window.cleanupStorage = cleanupStorage;
-  window.checkFileSize = checkFileSize;
   window.closeModalById = closeModalById;
   window.openModalById = openModalById;
   window.updateStorageStats = updateStorageStats;

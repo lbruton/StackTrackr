@@ -980,7 +980,7 @@ const bindImageImportExportListeners = () => {
           for (const [uuid, sides] of userMap) {
             const obverse = sides.obverse ? await sides.obverse.async('blob') : null;
             const reverse = sides.reverse ? await sides.reverse.async('blob') : null;
-            if (obverse) await imageCache.cacheUserImage(uuid, obverse, reverse);
+            if (obverse || reverse) await imageCache.cacheUserImage(uuid, obverse, reverse);
           }
         }
 
