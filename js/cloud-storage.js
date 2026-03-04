@@ -1002,7 +1002,7 @@ async function cloudDeleteBackup(provider, filename) {
           }
         } else {
           // No backups remain — delete the latest.json pointer
-          await fetch('https://api.dropboxapi.com/2/files/delete_v2', {
+          var delLatestResp = await fetch('https://api.dropboxapi.com/2/files/delete_v2', {
             method: 'POST',
             headers: {
               Authorization: 'Bearer ' + token,
@@ -1010,6 +1010,9 @@ async function cloudDeleteBackup(provider, filename) {
             },
             body: JSON.stringify({ path: config.folder + '/backups/' + CLOUD_LATEST_FILENAME }),
           });
+          if (!delLatestResp.ok) {
+            debugLog('[CloudStorage] Failed to delete latest pointer:', delLatestResp.status);
+          }
         }
       } catch (latestErr) {
         debugLog('[CloudStorage] Latest pointer update after delete failed:', latestErr.message);
