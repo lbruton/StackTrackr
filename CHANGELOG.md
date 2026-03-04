@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.47] - 2026-03-04
+
+### Changed — Sync Scope & Serialization (STAK-426)
+
+- **Changed**: Expanded cloud sync scope from 8 to 44 keys — all user preferences, header button config, feature toggles, Numista/PCGS settings, provider order, and API credentials now sync across devices (STAK-426)
+- **Fixed**: Manifest-first pull now compares and applies settings changes via DiffEngine, showing them in the DiffModal instead of silently skipping them (STAK-426)
+- **Fixed**: Manifest-first pull now downloads and restores the image vault when the hash differs, instead of silently skipping photo sync (STAK-426)
+- **Added**: Image deletion propagation — deleting all photos locally now removes the remote image vault so other devices don't restore deleted photos (STAK-426)
+
+---
+
 ## [3.33.46] - 2026-03-04
 
 ### Fixed — Cloud Storage API Hardening (STAK-425)
