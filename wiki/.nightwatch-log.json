@@ -1,5 +1,5 @@
 {
-  "nextIndex": 6,
+  "nextIndex": 7,
   "rotation": [
     "api-consumption.md",
     "backup-restore.md",
@@ -35,6 +35,14 @@
       "track": "frontend",
       "status": "inaccuracy_found",
       "finding": "Claims 'TTL is 30 minutes per claim' but devops/version-lock-protocol.md defines three tiers: Hotfix = 30min, Spec implementation = 4h, Pre-assigned queued slot = 4h.",
+      "verified": []
+    },
+    {
+      "date": "2026-03-03",
+      "page": "retail-modal.md",
+      "track": "frontend",
+      "status": "inaccuracy_found",
+      "finding": "Page claims initRetailPrices() in retail.js loads all cached data from localStorage, then calls syncRetailPrices({ ui: false }) in the background. However, initRetailPrices does not call syncRetailPrices; background syncing is actually triggered by startRetailBackgroundSync().",
       "verified": []
     }
   ]
