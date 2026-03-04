@@ -77,7 +77,7 @@ Key globals by source file:
 
 | File | Globals |
 |------|---------|
-| `state.js` | `inventory`, `spotPrices`, `elements`, `displayCurrency`, `exchangeRate`, `currencySymbol`, `itemTags`, `cloudBackupEnabled` |
+| `state.js` | `inventory`, `spotPrices`, `elements`, `displayCurrency`, `exchangeRate`, `currencySymbol`, `itemTags` |
 | `debug-log.js` | `debugLog()` |
 | `constants.js` | `API_PROVIDERS`, `METALS`, `ALLOWED_STORAGE_KEYS`, `APP_VERSION`, `LS_KEY`, `SPOT_HISTORY_KEY` |
 | `utils.js` | `saveData()`, `loadData()`, `saveDataSync()`, `loadDataSync()`, `sanitizeHtml()`, `formatCurrency()`, `computeMeltValue()` |
