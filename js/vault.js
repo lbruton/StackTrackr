@@ -374,8 +374,13 @@ async function restoreVaultData(payload) {
       try {
         // STAK-421: Compress before writing — raw vault payloads can exceed
         // localStorage quota (e.g. metalSpotHistory at 9 MB uncompressed).
+        // Skip if already CMP1-compressed to avoid double-wrapping.
         var value = data[key];
-        if (typeof __compressIfNeeded === 'function') {
+        if (
+          typeof value === 'string' &&
+          typeof __compressIfNeeded === 'function' &&
+          !value.startsWith('CMP1:')
+        ) {
           value = __compressIfNeeded(value);
         }
         localStorage.setItem(key, value);
