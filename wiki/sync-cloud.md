@@ -2,8 +2,8 @@
 title: Cloud Sync
 category: frontend
 owner: staktrakr
-lastUpdated: v3.33.41
-date: 2026-03-03
+lastUpdated: v3.33.46
+date: 2026-03-04
 sourceFiles:
   - js/cloud-sync.js
   - js/cloud-storage.js
@@ -13,7 +13,7 @@ relatedPages:
 ---
 # Cloud Sync
 
-> **Last updated:** v3.33.41 — 2026-03-03
+> **Last updated:** v3.33.46 — 2026-03-04
 > **Source files:** `js/cloud-sync.js`, `js/cloud-storage.js`
 
 ---
@@ -167,12 +167,12 @@ getSyncPasswordSilent()
 | `cloudIsConnected(provider)` | `(string) → boolean` | True if a stored token exists for the provider. |
 | `cloudStoreToken(provider, tokenData)` | `(string, object) → void` | Persist token to localStorage under `cloud_token_<provider>`. |
 | `cloudClearToken(provider)` | `(string) → void` | Remove stored token. |
-| `cloudDisconnect(provider)` | `(string) → void` | Clear token + account ID + last backup; update UI. |
-| `cloudUploadVault(provider, fileBytes, opts)` | `(string, ArrayBuffer, object?) → Promise<void>` | Manual backup upload. Writes versioned `.stvault` file + `staktrakr-latest.json` pointer (unless `opts.skipLatestUpdate` is true). Records to activity log. |
+| `cloudDisconnect(provider)` | `(string) → void` | Full disconnect: clears token, then removes all 13 cloud state keys (`cloud_last_backup`, `cloud_dropbox_account_id`, `cloud_vault_password`, `cloud_sync_enabled`, `cloud_sync_device_id`, `cloud_sync_cursor`, `cloud_sync_last_push`, `cloud_sync_last_pull`, `cloud_sync_override_backup`, `cloud_sync_mode`, `cloud_sync_local_modified`, `cloud_sync_migrated`, `staktrakr_oauth_result`). Cancels any pending `scheduleSyncPush` debounce. Updates UI. |
+| `cloudUploadVault(provider, fileBytes, opts)` | `(string, ArrayBuffer, object?) → Promise<void>` | Manual backup upload. Writes versioned `.stvault` file + `staktrakr-latest.json` pointer (unless `opts.skipLatestUpdate` is true). All provider upload responses are validated (`.ok` check) and throw on failure. Records to activity log. |
 | `cloudDownloadVault(provider)` | `(string) → Promise<Uint8Array>` | Download latest backup by pointer, or by listing if no pointer. |
 | `cloudDownloadVaultByName(provider, filename)` | `(string, string) → Promise<Uint8Array>` | Download a specific named backup file. |
-| `cloudListBackups(provider, type)` | `(string, string?) → Promise<object[]>` | List `.stvault` files in the provider's backups folder, sorted newest-first. Optional `type` param filters by prefix: `'manual'` (matches `MANUAL_BACKUP_PREFIX`), `'sync'` (matches `SYNC_BACKUP_PREFIX`), or `undefined` (all backups). |
-| `cloudDeleteBackup(provider, filename)` | `(string, string) → Promise<void>` | Delete a specific backup file; clears `cloud_last_backup` if it matches. |
+| `cloudListBackups(provider, type)` | `(string, string?) → Promise<object[]>` | List `.stvault` files in the provider's backups folder, sorted newest-first. Fetches all pages via `files/list_folder/continue` when Dropbox returns `has_more`. Optional `type` param filters by prefix: `'manual'` (matches `MANUAL_BACKUP_PREFIX`), `'sync'` (matches `SYNC_BACKUP_PREFIX`), or `undefined` (all backups). |
+| `cloudDeleteBackup(provider, filename)` | `(string, string) → Promise<void>` | Delete a specific backup file. If the deleted file was the `cloud_last_backup` pointer target, updates the remote `staktrakr-latest.json` to point to the next most recent backup, or deletes the pointer entirely if no backups remain. |
 | `cloudCheckConflict(provider)` | `(string) → Promise<object>` | Compare remote `staktrakr-latest.json` timestamp against local last-backup record. Returns `{conflict: bool, ...}`. |
 | `recordCloudActivity(entry)` | `(object) → void` | Append an entry to the cloud activity log (capped at 500 entries, purges >180 days old). |
 | `renderCloudActivityTable()` | `() → void` | Render the sortable activity table in Settings → Cloud. |
@@ -404,6 +404,8 @@ The override backup is the safety net for "Keep Theirs" conflicts or unwanted sy
 | `cloud_last_backup` | JSON: last backup metadata (only written by sync operations; manual backups with `skipLatestUpdate` do not update this key) |
 | `cloud_activity_log` | JSON array: cloud activity entries (max 500, 180-day TTL) |
 | `cloud_kraken_seen` | `'true'` after first successful backup (suppresses easter-egg toast) |
+
+**Disconnect cleanup (STAK-425, v3.33.46):** `cloudDisconnect(provider)` removes all cloud state keys except `cloud_kraken_seen`, `cloud_activity_log`, `cloud_backup_history_depth`, and `cloud_vault_idle_timeout`. It also cancels any pending `scheduleSyncPush` debounce to prevent a ghost push after disconnect.
 
 ---
 
