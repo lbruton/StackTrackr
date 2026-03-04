@@ -959,13 +959,16 @@ async function buildAndUploadManifest(token, password, syncId) {
   };
 
   // 4b. STAK-426: Embed settings snapshot so manifest-first pulls can compare
-  // settings without downloading the full vault
+  // settings without downloading the full vault.
+  // Use raw localStorage.getItem() so scalar string preferences (appTheme, appTimeZone,
+  // cardViewStyle, sort columns, etc.) stored via localStorage.setItem are captured —
+  // loadDataSync() JSON-parses and would return null for those raw-string values.
   var settingsSnapshot = {};
-  if (typeof SYNC_SCOPE_KEYS !== 'undefined') {
+  if (typeof SYNC_SCOPE_KEYS !== 'undefined' && typeof localStorage !== 'undefined') {
     for (var s = 0; s < SYNC_SCOPE_KEYS.length; s++) {
       if (SYNC_SCOPE_KEYS[s] === 'metalInventory') continue;
-      var sv = loadDataSync(SYNC_SCOPE_KEYS[s], null);
-      if (sv !== null && sv !== undefined) settingsSnapshot[SYNC_SCOPE_KEYS[s]] = sv;
+      var sv = localStorage.getItem(SYNC_SCOPE_KEYS[s]);
+      if (sv !== null) settingsSnapshot[SYNC_SCOPE_KEYS[s]] = sv;
     }
   }
   manifestPayload.settings = settingsSnapshot;
@@ -2109,12 +2112,16 @@ function _applyAndFinalize(newInventory, selectedChanges, settingsChanges, remot
     inventory = newInventory;
   }
 
-  // 3. Apply settings changes
+  // 3. Apply settings changes.
+  // remoteVal is a raw localStorage string (from vault payload.data or manifest.settings
+  // snapshot). Use localStorage.setItem directly so scalar string preferences
+  // (appTheme, appTimeZone, etc.) are written without JSON-encoding, matching the
+  // format expected by readers like theme.js and settings-listeners.js.
   if (settingsChanges && Array.isArray(settingsChanges)) {
     for (var i = 0; i < settingsChanges.length; i++) {
       var sc = settingsChanges[i];
-      if (sc && sc.key && typeof saveDataSync === 'function') {
-        saveDataSync(sc.key, sc.remoteVal);
+      if (sc && sc.key && sc.remoteVal !== null && sc.remoteVal !== undefined && typeof localStorage !== 'undefined') {
+        localStorage.setItem(sc.key, sc.remoteVal);
       }
     }
   }
@@ -2383,14 +2390,19 @@ async function _deferredVaultRestore(token, password, remoteMeta, selectedChange
           debugLog('[CloudSync] Selective apply would empty vault but remote has', remoteItems.length, 'items — falling back to full overwrite');
           // fall through to full-overwrite path below
         } else {
-          // STAK-426: Extract settings from vault payload and compare
+          // STAK-426: Extract settings from vault payload and compare.
+          // Use raw localStorage.getItem() for local settings so scalar string
+          // preferences (appTheme, appTimeZone, etc.) are included — loadDataSync()
+          // JSON-parses and returns null for those raw-string values. payload.data
+          // also contains raw localStorage strings, so both sides use the same
+          // serialization format and the comparison is stable.
           var _dvSettingsChanges = null;
           if (payload.data && typeof SYNC_SCOPE_KEYS !== 'undefined' && typeof DiffEngine !== 'undefined' && DiffEngine.compareSettings) {
             var _dvLocalSettings = {};
             var _dvRemoteSettings = {};
             for (var _dvs = 0; _dvs < SYNC_SCOPE_KEYS.length; _dvs++) {
               if (SYNC_SCOPE_KEYS[_dvs] === 'metalInventory') continue;
-              var _dvlv = loadDataSync(SYNC_SCOPE_KEYS[_dvs], null);
+              var _dvlv = typeof localStorage !== 'undefined' ? localStorage.getItem(SYNC_SCOPE_KEYS[_dvs]) : null;
               if (_dvlv !== null) _dvLocalSettings[SYNC_SCOPE_KEYS[_dvs]] = _dvlv;
               if (payload.data[SYNC_SCOPE_KEYS[_dvs]] !== undefined) {
                 _dvRemoteSettings[SYNC_SCOPE_KEYS[_dvs]] = payload.data[SYNC_SCOPE_KEYS[_dvs]];
@@ -2513,15 +2525,18 @@ async function pullWithPreview(remoteMeta) {
           // Build diff-like result from manifest data
           var manifestDiff = _buildDiffFromManifest(manifest);
 
-          // STAK-426: Compare settings from manifest snapshot (if present)
+          // STAK-426: Compare settings from manifest snapshot (if present).
+          // Use raw localStorage.getItem() to match the manifest snapshot format —
+          // the snapshot is also built from raw localStorage strings (scalar string
+          // prefs like appTheme would not be found by loadDataSync() which JSON-parses).
           var manifestSettingsDiff = null;
           if (manifest.settings && typeof DiffEngine !== 'undefined' && DiffEngine.compareSettings) {
             var _mLocalSettings = {};
-            if (typeof SYNC_SCOPE_KEYS !== 'undefined') {
+            if (typeof SYNC_SCOPE_KEYS !== 'undefined' && typeof localStorage !== 'undefined') {
               for (var ms = 0; ms < SYNC_SCOPE_KEYS.length; ms++) {
                 if (SYNC_SCOPE_KEYS[ms] === 'metalInventory') continue;
-                var msv = loadDataSync(SYNC_SCOPE_KEYS[ms], null);
-                if (msv !== null && msv !== undefined) _mLocalSettings[SYNC_SCOPE_KEYS[ms]] = msv;
+                var msv = localStorage.getItem(SYNC_SCOPE_KEYS[ms]);
+                if (msv !== null) _mLocalSettings[SYNC_SCOPE_KEYS[ms]] = msv;
               }
             }
             manifestSettingsDiff = DiffEngine.compareSettings(_mLocalSettings, manifest.settings);
