@@ -2,8 +2,8 @@
 title: Data Model
 category: frontend
 owner: staktrakr
-lastUpdated: v3.33.25
-date: 2026-03-02
+lastUpdated: v3.33.41
+date: 2026-03-03
 sourceFiles:
   - js/constants.js
   - js/utils.js
@@ -14,7 +14,7 @@ relatedPages:
 ---
 # Data Model
 
-> **Last updated:** v3.33.25 — 2026-03-02
+> **Last updated:** v3.33.41 — 2026-03-03
 > **Source files:** `js/constants.js`, `js/utils.js`, `js/types.js`
 
 ## Overview
@@ -362,7 +362,7 @@ All keys currently registered in `js/constants.js`. `cleanupStorage()` enforces 
 | `cloud_token_dropbox` | JSON | Dropbox OAuth token data |
 | `cloud_token_pcloud` | JSON | pCloud OAuth token data |
 | `cloud_token_box` | JSON | Box OAuth token data |
-| `cloud_last_backup` | JSON | `{ provider, timestamp }` last backup info |
+| `cloud_last_backup` | JSON | `{ provider, timestamp }` last backup info — only written by sync operations (manual backups with `skipLatestUpdate` skip this key) |
 | `cloud_kraken_seen` | Boolean string | Easter egg seen flag |
 | `staktrakr_oauth_result` | JSON | Transient OAuth callback relay (cleared after read) |
 | `cloud_activity_log` | JSON | Cloud sync activity log entries |
@@ -379,6 +379,15 @@ All keys currently registered in `js/constants.js`. `cleanupStorage()` enforces 
 | `cloud_sync_migrated` | String | Cloud folder migration flag — `"v2"` indicates flat-to-subfolder migration complete |
 | `cloud_backup_history_depth` | String | Max cloud backups to retain (`"3"`, `"5"`, `"10"`, or `"20"`) |
 | `manifestPruningThreshold` | Number string | Max sync cycles retained in manifest before pruning older entries (STAK-184) |
+
+**Cloud backup filename constants** (not localStorage keys — defined in `js/constants.js`, STAK-419):
+
+| Constant | Value | Purpose |
+|---|---|---|
+| `MANUAL_BACKUP_PREFIX` | `'staktrakr-backup-'` | Filename prefix for user-initiated manual backups |
+| `SYNC_BACKUP_PREFIX` | `'pre-sync-'` | Filename prefix for automatic sync pre-push snapshots |
+
+These prefixes are used by `cloudListBackups(provider, type)` to filter backups by type and by `cloudPruneBackups(provider, maxKeep, type)` to ensure auto-pruning only targets sync snapshots (manual backups are never auto-pruned).
 
 **One-time migrations:**
 
