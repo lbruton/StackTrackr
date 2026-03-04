@@ -8,7 +8,7 @@ const DEV_MODE = false; // Set to true during development — bypasses all cachi
 
 
 
-const CACHE_NAME = 'staktrakr-v3.33.40-b1772581550';
+const CACHE_NAME = 'staktrakr-v3.33.41-b1772583651';
 
 
 

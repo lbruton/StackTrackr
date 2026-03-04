@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.41] - 2026-03-03
+
+### Fixed — Cloud Backup Manual vs Sync Separation (STAK-419)
+
+- **Fixed**: Auto-prune now only deletes sync snapshots (`pre-sync-*`), never user manual backups (`staktrakr-backup-*`) — previously pruned all backups indiscriminately causing data loss (STAK-419)
+- **Fixed**: Restore list now shows only manual backups by default with sync snapshots in a collapsible section — previously flooded with identical sync metadata copies (STAK-419)
+- **Fixed**: "Backup history" dropdown renamed to "Sync history" and now controls only sync snapshot retention, not total backup count (STAK-419)
+- **Fixed**: Manual Backup button now always prompts for password via vault modal — previously silently reused the sync password cache (STAK-419)
+- **Fixed**: Manual backups no longer update `cloud_last_backup` sync tracking state or cache the password for auto-sync use (STAK-419)
+- **Added**: `MANUAL_BACKUP_PREFIX` and `SYNC_BACKUP_PREFIX` constants for filename-based backup type discrimination (STAK-419)
+
+---
+
 ## [3.33.40] - 2026-03-03
 
 ### Changed — Simplify Market Price Display (STAK-404)

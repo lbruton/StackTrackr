@@ -1154,10 +1154,10 @@ async function handleVaultAction() {
         // Cloud export: encrypt then upload
         var fileBytes = await vaultEncryptToBytes(password);
         showVaultStatus("info", "Uploading\u2026");
-        await cloudUploadVault(_cloudContext.provider, fileBytes);
+        await cloudUploadVault(_cloudContext.provider, fileBytes, _cloudContext.isManualBackup ? { skipLatestUpdate: true } : undefined);
         showVaultStatus("success", "Backup uploaded successfully.");
         // Cache password for this browser session
-        if (typeof cloudCachePassword === 'function') {
+        if (typeof cloudCachePassword === 'function' && !(_cloudContext && _cloudContext.isManualBackup)) {
           cloudCachePassword(_cloudContext.provider, password);
         }
         if (typeof showKrakenToastIfFirst === 'function') showKrakenToastIfFirst();
