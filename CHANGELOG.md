@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.46] - 2026-03-04
+
+### Fixed — Cloud Storage API Hardening (STAK-425)
+
+- **Fixed**: Upload response validation — `cloudUploadVault()` now checks `.ok` on all four provider upload responses (Dropbox vault, Dropbox latest.json, pCloud, Box) and throws on failure instead of silently recording success (STAK-425)
+- **Fixed**: Backup list pagination — `cloudListBackups()` now fetches all pages from Dropbox via `files/list_folder/continue`, returning partial results on pagination failure (STAK-425)
+- **Fixed**: Disconnect cleanup — `cloudDisconnect()` now removes all 13 cloud state keys and cancels pending sync push, preventing stale sync metadata on reconnect (STAK-425)
+- **Fixed**: Delete backup latest pointer — deleting the latest backup now updates remote `staktrakr-latest.json` to point to the next most recent, or deletes it if none remain (STAK-425)
+- **Security**: Vault export credential exclusion — `collectVaultData('full')` now filters out OAuth tokens, vault password, and device-specific sync state via `VAULT_EXCLUDE_KEYS` constant (STAK-425)
+
+---
+
 ## [3.33.45] - 2026-03-04
 
 ### Fixed — FAQ Cloudflare Cookie Disclosure (STAK-428)
