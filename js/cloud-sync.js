@@ -1478,7 +1478,7 @@ async function pushSyncVault() {
     // Auto-prune old backups (fire-and-forget)
     if (typeof cloudPruneBackups === 'function') {
       var pruneMax = parseInt(loadDataSync(CLOUD_BACKUP_HISTORY_KEY, String(CLOUD_BACKUP_HISTORY_DEFAULT)), 10);
-      cloudPruneBackups(_syncProvider, pruneMax).catch(function (e) {
+      cloudPruneBackups(_syncProvider, pruneMax, 'sync').catch(function (e) {
         debugLog('[CloudSync] Prune error (non-blocking):', e.message);
       });
     }

@@ -2,8 +2,8 @@
 title: Storage Patterns
 category: frontend
 owner: staktrakr
-lastUpdated: v3.33.25
-date: 2026-03-02
+lastUpdated: v3.33.41
+date: 2026-03-03
 sourceFiles:
   - js/utils.js
   - js/constants.js
@@ -13,7 +13,7 @@ relatedPages:
 ---
 # Storage Patterns
 
-> **Last updated:** v3.33.25 — 2026-03-02
+> **Last updated:** v3.33.41 — 2026-03-03
 > **Source files:** `js/utils.js`, `js/constants.js`
 
 ## Overview
@@ -269,7 +269,7 @@ All permitted keys are defined in `ALLOWED_STORAGE_KEYS` in `js/constants.js`. A
 | `"cloud_token_dropbox"` | JSON | Dropbox OAuth token data |
 | `"cloud_token_pcloud"` | JSON | pCloud OAuth token data |
 | `"cloud_token_box"` | JSON | Box OAuth token data |
-| `"cloud_last_backup"` | JSON | `{ provider, timestamp }` last cloud backup |
+| `"cloud_last_backup"` | JSON | `{ provider, timestamp }` last cloud backup — only written by sync operations (manual backups with `skipLatestUpdate` skip this key) |
 | `"cloud_activity_log"` | JSON array | Cloud sync activity log |
 | `"cloud_sync_enabled"` | boolean string | Master auto-sync toggle |
 | `"cloud_sync_last_push"` | JSON | `{ syncId, timestamp, rev, itemCount }` |
