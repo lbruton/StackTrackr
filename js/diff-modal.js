@@ -287,7 +287,7 @@
     if (applyBtn) {
       var count = _checkedCount();
       var hasSelectableItems = Object.keys(_checkedItems).length > 0;
-      var hasSettings = _options && _options.settingsDiff && _options.settingsDiff.length > 0;
+      var hasSettings = _options && _options.settingsDiff && _options.settingsDiff.changed && _options.settingsDiff.changed.length > 0;
       applyBtn.textContent = count > 0 ? 'Apply (' + count + ')' : 'Apply';
       applyBtn.disabled = hasSelectableItems && count === 0 && !hasSettings;
       applyBtn.style.opacity = (hasSelectableItems && count === 0 && !hasSettings) ? '0.4' : '';
@@ -421,7 +421,7 @@
     if (applyBtn) {
       var count = _checkedCount();
       var hasSelectableItems = Object.keys(_checkedItems).length > 0;
-      var hasSettings = _options && _options.settingsDiff && _options.settingsDiff.length > 0;
+      var hasSettings = _options && _options.settingsDiff && _options.settingsDiff.changed && _options.settingsDiff.changed.length > 0;
       applyBtn.textContent = count > 0 ? 'Apply (' + count + ')' : 'Apply';
       applyBtn.disabled = hasSelectableItems && count === 0 && !hasSettings;
       applyBtn.style.opacity = (hasSelectableItems && count === 0 && !hasSettings) ? '0.4' : '';
@@ -514,6 +514,14 @@
       if (_checkedItems['deleted-' + d] !== false) {
         result.push({ type: 'delete', itemKey: _itemKey(deleted[d]) });
       }
+    }
+
+    // Settings changes — always included (no per-setting checkboxes)
+    var settingsDiff = _options.settingsDiff || {};
+    var changedSettings = settingsDiff.changed || [];
+    for (var s = 0; s < changedSettings.length; s++) {
+      var setting = changedSettings[s];
+      result.push({ type: 'setting', key: setting.key, value: setting.remoteVal });
     }
 
     return result;
