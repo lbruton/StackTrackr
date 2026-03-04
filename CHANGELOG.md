@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.42] - 2026-03-03
+
+### Fixed — Full Backup for Sync Snapshots (STAK-419)
+
+- **Fixed**: Pre-sync snapshots now contain the FULL encrypted backup (all localStorage keys) instead of a partial sync-scoped copy — previously only contained 8 keys (inventory + display prefs), causing ghost items and data corruption when restored (STAK-419)
+- **Fixed**: Restore list now shows all backups (manual + sync) in a single flat list sorted newest first, each labeled "Manual" or "Sync" — previously showed partial sync files in a separate collapsible section (STAK-419)
+- **Fixed**: Backup count badge shows total backup count instead of manual-only count (STAK-419)
+
+---
+
 ## [3.33.41] - 2026-03-03
 
 ### Fixed — Cloud Backup Manual vs Sync Separation (STAK-419)
