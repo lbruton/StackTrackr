@@ -340,6 +340,11 @@ const createBackupZip = async () => {
  * @param {File} file - ZIP file created by createBackupZip
  */
 const restoreBackupZip = async (file) => {
+  // STAK-427: Block restore while cloud sync is applying remote changes
+  if (window.CloudSync && window.CloudSync.isSyncActive()) {
+    showToast('Cloud sync is in progress — please wait a moment and try again.', 'warning');
+    return;
+  }
   try {
     const zip = await JSZip.loadAsync(file);
 
