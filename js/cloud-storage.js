@@ -687,29 +687,31 @@ async function cloudUploadVault(provider, fileBytes, opts) {
       body: fileBytes,
     });
 
-    // Upload latest.json pointer
-    var latestData = {
-      filename: filename,
-      timestamp: now,
-      appVersion: cloudSafeAppVersion(),
-      itemCount: cloudSafeItemCount(),
-    };
-    var latestBytes = new TextEncoder().encode(JSON.stringify(latestData));
-    var latestArg = JSON.stringify({
-      path: config.folder + '/backups/' + CLOUD_LATEST_FILENAME,
-      mode: 'overwrite',
-      autorename: false,
-      mute: true,
-    });
-    await fetch('https://content.dropboxapi.com/2/files/upload', {
-      method: 'POST',
-      headers: {
-        Authorization: 'Bearer ' + token,
-        'Content-Type': 'application/octet-stream',
-        'Dropbox-API-Arg': latestArg,
-      },
-      body: latestBytes,
-    });
+    // Upload latest.json pointer (skip for manual backups — STAK-419)
+    if (!(opts && opts.skipLatestUpdate)) {
+      var latestData = {
+        filename: filename,
+        timestamp: now,
+        appVersion: cloudSafeAppVersion(),
+        itemCount: cloudSafeItemCount(),
+      };
+      var latestBytes = new TextEncoder().encode(JSON.stringify(latestData));
+      var latestArg = JSON.stringify({
+        path: config.folder + '/backups/' + CLOUD_LATEST_FILENAME,
+        mode: 'overwrite',
+        autorename: false,
+        mute: true,
+      });
+      await fetch('https://content.dropboxapi.com/2/files/upload', {
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer ' + token,
+          'Content-Type': 'application/octet-stream',
+          'Dropbox-API-Arg': latestArg,
+        },
+        body: latestBytes,
+      });
+    }
   } else if (provider === 'pcloud') {
     var formData = new FormData();
     formData.append('file', new Blob([fileBytes]), filename);
