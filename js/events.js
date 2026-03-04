@@ -380,11 +380,7 @@ const setupFormatImport = (overrideBtn, mergeBtn, fileInput, importFn, formatNam
   optionalListener(fileInput, "change", function (e) {
     if (e.target.files.length > 0) {
       const file = e.target.files[0];
-      if (!checkFileSize(file)) {
-        appAlert("File exceeds 2MB limit. Enable cloud backup for larger uploads.");
-      } else {
-        importFn(file, isOverride);
-      }
+      importFn(file, isOverride);
     }
     this.value = "";
   }, `${formatName} import`);

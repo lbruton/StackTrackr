@@ -2,8 +2,8 @@
 title: Release Workflow
 category: frontend
 owner: staktrakr
-lastUpdated: v3.33.25
-date: 2026-03-02
+lastUpdated: v3.33.44
+date: 2026-03-03
 sourceFiles:
   - .claude/skills/release/SKILL.md
   - .claude/skills/ship/SKILL.md
@@ -15,7 +15,7 @@ relatedPages:
 ---
 # Release Workflow
 
-> **Last updated:** v3.33.25 — 2026-03-02
+> **Last updated:** v3.33.44 — 2026-03-03
 > **Source files:** `.claude/skills/release/SKILL.md`, `.claude/skills/ship/SKILL.md`, `devops/version.lock`, `js/constants.js`
 
 ## Overview
@@ -47,7 +47,7 @@ Defined in `js/constants.js` as `APP_VERSION`:
 
 ```
 BRANCH.RELEASE.PATCH
-  3  .  33  .  25
+  3  .  33  .  44
 ```
 
 | Component | Meaning | When it changes |
@@ -59,7 +59,7 @@ BRANCH.RELEASE.PATCH
 The current version is always the authoritative value in `js/constants.js`:
 
 ```javascript
-const APP_VERSION = "3.33.25";
+const APP_VERSION = "3.33.44";
 ```
 
 ---
