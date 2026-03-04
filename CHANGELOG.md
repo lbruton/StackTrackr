@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.43] - 2026-03-04
+
+### Fixed — Cloud Sync Storage Blowout and Import Race (STAK-421)
+
+- **Fixed**: `restoreVaultData()` now compresses data before writing to localStorage — previously wrote raw vault payloads, causing metalSpotHistory (9 MB) to blow out localStorage quota on every sync pull (STAK-421)
+- **Fixed**: Override imports (CSV/JSON) now cancel the debounced sync push — previously `saveInventory()` would trigger a push that overwrote remote vault with freshly imported local data (STAK-421)
+- **Fixed**: `QuotaExceededError` in `saveData()` now shows a toast notification instead of silently logging to console (STAK-421)
+
+---
+
 ## [3.33.42] - 2026-03-03
 
 ### Fixed — Full Backup for Sync Snapshots (STAK-419)

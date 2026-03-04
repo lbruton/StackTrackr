@@ -1006,6 +1006,10 @@ const saveData = async (key, data) => {
     }
   } catch(e) {
     console.error('saveData failed', e);
+    // STAK-421: Surface QuotaExceededError so users know storage is full
+    if (e && e.name === 'QuotaExceededError' && typeof showToast === 'function') {
+      showToast('Storage is full — some data could not be saved. Try clearing unused spot history or image cache.', 'error');
+    }
   }
 };
 
@@ -1028,7 +1032,7 @@ const loadData = async (key, defaultValue = []) => {
 };
 
 // Synchronous versions for backward compatibility where async isn't supported
-const saveDataSync = (key, data) => { try { const raw = JSON.stringify(data); const out = __compressIfNeeded(raw); localStorage.setItem(key, out); } catch(e) { console.error('saveDataSync failed', e); throw e; } };
+const saveDataSync = (key, data) => { try { const raw = JSON.stringify(data); const out = __compressIfNeeded(raw); localStorage.setItem(key, out); } catch(e) { console.error('saveDataSync failed', e); if (e && e.name === 'QuotaExceededError' && typeof showToast === 'function') { showToast('Storage is full — some data could not be saved.', 'error'); } throw e; } };
 const loadDataSync = (key, defaultValue = []) => { try { const raw = localStorage.getItem(key); if(raw == null) return defaultValue; const str = __decompressIfNeeded(raw); return JSON.parse(str); } catch(e) { return defaultValue; } };
 
 /**
