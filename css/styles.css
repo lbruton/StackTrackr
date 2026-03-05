@@ -12716,6 +12716,7 @@ th {
   .market-card-trend { display: none; }
 }
 @media (max-width: 767px) {
+  .market-header-controls-row { flex-wrap: wrap; }
   .market-header-row { flex-wrap: wrap; gap: 8px; }
   .market-search { width: 100%; flex: unset; min-width: 0; }
   .market-header-controls-right { width: 100%; justify-content: flex-end; }
