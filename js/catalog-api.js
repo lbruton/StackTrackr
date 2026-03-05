@@ -1307,6 +1307,7 @@ const renderNumistaFieldCheckboxes = (result) => {
   if (!container) return;
 
   const typeValid = result.type && isValidSelectOption('itemType', result.type);
+  const metalValid = result.metal && result.metal !== 'Alloy/Other' && isValidSelectOption('itemMetal', result.metal);
 
   // Fields ordered: primary (checked by default) first, then optional (unchecked)
   const fields = [
@@ -1321,6 +1322,9 @@ const renderNumistaFieldCheckboxes = (result) => {
       warn: result.type && !typeValid ? `"${result.type}" — not in form options` : ''
     },
     { key: 'weight', label: 'Weight (g)', value: result.weight ? String(result.weight) : '', available: result.weight > 0, defaultOn: result.weight > 0 },
+    { key: 'obverseImage', label: 'Obverse Image', value: result.imageUrl || '', available: !!result.imageUrl, defaultOn: true },
+    { key: 'reverseImage', label: 'Reverse Image', value: result.reverseImageUrl || '', available: !!result.reverseImageUrl, defaultOn: true },
+    { key: 'metal', label: 'Metal', value: result.metal || '', available: metalValid, defaultOn: metalValid, warn: result.metal && !metalValid ? `"${result.metal}" — not in form options` : '' },
   ];
 
   // Keep the heading, rebuild field rows
@@ -1342,6 +1346,9 @@ const renderNumistaFieldCheckboxes = (result) => {
     year: (elements.itemYear || document.getElementById('itemYear'))?.value?.trim() || '',
     type: (elements.itemType || document.getElementById('itemType'))?.value || '',
     weight: (elements.itemWeight || document.getElementById('itemWeight'))?.value?.trim() || '',
+    obverseImage: (elements.itemObverseImageUrl || document.getElementById('itemObverseImageUrl'))?.value?.trim() || '',
+    reverseImage: (elements.itemReverseImageUrl || document.getElementById('itemReverseImageUrl'))?.value?.trim() || '',
+    metal: (elements.itemMetal || document.getElementById('itemMetal'))?.value || '',
   };
 
   fields.forEach(f => {
@@ -1633,6 +1640,24 @@ const fillFormFromNumistaResult = () => {
       case 'catalog': {
         const el = elements.itemCatalog || document.getElementById('itemCatalog');
         if (el) el.value = val;
+        break;
+      }
+      case 'obverseImage': {
+        const el = elements.itemObverseImageUrl || document.getElementById('itemObverseImageUrl');
+        if (el && !el.value.trim()) el.value = val;
+        break;
+      }
+      case 'reverseImage': {
+        const el = elements.itemReverseImageUrl || document.getElementById('itemReverseImageUrl');
+        if (el && !el.value.trim()) el.value = val;
+        break;
+      }
+      case 'metal': {
+        const el = elements.itemMetal || document.getElementById('itemMetal');
+        if (el) {
+          const valid = Array.from(el.options).map(o => o.value);
+          if (valid.includes(val)) el.value = val;
+        }
         break;
       }
     }
