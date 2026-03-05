@@ -4427,66 +4427,6 @@
       </div>
     </div>
 
-    <!-- STAK-149: Cloud Auto-Sync Conflict Modal -->
-    <div class="modal" id="cloudSyncConflictModal" style="display: none">
-      <div class="modal-content" style="max-width: 520px">
-        <div class="modal-header">
-          <h2>Sync Conflict</h2>
-          <button aria-label="Close modal" class="modal-close" id="syncConflictSkip">&times;</button>
-        </div>
-        <div class="modal-body">
-          <p class="settings-subtext" style="margin-bottom:1rem">Both this device and another device have changes since the last sync. Choose which version to keep.</p>
-          <div class="cloud-conflict-grid">
-            <div class="cloud-conflict-col">
-              <div class="cloud-conflict-col-label">This Device</div>
-              <div class="cloud-conflict-row"><span>Items</span><strong id="syncConflictLocalItems">&mdash;</strong></div>
-              <div class="cloud-conflict-row"><span>Changed</span><strong id="syncConflictLocalTime">&mdash;</strong></div>
-              <div class="cloud-conflict-row"><span>Version</span><strong id="syncConflictLocalVersion">&mdash;</strong></div>
-            </div>
-            <div class="cloud-conflict-divider">vs</div>
-            <div class="cloud-conflict-col">
-              <div class="cloud-conflict-col-label">Remote (another device)</div>
-              <div class="cloud-conflict-row"><span>Items</span><strong id="syncConflictRemoteItems">&mdash;</strong></div>
-              <div class="cloud-conflict-row"><span>Changed</span><strong id="syncConflictRemoteTime">&mdash;</strong></div>
-              <div class="cloud-conflict-row"><span>Version</span><strong id="syncConflictRemoteVersion">&mdash;</strong></div>
-              <div class="cloud-conflict-row"><span>Device</span><strong id="syncConflictRemoteDevice">&mdash;</strong></div>
-            </div>
-          </div>
-          <div class="encryption-warning" style="margin-top:1rem">
-            <strong>Note:</strong> The losing version will be overwritten and cannot be recovered.
-          </div>
-          <div class="encryption-actions" style="margin-top:1rem;gap:0.5rem;flex-wrap:wrap">
-            <button class="btn success" id="syncConflictKeepMine">Keep Mine (push local)</button>
-            <button class="btn info" id="syncConflictKeepTheirs">Keep Theirs (pull remote)</button>
-            <button class="btn" id="syncConflictSkipBtn" onclick="document.getElementById('cloudSyncConflictModal').style.display='none'">Skip for now</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- STAK-149: Cloud Auto-Sync Update Available Modal -->
-    <div class="modal" id="cloudSyncUpdateModal" style="display: none">
-      <div class="modal-content" style="max-width: 420px">
-        <div class="modal-header">
-          <h2>Sync Update Available</h2>
-          <button aria-label="Close modal" class="modal-close" id="syncUpdateDismissX">&times;</button>
-        </div>
-        <div class="modal-body">
-          <p class="settings-subtext" style="margin-bottom:1rem">Another device has pushed a newer version of your inventory. Would you like to update now?</p>
-          <div class="cloud-sync-update-meta">
-            <div class="cloud-sync-update-row"><span>Items</span><strong id="syncUpdateItemCount">&mdash;</strong></div>
-            <div class="cloud-sync-update-row"><span>Updated</span><strong id="syncUpdateTimestamp">&mdash;</strong></div>
-            <div class="cloud-sync-update-row"><span>Device</span><strong id="syncUpdateDevice">&mdash;</strong></div>
-          </div>
-          <div class="encryption-actions" style="margin-top:1.2rem;gap:0.5rem;flex-wrap:wrap">
-            <button class="btn success" id="syncUpdateAcceptBtn">Accept Update</button>
-            <button class="btn warning" id="syncUpdatePushBtn">Push My Data</button>
-            <button class="btn" id="syncUpdateDismissBtn">Not Now</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- STAK-186: Restore Preview Modal (Layer 5 — DiffEngine preview before sync restore) -->
     <div class="modal" id="restorePreviewModal" style="display: none">
       <div class="modal-content" style="max-width: 600px">
