@@ -109,13 +109,15 @@ gh run list --repo lbruton/StakTrakrApi --workflow "Merge Poller Branches" --lim
 
 ## Testing
 
-**Primary NL E2E suite** (`/bb-test` skill): `tests/runbook/*.md` — 75+ tests across 8 section files. Run via Stagehand/Browserbase against PR preview URLs. Sections: `01-page-load`, `02-crud`, `03-backup-restore`, `04-import-export`, `05-market`, `06-ui-ux`, `07-activity-log`, `08-spot-prices`.
+**Single test model:** `tests/runbook/*.md` — NL E2E tests run via `/bb-test` through Browserbase/Stagehand MCP against PR preview URLs. 84 tests across 8 section files: `01-page-load`, `02-crud`, `03-backup-restore`, `04-import-export`, `05-market`, `06-ui-ux`, `07-activity-log`, `08-spot-prices`. No Playwright, no browserless, no scripted specs.
 
-**Scripted suite** (`/smoke-test` skill): `tests/*.spec.js` — Playwright specs via self-hosted browserless Docker. Run with `npm test` or `npm run test:smoke`.
+**TDD enforcement:** Write runbook test blocks BEFORE implementing code. Run `/bb-test sections=NN` after implementation to verify. Use `/browserbase-test-maintenance` to add test blocks after shipping a spec.
 
-After shipping a spec, use `/browserbase-test-maintenance` to add runbook test steps for new behavior.
+**Test API keys** are stored in Infisical for tests requiring authentication (Numista, PCGS, etc.). Use the `secrets` skill to fetch them before running tests. Inject keys into localStorage via Stagehand after navigating to the app.
 
-**Cloud sync cannot be tested from PR previews.** Cloudflare preview deployments use a different origin, which breaks Dropbox OAuth (the registered redirect URI only matches `beta.staktrakr.com`). Cloud sync fixes must be merged to `dev` first and tested at `beta.staktrakr.com`.
+**Cloud sync and OAuth flows cannot be tested via Browserbase** — Cloudflare preview deployments use a different origin, which breaks Dropbox OAuth (the registered redirect URI only matches `beta.staktrakr.com`). Cloud sync fixes must be merged to `dev` first and tested manually by the user at `beta.staktrakr.com`.
+
+**Deprecated tests:** `tests/depreciated/` contains archived Playwright `.spec.js` files and legacy Browserbase TypeScript tests (`tests/depreciated/browserbase-legacy/`). These are kept as reference only — do not add to or run them.
 
 ## Linear
 
@@ -125,6 +127,6 @@ Team: `f876864d-ff80-4231-ae6c-a8e5cb69aca4`
 
 ## Project Skills
 
-In `.claude/skills/`: `coding-standards`, `homepoller-ssh`, `release`, `repo-boundaries`, `retail-poller`, `retail-provider-fix`, `seed-sync`, `ship`, `wiki-audit`, `wiki-search`, `wiki-update`.
+In `.claude/skills/`: `bb-test`, `browserbase-test-maintenance`, `coding-standards`, `homepoller-ssh`, `release`, `repo-boundaries`, `retail-poller`, `retail-provider-fix`, `seed-sync`, `ship`, `wiki-audit`, `wiki-search`, `wiki-update`.
 
 Use `/sync-instructions` after significant codebase changes.

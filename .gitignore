@@ -3,39 +3,33 @@
 .AppleDouble
 .LSOverride
 
-# Claude Code — all project skills tracked in git automatically;
+# Claude Code — all project skills tracked in git to prevent loss;
 # user-level skills live in ~/.claude/skills/ (outside repo)
 .claude/*
 !.claude/skills/
 .claude/skills/*
+!.claude/skills/api-infrastructure/
+!.claude/skills/bb-test/
+!.claude/skills/brainstorming/
+!.claude/skills/browserbase-test-maintenance/
 !.claude/skills/coding-standards/
+!.claude/skills/devops-dashboard/
 !.claude/skills/finishing-a-development-branch/
+!.claude/skills/homepoller-ssh/
 !.claude/skills/markdown-standards/
 !.claude/skills/release/
-!.claude/skills/seed-sync/
-!.claude/skills/ui-design/
-!.claude/skills/api-infrastructure/
-!.claude/skills/wiki-update/
-!.claude/skills/wiki-audit/
-!.claude/skills/wiki-sweep/
-!.claude/skills/wiki-search/
-!.claude/skills/wiki-nightwatch/
-!.claude/skills/ship/
-!.claude/skills/brainstorming/
+!.claude/skills/repo-boundaries/
 !.claude/skills/retail-poller/
 !.claude/skills/retail-provider-fix/
-!.claude/skills/repo-boundaries/
-!.claude/skills/homepoller-ssh/
-!.claude/skills/bb-test/
-!.claude/skills/browserbase-test-maintenance/
-!.claude/skills/devops-dashboard/
-!.claude/skills/frontend-design/
-!.claude/skills/jules-review/
-!.claude/skills/jules-suppress/
 !.claude/skills/scan-mentions/
-!.claude/skills/smoke-test/
+!.claude/skills/seed-sync/
+!.claude/skills/ship/
 !.claude/skills/sync-poller/
 !.claude/skills/ui-mockup/
+!.claude/skills/wiki-audit/
+!.claude/skills/wiki-search/
+!.claude/skills/wiki-sweep/
+!.claude/skills/wiki-update/
 .claude/commands/
 .mcp.json
 SPRINT.md
