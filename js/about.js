@@ -283,11 +283,11 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.33.52 &ndash; Market Controls Mobile Fix + Metal Filter Buttons</strong>: Fixed mobile search bar crushed to 2 chars and controls overflow. Fixed Expand/Collapse text flip on search. Added metal filter pill buttons (All/Silver/Gold/Goldback/Platinum/Palladium) with color-coded active states (STAK-433, STAK-434)</li>
     <li><strong>v3.33.51 &ndash; Pre-ship Security Hardening</strong>: XSS fix in settings pattern rules. OAuth CSRF protection on relay path. Sync flag leak fix. Console output sanitized to remove cryptographic metadata. Dead sync modal code removed (~206 lines). All confirmations use appConfirm (STAK-430)</li>
     <li><strong>v3.33.50 &ndash; Spot Health Dot UX, 7-Day Trend, Timezone Formatting</strong>: Spot dot shows orange (syncing) instead of red on fresh installs. Dot respects cache TTL for green status. 7-day trend sorts by date for correct direction. Sync log timestamps respect timezone preference (STAK-429, STAK-408, STAK-384, STAK-399, STAK-281)</li>
     <li><strong>v3.33.49 &ndash; Import/Restore Completeness &amp; Cloud Backup Photos</strong>: Manual cloud backup now has an optional &ldquo;Include photos&rdquo; checkbox. ZIP and vault restore blocked during active sync. Wiki updated with snapshot terminology and restore warnings (STAK-427)</li>
     <li><strong>v3.33.48 &ndash; DiffModal Settings Fix &amp; Empty-Diff Silent Pull</strong>: DiffModal Apply button now correctly detects pending settings changes. Settings are included in selectedChanges instead of being silently dropped. Manifest-first pull returns silently when no changes detected (STAK-387, STAK-401, STAK-415, STAK-417)</li>
-    <li><strong>v3.33.47 &ndash; Sync Scope &amp; Serialization</strong>: Cloud sync now syncs 44 keys across devices (up from 8) &mdash; all preferences, header buttons, feature toggles, and API credentials. Manifest-first pulls now compare and apply settings changes. Photos sync on all pull paths. Deleting all photos propagates deletion to remote (STAK-426)</li>
   `;
 };
 
