@@ -27,10 +27,10 @@ This file provides foundational mandates and project-specific context for Gemini
   - Or use a simple HTTP server: `python3 -m http.server 8000`.
 - **Linting:**
   - `npm run lint` (runs `eslint js/*.js sw.js`).
-- **Testing:**
-  - Manual smoke testing is mandatory for UI changes.
-  - **NL E2E tests** (`/bb-test` skill): `tests/runbook/*.md` — 75+ tests across 8 section files, executed via Stagehand/Browserbase against PR preview URLs.
-  - **Scripted tests** (`/smoke-test` skill): `tests/*.spec.js` — Playwright + self-hosted browserless Docker. Run with `npm test`.
+- **Testing (single model — runbook NL tests):**
+  - `tests/runbook/*.md` — 84 NL E2E tests across 8 sections, run via `/bb-test` (Browserbase/Stagehand) against PR preview URLs. No Playwright, no browserless, no scripted specs.
+  - TDD: write runbook test blocks BEFORE implementing code, verify with `/bb-test sections=NN`.
+  - Cloud sync/OAuth cannot be tested via Browserbase — test manually at `beta.staktrakr.com`.
 
 ### Deployment
 
@@ -231,7 +231,7 @@ Cloud-based browser infrastructure used for high-fidelity web scraping and autom
 - **Cost:** Real-world cost applies. **Requires explicit user approval** before initiating new sessions.
 - **Backend:** Switched via `BROWSER_MODE=browserbase`.
 - **Requirements:** `BROWSERBASE_API_KEY` and `BROWSERBASE_PROJECT_ID` environment variables.
-- **Integration:** Integrated with Playwright (see `playwright.config.js`) and custom scrapers.
+- **Integration:** Used via Stagehand NL automation for `tests/runbook/*.md` test suite.
 
 ### Context7 (Library Documentation)
 
@@ -258,13 +258,11 @@ any PR ready to merge.
 
 ### Playwright (Browser Automation)
 
-Playwright MCP for scripted browser control. Used with the self-hosted **Browserless** Docker
-container (`devops/browserless/`) for free local test runs.
+Playwright MCP for browser automation. **Note:** Playwright scripted specs have been retired in
+favor of `tests/runbook/*.md` NL tests via Browserbase/Stagehand. The Playwright MCP is still
+available for ad-hoc browser automation but is no longer used for the test suite.
 
-**When to use:** Writing or running Playwright specs, smoke tests, regression checks.
-
-**Start Browserless:** `cd devops/browserless && docker compose up -d`
-**Run tests:** `BROWSER_BACKEND=browserless TEST_URL=http://localhost:8765 npm test`
+**When to use:** Ad-hoc browser automation tasks, not testing (use `/bb-test` for tests).
 
 ### Code Graph Context (Structural Code Analysis)
 
