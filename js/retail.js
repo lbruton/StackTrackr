@@ -710,8 +710,9 @@ const RETAIL_METAL_EMOJI = { gold: "🟡", silver: "⚪", platinum: "🔷", pall
 const _computeRetailTrend = (slug) => {
   const history = retailPriceHistory[slug];
   if (!history || history.length < 2) return null;
-  const latest = Number(history[0].avg_median);
-  const prev   = Number(history[1].avg_median);
+  const sorted = [...history].sort((a, b) => new Date(b.date) - new Date(a.date));
+  const latest = Number(sorted[0].avg_median);
+  const prev   = Number(sorted[1].avg_median);
   if (!isFinite(latest) || !isFinite(prev) || prev === 0) return null;
   const change = ((latest - prev) / prev) * 100;
   const pct = Math.abs(change).toFixed(1);
@@ -1673,9 +1674,17 @@ const renderRetailHistoryTable = () => {
       recent.forEach((entry) => {
         const tr = document.createElement("tr");
         const ts = entry.ts ? new Date(entry.ts) : null;
-        const timeStr = (ts && !isNaN(ts))
-          ? `${ts.toLocaleDateString()} ${ts.getHours().toString().padStart(2, "0")}:${ts.getMinutes().toString().padStart(2, "0")}`
-          : "--";
+        const timeStr = (() => {
+          if (!ts || isNaN(ts)) return "--";
+          const tz = (typeof TIMEZONE_KEY !== 'undefined' && localStorage.getItem(TIMEZONE_KEY)) || undefined;
+          const tzOpts = tz && tz !== 'auto' ? { timeZone: tz } : {};
+          try {
+            const timePart = ts.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false, ...tzOpts });
+            return `${ts.toLocaleDateString(undefined, tzOpts)} ${timePart}`;
+          } catch (e) {
+            return `${ts.toLocaleDateString()} ${ts.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false })}`;
+          }
+        })();
         const windowStr = (() => {
           if (!entry.window) return "\u2014";
           const wd = new Date(entry.window);

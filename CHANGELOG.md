@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.50] - 2026-03-04
+
+### Fixed — Spot Health Dot UX, 7-Day Trend, Timezone Formatting (STAK-429)
+
+- **Fixed**: Spot health dot shows orange (syncing) instead of red on fresh installs when no sync data exists yet (STAK-408)
+- **Fixed**: Spot health dot respects cache TTL — shows green when cached data is still valid, falls back to age-based coloring when expired (STAK-384)
+- **Fixed**: 7-day retail trend now sorts history by date before comparing, fixing incorrect trend direction when array ordering is inconsistent (STAK-399)
+- **Fixed**: Retail sync log Time column now respects user timezone preference via TIMEZONE_KEY, matching the pattern used in retail-view-modal (STAK-281)
+
+---
+
 ## [3.33.49] - 2026-03-04
 
 ### Fixed — Import/Restore Completeness & Cloud Backup Photos (STAK-427)
