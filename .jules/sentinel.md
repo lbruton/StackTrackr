@@ -17,3 +17,8 @@
 **Vulnerability:** Security degradation when `generateUUID` is unavailable and the fallback uses `Math.random()`, undermining the hardening provided by `crypto.randomUUID()` / `crypto.getRandomValues()`.
 **Learning:** Fallback implementations for security utilities must preserve the same cryptographic properties as the primary implementation. In a vanilla JS, global-scope architecture, load-order fragility can accidentally route calls to insecure fallbacks, effectively undoing security upgrades even if no runtime errors occur.
 **Prevention:** Avoid using weak PRNGs such as `Math.random()` in ID or token generation paths. When designing fallbacks for globals like `generateUUID`, use `crypto.getRandomValues()` directly — it is available in every targeted environment (modern browsers, file:// protocol, Node 15+) and matches the precedent in `cloud-sync.js`.
+
+## 2026-10-27 - Unsanitized User Input in innerHTML
+**Vulnerability:** XSS via unsanitized user input assigned to `innerHTML` in `js/settings.js`.
+**Learning:** `innerHTML` is inherently unsafe and can execute embedded JavaScript if the input contains malicious tags. In `js/settings.js`, `name` derived from `item.name` was directly passed to `innerHTML`. Even though an `escapeHtml` function existed in the project, it was not utilized here.
+**Prevention:** Always sanitize variables that reflect user input before inserting them into the DOM. Prefer `textContent` over `innerHTML` when handling plain text, or rigorously apply sanitization functions like `escapeHtml` to any user-controlled string included in an HTML template literal assigned to `innerHTML`.

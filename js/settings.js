@@ -1874,7 +1874,8 @@ const renderUserImageGrid = async () => {
 
     const info = document.createElement('div');
     info.className = 'pattern-rule-info';
-    info.innerHTML = `<div class="rule-replacement">${name}</div>`;
+    // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml
+    info.innerHTML = `<div class="rule-replacement">${escapeHtml(name)}</div>`;
     row.appendChild(info);
 
     // Actions
