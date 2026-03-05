@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.54] - 2026-03-05
+
+### Fixed — STAK-448: Dateless Items Sort as Oldest
+
+- **Fixed**: Dateless items (blank/unknown purchase date) now sort as "infinitely old" — top when oldest-first, bottom when newest-first, instead of always pinned to bottom regardless of direction (STAK-448)
+
+---
+
 ## [3.33.53] - 2026-03-05
 
 ### Fixed — STAK-431: Numista N# Search Image URL + Metal Auto-Population
