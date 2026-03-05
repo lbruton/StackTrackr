@@ -127,6 +127,6 @@ Team: `f876864d-ff80-4231-ae6c-a8e5cb69aca4`
 
 ## Project Skills
 
-In `.claude/skills/`: `bb-test`, `browserbase-test-maintenance`, `coding-standards`, `homepoller-ssh`, `release`, `repo-boundaries`, `retail-poller`, `retail-provider-fix`, `seed-sync`, `ship`, `wiki-audit`, `wiki-search`, `wiki-update`.
+In `.claude/skills/`: `api-infrastructure`, `bb-test`, `brainstorming`, `browserbase-test-maintenance`, `bug-report`, `coding-standards`, `devops-dashboard`, `finishing-a-development-branch`, `homepoller-ssh`, `markdown-standards`, `prime`, `release`, `repo-boundaries`, `retail-poller`, `retail-provider-fix`, `scan-mentions`, `seed-sync`, `ship`, `sync-poller`, `ui-mockup`, `wiki-audit`, `wiki-search`, `wiki-sweep`, `wiki-update`.
 
 Use `/sync-instructions` after significant codebase changes.
