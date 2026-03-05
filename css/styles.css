@@ -12391,6 +12391,59 @@ th {
 .market-sort-label {
   pointer-events: none;
 }
+/* Metal filter pills */
+.market-filter-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.market-filter-pill {
+  background: transparent;
+  border: 1px solid var(--border, var(--bs-border-color));
+  border-radius: 14px;
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  color: var(--text-muted, #6c757d);
+}
+.market-filter-pill:hover {
+  border-color: var(--border-hover, #475569);
+  color: var(--text-primary, var(--bs-body-color));
+}
+.market-filter-pill.active[data-metal="all"] {
+  background: var(--bs-primary, #3b82f6);
+  color: #fff;
+  border-color: var(--bs-primary, #3b82f6);
+}
+.market-filter-pill.active[data-metal="gold"] {
+  background: rgba(245,158,11,0.15);
+  color: #f59e0b;
+  border-color: #f59e0b;
+}
+.market-filter-pill.active[data-metal="silver"] {
+  background: rgba(139,147,166,0.15);
+  color: var(--bs-secondary-color, #6c757d);
+  border-color: #6c757d;
+}
+.market-filter-pill.active[data-metal="platinum"] {
+  background: rgba(6,182,212,0.15);
+  color: #06b6d4;
+  border-color: #06b6d4;
+}
+.market-filter-pill.active[data-metal="goldback"] {
+  background: rgba(212,160,23,0.15);
+  color: #d4a017;
+  border-color: #d4a017;
+}
+.market-filter-pill.active[data-metal="palladium"] {
+  background: rgba(148,163,184,0.15);
+  color: #94a3b8;
+  border-color: #94a3b8;
+}
 /* Sync button — status-aware: green=current, amber=stale */
 .market-sync-btn {
   background: transparent;
@@ -12720,6 +12773,8 @@ th {
   .market-header-row { flex-wrap: wrap; gap: 8px; }
   .market-search { width: 100%; flex: unset; min-width: 0; }
   .market-header-controls-right { width: 100%; justify-content: flex-end; }
+  .market-filter-pills { width: 100%; }
+  .market-filter-pill { min-height: 32px; padding: 6px 12px; }
   .market-footer-row { flex-direction: column; align-items: flex-start; gap: 8px; }
   .market-list-card {
     grid-template-columns: 70px 1fr;
