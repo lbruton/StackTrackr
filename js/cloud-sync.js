@@ -1142,11 +1142,12 @@ async function pushSyncVault() {
           // OLD password. In that case we cannot reliably decrypt with the NEW password.
           if (_syncPasswordJustChanged) {
             console.warn('[CloudSync] Pre-push check: password just changed — remote metadata likely encrypted with old password');
-            var confirmBlindOverwrite = window.confirm(
+            var confirmBlindOverwrite = await appConfirm(
               'Your sync password was just changed.\n\n' +
               'StakTrakr cannot verify whether the cloud copy of your vault is newer than this device. ' +
               'Continuing may overwrite newer remote data.\n\n' +
-              'Do you want to overwrite the cloud copy with the data from this device now?'
+              'Do you want to overwrite the cloud copy with the data from this device now?',
+              'Cloud Sync'
             );
             if (!confirmBlindOverwrite) {
               console.warn('[CloudSync] Pre-push check: user cancelled blind overwrite after password change');
@@ -1203,9 +1204,6 @@ async function pushSyncVault() {
             logCloudSyncActivity('auto_sync_push', 'deferred', 'Remote change detected from device ' + prePushMeta.deviceId.slice(0, 8) + ' — showing diff');
             _syncPushInFlight = false;
             updateSyncStatusIndicator('idle');
-            // STAK-411: Set flag before await so concurrent poll sees it and skips
-            // its own handleRemoteChange call, preventing a double conflict modal.
-            _syncRemoteChangeActive = true;
             await handleRemoteChange(prePushMeta);
             return; // Do NOT push — let the user decide via the update/conflict modal
           } else {
