@@ -2,8 +2,8 @@
 title: Retail Modal
 category: frontend
 owner: staktrakr
-lastUpdated: v3.33.50
-date: 2026-03-04
+lastUpdated: v3.33.52
+date: 2026-03-05
 sourceFiles:
   - js/retail-view-modal.js
   - js/retail.js
@@ -13,7 +13,7 @@ relatedPages:
 ---
 # Retail Modal
 
-> **Last updated:** v3.33.50 — 2026-03-04
+> **Last updated:** v3.33.52 — 2026-03-05
 > **Source files:** `js/retail-view-modal.js`, `js/retail.js`
 
 ## Overview
@@ -54,6 +54,8 @@ On open, the modal displays cached data from localStorage immediately, then fire
 - Manifest-driven slug/metadata resolution: `getActiveRetailSlugs`, `getRetailCoinMeta`, `getVendorDisplay`.
 - The sync log, sync-in-progress flags, and error state. The sync log Time column uses timezone-aware formatting via `TIMEZONE_KEY` from localStorage, matching the `_fmtIntradayTime` pattern in `retail-view-modal.js`. Falls back gracefully if the stored timezone is invalid.
 - Rendering of all card/list views (grid view, market list view, sparklines).
+- Metal filter pill state (`_marketMetalFilter`) and filtering logic in `_getFilteredSortedSlugs()` — filters slugs by `getRetailCoinMeta(slug).metal` when a pill other than "All" is active.
+- Expand/Collapse button text reset — `_renderMarketListView()` resets `marketExpandAllBtn` to "Expand All" on every re-render (search, filter change), since newly rendered cards are always collapsed.
 - Card-level trend indicators via `_computeRetailTrend(slug)`, which sorts history by date descending before comparing the two most recent entries to determine trend direction.
 
 **`retail-view-modal.js`** owns:
@@ -79,6 +81,13 @@ Declared in `retail.js`. All three maps must be updated together when adding a n
 | `bullionexchanges` | BullionX | `#f472b6` bright pink |
 | `summitmetals` | Summit | `#22d3ee` bright cyan |
 | `goldback` | Goldback | `#d4a017` deep gold |
+
+### Module-Level State (retail.js — market list view)
+
+| Variable | Type | Purpose |
+|---|---|---|
+| `_marketMetalFilter` | `string` | Active metal filter pill value: `"all"`, `"silver"`, `"gold"`, `"goldback"`, `"platinum"`, or `"palladium"` |
+| `_marketSearchTimer` | `number \| null` | Search input debounce timer |
 
 ### Module-Level State (retail-view-modal.js)
 

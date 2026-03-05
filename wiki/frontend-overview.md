@@ -2,8 +2,8 @@
 title: Frontend Overview
 category: frontend
 owner: staktrakr
-lastUpdated: v3.33.44
-date: 2026-03-03
+lastUpdated: v3.33.52
+date: 2026-03-05
 sourceFiles:
   - index.html
   - js/constants.js
@@ -17,7 +17,7 @@ relatedPages:
 ---
 # Frontend Overview
 
-> **Last updated:** v3.33.44 — 2026-03-03
+> **Last updated:** v3.33.52 — 2026-03-05
 > **Source files:** `index.html`, `js/constants.js`, `sw.js`, `js/file-protocol-fix.js`
 
 ## Overview
@@ -76,7 +76,7 @@ index.html  (single-page app — all UI panels, modals, and sections)
 Branch  Release  Patch
 ```
 
-Current version: **3.33.44**
+Current version: **3.33.52**
 
 Optional state suffixes: `a` = alpha, `b` = beta, `rc` = release candidate.
 

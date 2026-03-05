@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.53] - 2026-03-05
+
+### Fixed — STAK-431: Numista N# Search Image URL + Metal Auto-Population
+
+- **Fixed**: Numista N# search now auto-populates obverse and reverse image URLs into inventory items — images appear immediately in table and card views without manual re-download (STAK-431)
+- **Fixed**: Metal type is now auto-detected from Numista composition data and pre-selected in the form dropdown for gold, silver, platinum, and palladium items (STAK-431)
+- **Added**: Field picker now shows Obverse Image, Reverse Image, and Metal checkboxes — users can opt out of any field before filling (STAK-431)
+
+---
+
 ## [3.33.52] - 2026-03-05
 
 ### Fixed/Added — STAK-433/STAK-434: Market Controls Mobile Fix + Metal Filter Buttons
