@@ -505,7 +505,7 @@ async function cloudExchangeCode(code, state) {
           } else {
             console.warn('[CloudStorage] API fallback FAILED to get account_id');
           }
-        } catch (e) { console.warn('[CloudStorage] Failed to fetch Dropbox account ID:', e.message); }
+        } catch (e) { console.warn('[CloudStorage] Failed to fetch Dropbox account ID.'); }
       }
     }
     sessionStorage.removeItem('cloud_oauth_state');
@@ -537,9 +537,9 @@ function cloudCheckOAuthRelay() {
     localStorage.removeItem('staktrakr_oauth_result');
     var data = JSON.parse(raw);
     if (data.code && data.state) {
-      var savedState = sessionStorage.getItem('cloud_oauth_state');
+      const savedState = sessionStorage.getItem('cloud_oauth_state');
       if (!savedState || savedState !== data.state) {
-        console.warn('[CloudStorage] OAuth relay: state mismatch — possible CSRF, rejecting');
+        console.warn('[CloudStorage] OAuth relay: state mismatch (likely another tab) — skipping');
         return;
       }
       cloudExchangeCode(data.code, data.state);
