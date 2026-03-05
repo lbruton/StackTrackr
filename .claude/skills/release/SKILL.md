@@ -312,13 +312,22 @@ Commit message format: `vNEW_VERSION — TITLE`
 
 If there are other uncommitted changes beyond the 5 version files, ask the user whether to include them in this commit or leave them staged separately.
 
-**After a successful commit, dispatch a background wiki update:**
+**After a successful commit, run wiki update (BLOCKING — must complete before PR):**
 
-Invoke the `wiki-update` skill (Skill tool) as a background Task agent. It identifies
-which wiki pages were affected by this patch and updates in-repo `wiki/`.
-Do not wait for it — proceed to Phase 4 immediately.
+Invoke the `wiki-update` skill (Skill tool). It identifies which wiki pages were
+affected by this patch and updates in-repo `wiki/`. **This is a blocking step.**
+Wiki changes MUST be committed to the patch branch BEFORE proceeding to Phase 4.
+Do NOT push or create a PR until wiki updates are committed.
 
-**After a successful commit, push the patch branch and open a PR to dev** (Phase 4 covers this).
+If wiki-update produces changes, commit them on the same patch branch:
+```bash
+git add wiki/
+git commit -m "docs: update wiki pages for vVERSION"
+```
+
+If wiki-update finds no affected pages, it exits with a no-op message — proceed to Phase 4.
+
+**After wiki is committed, push the patch branch and open a PR to dev** (Phase 4 covers this).
 **After the PR is merged to dev — tag the patch commit on dev and run worktree cleanup:**
 
 ```bash
@@ -347,6 +356,22 @@ git push origin --delete patch/VERSION
 
 > **⚠️ PR target reminder:** `patch/VERSION` → **`dev`** (QA preview). `dev` → `main` only via Phase 4.5, only when user says ready. Never create a patch PR targeting main.
 
+### Pre-flight check (HARD GATE)
+
+Before pushing, verify the branch is complete:
+
+```bash
+# 1. Wiki must be committed — no orphaned wiki changes
+git diff --name-only wiki/ | grep -c . && echo "FAIL: uncommitted wiki changes" || echo "OK: wiki clean"
+
+# 2. All version files present in commit history
+git log --oneline --name-only HEAD~3..HEAD | grep -E '(wiki/|js/constants|CHANGELOG)' || echo "WARNING: check commit contents"
+```
+
+If uncommitted wiki changes exist, commit them before pushing. **Do NOT create a PR with pending wiki updates.**
+
+### Step 1: Push and create PR
+
 1. Push the patch branch:
    ```bash
    git push origin patch/VERSION
@@ -373,6 +398,20 @@ git push origin --delete patch/VERSION
    ```
 
 3. (Optional — requires Linear MCP) If Linear issues are referenced, update status to **In Progress** (not Done — that happens at merge time).
+
+### Step 2: PR Resolution & Scan Monitoring (MANDATORY)
+
+After the PR is created, **do not walk away**. Complete these steps:
+
+1. **Wait for CI/Codacy scans** to start (usually 30-60 seconds after push)
+2. **Run `/pr-resolve`** to monitor and resolve review threads as they appear
+3. **Check scan results**: `gh pr checks <PR_NUMBER>` — wait for all checks to complete
+4. **Address any Codacy/Copilot findings** — fix issues, push follow-up commits, re-run `/pr-resolve`
+5. **Confirm the PR is clean** — all checks passing, no unresolved threads
+
+The PR should be ready for the user to merge with a single click. Do not leave unresolved threads or failing checks for the user to clean up.
+
+> **The PR is not "done" until it's clean.** A draft PR with failing scans and unresolved threads is incomplete work.
 
 > **No `dev → main` PR here.** The patch branch PRs to `dev` only. The `dev → main` PR is created at Phase 4.5, using version tags on `dev` as the changelog source. Do not create or touch any PR targeting `main` during Phase 4.
 
