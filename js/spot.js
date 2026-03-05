@@ -106,8 +106,8 @@ const updateLastTimestamps = (source, provider, timestamp) => {
 
 /**
  * Updates the #headerSyncDot color based on last spot sync age.
- * Green: < 60 min, Orange: 60 min – 24 hr, Red: > 24 hr or no data.
- * Falls back to cache refresh timestamp before showing orange (no data).
+ * Green: < 60 min, Orange: 60 min – 24 hr or no data, Red: > 24 hr.
+ * Falls back to cache refresh timestamp before treating the state as no data (orange).
  */
 const updateSpotSyncHealthDot = () => {
   const dot = safeGetElement('headerSyncDot');
@@ -123,8 +123,12 @@ const updateSpotSyncHealthDot = () => {
   try { cache = loadDataSync(LAST_CACHE_REFRESH_KEY); } catch (e) { /* ignore */ }
   if (cache && cache.timestamp) {
     if (typeof getCacheDurationMs === 'function') {
-      const age = Date.now() - new Date(cache.timestamp).getTime();
-      if (age <= getCacheDurationMs('STAKTRAKR')) { dot.classList.add('header-cloud-dot--green'); return; }
+      const cacheMs = new Date(cache.timestamp).getTime();
+      if (!isNaN(cacheMs)) {
+        const rawProvider = (cache.provider || '').replace(/ \(cached\)$/, '');
+        const age = Date.now() - cacheMs;
+        if (age <= getCacheDurationMs(rawProvider || 'STAKTRAKR')) { dot.classList.add('header-cloud-dot--green'); return; }
+      }
     }
     dot.classList.add(`header-cloud-dot${getHealthStatusClass(cache.timestamp)}`);
     return;
