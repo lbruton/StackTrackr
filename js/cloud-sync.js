@@ -1879,7 +1879,6 @@ async function pullSyncVault(remoteMeta) {
             pulledImageHash = remoteMeta.imageVault.hash;
             debugLog('[CloudSync] Image vault not found on remote (404) — skipping');
           } else {
-            var imgErrBody = await imgPullResp.text().catch(function () { return ''; });
             console.warn('[CloudSync] Image vault download failed:', imgPullResp.status);
             logCloudSyncActivity('image_vault_pull', 'fail', 'HTTP ' + imgPullResp.status);
           }
