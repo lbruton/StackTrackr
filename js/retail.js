@@ -1580,6 +1580,8 @@ const _renderMarketListView = () => {
   footerRow.appendChild(sponsorBadge);
   footer.appendChild(footerRow);
   grid.appendChild(footer);
+  const expandBtn = safeGetElement("marketExpandAllBtn");
+  if (expandBtn) expandBtn.textContent = "Expand All";
 };
 
 /** Debounced search handler for market list view. */
