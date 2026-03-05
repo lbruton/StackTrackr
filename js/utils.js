@@ -169,17 +169,6 @@ const debounce = (func, wait) => {
 };
 
 /**
- * Checks if a file exceeds the local upload size limit
- *
- * @param {File} file - File to validate
- * @returns {boolean} True if file is within allowed size
- */
-const checkFileSize = (file) => {
-  const limit = cloudBackupEnabled ? Infinity : MAX_LOCAL_FILE_SIZE;
-  return file.size <= limit;
-};
-
-/**
  * Refreshes composition dropdown options in add/edit modals
  */
 const refreshCompositionOptions = () => {
@@ -998,8 +987,18 @@ const saveData = async (key, data) => {
     const raw = JSON.stringify(data);
     const out = __compressIfNeeded(raw);
     localStorage.setItem(key, out);
+    // STAK-414: Track when inventory was last modified locally so the sync
+    // poller can detect that local data is newer than the remote vault and
+    // trigger a push instead of a pull.
+    if (key === 'metalInventory') {
+      localStorage.setItem('cloud_sync_local_modified', new Date().toISOString());
+    }
   } catch(e) {
     console.error('saveData failed', e);
+    // STAK-421: Surface QuotaExceededError so users know storage is full
+    if (e && e.name === 'QuotaExceededError' && typeof showToast === 'function') {
+      showToast('Storage is full — some data could not be saved. Try clearing unused spot history or image cache.', 'error');
+    }
   }
 };
 
@@ -1022,7 +1021,19 @@ const loadData = async (key, defaultValue = []) => {
 };
 
 // Synchronous versions for backward compatibility where async isn't supported
-const saveDataSync = (key, data) => { try { const raw = JSON.stringify(data); const out = __compressIfNeeded(raw); localStorage.setItem(key, out); } catch(e) { console.error('saveDataSync failed', e); throw e; } };
+const saveDataSync = (key, data) => {
+  try {
+    const raw = JSON.stringify(data);
+    const out = __compressIfNeeded(raw);
+    localStorage.setItem(key, out);
+  } catch (e) {
+    console.error('saveDataSync failed', e);
+    if (e && e.name === 'QuotaExceededError' && typeof showToast === 'function') {
+      showToast('Storage is full — some data could not be saved. Try clearing unused spot history or image cache.', 'error');
+    }
+    throw e;
+  }
+};
 const loadDataSync = (key, defaultValue = []) => { try { const raw = localStorage.getItem(key); if(raw == null) return defaultValue; const str = __decompressIfNeeded(raw); return JSON.parse(str); } catch(e) { return defaultValue; } };
 
 /**
@@ -3124,7 +3135,6 @@ if (typeof window !== 'undefined') {
   };
 
   window.cleanupStorage = cleanupStorage;
-  window.checkFileSize = checkFileSize;
   window.closeModalById = closeModalById;
   window.openModalById = openModalById;
   window.updateStorageStats = updateStorageStats;

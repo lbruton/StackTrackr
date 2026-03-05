@@ -231,7 +231,7 @@ const syncSettingsUI = () => {
   // Cloud backup history depth
   var historySelect = safeGetElement('cloudBackupHistoryDepth');
   if (historySelect) {
-    var savedDepth = loadData(CLOUD_BACKUP_HISTORY_KEY) || String(CLOUD_BACKUP_HISTORY_DEFAULT);
+    const savedDepth = loadDataSync(CLOUD_BACKUP_HISTORY_KEY, String(CLOUD_BACKUP_HISTORY_DEFAULT));
     historySelect.value = savedDepth;
   }
 
@@ -391,12 +391,6 @@ const syncSettingsUI = () => {
     switchProviderTab('NUMISTA');
   }
 
-  // Hide Cloud nav item when no provider is connected (STAK-317)
-  const cloudNavItem = document.querySelector('.settings-nav-item[data-section="cloud"]');
-  if (cloudNavItem && typeof cloudIsConnected === 'function' && typeof CLOUD_PROVIDERS !== 'undefined') {
-    const connectedCount = Object.keys(CLOUD_PROVIDERS).filter(p => cloudIsConnected(p)).length;
-    cloudNavItem.style.display = connectedCount >= 1 ? '' : 'none';
-  }
 };
 
 /**
@@ -1880,7 +1874,7 @@ const renderUserImageGrid = async () => {
 
     const info = document.createElement('div');
     info.className = 'pattern-rule-info';
-    info.innerHTML = `<div class="rule-replacement">${name}</div>`;
+    info.innerHTML = '<div class="rule-replacement">' + sanitizeHtml(name) + '</div>';
     row.appendChild(info);
 
     // Actions

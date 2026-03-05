@@ -50,11 +50,11 @@ Two independent pollers write to the **same Turso database**. A single publisher
 
 1. Load providers from Turso (Turso-first with file fallback)
 2. `price-extract.js` — scrape dealers, write results to Turso `price_snapshots`
-3. `capture.js` — screenshots via Playwright (requires `GEMINI_API_KEY`)
-4. `extract-vision.js` — Gemini Vision cross-validation (requires `GEMINI_API_KEY`)
+3. `capture.js` — screenshots via Playwright (requires `GEMINI_API_KEY` + `VISION_ENABLED=1` on Fly.io)
+4. `extract-vision.js` — Gemini Vision cross-validation (requires `GEMINI_API_KEY` + `VISION_ENABLED=1` on Fly.io)
 5. **Done** — does NOT touch Git
 
-> **Note:** Both Fly and home can run the vision pipeline when `GEMINI_API_KEY` is present.
+> **Note:** Vision is **soft-disabled by default** on Fly.io (`VISION_ENABLED=0` in `run-local.sh`). The home poller runs vision when `GEMINI_API_KEY` is present — no `VISION_ENABLED` gate.
 
 ### `run-publish.sh` (Fly.io only, every 15 min: `8,23,38,53 * * * *`)
 
@@ -95,7 +95,7 @@ Home LXC run-home.sh ──┘    readLatestPerVendor()        (run-publish.sh, 
 | `coin_slug` | e.g. `ase`, `age`, `maple-silver` |
 | `vendor` | Provider ID, e.g. `jmbullion`, `apmex` |
 | `price` | Scraped price (null if OOS or failed) |
-| `source` | `firecrawl`, `playwright`, `gemini-vision`, or `fbp` |
+| `source` | `playwright_direct`, `firecrawl`, `playwright`, `gemini-vision`, or `fbp` |
 | `in_stock` | false if OOS patterns matched |
 | `is_failed` | true if scrape threw an error |
 
@@ -117,23 +117,49 @@ See [providers.md](providers.md) for full details.
 
 ---
 
-## Multi-URL Fallback (`price-extract.js`)
+## Scrape Pipeline (`price-extract.js`)
 
-Since 2026-02-23, each provider entry can specify a `urls` array instead of a single `url`. The scraper tries each URL in sequence using a two-phase strategy:
+Since 2026-02-23, each provider entry can specify a `urls` array instead of a single `url`. The scraper tries each URL in sequence. Single-`url` entries are backward compatible — treated as a 1-element `urls` list.
 
-**Phase 1 — Firecrawl chain (all URLs):**
+> **Pipeline divergence (API-3, 2026-03-02):** The Fly.io and home pollers now run **different pipeline orders**. The sections below describe the Fly.io pipeline. See [Home Poller](home-poller.md) for the home pipeline, and [Poller Parity](poller-parity.md) for a side-by-side comparison.
+
+### Fly.io Pipeline Order (post API-3)
+
+**Phase 0 — Playwright direct (all URLs, tried first):**
+
+`scrapeWithPlaywrightDirect(url, providerId)` — lightweight direct scrape using Fly.io's own IP (no proxy). 15-second timeout, no retries.
 
 | Event at URL[i] | Action |
 |-----------------|--------|
-| OOS detected | Log ⚠, jitter, try URL[i+1] |
-| Price not found (page loaded) | Log ?, jitter, try URL[i+1] |
-| Firecrawl error | Log ✗, jitter, try URL[i+1] |
 | Price found | Log ✓, break — skip remaining URLs |
+| OOS detected | Log ⚠, jitter, try URL[i+1] |
+| 403 / timeout / AbortError | Set `skipRetry = true`, fall through to Phase 1 |
+| Price not found | Log ?, jitter, try URL[i+1] |
 
-**Phase 2 — Playwright (last resort, once):**
-Only runs after the full Firecrawl chain is exhausted with no price. Uses `finalUrl` (the last URL tried). If Playwright also fails, result is recorded as `price_not_found` or `out_of_stock`.
+~65 targets succeed at Phase 0 (~5s avg per target).
 
-Single-`url` entries are backward compatible — treated as a 1-element `urls` list.
+**Phase 1 — Firecrawl with proxy (fallback only):**
+
+Only runs if Phase 0 exhausted all URLs with no price. Uses `HOME_PROXY_URL` (tinyproxy on home VM via Tailscale) for residential IP routing.
+
+| Event | Action |
+|-------|--------|
+| Price found | Log ✓, done |
+| OOS detected | Done (no further retry) |
+| Firecrawl error | Recorded as failed, queued for T3 retry |
+
+~20 targets need Phase 1 (~20s avg per target).
+
+**Abort/timeout handling:** The `scrapeUrl()` catch block sets `skipRetry = true` for `AbortError` and timeout errors, preventing wasted retries on targets that are genuinely unreachable.
+
+### Home Poller Pipeline Order (unchanged)
+
+The home poller (`run-home.sh`) still uses the **old pipeline order**:
+
+1. **Firecrawl first** (no proxy — home poller is already on residential IP)
+2. **Playwright fallback** (if Firecrawl fails)
+
+The home poller does not have a `scrapeWithPlaywrightDirect()` phase. See [Home Poller](home-poller.md) for details.
 
 ---
 
@@ -187,17 +213,45 @@ When T4 fills a vendor slot, the manifest entry includes extra fields the fronte
 
 ## Vision Pipeline
 
-Requires `GEMINI_API_KEY`. Non-fatal — failure is logged and scrape continues. Both Fly and home can run vision when `GEMINI_API_KEY` is present.
+Requires `GEMINI_API_KEY` **and** `VISION_ENABLED=1`. Non-fatal — failure is logged and scrape continues.
 
-1. **`capture.js`** — Playwright screenshots each dealer page. Dismisses popups/modals (Escape + common close selectors) before screenshot.
-2. **`extract-vision.js`** — Sends screenshots to Gemini Vision. Extracts price from image, compares against Firecrawl price.
+> **Soft-disabled by default (API-3, 2026-03-02):** The Fly.io poller's `run-local.sh` sets `VISION_ENABLED=0` by default. Toggle via `fly secrets set VISION_ENABLED=1` to re-enable, or `fly secrets unset VISION_ENABLED` to disable. The home poller runs vision when `GEMINI_API_KEY` is present in `.env` (no `VISION_ENABLED` gate).
+
+### capture.js — Direct-first screenshot capture
+
+`captureCoinDirectFirst()` tries two browser contexts in sequence:
+
+1. **Direct browser** (Fly.io IP, 20s timeout) — no proxy overhead
+2. **Proxy browser** (via `HOME_PROXY_URL`, 30s timeout) — fallback on 403 errors
+
+Both browser contexts are kept alive for the duration of the capture run. If `HOME_PROXY_URL` is unreachable at startup (5s health probe), the proxy browser is skipped and only direct capture is attempted.
+
+### extract-vision.js — Gemini Vision cross-validation
+
+Sends screenshots to Gemini Vision API. Extracts price from image, compares against scraped price. Unchanged by API-3.
+
+### Proxy health probe
+
+Both `price-extract.js` and `capture.js` probe `HOME_PROXY_URL` at startup with a 5-second timeout. If the proxy is unreachable, a `[WARN]` is logged and the pipeline continues in direct-only mode (no proxy fallback).
+
+### Confidence scoring
 
 | Scenario | Confidence |
 |----------|-----------|
-| Firecrawl + Vision agree (≤3% diff) | 99 |
-| Vision only (Firecrawl null) | ~70 |
-| Firecrawl + Vision disagree (>3% diff) | ≤70, scaled by divergence |
-| Firecrawl only, no Vision | `scoreVendorPrice()` vs 30-day median |
+| Scrape + Vision agree (≤3% diff) | 99 |
+| Vision only (scrape null) | ~70 |
+| Scrape + Vision disagree (>3% diff) | ≤70, scaled by divergence |
+| Scrape only, no Vision | `scoreVendorPrice()` vs 30-day median (~80 max) |
+
+> **Without vision enabled**, confidence scores cap at ~80. No code changes were needed in `merge-prices.js` or `api-export.js` — they handle vision-absent data gracefully.
+
+### Expected run timing
+
+| Configuration | Approximate duration |
+|---------------|---------------------|
+| **Without vision** (default) | ~16 min |
+| **With vision enabled** | ~28 min |
+| **Old pipeline (pre-API-3)** | ~68 min |
 
 ---
 

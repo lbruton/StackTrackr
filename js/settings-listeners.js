@@ -980,7 +980,7 @@ const bindImageImportExportListeners = () => {
           for (const [uuid, sides] of userMap) {
             const obverse = sides.obverse ? await sides.obverse.async('blob') : null;
             const reverse = sides.reverse ? await sides.reverse.async('blob') : null;
-            if (obverse) await imageCache.cacheUserImage(uuid, obverse, reverse);
+            if (obverse || reverse) await imageCache.cacheUserImage(uuid, obverse, reverse);
           }
         }
 
@@ -1013,40 +1013,44 @@ const bindImageSettingsListeners = () => {
  * Render the backup list for a cloud provider.
  */
 const renderCloudBackupList = (provider, backups) => {
-  const listEl = document.getElementById('cloudBackupList_' + provider);
-  if (!listEl) return;
-
-  if (!backups || backups.length === 0) {
-    listEl.style.display = '';
-    listEl.innerHTML = '<div class="cloud-backup-empty">No backups found</div>';
-    return;
-  }
+  const listEl = safeGetElement('cloudBackupList_' + provider);
+  if (!(listEl instanceof HTMLElement)) return;
 
   listEl.style.display = '';
+
+  // Single flat list — manual + sync merged, sorted newest first
+  var html = '';
+  if (!backups || backups.length === 0) {
+    html += '<div class="cloud-backup-empty">No backups found</div>';
+  } else {
+    html += backups.map(function (b) {
+      var d = new Date(b.server_modified);
+      var dateStr = d.toLocaleDateString([], { month: 'short', day: 'numeric' }) +
+        ' ' + d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+      var sizeStr = b.size < 1024 ? b.size + ' B' :
+        b.size < 1048576 ? (b.size / 1024).toFixed(0) + ' KB' :
+          (b.size / 1048576).toFixed(1) + ' MB';
+      var isManual = b.name.indexOf(MANUAL_BACKUP_PREFIX) === 0;
+      var typeLabel = isManual ? 'Manual' : 'Sync';
+      var safeProvider = sanitizeHtml(provider);
+      var safeFilename = sanitizeHtml(b.name);
+      return '<div class="cloud-backup-row">' +
+        '<button class="cloud-backup-entry" data-provider="' + safeProvider +
+          '" data-filename="' + safeFilename + '" data-size="' + b.size + '">' +
+          '<span class="cloud-backup-type" style="min-width:3rem">' + typeLabel + '</span>' +
+          '<span class="cloud-backup-name" title="' + safeFilename + '">' + sanitizeHtml(dateStr) + '</span>' +
+          '<span class="cloud-backup-size">' + sanitizeHtml(sizeStr) + '</span>' +
+        '</button>' +
+        '<button class="cloud-backup-delete-btn" data-provider="' + safeProvider +
+          '" data-filename="' + safeFilename + '" title="Delete this backup from cloud storage" aria-label="Delete ' + safeFilename + '">' +
+          '&times;' +
+        '</button>' +
+      '</div>';
+    }).join('');
+  }
+
   // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml
-  listEl.innerHTML = backups.map(function (b) {
-    const d = new Date(b.server_modified);
-    const dateStr = d.toLocaleDateString([], { month: 'short', day: 'numeric' }) +
-      ' ' + d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-    const sizeStr = b.size < 1024 ? b.size + ' B' :
-      b.size < 1048576 ? (b.size / 1024).toFixed(0) + ' KB' :
-        (b.size / 1048576).toFixed(1) + ' MB';
-    const label = b.name.includes(VAULT_IMAGE_FILE_SUFFIX) ? 'Image backup' : 'Inventory backup';
-    const safeProvider = sanitizeHtml(provider);
-    const safeFilename = sanitizeHtml(b.name);
-    return '<div class="cloud-backup-row">' +
-      '<button class="cloud-backup-entry" data-provider="' + safeProvider +
-        '" data-filename="' + safeFilename + '" data-size="' + b.size + '">' +
-        '<span class="cloud-backup-name" title="' + safeFilename + '">' + sanitizeHtml(dateStr) + '</span>' +
-        '<span class="cloud-backup-size">' + sanitizeHtml(sizeStr) + '</span>' +
-        '<span class="cloud-backup-type">' + label + '</span>' +
-      '</button>' +
-      '<button class="cloud-backup-delete-btn" data-provider="' + safeProvider +
-        '" data-filename="' + safeFilename + '" title="Delete this backup from Dropbox" aria-label="Delete ' + safeFilename + '">' +
-        '&times;' +
-      '</button>' +
-    '</div>';
-  }).join('');
+  listEl.innerHTML = html;
 };
 
 /**
@@ -1115,6 +1119,24 @@ const _cloudRestoreWithCachedPw = async (provider, password, fileBytes) => {
   }
 };
 
+/**
+ * Fetches the backup count for a cloud provider and updates the badge element.
+ * Fire-and-forget — errors are silently caught and the badge shows a dash.
+ *
+ * @param {string} provider - Cloud provider key (e.g. 'dropbox')
+ */
+const cloudUpdateBackupCount = async (provider) => {
+  const el = safeGetElement('cloudBackupCount_' + provider);
+  if (!(el instanceof HTMLElement)) return;
+  try {
+    const backups = await cloudListBackups(provider);
+    const count = Array.isArray(backups) ? backups.length : 0;
+    el.textContent = count + ' backup' + (count !== 1 ? 's' : '');
+  } catch {
+    el.textContent = '\u2014';
+  }
+};
+
 const bindCloudStorageListeners = () => {
   var panel = document.getElementById('inventoryCloudSection') || document.getElementById('settingsPanel_cloud');
   if (!panel) return;
@@ -1164,16 +1186,7 @@ const bindCloudStorageListeners = () => {
             return;
           }
         }
-        // Prefer session cache (hot path), fall back to localStorage so Backup
-        // works after a page reload without re-prompting when password is already stored.
-        var cachedPw = typeof cloudGetCachedPassword === 'function' ? cloudGetCachedPassword(provider) : null;
-        if (!cachedPw) cachedPw = localStorage.getItem('cloud_vault_password') || null;
-        if (cachedPw) {
-          await _cloudBackupWithCachedPw(provider, cachedPw, btn);
-          return;
-        }
-        openVaultModal('cloud-export', { provider: provider });
-        if (typeof showKrakenToastIfFirst === 'function') showKrakenToastIfFirst();
+        openVaultModal('cloud-export', { provider: provider, isManualBackup: true });
       }, 'Conflict check failed: ');
 
     } else if (btn.classList.contains('cloud-restore-btn')) {
@@ -1376,4 +1389,5 @@ const setupSettingsEventListeners = () => {
 
 if (typeof window !== 'undefined') {
   window.setupSettingsEventListeners = setupSettingsEventListeners;
+  window.cloudUpdateBackupCount = cloudUpdateBackupCount;
 }

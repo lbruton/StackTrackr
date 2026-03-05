@@ -203,7 +203,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     elements.apiHistoryModal = safeGetElement("apiHistoryModal");
     elements.goldbackHistoryModal = safeGetElement("goldbackHistoryModal");
     elements.cloudSyncModal = safeGetElement("cloudSyncModal");
-    elements.cloudSyncConflictModal = safeGetElement("cloudSyncConflictModal");
     elements.vaultModal = safeGetElement("vaultModal");
     elements.apiQuotaModal = safeGetElement("apiQuotaModal");
     elements.aboutModal = safeGetElement("aboutModal");
@@ -263,7 +262,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Pagination elements
     debugLog("Phase 5: Initializing pagination elements...");
     elements.itemsPerPage = safeGetElement("itemsPerPage");
-    elements.itemCount = safeGetElement("itemCount");
 
       elements.changeLogBtn = safeGetElement("changeLogBtn");
       elements.backupReminder = safeGetElement("backupReminder");

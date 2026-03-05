@@ -340,6 +340,11 @@ const createBackupZip = async () => {
  * @param {File} file - ZIP file created by createBackupZip
  */
 const restoreBackupZip = async (file) => {
+  // STAK-427: Block restore while cloud sync is applying remote changes
+  if (window.CloudSync && window.CloudSync.isSyncActive()) {
+    showToast('Cloud sync is in progress — please wait a moment and try again.', 'warning');
+    return;
+  }
   try {
     const zip = await JSZip.loadAsync(file);
 
@@ -1089,18 +1094,10 @@ const persistInventoryAndRefresh = () => {
 };
 
 /**
- * Updates the displayed inventory item count based on active filters
- *
- * @param {number} filteredCount - Items matching current filters
- * @param {number} totalCount - Total items in inventory
+ * Updates the displayed inventory item count — now handled by the summary bar
+ * in card-view.js (_renderSortBarSummary). Kept as no-op for call-site compat.
  */
-const updateItemCount = (filteredCount, totalCount) => {
-  if (!elements.itemCount) return;
-  elements.itemCount.textContent =
-    filteredCount === totalCount
-      ? `${totalCount} items`
-      : `${filteredCount} of ${totalCount} items`;
-};
+const updateItemCount = () => {};
 
 /**
  * Enhanced validation for inline edits with comprehensive field support
@@ -2744,13 +2741,14 @@ const endImportProgress = () => {
 /**
  * Post-import cleanup — registers names, syncs catalog, saves, and re-renders.
  * @param {Array} newItems - Items that were added during import
- * @param {Map|null} pendingTagsByUuid - Optional map of uuid -> tag[] for deferred tag application
+ * @param {Map|null} pendingTagsByUuid - Optional map of itemKey -> tag[] for deferred tag application
  */
 const _postImportCleanup = (newItems, pendingTagsByUuid) => {
-  // Apply deferred tags if needed
+  // Apply deferred tags if needed (keyed by DiffEngine.computeItemKey)
   if (pendingTagsByUuid && typeof addItemTag === 'function') {
     for (const item of newItems) {
-      const tags = pendingTagsByUuid.get(item.uuid);
+      const itemKey = typeof DiffEngine !== 'undefined' ? DiffEngine.computeItemKey(item) : (item.uuid || item.serial || '');
+      const tags = pendingTagsByUuid.get(itemKey);
       if (tags && tags.length) {
         tags.forEach(tag => addItemTag(item.uuid, tag, false));
       }
@@ -2848,12 +2846,14 @@ const showImportDiffReview = (parsedItems, sourceInfo, options, onComplete) => {
 
       inventory = DiffEngine.applySelectedChanges(inventory, selectedChanges);
 
-      // Apply tags for added items if pendingTagsByUuid provided
+      // Apply deferred tags for accepted changes (add + modify).
+      // Look up by DiffEngine.computeItemKey to match the key used at build time.
       if (options.pendingTagsByUuid && typeof addItemTag === 'function') {
-        const addedItems = selectedChanges.filter(function(c) { return c.type === 'add'; });
-        for (const change of addedItems) {
-          if (change.item) {
-            const tags = options.pendingTagsByUuid.get(change.item.uuid);
+        const tagEligible = selectedChanges.filter(function(c) { return c.type === 'add' || c.type === 'modify'; });
+        for (const change of tagEligible) {
+          if (change.item && change.item.uuid) {
+            var tagKey = typeof DiffEngine !== 'undefined' ? DiffEngine.computeItemKey(change.item) : (change.item.uuid || change.item.serial || '');
+            const tags = options.pendingTagsByUuid.get(tagKey);
             if (tags && tags.length) {
               tags.forEach(function(tag) { addItemTag(change.item.uuid, tag, false); });
             }
@@ -2939,6 +2939,7 @@ const importCsv = (file, override = false) => {
 
         const supportedMetals = ['Silver', 'Gold', 'Platinum', 'Palladium'];
         const skippedNonPM = [];
+        const pendingTagsByUuid = new Map();
 
         for (const row of results.data) {
           processed++;
@@ -3041,19 +3042,20 @@ const importCsv = (file, override = false) => {
 
           imported.push(item);
 
-          // STAK-126: Import tags from CSV
-          if (csvTags && typeof addItemTag === 'function') {
-            csvTags.split(';').map(t => t.trim()).filter(Boolean).forEach(tag => {
-              addItemTag(item.uuid, tag, false);
-            });
+          // STAK-126 / STAK-424: Collect tags but defer persistence until import confirmed.
+          // Key by DiffEngine.computeItemKey (uuid → serial → name|date) so legacy
+          // CSV exports without UUIDs still match after serial→uuid enrichment.
+          if (csvTags) {
+            const tagList = csvTags.split(';').map(t => t.trim()).filter(Boolean);
+            if (tagList.length) {
+              const tagKey = typeof DiffEngine !== 'undefined' ? DiffEngine.computeItemKey(item) : (item.uuid || item.serial || '');
+              if (tagKey) pendingTagsByUuid.set(tagKey, tagList);
+            }
           }
 
           importedCount++;
           updateImportProgress(processed, importedCount, totalRows);
         }
-
-        // STAK-126: Persist any imported tags
-        if (typeof saveItemTags === 'function') saveItemTags();
 
         endImportProgress();
 
@@ -3103,6 +3105,23 @@ const importCsv = (file, override = false) => {
           }
 
           saveInventory();
+          // STAK-424: Apply deferred tags after override confirmation
+          if (pendingTagsByUuid.size > 0 && typeof addItemTag === 'function') {
+            for (const item of imported) {
+              const itemKey = typeof DiffEngine !== 'undefined' ? DiffEngine.computeItemKey(item) : (item.uuid || item.serial || '');
+              const tags = pendingTagsByUuid.get(itemKey);
+              if (tags && tags.length) {
+                tags.forEach(tag => addItemTag(item.uuid, tag, false));
+              }
+            }
+            if (typeof saveItemTags === 'function') saveItemTags();
+          }
+          // STAK-421: Cancel the debounced sync push that saveInventory() just
+          // scheduled — override imports replace all local data, so pushing
+          // immediately would overwrite the remote vault before the user can review.
+          if (typeof scheduleSyncPush === 'function' && typeof scheduleSyncPush.cancel === 'function') {
+            scheduleSyncPush.cancel();
+          }
           renderTable();
           if (typeof renderActiveFilters === 'function') {
             renderActiveFilters();
@@ -3120,6 +3139,7 @@ const importCsv = (file, override = false) => {
         // --- Merge path: use shared DiffEngine + DiffModal helper ---
         showImportDiffReview(imported, { type: 'csv', label: file.name }, {
           validationResult: _validationResult,
+          pendingTagsByUuid: pendingTagsByUuid,
         }, function(summary) {
           debugLog('importCsv DiffEngine complete', summary.added, 'added', summary.modified, 'modified', summary.deleted, 'deleted');
         });
@@ -3342,6 +3362,10 @@ const importNumistaCsv = (file, override = false) => {
             inventory = catalogManager.syncInventory(inventory);
           }
           saveInventory();
+          // STAK-421: Cancel debounced sync push after override import
+          if (typeof scheduleSyncPush === 'function' && typeof scheduleSyncPush.cancel === 'function') {
+            scheduleSyncPush.cancel();
+          }
           renderTable();
           if (typeof renderActiveFilters === 'function') renderActiveFilters();
           if (typeof updateStorageStats === 'function') updateStorageStats();
@@ -3472,7 +3496,7 @@ const exportCsv = () => {
   const headers = [
     "Date","Metal","Type","Name","Year","Qty","Weight(oz)","Weight Unit","Purity",
     "Purchase Price","Melt Value","Retail Price","Gain/Loss",
-    "Purchase Location","N#","PCGS #","Grade","Grading Authority","Cert #","Serial Number","Notes","UUID",
+    "Purchase Location","Storage Location","N#","PCGS #","Grade","Grading Authority","Cert #","Serial Number","Notes","Tags","UUID",
     "Obverse Image URL","Reverse Image URL",
     "Disposition Type","Disposition Date","Disposition Amount","Realized Gain/Loss"
   ];
@@ -3504,6 +3528,7 @@ const exportCsv = () => {
       formatCurrency(i.marketValue || 0),
       gainLoss !== null ? formatCurrency(gainLoss) : '—',
       i.purchaseLocation,
+      i.storageLocation || '',
       i.numistaId || '',
       i.pcgsNumber || '',
       i.grade || '',
@@ -3511,6 +3536,7 @@ const exportCsv = () => {
       i.certNumber || '',
       i.serialNumber || '',
       i.notes || '',
+      typeof getItemTags === 'function' ? getItemTags(i.uuid).join('; ') : '',
       i.uuid || '',
       i.obverseImageUrl || '',
       i.reverseImageUrl || '',
@@ -3768,6 +3794,11 @@ const importJson = (file, override = false) => {
           inventory = catalogManager.syncInventory(inventory);
         }
         saveInventory();
+        // STAK-421: Cancel debounced sync push — override import replaces all
+        // local data; pushing now would overwrite remote before user can review.
+        if (typeof scheduleSyncPush === 'function' && typeof scheduleSyncPush.cancel === 'function') {
+          scheduleSyncPush.cancel();
+        }
         renderTable();
         if (typeof renderActiveFilters === 'function') renderActiveFilters();
         if (typeof updateStorageStats === 'function') updateStorageStats();
@@ -3845,6 +3876,7 @@ const exportJson = () => {
     marketValue: item.marketValue || 0,
     purchaseLocation: item.purchaseLocation,
     storageLocation: item.storageLocation,
+    tags: typeof getItemTags === 'function' ? getItemTags(item.uuid) : [],
     notes: item.notes,
     numistaId: item.numistaId,
     grade: item.grade || '',

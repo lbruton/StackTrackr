@@ -283,11 +283,11 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
-    <li><strong>v3.33.25 &ndash; Browserbase Test Runbook v2</strong>: Modular E2E test runbook with 75+ tests across 8 section files. /bb-test skill reads runbook Markdown at runtime with section and tag filtering. Manual execution via Chrome DevTools or Claude browser extension documented as $0 alternative (STAK-396)</li>
-    <li><strong>v3.33.24 &ndash; Backup Integrity Audit</strong>: exportOrigin metadata added to all export formats. Pre-import validation, DiffModal count header with Select All, and post-import summary banner (STAK-374)</li>
-    <li><strong>v3.33.23 &ndash; Chip Max Count Setting</strong>: New chipMaxCount setting caps the filter chip bar to prevent overflow. Search chips always render regardless of cap. Configure in Settings</li>
-    <li><strong>v3.33.22 &ndash; Storage Error Modal Suppressed for Intraday Cache</strong>: saveRetailIntradayData() failures now log a console warning instead of showing a user-visible Storage Error modal &mdash; transient 24h sparkline cache is non-critical</li>
-    <li><strong>v3.33.20 &ndash; Market Panel Bug Fixes</strong>: API-driven item names via getRetailCoinMeta() as source of truth. Grid/list sync status shows &ldquo;just now&rdquo; after sync, time-ago when lingering, error state on API failure. Activity log dropdown dynamically populated from API manifest</li>
+    <li><strong>v3.33.51 &ndash; Pre-ship Security Hardening</strong>: XSS fix in settings pattern rules. OAuth CSRF protection on relay path. Sync flag leak fix. Console output sanitized to remove cryptographic metadata. Dead sync modal code removed (~206 lines). All confirmations use appConfirm (STAK-430)</li>
+    <li><strong>v3.33.50 &ndash; Spot Health Dot UX, 7-Day Trend, Timezone Formatting</strong>: Spot dot shows orange (syncing) instead of red on fresh installs. Dot respects cache TTL for green status. 7-day trend sorts by date for correct direction. Sync log timestamps respect timezone preference (STAK-429, STAK-408, STAK-384, STAK-399, STAK-281)</li>
+    <li><strong>v3.33.49 &ndash; Import/Restore Completeness &amp; Cloud Backup Photos</strong>: Manual cloud backup now has an optional &ldquo;Include photos&rdquo; checkbox. ZIP and vault restore blocked during active sync. Wiki updated with snapshot terminology and restore warnings (STAK-427)</li>
+    <li><strong>v3.33.48 &ndash; DiffModal Settings Fix &amp; Empty-Diff Silent Pull</strong>: DiffModal Apply button now correctly detects pending settings changes. Settings are included in selectedChanges instead of being silently dropped. Manifest-first pull returns silently when no changes detected (STAK-387, STAK-401, STAK-415, STAK-417)</li>
+    <li><strong>v3.33.47 &ndash; Sync Scope &amp; Serialization</strong>: Cloud sync now syncs 44 keys across devices (up from 8) &mdash; all preferences, header buttons, feature toggles, and API credentials. Manifest-first pulls now compare and apply settings changes. Photos sync on all pull paths. Deleting all photos propagates deletion to remote (STAK-426)</li>
   `;
 };
 

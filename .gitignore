@@ -120,3 +120,4 @@ devops/hub/
 
 # Wiki nightwatch — local rotation state, not project history
 wiki/.nightwatch-log.json
+.playwright-mcp/

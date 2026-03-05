@@ -380,11 +380,7 @@ const setupFormatImport = (overrideBtn, mergeBtn, fileInput, importFn, formatNam
   optionalListener(fileInput, "change", function (e) {
     if (e.target.files.length > 0) {
       const file = e.target.files[0];
-      if (!checkFileSize(file)) {
-        appAlert("File exceeds 2MB limit. Enable cloud backup for larger uploads.");
-      } else {
-        importFn(file, isOverride);
-      }
+      importFn(file, isOverride);
     }
     this.value = "";
   }, `${formatName} import`);
@@ -769,11 +765,29 @@ const setupHeaderButtonListeners = () => {
         // Needs password setup — open inline popover
         if (typeof _openCloudSyncPopover === 'function') _openCloudSyncPopover();
       } else if (state === 'green') {
-        var lp = typeof syncGetLastPush === 'function' ? syncGetLastPush() : null;
-        var msg = lp && lp.timestamp
-          ? 'Cloud sync active \u2014 last synced ' + (typeof _syncRelativeTime === 'function' ? _syncRelativeTime(lp.timestamp) : '')
-          : 'Cloud sync active';
-        if (typeof showCloudToast === 'function') showCloudToast(msg, 2500);
+        // Trigger a sync on tap (STAK-398: header button should do something useful)
+        if (typeof syncNow === 'function') {
+          if (typeof showCloudToast === 'function') showCloudToast('Syncing…', 1500);
+          syncNow().then(function () {
+            const lp = typeof syncGetLastPush === 'function' ? syncGetLastPush() : null;
+            const msg = lp && lp.timestamp
+              ? 'Synced ' + (typeof _syncRelativeTime === 'function' ? _syncRelativeTime(lp.timestamp) : '')
+              : 'Sync complete';
+            if (typeof showCloudToast === 'function') showCloudToast(msg, 2500);
+          }).catch(function (err) {
+            if (typeof debugLog === 'function') {
+              debugLog('Cloud sync failed: ' + (err && err.message ? err.message : String(err)), 'error');
+            } else {
+              console.error('Cloud sync failed:', err);
+            }
+            if (typeof showCloudToast === 'function') showCloudToast('Sync failed', 2500);
+          });
+        }
+      } else if (state === 'ready') {
+        // Connected + credentials complete but auto-sync is off
+        if (typeof showCloudToast === 'function') {
+          showCloudToast('Cloud sync ready — enable auto-sync in Settings to start', 3000);
+        }
       } else {
         if (typeof showSettingsModal === 'function') showSettingsModal('system');
       }
@@ -3196,7 +3210,26 @@ function _openCloudSyncPopover() {
     try { localStorage.setItem('cloud_vault_password', pw); } catch (_) {}
     if (typeof cloudCachePassword === 'function') cloudCachePassword('dropbox', pw);
     if (typeof updateCloudSyncHeaderBtn === 'function') updateCloudSyncHeaderBtn();
-    setTimeout(function () { if (typeof pushSyncVault === 'function') pushSyncVault(); }, 100);
+    // STAK-398: poll for remote changes first, then push. Check account_id is present.
+    var hasAccountId = !!localStorage.getItem('cloud_dropbox_account_id');
+    debugWarn('[CloudSync] Popover unlock: password set, accountId:', hasAccountId);
+    if (!hasAccountId) {
+      debugWarn('[CloudSync] Popover unlock: no account_id — sync key incomplete, skipping sync');
+      if (typeof showCloudToast === 'function') {
+        showCloudToast('Cloud sync setup incomplete — please reconnect your Dropbox account.');
+      }
+      return;
+    }
+    // Short delay lets popover cleanup / DOM update finish before async sync starts
+    setTimeout(function () {
+      if (typeof pollForRemoteChanges === 'function') {
+        pollForRemoteChanges().then(function () {
+          if (typeof pushSyncVault === 'function') pushSyncVault();
+        });
+      } else if (typeof pushSyncVault === 'function') {
+        pushSyncVault();
+      }
+    }, 100);
   }
 
   if (unlockBtn) unlockBtn.onclick = onUnlock;

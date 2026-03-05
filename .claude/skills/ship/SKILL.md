@@ -112,7 +112,7 @@ git fetch origin main
 LATEST=$(git tag --merged origin/main --sort=-version:refname | grep '^v3\.' | head -1)
 
 # Get changelog section for this version
-NOTES=$(awk "/## \[${LATEST#v}\]/,/^---$/" /path/to/StakTrakr/CHANGELOG.md | head -20)
+NOTES=$(awk "/## \[${LATEST#v}\]/,/^---$/" "$(git rev-parse --show-toplevel)/CHANGELOG.md" | head -20)
 
 gh release create "$LATEST" \
   --target main \

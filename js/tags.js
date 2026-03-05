@@ -13,7 +13,20 @@
  */
 const loadItemTags = () => {
   try {
-    itemTags = loadDataSync(ITEM_TAGS_KEY, {});
+    var loaded = loadDataSync(ITEM_TAGS_KEY, {});
+    // STAK-421: Repair cascading JSON.stringify corruption — if the stored
+    // value was stringified multiple times, loadDataSync returns a string
+    // instead of an object. Unwind parse layers until we get an object.
+    var repairs = 0;
+    while (typeof loaded === 'string' && repairs < 20) {
+      try { loaded = JSON.parse(loaded); repairs++; } catch (_) { break; }
+    }
+    if (repairs > 0) {
+      console.warn('[Tags] Repaired', repairs, 'layers of stringify corruption');
+    }
+    itemTags = (typeof loaded === 'object' && loaded !== null && !Array.isArray(loaded)) ? loaded : {};
+    // Persist the repaired value so the corruption doesn't recur on next sync
+    if (repairs > 0) saveItemTags();
   } catch (e) {
     console.error('Failed to load item tags:', e);
     itemTags = {};
@@ -25,6 +38,12 @@ const loadItemTags = () => {
  */
 const saveItemTags = () => {
   try {
+    // STAK-421: Guard against saving corrupted non-object value — this is the
+    // entry point for the cascading stringify corruption (string gets re-stringified).
+    if (typeof itemTags !== 'object' || itemTags === null || Array.isArray(itemTags)) {
+      console.warn('[Tags] saveItemTags blocked — itemTags is not an object:', typeof itemTags);
+      itemTags = {};
+    }
     saveDataSync(ITEM_TAGS_KEY, itemTags);
     if (typeof scheduleSyncPush === 'function') scheduleSyncPush();
   } catch (e) {

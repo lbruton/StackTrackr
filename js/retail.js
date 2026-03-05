@@ -710,8 +710,9 @@ const RETAIL_METAL_EMOJI = { gold: "🟡", silver: "⚪", platinum: "🔷", pall
 const _computeRetailTrend = (slug) => {
   const history = retailPriceHistory[slug];
   if (!history || history.length < 2) return null;
-  const latest = Number(history[0].avg_median);
-  const prev   = Number(history[1].avg_median);
+  const sorted = [...history].sort((a, b) => new Date(b.date) - new Date(a.date));
+  const latest = Number(sorted[0].avg_median);
+  const prev   = Number(sorted[1].avg_median);
   if (!isFinite(latest) || !isFinite(prev) || prev === 0) return null;
   const change = ((latest - prev) / prev) * 100;
   const pct = Math.abs(change).toFixed(1);
@@ -837,36 +838,13 @@ const _buildRetailCard = (slug, meta, priceData) => {
         const label = getVendorDisplay(key).name;
         return { key, label, price, score, isAvailable };
       })
-      .filter(({ price, isAvailable }) => price != null || !isAvailable) // show if has price OR is OOS
-      .sort((a, b) => {
-        // OOS vendors always go last
-        if (!a.isAvailable && b.isAvailable) return 1;
-        if (a.isAvailable && !b.isAvailable) return -1;
-        if (!a.isAvailable && !b.isAvailable) return 0; // both OOS, maintain order
-        // Both in-stock: sort by confidence and price
-        const aHigh = a.score != null && a.score >= 60;
-        const bHigh = b.score != null && b.score >= 60;
-        if (aHigh && bHigh) return a.price - b.price;
-        if (aHigh) return -1;
-        if (bHigh) return 1;
-        return 0;
-      });
+      .filter(({ price }) => price != null) // show only vendors with a price
+      .sort((a, b) => a.price - b.price); // sort by price ascending
 
-    // Award medals to top 3 high-confidence (≥60%) in-stock vendors by price
-    const qualifyingVendors = sortedVendorEntries
-      .filter(({ isAvailable, score }) => isAvailable && score != null && score >= 60);
-    const top3 = qualifyingVendors.slice(0, 3).map(({ key }) => key);
-    const medals = { 0: "🥇", 1: "🥈", 2: "🥉" };
+    // Award medals to top 3 vendors by price
+    const top3 = sortedVendorEntries.slice(0, 3).map(({ key }) => key);
 
-    sortedVendorEntries.forEach(({ key, label, price, score, isAvailable }) => {
-      if (!isAvailable) {
-        // Render out-of-stock vendor
-        const oosRow = _buildOOSVendorRow(key, lastKnownPrices[key], lastKnownDates[key], slug);
-        vendors.appendChild(oosRow);
-        return;
-      }
-
-      // Render in-stock vendor (existing logic)
+    sortedVendorEntries.forEach(({ key, label, price }) => {
       const row = document.createElement("div");
       row.className = "retail-vendor-row";
       const medalIndex = top3.indexOf(key);
@@ -902,11 +880,8 @@ const _buildRetailCard = (slug, meta, priceData) => {
       priceEl.className = "retail-vendor-price";
       priceEl.textContent = _fmtRetailPrice(price);
 
-      const scoreEl = _buildConfidenceBar(score);
-
       row.appendChild(nameEl);
       row.appendChild(priceEl);
-      row.appendChild(scoreEl);
       vendors.appendChild(row);
     });
 
@@ -948,83 +923,6 @@ const _buildRetailCard = (slug, meta, priceData) => {
   card.appendChild(btnRow);
 
   return card;
-};
-
-/**
- * Builds a compact confidence percentage chip.
- * @param {number|null} score - 0 to 100
- * @returns {HTMLElement}
- */
-const _buildConfidenceBar = (score) => {
-  const chip = document.createElement("span");
-  const tier = (score == null) ? "low" : score >= 60 ? "high" : score >= 40 ? "mid" : "low";
-  chip.className = `retail-conf-chip retail-conf-chip--${tier}`;
-  chip.textContent = score != null ? `${Math.round(score)}%` : "?";
-  chip.title = `Confidence: ${score != null ? `${Math.round(score)}/100` : "unknown"}`;
-  return chip;
-};
-
-/**
- * Builds a grayed-out vendor row for out-of-stock items.
- * @param {string} vendorId - Vendor key (e.g., "apmex")
- * @param {number|null} lastKnownPrice - Last known price before going OOS
- * @param {string|null} lastAvailableDate - Last date item was in stock (YYYY-MM-DD)
- * @param {string} [slug] - Product slug for product-page link lookup
- * @returns {HTMLElement}
- */
-const _buildOOSVendorRow = (vendorId, lastKnownPrice, lastAvailableDate, slug) => {
-  const row = document.createElement("div");
-  row.className = "retail-vendor-row retail-vendor-row--out-of-stock";
-
-  const nameEl = document.createElement("span");
-  nameEl.className = "retail-vendor-name text-muted";
-  const _vd = getVendorDisplay(vendorId);
-  const vendorLabel = _vd.name;
-  // Add vendor link (same pattern as in-stock rows)
-  const vendorUrl = (slug && retailProviders && retailProviders[slug] && retailProviders[slug][vendorId])
-    || _vd.url;
-  if (vendorUrl) {
-    const link = document.createElement("a");
-    link.href = "#";
-    link.textContent = vendorLabel;
-    link.className = "retail-vendor-link text-muted";
-    link.addEventListener("click", (e) => {
-      e.preventDefault();
-      const popup = window.open(vendorUrl, `retail_vendor_${vendorId}`, "width=1250,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no");
-      if (!popup) window.open(vendorUrl, "_blank");
-    });
-    nameEl.appendChild(link);
-  } else {
-    nameEl.textContent = vendorLabel;
-  }
-
-  const priceEl = document.createElement("span");
-  priceEl.className = "retail-vendor-price";
-
-  const priceText = document.createElement("del");
-  priceText.textContent = lastKnownPrice ? _fmtRetailPrice(lastKnownPrice) : "\u2014";
-  priceEl.appendChild(priceText);
-
-  const oosLabel = document.createElement("small");
-  oosLabel.className = "text-danger ms-1";
-  oosLabel.textContent = "OOS";
-  oosLabel.title = "Out of stock";
-  priceEl.appendChild(oosLabel);
-
-  const badgeEl = document.createElement("span");
-  badgeEl.className = "retail-conf-chip badge-muted";
-  badgeEl.textContent = "\u2014";
-
-  const tooltipText = lastAvailableDate
-    ? `Out of stock (last seen: ${priceText.textContent} on ${lastAvailableDate})`
-    : "Out of stock";
-  row.title = tooltipText;
-
-  row.appendChild(nameEl);
-  row.appendChild(priceEl);
-  row.appendChild(badgeEl);
-
-  return row;
 };
 
 // ---------------------------------------------------------------------------
@@ -1207,71 +1105,57 @@ const _buildMarketListCard = (slug, meta, priceData, historyData) => {
       gbPriceEl.textContent = _fmtRetailPrice(gbPrice.price) + (gbPrice.isStale ? " (stale)" : "");
       gbChip.appendChild(gbPriceEl);
       const gbSrc = document.createElement("span");
-      gbSrc.className = "vendor-confidence";
+      gbSrc.className = "vendor-source";
       gbSrc.textContent = "goldback.com";
       gbSrc.style.fontSize = "0.65rem";
+      gbSrc.style.color = "var(--text-muted, #6c757d)";
+      gbSrc.style.opacity = "0.7";
       gbChip.appendChild(gbSrc);
       vendorRow.appendChild(gbChip);
     }
   }
   if (priceData) {
     const vendorMap = priceData.vendors || {};
-    const avail = retailAvailability[slug] || {};
-    const allVendorKeys = new Set([...Object.keys(vendorMap), ...Object.keys(avail)]);
-    const sortedVendors = Array.from(allVendorKeys)
+    const sortedVendors = Object.keys(vendorMap)
       .map((key) => {
         const vd = vendorMap[key];
-        const isAvailable = avail[key] !== false;
         const price = vd ? vd.price : null;
-        const score = vd ? vd.confidence : null;
-        return { key, price, score, isAvailable };
+        return { key, price };
       })
-      .filter(({ price, isAvailable }) => price != null || !isAvailable)
-      .sort((a, b) => {
-        if (!a.isAvailable && b.isAvailable) return 1;
-        if (a.isAvailable && !b.isAvailable) return -1;
-        if (!a.isAvailable && !b.isAvailable) return 0;
-        const aHigh = a.score != null && a.score >= 60;
-        const bHigh = b.score != null && b.score >= 60;
-        if (aHigh && bHigh) return a.price - b.price;
-        if (aHigh) return -1;
-        if (bHigh) return 1;
-        return 0;
-      });
-    const qualVendors = sortedVendors.filter(({ isAvailable, price }) => isAvailable && price != null);
-    const top3Keys = qualVendors.slice(0, 3).map(({ key }) => key);
-    sortedVendors.forEach(({ key, price, score, isAvailable }) => {
+      .filter(({ price }) => price != null && price > 0)
+      .sort((a, b) => a.price - b.price);
+
+    // Median anomaly filter: suppress vendors >40% from median (3+ vendors required)
+    let displayVendors = sortedVendors;
+    if (sortedVendors.length >= 3) {
+      const prices = sortedVendors.map(({ price }) => price);
+      const mid = Math.floor(prices.length / 2);
+      const median = prices.length % 2 ? prices[mid] : (prices[mid - 1] + prices[mid]) / 2;
+      const threshold = typeof RETAIL_ANOMALY_THRESHOLD !== "undefined" ? RETAIL_ANOMALY_THRESHOLD : 0.40;
+      const filtered = sortedVendors.filter(({ price }) => Math.abs(price - median) / median <= threshold);
+      // Guard: if all would be filtered, show all
+      if (filtered.length > 0) displayVendors = filtered;
+    }
+
+    const top3Keys = displayVendors.slice(0, 3).map(({ key }) => key);
+    displayVendors.forEach(({ key, price }) => {
       const chip = document.createElement("span");
       chip.className = "vendor-chip";
-      if (!isAvailable) chip.classList.add("oos");
-      else if (score != null && score < 60) chip.classList.add("low-conf");
 
-      if (isAvailable) {
-        const medalIdx = top3Keys.indexOf(key);
-        if (medalIdx !== -1) {
-          const medal = document.createElement("span");
-          medal.className = `vendor-medal ${_MARKET_MEDAL_CLASSES[medalIdx]}`;
-          medal.textContent = _MARKET_MEDALS[medalIdx];
-          chip.appendChild(medal);
-        }
+      const medalIdx = top3Keys.indexOf(key);
+      if (medalIdx !== -1) {
+        const medal = document.createElement("span");
+        medal.className = `vendor-medal ${_MARKET_MEDAL_CLASSES[medalIdx]}`;
+        medal.textContent = _MARKET_MEDALS[medalIdx];
+        chip.appendChild(medal);
       }
       const nameLink = _buildMarketVendorLink(key, slug);
       nameLink.className = "vendor-name";
-      if (!isAvailable) {
-        nameLink.style.color = "";
-      }
       chip.appendChild(nameLink);
       const priceEl = document.createElement("span");
       priceEl.className = "vendor-price";
-      priceEl.textContent = isAvailable ? _fmtRetailPrice(price) : "OOS";
+      priceEl.textContent = _fmtRetailPrice(price);
       chip.appendChild(priceEl);
-      // Confidence score badge (playground shows "95%", "80%" etc.)
-      if (isAvailable && score != null) {
-        const confEl = document.createElement("span");
-        confEl.className = "vendor-confidence";
-        confEl.textContent = `${Math.round(score)}%`;
-        chip.appendChild(confEl);
-      }
       vendorRow.appendChild(chip);
     });
   }
@@ -1790,9 +1674,17 @@ const renderRetailHistoryTable = () => {
       recent.forEach((entry) => {
         const tr = document.createElement("tr");
         const ts = entry.ts ? new Date(entry.ts) : null;
-        const timeStr = (ts && !isNaN(ts))
-          ? `${ts.toLocaleDateString()} ${ts.getHours().toString().padStart(2, "0")}:${ts.getMinutes().toString().padStart(2, "0")}`
-          : "--";
+        const timeStr = (() => {
+          if (!ts || isNaN(ts)) return "--";
+          const tz = (typeof TIMEZONE_KEY !== 'undefined' && localStorage.getItem(TIMEZONE_KEY)) || undefined;
+          const tzOpts = tz && tz !== 'auto' ? { timeZone: tz } : {};
+          try {
+            const timePart = ts.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false, ...tzOpts });
+            return `${ts.toLocaleDateString(undefined, tzOpts)} ${timePart}`;
+          } catch (e) {
+            return `${ts.toLocaleDateString()} ${ts.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false })}`;
+          }
+        })();
         const windowStr = (() => {
           if (!entry.window) return "\u2014";
           const wd = new Date(entry.window);
@@ -2001,7 +1893,6 @@ if (typeof window !== "undefined") {
   window.RETAIL_VENDOR_NAMES = RETAIL_VENDOR_NAMES;
   window.RETAIL_VENDOR_URLS = RETAIL_VENDOR_URLS;
   window.RETAIL_VENDOR_COLORS = RETAIL_VENDOR_COLORS;
-  window._buildConfidenceBar = _buildConfidenceBar;
   window.retailAvailability = retailAvailability;
   window.retailLastKnownPrices = retailLastKnownPrices;
   window.retailLastAvailableDates = retailLastAvailableDates;
