@@ -189,7 +189,7 @@ const CACHE_NAME = 'staktrakr-vNEW_VERSION-bTIMESTAMP';
 
 You do NOT need to manually edit `sw.js` CACHE_NAME during releases. The hook handles it.
 
-**Do verify** that `sw.js` CORE_ASSETS is up to date (any new `.js` files added since last release must be listed). See the `sw-cache` skill for details.
+**Do verify** that `sw.js` CORE_ASSETS is up to date (any new `.js` files added since last release must be listed). Check by comparing `<script>` tags in `index.html` against the CORE_ASSETS array in `sw.js`.
 
 ### File 3: `CHANGELOG.md` — New version section
 
