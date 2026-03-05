@@ -1751,59 +1751,6 @@ function syncHasLocalChanges() {
 }
 
 /**
- * Show the "Update available" modal and return a Promise that resolves with the
- * user's choice: 'accept', 'push', or 'dismiss'. Resolves null if the modal is not in the DOM.
- * @param {object} remoteMeta - The parsed staktrakr-sync.json content
- * @returns {Promise<'accept'|'push'|'dismiss'|null>}
- */
-function showSyncUpdateModal(remoteMeta) {
-  return new Promise(function (resolve) {
-    var modal = safeGetElement('cloudSyncUpdateModal');
-    if (!modal) { resolve(false); return; } // fallback: decline if no modal in DOM
-
-    // Populate metadata fields
-    var itemCountEl = safeGetElement('syncUpdateItemCount');
-    var timestampEl = safeGetElement('syncUpdateTimestamp');
-    var deviceEl    = safeGetElement('syncUpdateDevice');
-
-    if (itemCountEl) itemCountEl.textContent = remoteMeta.itemCount != null ? String(remoteMeta.itemCount) : '—';
-    if (timestampEl) {
-      var ts = remoteMeta.timestamp ? new Date(remoteMeta.timestamp) : null;
-      timestampEl.textContent = ts ? ts.toLocaleString() : '—';
-    }
-    if (deviceEl) {
-      var devId = remoteMeta.deviceId || '';
-      deviceEl.textContent = devId ? devId.slice(0, 8) + '\u2026' : 'unknown';
-    }
-
-    modal.style.display = 'flex';
-
-    var acceptBtn  = safeGetElement('syncUpdateAcceptBtn');
-    var pushBtn    = safeGetElement('syncUpdatePushBtn');
-    var dismissBtn = safeGetElement('syncUpdateDismissBtn');
-    var dismissX   = safeGetElement('syncUpdateDismissX');
-
-    function cleanup(result) {
-      modal.style.display = 'none';
-      if (acceptBtn)  acceptBtn.removeEventListener('click', onAccept);
-      if (pushBtn)    pushBtn.removeEventListener('click', onPush);
-      if (dismissBtn) dismissBtn.removeEventListener('click', onDismiss);
-      if (dismissX)   dismissX.removeEventListener('click', onDismiss);
-      resolve(result);
-    }
-
-    function onAccept()  { cleanup('accept'); }
-    function onPush()    { cleanup('push'); }
-    function onDismiss() { cleanup('dismiss'); }
-
-    if (acceptBtn)  acceptBtn.addEventListener('click', onAccept);
-    if (pushBtn)    pushBtn.addEventListener('click', onPush);
-    if (dismissBtn) dismissBtn.addEventListener('click', onDismiss);
-    if (dismissX)   dismissX.addEventListener('click', onDismiss);
-  });
-}
-
-/**
  * Handle a detected remote change.
  * If no local changes → show update-available modal, then pull on Accept.
  * If both sides changed → show conflict modal.
@@ -1978,95 +1925,6 @@ async function pullSyncVault(remoteMeta) {
     updateSyncStatusIndicator('error', errMsg.slice(0, 60));
     if (typeof showCloudToast === 'function') showCloudToast('Auto-sync pull failed: ' + errMsg);
   }
-}
-
-// ---------------------------------------------------------------------------
-// Conflict modal
-// ---------------------------------------------------------------------------
-
-/**
- * Show the sync conflict modal with local vs. remote comparison.
- * @param {{local: object, remote: object, remoteMeta: object}} opts
- */
-function showSyncConflictModal(opts) {
-  return new Promise(function (resolve) {
-    var modal = safeGetElement('cloudSyncConflictModal');
-    if (!modal) {
-      var msg = 'Sync conflict detected.\n\n' +
-        'Local:  ' + opts.local.itemCount + ' items\n' +
-        'Remote: ' + opts.remote.itemCount + ' items\n\n' +
-        'Keep YOUR local version? (Cancel to keep the remote version)';
-      if (typeof appConfirm === 'function') {
-        appConfirm(msg, 'Sync Conflict').then(function (keepMine) {
-          if (keepMine) { _syncConflictUserOverride = true; pushSyncVault().catch(function(e) { console.error('[CloudSync] Keep Mine (fallback) push failed:', e); }); }
-          else pullWithPreview(opts.remoteMeta).catch(function (err) {
-            debugLog('[CloudSync] pullWithPreview failed in conflict fallback:', err);
-            updateSyncStatusIndicator('error', 'Pull failed — ' + err.message);
-          });
-          resolve();
-        });
-      } else {
-        resolve();
-      }
-      return;
-    }
-
-    // Populate modal fields
-    var setEl = function (id, text) {
-      var el = safeGetElement(id);
-      if (el) el.textContent = text || '\u2014';
-    };
-
-    setEl('syncConflictLocalItems', opts.local.itemCount + ' items');
-    setEl('syncConflictLocalTime', opts.local.timestamp ? _syncRelativeTime(opts.local.timestamp) : 'Unknown');
-    setEl('syncConflictLocalVersion', 'v' + opts.local.appVersion);
-    setEl('syncConflictRemoteItems', opts.remote.itemCount + ' items');
-    setEl('syncConflictRemoteTime', opts.remote.timestamp ? _syncRelativeTime(opts.remote.timestamp) : 'Unknown');
-    setEl('syncConflictRemoteVersion', 'v' + opts.remote.appVersion);
-    setEl('syncConflictRemoteDevice', opts.remote.deviceId ? opts.remote.deviceId.slice(0, 8) + '\u2026' : 'Another device');
-
-    // Wire buttons
-    var keepMineBtn = safeGetElement('syncConflictKeepMine');
-    var keepTheirsBtn = safeGetElement('syncConflictKeepTheirs');
-    var skipBtn = safeGetElement('syncConflictSkip');
-
-    var closeModal = function () {
-      modal.style.display = 'none';
-      if (typeof closeModalById === 'function') closeModalById('cloudSyncConflictModal');
-    };
-
-    if (keepMineBtn) {
-      keepMineBtn.onclick = function () {
-        closeModal();
-        _syncConflictUserOverride = true;
-        pushSyncVault().catch(function(e) { console.error('[CloudSync] Keep Mine push failed:', e); });
-        resolve();
-      };
-    }
-    if (keepTheirsBtn) {
-      keepTheirsBtn.onclick = function () {
-        closeModal();
-        // Layer 5 — Show restore preview instead of direct pull (REQ-5)
-        pullWithPreview(opts.remoteMeta).catch(function (err) {
-          debugLog('[CloudSync] pullWithPreview failed on Keep Theirs:', err);
-          updateSyncStatusIndicator('error', 'Pull failed — ' + err.message);
-        });
-        resolve();
-      };
-    }
-    if (skipBtn) {
-      skipBtn.onclick = function () {
-        closeModal();
-        resolve();
-      };
-    }
-
-    if (typeof openModalById === 'function') {
-      openModalById('cloudSyncConflictModal');
-    } else {
-      modal.style.display = 'flex';
-    }
-  });
 }
 
 // ---------------------------------------------------------------------------
@@ -3118,8 +2976,6 @@ window.syncNow = syncNow;
 window.pushSyncVault = pushSyncVault;
 window.pullSyncVault = pullSyncVault;
 window.pollForRemoteChanges = pollForRemoteChanges;
-window.showSyncConflictModal = showSyncConflictModal;
-window.showSyncUpdateModal = showSyncUpdateModal;
 window.showRestorePreviewModal = showRestorePreviewModal;
 window.pullWithPreview = pullWithPreview;
 window.computeInventoryHash = computeInventoryHash;

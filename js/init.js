@@ -203,7 +203,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     elements.apiHistoryModal = safeGetElement("apiHistoryModal");
     elements.goldbackHistoryModal = safeGetElement("goldbackHistoryModal");
     elements.cloudSyncModal = safeGetElement("cloudSyncModal");
-    elements.cloudSyncConflictModal = safeGetElement("cloudSyncConflictModal");
     elements.vaultModal = safeGetElement("vaultModal");
     elements.apiQuotaModal = safeGetElement("apiQuotaModal");
     elements.aboutModal = safeGetElement("aboutModal");
