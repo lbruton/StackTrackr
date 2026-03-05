@@ -2,7 +2,7 @@
 title: Backup & Restore
 category: frontend
 owner: staktrakr
-lastUpdated: v3.33.49
+lastUpdated: v3.33.51
 date: 2026-03-04
 sourceFiles:
   - js/cloud-storage.js
@@ -15,7 +15,7 @@ relatedPages:
 ---
 # Backup & Restore
 
-> **Last updated:** v3.33.49 — 2026-03-04
+> **Last updated:** v3.33.51 — 2026-03-05
 > **Source files:** `js/cloud-storage.js`, `js/cloud-sync.js`, `js/utils.js`, `js/vault.js`
 
 ## Overview
@@ -76,6 +76,7 @@ There is no dedicated `backup.js` or `restore.js`. All backup and restore logic 
 - Conflict detection via `cloudCheckConflict()` comparing remote `latest.json` timestamp against `cloud_last_backup` in localStorage
 - Cloud activity log: all transactions recorded to `cloud_activity_log` (capped at 500 entries, max 180 days)
 - UI state management via `syncCloudUI()`
+- OAuth state validation in the localStorage relay path (`cloudCheckOAuthRelay`) — rejects relayed OAuth codes whose `state` does not match `cloud_oauth_state` in `sessionStorage`, guarding against CSRF
 
 **Manual cloud backup flow (updated STAK-419, v3.33.41):**
 
@@ -100,6 +101,13 @@ There is no dedicated `backup.js` or `restore.js`. All backup and restore logic 
 - Multi-tab coordination via `BroadcastChannel('staktrakr-sync')` — push/pull events broadcast to all tabs
 - Password management (`getSyncPassword`, `getSyncPasswordSilent`, `changeVaultPassword`)
 - Empty-vault push guard: blocks push when local is empty but remote has items
+- All user confirmation dialogs use `await appConfirm()` — no `window.confirm` calls
+
+**Remote change flow (STAK-413):**
+
+All remote changes (both sync updates and conflicts) flow directly into `handleRemoteChange()`, which routes to `pullWithPreview()` showing the DiffModal. The former intermediate dialogs `showSyncUpdateModal()` and `showSyncConflictModal()` have been removed — DiffModal is the sole review UI.
+
+`_syncRemoteChangeActive` is managed exclusively by `handleRemoteChange()` via `try/finally`, guaranteeing the flag is always cleared even if `pullWithPreview()` throws.
 
 **Auto-sync file layout on Dropbox:**
 
@@ -322,6 +330,7 @@ Image blobs are NOT restored via vault — requires a separate ZIP or image vaul
 | `cloudListBackups` | `async (provider, type?)` | List `.stvault` files in the cloud backups folder; paginates via `files/list_folder/continue` when Dropbox returns `has_more` (STAK-425). Optional `type` filters by prefix: `'manual'`, `'sync'`, or `undefined` (all). Returns array sorted newest-first |
 | `cloudDeleteBackup` | `async (provider, filename)` | Delete a named vault file. If the deleted file was the `cloud_last_backup` pointer target, updates remote `staktrakr-latest.json` to point to the next most recent backup, or deletes the pointer if no backups remain (STAK-425). |
 | `cloudCheckConflict` | `async (provider)` | Compare remote `latest.json` timestamp vs `cloud_last_backup`; returns conflict info object |
+| `cloudCheckOAuthRelay` | `()` | Reads `staktrakr_oauth_result` from localStorage (relay path when popup loses `window.opener`); validates `state` against `sessionStorage` before calling `cloudExchangeCode`. Rejects with a warning on state mismatch (CSRF guard). |
 | `cloudGetToken` | `async (provider)` | Get OAuth access token; auto-refreshes if expired; clears token on refresh failure |
 | `cloudIsConnected` | `(provider)` | Returns `true` if a stored token exists for the provider |
 | `cloudAuthStart` | `(provider)` | Opens OAuth popup; initiates PKCE flow for Dropbox |
@@ -336,12 +345,13 @@ Image blobs are NOT restored via vault — requires a separate ZIP or image vaul
 | Function | Signature | Purpose |
 |----------|-----------|---------|
 | `pushSyncVault` | `async ()` | Encrypt and push sync-scoped vault to Dropbox; includes empty-vault guard, image vault, and manifest |
-| `pullWithPreview` | `async (remoteMeta)` | Primary pull path. Shows DiffModal (manifest-first or vault-first) and awaits user action (Apply or Cancel) before returning. Keeps `_syncRemoteChangeActive=true` for the full duration, blocking concurrent pushes while the user reviews the diff. |
+| `handleRemoteChange` | `async (remoteMeta)` | Entry point for all remote change events (both sync updates and conflicts). Sets `_syncRemoteChangeActive = true`, cancels any queued push, then calls `pullWithPreview()`. Uses `try/finally` to guarantee `_syncRemoteChangeActive` is cleared on exit, including on error. |
+| `pullWithPreview` | `async (remoteMeta)` | Primary pull path. Shows DiffModal (manifest-first or vault-first) and awaits user action (Apply or Cancel) before returning. Runs within `handleRemoteChange`'s `_syncRemoteChangeActive` scope, blocking concurrent pushes while the user reviews the diff. |
 | `syncSaveOverrideBackup` | `()` | Snapshot all `SYNC_SCOPE_KEYS` raw strings to `cloud_sync_override_backup` |
 | `syncRestoreOverrideBackup` | `async ()` | Restore pre-pull snapshot with confirmation; clears scope keys then rewrites from snapshot |
 | `getSyncPassword` | `()` → `Promise<string\|null>` | Interactively prompt for vault password; stores in localStorage; returns composite key |
 | `getSyncPasswordSilent` | `()` → `string\|null` | Return composite key (`password:accountId`) without UI; returns `null` if either missing |
-| `changeVaultPassword` | `async (newPassword)` → `boolean` | Store new password; triggers debounced push to re-encrypt vault |
+| `changeVaultPassword` | `async (newPassword)` → `boolean` | Store new password; triggers debounced push to re-encrypt vault. Password-change overwrites require `appConfirm()` confirmation before blind-overwriting remote. |
 | `syncIsEnabled` | `()` → `boolean` | Returns `true` when `cloud_sync_enabled === 'true'` in localStorage |
 | `syncGetLastPush` | `()` → `object\|null` | Read `cloud_sync_last_push` from localStorage |
 | `syncSetLastPush` | `(meta)` | Write `cloud_sync_last_push` to localStorage |
@@ -374,6 +384,8 @@ Image blobs are NOT restored via vault — requires a separate ZIP or image vaul
 ### Auto-sync conflict
 
 Conflict detection is driven by `syncHasLocalChanges()`, which checks whether both local and remote have diverged (last push timestamp is more recent than last pull timestamp). When both sides have diverged, the conflict modal appears. It is not triggered by item-count differences alone.
+
+All remote changes — both routine updates and conflicts — are routed through `handleRemoteChange()`, which calls `pullWithPreview()` (DiffModal). The former intermediate dialogs (`showSyncUpdateModal`, `showSyncConflictModal`) were removed in STAK-413. DiffModal is the sole review UI for all remote sync changes.
 
 `syncSaveOverrideBackup()` stores a pre-pull snapshot enabling the "Restore Override Backup" button in the sync history section. If the user accepts a conflicting pull and wants to revert, `syncRestoreOverrideBackup()` writes the pre-pull snapshot back.
 
@@ -473,12 +485,13 @@ All JSON/CSV/vault imports use a **merge strategy** (not replace-all):
 | "Pattern images disappeared after restore" | Only the ZIP backup includes `pattern_images/`. Cloud sync and the image vault do not cover this store. | Restore from ZIP backup to recover pattern images. |
 | "Numista images came back immediately after vault restore" | Expected behavior. Numista CDN URLs (`obverseImageUrl`, `reverseImageUrl`) are stored on the inventory items in localStorage, so they survive any vault restore without touching IDB. | No action needed — this is correct. |
 | "Image vault upload failed during cloud push" | Image vault upload is non-fatal — the inventory vault still succeeds. | Check Dropbox token validity. The next successful push will retry the image vault if the hash changed. |
-| "Conflict prompt appeared after cloud pull" | Both local and remote have diverged — last push is more recent than last pull, meaning both sides have independent changes. | Review the conflict UI and choose which version to keep. |
+| "Conflict prompt appeared after cloud pull" | Both local and remote have diverged — last push is more recent than last pull, meaning both sides have independent changes. | Review the DiffModal and choose which version to keep. |
 | "DiffModal shows fewer items than I expected" | Pre-validation in `buildImportValidationResult()` filters out invalid items before DiffModal opens. The count header shows backup count (including skipped) vs. projected count. | Check the pre-validation warning toast for the number of skipped items and their reasons. The post-import summary banner also lists skip reasons. |
 | "I see a yellow cross-domain warning on import" | The file's `exportOrigin` (e.g., `https://beta.staktrakr.com`) differs from the current domain. | The warning is informational only. Proceed if you intentionally want to merge across environments. |
 | "The JSON file I exported doesn't look like a plain array anymore" | `exportJson()` now wraps items in an object with `items` and `exportMeta` fields. | Both the wrapped format and the legacy plain-array format are supported on import. Old files still import correctly. |
 | "Import shows a banner but also a toast" | If `safeGetElement()` cannot find the inventory table container, `showImportSummaryBanner()` falls back to `showToast()`. | Verify the inventory container element id is present in the DOM at import time. |
 | "Push was blocked with 'Empty vault — pull first'" | Empty-vault guard in `pushSyncVault()` detected remote has items but local is empty. | Pull from cloud first to restore local inventory, then push will proceed normally. |
+| "OAuth relay rejected with 'state mismatch'" | `cloudCheckOAuthRelay` validates the `state` parameter from the localStorage relay against `cloud_oauth_state` in `sessionStorage`. A mismatch means the relay entry is stale or from a different OAuth session. | Re-initiate the OAuth flow from Settings → Cloud → Connect. |
 
 > **Never modify the `coinImages` IDB store.** It is a legacy store retained only to avoid a forced migration. It is never read or written. ZIP restore explicitly skips `coinImages/` and logs: `"skipping legacy coinImages folder (store deprecated)"`.
 
