@@ -78,13 +78,13 @@
   - _Requirements: 3.2, 3.3_
   - _Prompt: Role: QA Engineer with expertise in service testing and mocking frameworks | Task: Create comprehensive unit tests for FeatureService methods covering requirements 3.2 and 3.3, using mocked dependencies from tests/mocks/modelMocks.ts and test utilities | Restrictions: Must mock all external dependencies, test business logic in isolation, do not test framework code | Success: All service methods tested with proper mocking, error scenarios covered, tests verify business logic correctness and error handling_
 
-- [ ] 9. Create API endpoints
+- [ ] 4. Create API endpoints
   - Design API structure
   - _Leverage: src/api/baseApi.ts, src/utils/apiUtils.ts_
   - _Requirements: 4.0_
   - _Prompt: Role: API Architect specializing in RESTful design and Express.js | Task: Design comprehensive API structure following requirement 4.0, leveraging existing patterns from src/api/baseApi.ts and utilities from src/utils/apiUtils.ts | Restrictions: Must follow REST conventions, maintain API versioning compatibility, do not expose internal data structures directly | Success: API structure is well-designed and documented, follows existing patterns, supports all required operations with proper HTTP methods and status codes_
 
-- [ ] 9.1 Set up routing and middleware
+- [ ] 4.1 Set up routing and middleware
   - Configure application routes
   - Add authentication middleware
   - Set up error handling middleware
@@ -92,7 +92,7 @@
   - _Requirements: 4.1_
   - _Prompt: Role: Backend Developer with expertise in Express.js middleware and routing | Task: Configure application routes and middleware following requirement 4.1, integrating authentication from src/middleware/auth.ts and error handling from src/middleware/errorHandler.ts | Restrictions: Must maintain middleware order, do not bypass security middleware, ensure proper error propagation | Success: Routes are properly configured with correct middleware chain, authentication works correctly, errors are handled gracefully throughout the request lifecycle_
 
-- [ ] 9.2 Implement CRUD endpoints
+- [ ] 4.2 Implement CRUD endpoints
   - Create API endpoints
   - Add request validation
   - Write API integration tests
@@ -100,13 +100,13 @@
   - _Requirements: 4.2, 4.3_
   - _Prompt: Role: Full-stack Developer with expertise in API development and validation | Task: Implement CRUD endpoints following requirements 4.2 and 4.3, extending BaseController patterns and using validation utilities from src/utils/validation.ts | Restrictions: Must validate all inputs, follow existing controller patterns, ensure proper HTTP status codes and responses | Success: All CRUD operations work correctly, request validation prevents invalid data, integration tests pass and cover all endpoints_
 
-- [ ] 10. Add frontend components
+- [ ] 5. Add frontend components
   - Plan component architecture
   - _Leverage: src/components/BaseComponent.tsx, src/styles/theme.ts_
   - _Requirements: 5.0_
   - _Prompt: Role: Frontend Architect with expertise in React component design and architecture | Task: Plan comprehensive component architecture following requirement 5.0, leveraging base patterns from src/components/BaseComponent.tsx and theme system from src/styles/theme.ts | Restrictions: Must follow existing component patterns, maintain design system consistency, ensure component reusability | Success: Architecture is well-planned and documented, components are properly organized, follows existing patterns and theme system_
 
-- [ ] 10.1 Create base UI components
+- [ ] 5.1 Create base UI components
   - Set up component structure
   - Implement reusable components
   - Add styling and theming
@@ -114,7 +114,7 @@
   - _Requirements: 5.1_
   - _Prompt: Role: Frontend Developer specializing in React and component architecture | Task: Create reusable UI components following requirement 5.1, extending BaseComponent patterns and using existing theme system from src/styles/theme.ts | Restrictions: Must use existing theme variables, follow component composition patterns, ensure accessibility compliance | Success: Components are reusable and properly themed, follow existing architecture, accessible and responsive_
 
-- [ ] 10.2 Implement feature-specific components
+- [ ] 5.2 Implement feature-specific components
   - Create feature components
   - Add state management
   - Connect to API endpoints
@@ -122,20 +122,20 @@
   - _Requirements: 5.2, 5.3_
   - _Prompt: Role: React Developer with expertise in state management and API integration | Task: Implement feature-specific components following requirements 5.2 and 5.3, using API hooks from src/hooks/useApi.ts and extending BaseComponent patterns | Restrictions: Must use existing state management patterns, handle loading and error states properly, maintain component performance | Success: Components are fully functional with proper state management, API integration works smoothly, user experience is responsive and intuitive_
 
-- [ ] 11. Integration and testing
+- [ ] 6. Integration and testing
   - Plan integration approach
   - _Leverage: src/utils/integrationUtils.ts, tests/helpers/testUtils.ts_
   - _Requirements: 6.0_
   - _Prompt: Role: Integration Engineer with expertise in system integration and testing strategies | Task: Plan comprehensive integration approach following requirement 6.0, leveraging integration utilities from src/utils/integrationUtils.ts and test helpers | Restrictions: Must consider all system components, ensure proper test coverage, maintain integration test reliability | Success: Integration plan is comprehensive and feasible, all system components work together correctly, integration points are well-tested_
 
-- [ ] 11.1 Write end-to-end tests
+- [ ] 6.1 Write end-to-end tests
   - Write user journey tests using Browserbase/Stagehand natural-language automation
   - Test against the PR preview URL (get from Cloudflare Pages check on the draft PR)
   - _Leverage: /bb-test skill, mcp__browserbase__* tools, PR preview URL from gh pr checks_
   - _Requirements: All_
-  - _Prompt: Role: QA Automation Engineer with expertise in Browserbase/Stagehand natural-language browser automation | Task: Implement end-to-end tests for all critical user journeys using Browserbase Stagehand tools (browserbase_session_create, stagehand_navigate, stagehand_act, stagehand_extract, browserbase_screenshot). Test against the PR preview URL — get it with: gh pr checks <PR_NUMBER> --json name,state,targetUrl | python3 -c "import sys,json; checks=json.load(sys.stdin); [print(c['targetUrl']) for c in checks if 'pages.dev' in c.get('targetUrl','')]". Playwright and browserless are also available for scripted tests (see /smoke-test skill). Each test step has a 10-minute timeout: if a step stalls, skip it and log a warning. | Restrictions: Use stagehand_act for all interactions, stagehand_extract for all assertions, no javascript_tool. Test real user workflows end-to-end. | Success: All critical user journeys tested against PR preview URL, session recording available in Browserbase dashboard, results logged via log-implementation_
+  - _Prompt: Role: QA Automation Engineer with expertise in Browserbase/Stagehand natural-language browser automation | Task: Implement end-to-end tests for all critical user journeys using Browserbase Stagehand tools (browserbase_session_create, stagehand_navigate, stagehand_act, stagehand_extract, browserbase_screenshot). Test against the PR preview URL — get it with: gh pr checks <PR_NUMBER> --json name,state,targetUrl | python3 -c "import sys,json; checks=json.load(sys.stdin); [print(c['targetUrl']) for c in checks if 'pages.dev' in c.get('targetUrl','')]". Do NOT use Playwright or browserless — they are unavailable. Each test step has a 10-minute timeout: if a step stalls, skip it and log a warning. | Restrictions: Use stagehand_act for all interactions, stagehand_extract for all assertions, no javascript_tool. Test real user workflows end-to-end. | Success: All critical user journeys tested against PR preview URL, session recording available in Browserbase dashboard, results logged via log-implementation_
 
-- [ ] 11.2 Final integration and cleanup
+- [ ] 6.2 Final integration and cleanup
   - Integrate all components
   - Fix any integration issues
   - Clean up code and documentation

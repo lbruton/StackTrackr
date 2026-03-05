@@ -68,8 +68,8 @@ mapping table:
 | `js/api.js`, `js/api-health.js` | `api-consumption.md` |
 | `.claude/skills/release/`, `.claude/skills/ship/`, `devops/` | `release-workflow.md` |
 | `sw.js`, `devops/hooks/stamp-sw-cache.sh` | `service-worker.md` |
-| `js/backup.js`, `js/restore.js` | `backup-restore.md` |
-| `js/image-*.js`, `js/capture.js` | `image-pipeline.md` |
+| `js/cloud-storage.js`, `js/cloud-sync.js` | `backup-restore.md` |
+| `js/image-cache.js`, `js/image-processor.js`, `js/image-cache-modal.js`, `js/bulk-image-cache.js`, `js/seed-images.js` | `image-pipeline.md` |
 
 **Use the frontmatter method as primary.** The hardcoded table is a fallback for
 pages with missing or malformed frontmatter.
