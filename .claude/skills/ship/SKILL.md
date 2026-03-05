@@ -62,19 +62,7 @@ files to reflect the **full release** being shipped.
    changes in this release (grouped by theme, not per-patch). Use the version
    tags from Step 2 as source material. Format:
    ```markdown
-   - **Title (vX.X.X)**: Summary sentence. Additional detail sentence (STAK-XX).
-   ```
-3. Update `## Development Roadmap` — remove items completed in this release,
-   keep 3–4 forward-looking items.
-
-### about.js — getEmbeddedWhatsNew() + getEmbeddedRoadmap()
-
-These are the `file://` fallback and **MUST mirror announcements.md exactly**.
-
-1. Read `js/about.js` and find `getEmbeddedWhatsNew()` and `getEmbeddedRoadmap()`
-2. Replace their contents with HTML `<li>` versions of the same entries from
-   announcements.md
-3. Each entry: `<li><strong>vVERSION &ndash; TITLE</strong>: Summary</li>`
+   - **vX.X.X &ndash; Title**: Summary sentence. Additional detail sentence (STAK-XX).
 
 ### Sync check
 
