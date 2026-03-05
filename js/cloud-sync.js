@@ -647,7 +647,7 @@ function _logDecryptAttempt(artifact, candidates) {
   console.warn('[CloudSync] decrypt attempt:',
     'artifact=' + artifact,
     'vaultPw:', _diagPw,
-    'accountId:', _diagAid ? _diagAid.slice(0, 8) + '… (' + _diagAid.length + ' chars)' : 'MISSING',
+    'accountId:', _diagAid ? 'present' : 'MISSING',
     'candidates:', candidates.length);
 }
 
@@ -723,7 +723,7 @@ async function _tryDecryptMetadata(parsed) {
       console.warn('[CloudSync] Metadata decrypted with', candidates[i].label, 'key (attempt', i + 1 + '/' + candidates.length + ')');
       return { meta: meta, keyUsed: candidates[i].label };
     } catch (_) {
-      console.warn('[CloudSync] Decrypt attempt', i + 1, 'failed (' + candidates[i].label + ', key length:', candidates[i].key.length + ')');
+      console.warn('[CloudSync] Decrypt attempt', i + 1, 'failed (' + candidates[i].label + ')');
     }
   }
   throw new Error('All ' + candidates.length + ' key variants failed to decrypt metadata');
@@ -740,11 +740,10 @@ function getSyncPasswordSilent() {
   var vaultPw = localStorage.getItem('cloud_vault_password');
   var accountId = localStorage.getItem('cloud_dropbox_account_id');
 
-  // STAK-398 diagnostic: log key component shapes (not values) — MUST use console.warn, not debugLog
-  console.warn('[CloudSync] getSyncPasswordSilent:',
-    'vaultPw:', vaultPw ? vaultPw.length + ' chars' : 'NULL',
-    '| accountId:', accountId ? accountId.slice(0, 8) + '… (' + accountId.length + ' chars)' : 'NULL',
-    '| compositeKey:', (vaultPw && accountId) ? (vaultPw + ':' + accountId).length + ' chars' : 'N/A');
+  debugLog('[CloudSync] getSyncPasswordSilent:',
+    'vaultPw:', vaultPw ? 'present' : 'NULL',
+    '| accountId:', accountId ? 'present' : 'NULL',
+    '| compositeKey:', (vaultPw && accountId) ? 'present' : 'N/A');
 
   // Unified mode: both required
   if (vaultPw && accountId) {
@@ -1113,7 +1112,7 @@ async function pushSyncVault() {
         var prePushMeta = null;
         var prePushBuffer = await prePushResp.arrayBuffer();
         var prePushBytes = new Uint8Array(prePushBuffer);
-        console.warn('[CloudSync] Pre-push check: metadata downloaded,', prePushBytes.length, 'bytes');
+        debugLog('[CloudSync] Pre-push check: metadata downloaded,', prePushBytes.length, 'bytes');
 
         // First, try to interpret the metadata as an encrypted .stvault file
         var prePushParsed = null;
@@ -1471,8 +1470,7 @@ async function pushSyncVault() {
 
     // Encrypt metadata before upload (same AES-256-GCM as vault files)
     // STAK-398 diagnostic: log the key used for metadata encryption (for cross-device comparison)
-    console.warn('[CloudSync] Metadata ENCRYPT: password length:', password.length,
-      '| iterations:', VAULT_PBKDF2_ITERATIONS);
+    debugLog('[CloudSync] Metadata ENCRYPT: using', password.indexOf(':') !== -1 ? 'composite key' : 'password-only');
     var metaJson = JSON.stringify(metaPayload);
     var metaSalt = vaultRandomBytes(32);
     var metaIv = vaultRandomBytes(12);
@@ -1623,7 +1621,7 @@ async function pollForRemoteChanges() {
     try {
       metaBuffer = await resp.arrayBuffer();
       var metaBytes = new Uint8Array(metaBuffer);
-      console.warn('[CloudSync] Poll: metadata downloaded,', metaBytes.length, 'bytes');
+      debugLog('[CloudSync] Poll: metadata downloaded,', metaBytes.length, 'bytes');
       var metaParsed = parseVaultFile(metaBytes);
       // Check we have at least a password before trying decrypt
       if (!localStorage.getItem('cloud_vault_password')) {
@@ -1693,7 +1691,7 @@ async function pollForRemoteChanges() {
         }
 
         console.warn('[CloudSync] Poll: hash comparison — inv:', invMatch, 'settings:', settingsMatch,
-          '| local:', localHash, '(' + localInv.length + ' items) vs remote:', remoteMeta.inventoryHash, '(' + remoteMeta.itemCount + ' items)');
+          '| local:', localInv.length, 'items vs remote:', remoteMeta.itemCount, 'items');
 
         if (invMatch && settingsMatch) {
           console.warn('[CloudSync] Poll: inventory + settings hashes MATCH — silently recording pull');
@@ -1935,7 +1933,7 @@ async function pullSyncVault(remoteMeta) {
             debugLog('[CloudSync] Image vault not found on remote (404) — skipping');
           } else {
             var imgErrBody = await imgPullResp.text().catch(function () { return ''; });
-            console.warn('[CloudSync] Image vault download failed:', imgPullResp.status, imgErrBody.slice(0, 120));
+            console.warn('[CloudSync] Image vault download failed:', imgPullResp.status);
             logCloudSyncActivity('image_vault_pull', 'fail', 'HTTP ' + imgPullResp.status);
           }
         } else {
