@@ -71,19 +71,73 @@ ssh -T homepoller 'curl -sf http://localhost:3002/v1/scrape -X POST -H "Content-
 
 ---
 
+## Pre-Update Backup (MANDATORY before updating poller code)
+
+Before pulling any new code onto the VM, capture the current state of all running scripts. This lets you roll back by copying the backup files back to `/opt/poller/` if an update breaks something.
+
+```bash
+SNAPSHOT_TS=$(date -u '+%Y-%m-%d_%H-%M')
+SNAPSHOT_DIR="/Volumes/DATA/GitHub/StakTrakrApi/devops/deploy-backups/home-${SNAPSHOT_TS}"
+mkdir -p "$SNAPSHOT_DIR/scripts" "$SNAPSHOT_DIR/logs"
+
+# Copy all running scripts from the VM via tar (excludes node_modules, .env, secrets)
+ssh -T homepoller 'tar -czf - -C /opt/poller --exclude=node_modules --exclude=.git --exclude=.env --exclude="*.lock" .' \
+  | tar -xzf - -C "$SNAPSHOT_DIR/scripts/" 2>/dev/null
+
+# Capture service state
+ssh -T homepoller 'sudo /usr/bin/supervisorctl -c /etc/supervisor/supervisord.conf status' \
+  > "$SNAPSHOT_DIR/logs/supervisord-status.txt" 2>&1
+ssh -T homepoller 'tail -200 /var/log/retail-poller.log' \
+  > "$SNAPSHOT_DIR/logs/retail-poller.log" 2>&1
+ssh -T homepoller 'node --version && echo "npm: $(npm --version)"' \
+  > "$SNAPSHOT_DIR/logs/node-info.txt" 2>&1
+
+# Record metadata
+cat > "$SNAPSHOT_DIR/README.txt" <<EOF
+Pre-update snapshot: $(date -u '+%Y-%m-%d %H:%M UTC')
+Home VM: 192.168.1.81 (/opt/poller)
+Purpose: VM state before curl-update from StakTrakrApi main
+EOF
+
+# Commit the snapshot to StakTrakrApi main
+cd /Volumes/DATA/GitHub/StakTrakrApi
+git add devops/deploy-backups/
+git commit -m "chore: pre-home-update snapshot ${SNAPSHOT_TS}
+
+VM state captured before curl-update of /opt/poller from StakTrakrApi main
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
+git push origin main
+```
+
+**Why:** The home poller often has files edited directly on the VM that haven't been synced to the repo yet. This snapshot captures the live state — if the update breaks something, copy `$SNAPSHOT_DIR/scripts/` files back to `/opt/poller/` via `scp`.
+
+**Retention:** Prune snapshots older than 30 days when `ls devops/deploy-backups/` gets crowded.
+
+---
+
 ## Updating Poller Code
 
 Pull latest from StakTrakrApi main branch:
 
 ```bash
 ssh -T homepoller 'bash -s' << 'SCRIPT'
-BASE=https://raw.githubusercontent.com/lbruton/StakTrakrApi/main/devops/retail-poller
 cd /opt/poller
-for f in price-extract.js capture.js db.js turso-client.js merge-prices.js api-export.js \
-         serve.js vision-patch.js extract-vision.js import-from-log.js goldback-scraper.js \
-         run-home.sh run-fbp.sh run-spot.sh run-publish.sh run-goldback.sh monitor-oos.sh package.json; do
-  curl -sf "$BASE/$f" -o "$f" || echo "WARN: $f not found upstream"
+
+# Shared scraper files — source: devops/fly-poller/
+FLY=https://raw.githubusercontent.com/lbruton/StakTrakrApi/main/devops/fly-poller
+for f in price-extract.js capture.js db.js turso-client.js provider-db.js merge-prices.js \
+         api-export.js serve.js vision-patch.js extract-vision.js import-from-log.js \
+         goldback-scraper.js monitor-oos.sh spot-extract.js backfill-spot.js package.json; do
+  curl -sf "$FLY/$f" -o "$f" || echo "WARN: $f not found in fly-poller"
 done
+
+# Home-only files — source: devops/home-scraper/
+HOME=https://raw.githubusercontent.com/lbruton/StakTrakrApi/main/devops/home-scraper
+for f in run-home.sh run-fbp.sh check-flyio.sh setup-lxc.sh; do
+  curl -sf "$HOME/$f" -o "$f" || echo "WARN: $f not found in home-scraper"
+done
+
 npm install
 echo "Update complete"
 SCRIPT

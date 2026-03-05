@@ -102,9 +102,9 @@ gh run list --repo lbruton/StakTrakrApi --workflow "Merge Poller Branches" --lim
 - **DOM**: `safeGetElement(id)` — never raw `document.getElementById()` (except startup in `about.js` / `init.js`)
 - **Storage**: `saveData()`/`loadData()` from `js/utils.js` — never direct `localStorage`
 - **Storage keys**: must be in `ALLOWED_STORAGE_KEYS` in `js/constants.js`
-- **New JS files**: add to `sw.js` CORE_ASSETS AND script load order in `index.html` (67 script files, strict order)
+- **New JS files**: add to `sw.js` CORE_ASSETS AND script load order in `index.html` (70 script files, strict order)
 - **innerHTML**: always `sanitizeHtml()` on user content
-- **sw.js CACHE_NAME**: auto-stamped by pre-commit hook — see `sw-cache` skill
+- **sw.js CACHE_NAME**: auto-stamped by pre-commit hook (`devops/hooks/stamp-sw-cache.sh`)
 - **Duplicate check**: when editing frontend code, check `events.js` AND `api.js` for duplicate function definitions before making changes — edits to the wrong file are a recurring source of lost time
 
 ## Testing
@@ -115,6 +115,8 @@ gh run list --repo lbruton/StakTrakrApi --workflow "Merge Poller Branches" --lim
 
 After shipping a spec, use `/browserbase-test-maintenance` to add runbook test steps for new behavior.
 
+**Cloud sync cannot be tested from PR previews.** Cloudflare preview deployments use a different origin, which breaks Dropbox OAuth (the registered redirect URI only matches `beta.staktrakr.com`). Cloud sync fixes must be merged to `dev` first and tested at `beta.staktrakr.com`.
+
 ## Linear
 
 Team: `f876864d-ff80-4231-ae6c-a8e5cb69aca4`
@@ -123,6 +125,6 @@ Team: `f876864d-ff80-4231-ae6c-a8e5cb69aca4`
 
 ## Project Skills
 
-In `.claude/skills/`: `api-infrastructure`, `bb-test`, `browserbase-test-maintenance`, `coding-standards`, `devops-dashboard`, `frontend-design`, `homepoller-ssh`, `jules-review`, `jules-suppress`, `release`, `repo-boundaries`, `retail-poller`, `retail-provider-fix`, `scan-mentions`, `seed-sync`, `ship`, `smoke-test`, `sync-poller`, `ui-design`, `ui-mockup`, `wiki-audit`, `wiki-nightwatch`, `wiki-search`, `wiki-sweep`, `wiki-update`.
+In `.claude/skills/`: `coding-standards`, `homepoller-ssh`, `release`, `repo-boundaries`, `retail-poller`, `retail-provider-fix`, `seed-sync`, `ship`, `wiki-audit`, `wiki-search`, `wiki-update`.
 
 Use `/sync-instructions` after significant codebase changes.
