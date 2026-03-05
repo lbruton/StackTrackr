@@ -25,9 +25,9 @@ fly ssh console -a staktrakr -C "curl -s -X POST http://localhost:3002/v1/scrape
     print('WARNING:',w); print('LEN:',len(md)); print(md[:5000])\""
 ```
 
-For home LXC, replace `fly ssh console -a staktrakr -C` with `ssh home-lxc`:
+For home poller, replace `fly ssh console -a staktrakr -C` with `ssh homepoller`:
 ```bash
-ssh home-lxc "curl -s -X POST http://localhost:3002/v1/scrape ..."
+ssh homepoller "curl -s -X POST http://localhost:3002/v1/scrape ..."
 ```
 
 ---

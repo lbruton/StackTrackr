@@ -193,7 +193,7 @@ semantic understanding.
   returns the worktree root, so `$ROOT/wiki/` automatically resolves correctly.
 - **Both indexes coexist.** The code index (`$ROOT/`) and wiki index (`$ROOT/wiki/`)
   are separate — use the `path` parameter to target the right one.
-- **Re-index after sweeps.** After `/wiki-sweep` rewrites many pages, re-index with
+- **Re-index after bulk updates.** After rewriting many wiki pages, re-index with
   `force: true` to ensure search results are current.
 - **Infrastructure pages** are owned by StakTrakrApi Claude. For infra questions,
   search first, then verify with `/remember api infrastructure` if needed.
