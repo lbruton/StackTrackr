@@ -539,6 +539,11 @@ function cloudCheckOAuthRelay() {
     localStorage.removeItem('staktrakr_oauth_result');
     var data = JSON.parse(raw);
     if (data.code && data.state) {
+      var savedState = sessionStorage.getItem('cloud_oauth_state');
+      if (!savedState || savedState !== data.state) {
+        console.warn('[CloudStorage] OAuth relay: state mismatch — possible CSRF, rejecting');
+        return;
+      }
       cloudExchangeCode(data.code, data.state);
     }
   } catch (e) { /* ignore */ }
