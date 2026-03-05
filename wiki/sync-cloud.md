@@ -2,7 +2,7 @@
 title: Cloud Sync
 category: frontend
 owner: staktrakr
-lastUpdated: v3.33.46
+lastUpdated: v3.33.51
 date: 2026-03-04
 sourceFiles:
   - js/cloud-sync.js
@@ -13,7 +13,7 @@ relatedPages:
 ---
 # Cloud Sync
 
-> **Last updated:** v3.33.46 — 2026-03-04
+> **Last updated:** v3.33.51 — 2026-03-05
 > **Source files:** `js/cloud-sync.js`, `js/cloud-storage.js`
 
 ---
@@ -46,10 +46,11 @@ A separate image vault lives at:
 
 1. **Never bypass `getSyncPasswordSilent()`** — do not add your own `localStorage.getItem('cloud_vault_password')` reads inline. All key derivation logic (Simple mode migration, Unified mode construction) is encapsulated there.
 2. **`.catch()` on `pushSyncVault()` is optional** — it catches internally and all guard conditions return silently. **`.catch()` on `pullSyncVault()` is required** — the token check at the top fires before the internal try/catch, so callers must handle rejection.
-3. **Cancel the debounced push before pulling** — `handleRemoteChange()` calls `scheduleSyncPush.cancel()` before opening any modal. If you add a new pull path, replicate this cancel guard or the vault overwrite race will reopen. `handleRemoteChange()` also sets `_syncRemoteChangeActive = true` for the entire duration of the pull (including while the DiffModal is open, awaiting user action), which blocks concurrent `pushSyncVault()` calls. Both guards are required: the cancel prevents the queued debounce from firing, and the `_syncRemoteChangeActive` flag blocks any new push triggered while the user is reviewing the diff.
+3. **Cancel the debounced push before pulling** — `handleRemoteChange()` calls `scheduleSyncPush.cancel()` before routing to `pullWithPreview()`. If you add a new pull path, replicate this cancel guard or the vault overwrite race will reopen. `handleRemoteChange()` also sets `_syncRemoteChangeActive = true` for the entire duration of the pull (including while the DiffModal is open, awaiting user action), which blocks concurrent `pushSyncVault()` calls. Both guards are required: the cancel prevents the queued debounce from firing, and the `_syncRemoteChangeActive` flag blocks any new push triggered while the user is reviewing the diff. The flag is managed solely by try/finally inside `handleRemoteChange()` — it must not be set at call sites.
 4. **Do not duplicate `getSyncPassword()` logic** — the fast-path check at the top delegates to `getSyncPasswordSilent()`, which handles both modes and the migration edge case. Adding a second localStorage read before it breaks Simple-mode migration.
 5. **Only the leader tab pushes and polls** — `_syncIsLeader` guards both `pushSyncVault()` and `pollForRemoteChanges()`. Do not call the underlying network operations directly from UI code without this guard, or multi-tab races occur.
 6. **`cloud_dropbox_account_id` is required on every pull/poll path** — `pollForRemoteChanges()`, `pullSyncVault()`, and `pullWithPreview()` all check for a present `cloud_dropbox_account_id` before attempting any decrypt. Missing accountId yields an early-return with a "setup incomplete" toast instead of a misleading "Wrong Vault Password" error.
+7. **All confirmations use `appConfirm`** — there are no `window.confirm` calls in this module. The password-change blind-overwrite confirmation at line 1144 uses `await appConfirm(..., 'Cloud Sync')`.
 
 ---
 
@@ -138,14 +139,12 @@ getSyncPasswordSilent()
 | `pullSyncVault(remoteMeta)` | `(object) → Promise<void>` | Download, decrypt, and restore vault. Throws if no token — callers must `.catch()`. |
 | `pullWithPreview(remoteMeta)` | `(object) → Promise<void>` | Primary pull path. Manifest-first: downloads `.stmanifest`, builds diff, shows `DiffModal` and awaits user action before returning. Falls back to vault-first if manifest unavailable; vault-first path also awaits user action. Does not return until Apply or Cancel is selected. |
 | `pollForRemoteChanges()` | `() → Promise<void>` | Download `staktrakr-sync.json`, compare `syncId` with last pull, call `handleRemoteChange()` on change. Only runs if leader tab + visible. |
-| `handleRemoteChange(remoteMeta)` | `(object) → Promise<void>` | Route a detected remote change: cancel debounced push, then show update modal (no local changes) or conflict modal (both sides changed). |
-| `showSyncConflictModal(opts)` | `({local, remote, remoteMeta}) → void` | Display conflict modal with Keep Mine / Keep Theirs / Skip. |
-| `showSyncUpdateModal(remoteMeta)` | `(object) → Promise<boolean>` | Display "Update available" modal, resolves true/false on user action. |
+| `handleRemoteChange(remoteMeta)` | `(object) → Promise<void>` | Route a detected remote change: cancel debounced push, then go directly to `pullWithPreview()`. Sets `_syncRemoteChangeActive = true` via try/finally for the full duration. |
 | `getSyncPasswordSilent()` | `() → string\|null` | Non-interactive key derivation — safe to call from background loops. |
 | `getSyncPassword()` | `() → Promise<string\|null>` | Interactive key prompt — opens password modal; shows in-modal error if `cloud_dropbox_account_id` is absent at confirm time. |
 | `changeVaultPassword(newPassword)` | `(string) → Promise<boolean>` | Update vault password in localStorage and trigger re-encrypt push. |
 | `syncSaveOverrideBackup()` | `() → void` | Snapshot all `SYNC_SCOPE_KEYS` from localStorage before a pull overwrites them. |
-| `syncRestoreOverrideBackup()` | `() → Promise<void>` | Restore the pre-pull snapshot (with confirmation dialog). |
+| `syncRestoreOverrideBackup()` | `() → Promise<void>` | Restore the pre-pull snapshot (with `appConfirm` dialog). |
 | `getSyncDeviceId()` | `() → string` | Get or create stable per-device UUID (persisted in `cloud_sync_device_id`). |
 | `syncHasLocalChanges()` | `() → boolean` | True if last push timestamp is newer than last pull timestamp. |
 | `buildAndUploadManifest(token, password, syncId)` | `(...) → Promise<void>` | Build and encrypt a field-level changelog from `changeLog`, upload to Dropbox. Non-blocking (failure does not prevent vault push). |
@@ -163,6 +162,7 @@ getSyncPasswordSilent()
 |---|---|---|
 | `cloudAuthStart(provider)` | `(string) → void` | Open OAuth popup (PKCE for Dropbox). Must be called from a click handler to avoid popup blockers. |
 | `cloudExchangeCode(code, state)` | `(string, string) → Promise<void>` | Exchange OAuth code for access/refresh tokens. Validates state parameter against saved session. |
+| `cloudCheckOAuthRelay()` | `() → void` | Fallback relay handler when popup loses `window.opener`. Reads `staktrakr_oauth_result` from localStorage, validates `data.state` against `sessionStorage.getItem('cloud_oauth_state')` before calling `cloudExchangeCode` — rejects with a CSRF warning on mismatch. |
 | `cloudGetToken(provider)` | `(string) → Promise<string\|null>` | Return valid access token. Attempts refresh if expired (with 60s buffer). Clears token and returns null on refresh failure. |
 | `cloudIsConnected(provider)` | `(string) → boolean` | True if a stored token exists for the provider. |
 | `cloudStoreToken(provider, tokenData)` | `(string, object) → void` | Persist token to localStorage under `cloud_token_<provider>`. |
@@ -230,23 +230,18 @@ pollForRemoteChanges()
 
 ### Remote Change Handling
 
+`handleRemoteChange()` no longer routes through intermediate update or conflict modals. All remote changes — whether or not the local device has unsaved changes — go directly to `pullWithPreview()`:
+
 ```
 handleRemoteChange(remoteMeta)
   ├─ Defer if password prompt is active
-  ├─ _syncRemoteChangeActive = true   ← blocks concurrent pushes for the full duration
+  ├─ _syncRemoteChangeActive = true   ← set here; cleared only by try/finally inside this function
   ├─ scheduleSyncPush.cancel()   ← CRITICAL: prevents vault overwrite race
-  ├─ syncHasLocalChanges()?
-  │    No  → showSyncUpdateModal() → user accepts → await pullWithPreview()
-  │                                                  (returns only after Apply/Cancel)
-  │                                  user chooses "Push My Data"
-  │                                    → _syncConflictUserOverride = true → pushSyncVault()
-  │    Yes → showSyncConflictModal()
-  │             ├─ Keep Mine  → _syncConflictUserOverride = true → pushSyncVault()
-  │             ├─ Keep Theirs → pullWithPreview(remoteMeta)
-  │             └─ Skip → close modal
-  │             (appConfirm fallback: keepMine → _syncConflictUserOverride = true → pushSyncVault())
+  ├─ await pullWithPreview(remoteMeta)   ← handles all cases (update, conflict, diff preview)
   └─ finally: _syncRemoteChangeActive = false   ← clears only after pull is fully applied
 ```
+
+> **Note:** `showSyncUpdateModal` and `showSyncConflictModal` were removed in STAK-413. The DiffModal used by `pullWithPreview()` presents all necessary conflict and update information in a single unified interface.
 
 ### Pull (Dropbox → inventory)
 
@@ -303,36 +298,17 @@ Runs as part of push and pull, non-fatally:
 
 ## Conflict Resolution
 
-**Default: remote wins** when there are no local changes (user accepts the update modal).
+**Default: DiffModal always shown** — `handleRemoteChange()` routes all remote changes directly to `pullWithPreview()`, which presents the DiffModal. The user chooses Apply or Cancel regardless of whether the local device has unsaved changes.
 
-`syncHasLocalChanges()` returns true if `lastPush.timestamp > lastPull.timestamp` — meaning the local device has pushed changes that predated the remote update, so both sides have diverged.
-
-When both sides have changes, the conflict modal displays:
-
-| Side | Fields shown |
-|---|---|
-| Local | item count, last-push timestamp (relative), app version |
-| Remote | item count, timestamp (relative), app version, device ID (first 8 chars) |
-
-Choices:
-
-- **Keep Mine** → `pushSyncVault()` — overwrites remote with local
-- **Keep Theirs** → `pullWithPreview(remoteMeta)` — shows diff preview, then applies remote
-- **Skip** → close modal, no action (remote change will reappear on next poll)
+`syncHasLocalChanges()` returns true if `lastPush.timestamp > lastPull.timestamp` — meaning the local device has pushed changes that predated the remote update, so both sides have diverged. This flag is checked internally within the pull/preview flow.
 
 The override backup (`syncSaveOverrideBackup`) is written before any pull, enabling "Restore This Snapshot" in the Sync History section.
 
 ### Keep Mine / Push My Data — conflict bypass flag (STAK-403, v3.33.32)
 
-**Problem:** Choosing "Keep Mine" in the conflict modal or "Push My Data" in the update modal triggered `pushSyncVault()`, which immediately re-ran the Layer 0 pre-push remote check. That check detected the same unacknowledged remote change the user had just explicitly dismissed and re-routed back to `handleRemoteChange()` — creating an infinite conflict-resolution loop.
+**Problem:** Choosing to overwrite the remote vault (from within the DiffModal or a conflict prompt) triggered `pushSyncVault()`, which immediately re-ran the Layer 0 pre-push remote check. That check detected the same unacknowledged remote change the user had just explicitly dismissed and re-routed back to `handleRemoteChange()` — creating an infinite conflict-resolution loop.
 
-**Fix:** A module-level one-shot flag `_syncConflictUserOverride` (initialized `false`, line 36 of `cloud-sync.js`) is set `true` at three call sites immediately before `pushSyncVault()` is invoked:
-
-1. `keepMineBtn.onclick` in `showSyncConflictModal`
-2. `showSyncUpdateModal` "Push My Data" branch inside `handleRemoteChange`
-3. `appConfirm` fallback branch in `showSyncConflictModal`
-
-At the start of the Layer 0 pre-push try block, the flag is snapshot-and-cleared atomically:
+**Fix:** A module-level one-shot flag `_syncConflictUserOverride` (initialized `false`, line 36 of `cloud-sync.js`) is set `true` at call sites that represent explicit user intent to overwrite. At the start of the Layer 0 try block, the flag is snapshot-and-cleared atomically:
 
 ```js
 var _prePushOverride = _syncConflictUserOverride;
@@ -375,14 +351,14 @@ Manual backups and sync snapshots are separated by filename prefix and treated i
 - **`MANUAL_BACKUP_PREFIX` (`staktrakr-backup-`)** — user-initiated backups via the "Backup" button. These are never auto-pruned by the sync system. The user must delete them explicitly.
 - **`SYNC_BACKUP_PREFIX` (`pre-sync-`)** — automatic pre-push snapshots created by `pushSyncVault()`. These are pruned by `cloudPruneBackups()` which defaults to `type='sync'`.
 
-**Key behavioral changes:**
+**Key behavioral notes:**
 
 - `cloudListBackups(provider, type)` accepts an optional `type` parameter (`'manual'` | `'sync'` | `undefined`) for client-side prefix filtering.
 - `cloudPruneBackups(provider, maxKeep, type)` defaults to `type='sync'`, so auto-pruning only touches sync snapshots. Manual backups are preserved regardless of the backup history depth setting.
 - `cloudUploadVault(provider, fileBytes, opts)` accepts an `opts` parameter. When `opts.skipLatestUpdate` is true, the `cloud_last_backup` pointer is not updated — this prevents manual backups from interfering with sync state tracking.
 - The vault modal password is not cached for manual backups (password caching via `cloudCachePassword` is skipped for `isManualBackup: true` contexts). Each manual backup requires the user to re-enter their vault password.
 
-The override backup is the safety net for "Keep Theirs" conflicts or unwanted sync pulls. It restores raw localStorage strings (not Dropbox files) directly back to the pre-pull state.
+The override backup is the safety net for unwanted sync pulls. It restores raw localStorage strings (not Dropbox files) directly back to the pre-pull state.
 
 ---
 
@@ -409,6 +385,35 @@ The override backup is the safety net for "Keep Theirs" conflicts or unwanted sy
 
 ---
 
+## Security Notes
+
+### Console output sanitization (STAK-430, v3.33.51)
+
+Console and debug output has been hardened to avoid leaking credential material:
+
+- **`cloud-sync.js`** — `console.warn` calls no longer emit `password.length`, `key.length`, byte counts, or hash values. Crypto-diagnostic logs are routed through `debugLog()` (suppressed in production). The pre-decrypt diagnostic (`_logDecryptAttempt`) logs only boolean presence of `cloud_vault_password` and `'present'`/`'MISSING'` for `cloud_dropbox_account_id` — never the actual value or its length.
+- **`cloud-storage.js`** — Account ID logged as `'present'` rather than a slice of the actual value. Response status codes are not included in failure log messages.
+
+### OAuth state parameter validation (STAK-430, v3.33.51)
+
+`cloudCheckOAuthRelay()` now validates the OAuth state parameter before processing relay results:
+
+```js
+var savedState = sessionStorage.getItem('cloud_oauth_state');
+if (!savedState || savedState !== data.state) {
+  console.warn('[CloudStorage] OAuth relay: state mismatch — possible CSRF, rejecting');
+  return;
+}
+```
+
+If the state stored in `sessionStorage` is missing or does not match `data.state` from the relay payload, the relay is rejected and `cloudExchangeCode` is never called. This prevents a CSRF attacker from injecting a crafted OAuth result into localStorage and having it auto-processed.
+
+### All confirmations use `appConfirm`
+
+There are no `window.confirm` calls anywhere in `cloud-sync.js` or `cloud-storage.js`. The password-change blind-overwrite prompt uses `await appConfirm(..., 'Cloud Sync')`, which renders in the app's modal system rather than the browser's native dialog (consistent with all other sync confirmations).
+
+---
+
 ## Error Handling Patterns
 
 - **`pushSyncVault()`** — all errors caught internally; sets status indicator to `'error'`; returns silently. No caller catch required.
@@ -423,17 +428,18 @@ The override backup is the safety net for "Keep Theirs" conflicts or unwanted sy
 
 ### Pre-decrypt diagnostics
 
-`_tryDecryptVault(fileBytes, artifactLabel?)` and `_tryDecryptMetadata(parsed)` each emit a structured `console.warn` **before entering the key-candidate loop**:
+`_tryDecryptVault(fileBytes, artifactLabel?)` and `_tryDecryptMetadata(parsed)` each emit a structured `console.warn` **before entering the key-candidate loop** via `_logDecryptAttempt()`:
 
 ```
-[CloudSync] decrypt attempt: artifact=stvault vaultPw: true accountId: dbid:abc1… (40 chars) candidates: 3
+[CloudSync] decrypt attempt: artifact=stvault vaultPw: true accountId: present candidates: 3
 [CloudSync] decrypt attempt: artifact=metadata vaultPw: true accountId: MISSING candidates: 0
 ```
 
 Fields logged:
+
 - `artifact` — `'stvault'` (all `_tryDecryptVault` call sites), `'metadata'` (`_tryDecryptMetadata`)
-- `vaultPw` — boolean presence of `cloud_vault_password`
-- `accountId` — first 8 chars + length if present, or `MISSING`
+- `vaultPw` — boolean presence of `cloud_vault_password` (never the value or its length)
+- `accountId` — `'present'` if set, or `'MISSING'` (never the account ID value or a slice of it)
 - `candidates` — count from `_getSyncKeyCandidates()` (0 when accountId is missing, since no valid composite key can be formed)
 
 ---
@@ -494,6 +500,10 @@ scheduleSyncPush(); // for inventory changes
 
 `pullWithPreview()` has two distinct paths: manifest-first (lightweight) and vault-first (full download). The manifest path is best-effort. Code that hooks into the pull flow must handle both paths.
 
+### Setting `_syncRemoteChangeActive` at a call site
+
+`_syncRemoteChangeActive` is managed exclusively by `handleRemoteChange()` via try/finally. Setting it to `true` before calling `handleRemoteChange()` — a pattern that previously existed — was removed in STAK-430 because it caused the flag to remain `true` if `handleRemoteChange()` threw before reaching its own try block, permanently blocking all future pushes.
+
 ---
 
 ## Vault Overwrite Race (fixed v3.32.24, extended v3.33.34)
@@ -502,7 +512,7 @@ scheduleSyncPush(); // for inventory changes
 
 **Root cause:** `initSyncModule()` builds `scheduleSyncPush` with a 2000ms debounce. If the poller detected a remote change within that 2-second window, the debounced push fired during or after the conflict modal, overwriting the remote vault before the pull could complete.
 
-**Fix (v3.32.24):** `handleRemoteChange()` calls `scheduleSyncPush.cancel()` as its first substantive action — before any modal is shown. This prevents the *queued debounce* from firing.
+**Fix (v3.32.24):** `handleRemoteChange()` calls `scheduleSyncPush.cancel()` as its first substantive action — before routing to `pullWithPreview()`. This prevents the *queued debounce* from firing.
 
 **Extended fix (v3.33.34, STAK-406):** A second race path remained: `pullWithPreview()` previously returned as soon as it handed off to `DiffModal.show()`, clearing `_syncRemoteChangeActive` before the user had applied or cancelled. A new push triggered while the DiffModal was open (e.g., from another tab broadcast or user action) would not be blocked. The fix makes `pullWithPreview()` await the DiffModal user action in both the manifest-first and vault-first paths before returning, so `_syncRemoteChangeActive` stays `true` until the pull is fully applied. Similarly, `showRestorePreviewModal()` now returns a `Promise<void>` (resolved on Apply or Cancel) instead of a boolean, enabling callers to await it. It returns `null` only when DiffModal is unavailable.
 
@@ -512,11 +522,11 @@ scheduleSyncPush(); // for inventory changes
 
 ## Keep Mine Conflict Resolution Infinite Loop (fixed v3.33.32, STAK-403)
 
-**Symptom:** Choosing "Keep Mine" in the conflict modal (or "Push My Data" in the update modal) caused the conflict modal to reappear immediately after every push, preventing the user from ever overwriting the remote vault.
+**Symptom:** Choosing to overwrite the remote vault caused the conflict resolution flow to immediately re-trigger, preventing the user from ever overwriting the remote vault.
 
-**Root cause:** The Layer 0 pre-push check (added in STAK-398) downloads and inspects remote metadata before every push. When the user chose "Keep Mine", the resulting `pushSyncVault()` call hit Layer 0, detected the same unacknowledged remote change the user had just dismissed, and re-routed to `handleRemoteChange()` — triggering the conflict modal again in a loop.
+**Root cause:** The Layer 0 pre-push check (added in STAK-398) downloads and inspects remote metadata before every push. When the user chose to overwrite, the resulting `pushSyncVault()` call hit Layer 0, detected the same unacknowledged remote change the user had just dismissed, and re-routed to `handleRemoteChange()` — triggering the conflict flow again in a loop.
 
-**Fix (v3.33.32):** A module-level one-shot flag `_syncConflictUserOverride` is set `true` at the three call sites that represent explicit user intent to overwrite (Keep Mine button, Push My Data branch, appConfirm fallback). At the start of the Layer 0 try block the flag is snapshot-and-cleared; if the snapshot is `true` the conflict check is bypassed and the push proceeds. See the "Keep Mine / Push My Data — conflict bypass flag" section under Conflict Resolution for full details.
+**Fix (v3.33.32):** A module-level one-shot flag `_syncConflictUserOverride` is set `true` at call sites that represent explicit user intent to overwrite. At the start of the Layer 0 try block the flag is snapshot-and-cleared; if the snapshot is `true` the conflict check is bypassed and the push proceeds. See the "Keep Mine / Push My Data — conflict bypass flag" section under Conflict Resolution for full details.
 
 ---
 

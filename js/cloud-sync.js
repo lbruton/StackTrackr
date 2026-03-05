@@ -647,7 +647,7 @@ function _logDecryptAttempt(artifact, candidates) {
   console.warn('[CloudSync] decrypt attempt:',
     'artifact=' + artifact,
     'vaultPw:', _diagPw,
-    'accountId:', _diagAid ? _diagAid.slice(0, 8) + '… (' + _diagAid.length + ' chars)' : 'MISSING',
+    'accountId:', _diagAid ? 'present' : 'MISSING',
     'candidates:', candidates.length);
 }
 
@@ -723,7 +723,7 @@ async function _tryDecryptMetadata(parsed) {
       console.warn('[CloudSync] Metadata decrypted with', candidates[i].label, 'key (attempt', i + 1 + '/' + candidates.length + ')');
       return { meta: meta, keyUsed: candidates[i].label };
     } catch (_) {
-      console.warn('[CloudSync] Decrypt attempt', i + 1, 'failed (' + candidates[i].label + ', key length:', candidates[i].key.length + ')');
+      console.warn('[CloudSync] Decrypt attempt', i + 1, 'failed (' + candidates[i].label + ')');
     }
   }
   throw new Error('All ' + candidates.length + ' key variants failed to decrypt metadata');
@@ -740,11 +740,10 @@ function getSyncPasswordSilent() {
   var vaultPw = localStorage.getItem('cloud_vault_password');
   var accountId = localStorage.getItem('cloud_dropbox_account_id');
 
-  // STAK-398 diagnostic: log key component shapes (not values) — MUST use console.warn, not debugLog
-  console.warn('[CloudSync] getSyncPasswordSilent:',
-    'vaultPw:', vaultPw ? vaultPw.length + ' chars' : 'NULL',
-    '| accountId:', accountId ? accountId.slice(0, 8) + '… (' + accountId.length + ' chars)' : 'NULL',
-    '| compositeKey:', (vaultPw && accountId) ? (vaultPw + ':' + accountId).length + ' chars' : 'N/A');
+  debugLog('[CloudSync] getSyncPasswordSilent:',
+    'vaultPw:', vaultPw ? 'present' : 'NULL',
+    '| accountId:', accountId ? 'present' : 'NULL',
+    '| compositeKey:', (vaultPw && accountId) ? 'present' : 'N/A');
 
   // Unified mode: both required
   if (vaultPw && accountId) {
@@ -1113,7 +1112,7 @@ async function pushSyncVault() {
         var prePushMeta = null;
         var prePushBuffer = await prePushResp.arrayBuffer();
         var prePushBytes = new Uint8Array(prePushBuffer);
-        console.warn('[CloudSync] Pre-push check: metadata downloaded,', prePushBytes.length, 'bytes');
+        debugLog('[CloudSync] Pre-push check: metadata downloaded,', prePushBytes.length, 'bytes');
 
         // First, try to interpret the metadata as an encrypted .stvault file
         var prePushParsed = null;
@@ -1142,11 +1141,12 @@ async function pushSyncVault() {
           // OLD password. In that case we cannot reliably decrypt with the NEW password.
           if (_syncPasswordJustChanged) {
             console.warn('[CloudSync] Pre-push check: password just changed — remote metadata likely encrypted with old password');
-            var confirmBlindOverwrite = window.confirm(
+            var confirmBlindOverwrite = await appConfirm(
               'Your sync password was just changed.\n\n' +
               'StakTrakr cannot verify whether the cloud copy of your vault is newer than this device. ' +
               'Continuing may overwrite newer remote data.\n\n' +
-              'Do you want to overwrite the cloud copy with the data from this device now?'
+              'Do you want to overwrite the cloud copy with the data from this device now?',
+              'Cloud Sync'
             );
             if (!confirmBlindOverwrite) {
               console.warn('[CloudSync] Pre-push check: user cancelled blind overwrite after password change');
@@ -1203,9 +1203,6 @@ async function pushSyncVault() {
             logCloudSyncActivity('auto_sync_push', 'deferred', 'Remote change detected from device ' + prePushMeta.deviceId.slice(0, 8) + ' — showing diff');
             _syncPushInFlight = false;
             updateSyncStatusIndicator('idle');
-            // STAK-411: Set flag before await so concurrent poll sees it and skips
-            // its own handleRemoteChange call, preventing a double conflict modal.
-            _syncRemoteChangeActive = true;
             await handleRemoteChange(prePushMeta);
             return; // Do NOT push — let the user decide via the update/conflict modal
           } else {
@@ -1473,8 +1470,7 @@ async function pushSyncVault() {
 
     // Encrypt metadata before upload (same AES-256-GCM as vault files)
     // STAK-398 diagnostic: log the key used for metadata encryption (for cross-device comparison)
-    console.warn('[CloudSync] Metadata ENCRYPT: password length:', password.length,
-      '| iterations:', VAULT_PBKDF2_ITERATIONS);
+    debugLog('[CloudSync] Metadata ENCRYPT: using', password.indexOf(':') !== -1 ? 'composite key' : 'password-only');
     var metaJson = JSON.stringify(metaPayload);
     var metaSalt = vaultRandomBytes(32);
     var metaIv = vaultRandomBytes(12);
@@ -1625,7 +1621,7 @@ async function pollForRemoteChanges() {
     try {
       metaBuffer = await resp.arrayBuffer();
       var metaBytes = new Uint8Array(metaBuffer);
-      console.warn('[CloudSync] Poll: metadata downloaded,', metaBytes.length, 'bytes');
+      debugLog('[CloudSync] Poll: metadata downloaded,', metaBytes.length, 'bytes');
       var metaParsed = parseVaultFile(metaBytes);
       // Check we have at least a password before trying decrypt
       if (!localStorage.getItem('cloud_vault_password')) {
@@ -1695,7 +1691,7 @@ async function pollForRemoteChanges() {
         }
 
         console.warn('[CloudSync] Poll: hash comparison — inv:', invMatch, 'settings:', settingsMatch,
-          '| local:', localHash, '(' + localInv.length + ' items) vs remote:', remoteMeta.inventoryHash, '(' + remoteMeta.itemCount + ' items)');
+          '| local:', localInv.length, 'items vs remote:', remoteMeta.itemCount, 'items');
 
         if (invMatch && settingsMatch) {
           console.warn('[CloudSync] Poll: inventory + settings hashes MATCH — silently recording pull');
@@ -1752,59 +1748,6 @@ function syncHasLocalChanges() {
   if (!lastPush) return false;
   if (!lastPull) return true; // pushed but never pulled
   return lastPush.timestamp > lastPull.timestamp;
-}
-
-/**
- * Show the "Update available" modal and return a Promise that resolves with the
- * user's choice: 'accept', 'push', or 'dismiss'. Resolves null if the modal is not in the DOM.
- * @param {object} remoteMeta - The parsed staktrakr-sync.json content
- * @returns {Promise<'accept'|'push'|'dismiss'|null>}
- */
-function showSyncUpdateModal(remoteMeta) {
-  return new Promise(function (resolve) {
-    var modal = safeGetElement('cloudSyncUpdateModal');
-    if (!modal) { resolve(false); return; } // fallback: decline if no modal in DOM
-
-    // Populate metadata fields
-    var itemCountEl = safeGetElement('syncUpdateItemCount');
-    var timestampEl = safeGetElement('syncUpdateTimestamp');
-    var deviceEl    = safeGetElement('syncUpdateDevice');
-
-    if (itemCountEl) itemCountEl.textContent = remoteMeta.itemCount != null ? String(remoteMeta.itemCount) : '—';
-    if (timestampEl) {
-      var ts = remoteMeta.timestamp ? new Date(remoteMeta.timestamp) : null;
-      timestampEl.textContent = ts ? ts.toLocaleString() : '—';
-    }
-    if (deviceEl) {
-      var devId = remoteMeta.deviceId || '';
-      deviceEl.textContent = devId ? devId.slice(0, 8) + '\u2026' : 'unknown';
-    }
-
-    modal.style.display = 'flex';
-
-    var acceptBtn  = safeGetElement('syncUpdateAcceptBtn');
-    var pushBtn    = safeGetElement('syncUpdatePushBtn');
-    var dismissBtn = safeGetElement('syncUpdateDismissBtn');
-    var dismissX   = safeGetElement('syncUpdateDismissX');
-
-    function cleanup(result) {
-      modal.style.display = 'none';
-      if (acceptBtn)  acceptBtn.removeEventListener('click', onAccept);
-      if (pushBtn)    pushBtn.removeEventListener('click', onPush);
-      if (dismissBtn) dismissBtn.removeEventListener('click', onDismiss);
-      if (dismissX)   dismissX.removeEventListener('click', onDismiss);
-      resolve(result);
-    }
-
-    function onAccept()  { cleanup('accept'); }
-    function onPush()    { cleanup('push'); }
-    function onDismiss() { cleanup('dismiss'); }
-
-    if (acceptBtn)  acceptBtn.addEventListener('click', onAccept);
-    if (pushBtn)    pushBtn.addEventListener('click', onPush);
-    if (dismissBtn) dismissBtn.addEventListener('click', onDismiss);
-    if (dismissX)   dismissX.addEventListener('click', onDismiss);
-  });
 }
 
 /**
@@ -1936,8 +1879,7 @@ async function pullSyncVault(remoteMeta) {
             pulledImageHash = remoteMeta.imageVault.hash;
             debugLog('[CloudSync] Image vault not found on remote (404) — skipping');
           } else {
-            var imgErrBody = await imgPullResp.text().catch(function () { return ''; });
-            console.warn('[CloudSync] Image vault download failed:', imgPullResp.status, imgErrBody.slice(0, 120));
+            console.warn('[CloudSync] Image vault download failed:', imgPullResp.status);
             logCloudSyncActivity('image_vault_pull', 'fail', 'HTTP ' + imgPullResp.status);
           }
         } else {
@@ -1982,95 +1924,6 @@ async function pullSyncVault(remoteMeta) {
     updateSyncStatusIndicator('error', errMsg.slice(0, 60));
     if (typeof showCloudToast === 'function') showCloudToast('Auto-sync pull failed: ' + errMsg);
   }
-}
-
-// ---------------------------------------------------------------------------
-// Conflict modal
-// ---------------------------------------------------------------------------
-
-/**
- * Show the sync conflict modal with local vs. remote comparison.
- * @param {{local: object, remote: object, remoteMeta: object}} opts
- */
-function showSyncConflictModal(opts) {
-  return new Promise(function (resolve) {
-    var modal = safeGetElement('cloudSyncConflictModal');
-    if (!modal) {
-      var msg = 'Sync conflict detected.\n\n' +
-        'Local:  ' + opts.local.itemCount + ' items\n' +
-        'Remote: ' + opts.remote.itemCount + ' items\n\n' +
-        'Keep YOUR local version? (Cancel to keep the remote version)';
-      if (typeof appConfirm === 'function') {
-        appConfirm(msg, 'Sync Conflict').then(function (keepMine) {
-          if (keepMine) { _syncConflictUserOverride = true; pushSyncVault().catch(function(e) { console.error('[CloudSync] Keep Mine (fallback) push failed:', e); }); }
-          else pullWithPreview(opts.remoteMeta).catch(function (err) {
-            debugLog('[CloudSync] pullWithPreview failed in conflict fallback:', err);
-            updateSyncStatusIndicator('error', 'Pull failed — ' + err.message);
-          });
-          resolve();
-        });
-      } else {
-        resolve();
-      }
-      return;
-    }
-
-    // Populate modal fields
-    var setEl = function (id, text) {
-      var el = safeGetElement(id);
-      if (el) el.textContent = text || '\u2014';
-    };
-
-    setEl('syncConflictLocalItems', opts.local.itemCount + ' items');
-    setEl('syncConflictLocalTime', opts.local.timestamp ? _syncRelativeTime(opts.local.timestamp) : 'Unknown');
-    setEl('syncConflictLocalVersion', 'v' + opts.local.appVersion);
-    setEl('syncConflictRemoteItems', opts.remote.itemCount + ' items');
-    setEl('syncConflictRemoteTime', opts.remote.timestamp ? _syncRelativeTime(opts.remote.timestamp) : 'Unknown');
-    setEl('syncConflictRemoteVersion', 'v' + opts.remote.appVersion);
-    setEl('syncConflictRemoteDevice', opts.remote.deviceId ? opts.remote.deviceId.slice(0, 8) + '\u2026' : 'Another device');
-
-    // Wire buttons
-    var keepMineBtn = safeGetElement('syncConflictKeepMine');
-    var keepTheirsBtn = safeGetElement('syncConflictKeepTheirs');
-    var skipBtn = safeGetElement('syncConflictSkip');
-
-    var closeModal = function () {
-      modal.style.display = 'none';
-      if (typeof closeModalById === 'function') closeModalById('cloudSyncConflictModal');
-    };
-
-    if (keepMineBtn) {
-      keepMineBtn.onclick = function () {
-        closeModal();
-        _syncConflictUserOverride = true;
-        pushSyncVault().catch(function(e) { console.error('[CloudSync] Keep Mine push failed:', e); });
-        resolve();
-      };
-    }
-    if (keepTheirsBtn) {
-      keepTheirsBtn.onclick = function () {
-        closeModal();
-        // Layer 5 — Show restore preview instead of direct pull (REQ-5)
-        pullWithPreview(opts.remoteMeta).catch(function (err) {
-          debugLog('[CloudSync] pullWithPreview failed on Keep Theirs:', err);
-          updateSyncStatusIndicator('error', 'Pull failed — ' + err.message);
-        });
-        resolve();
-      };
-    }
-    if (skipBtn) {
-      skipBtn.onclick = function () {
-        closeModal();
-        resolve();
-      };
-    }
-
-    if (typeof openModalById === 'function') {
-      openModalById('cloudSyncConflictModal');
-    } else {
-      modal.style.display = 'flex';
-    }
-  });
 }
 
 // ---------------------------------------------------------------------------
@@ -3122,8 +2975,6 @@ window.syncNow = syncNow;
 window.pushSyncVault = pushSyncVault;
 window.pullSyncVault = pullSyncVault;
 window.pollForRemoteChanges = pollForRemoteChanges;
-window.showSyncConflictModal = showSyncConflictModal;
-window.showSyncUpdateModal = showSyncUpdateModal;
 window.showRestorePreviewModal = showRestorePreviewModal;
 window.pullWithPreview = pullWithPreview;
 window.computeInventoryHash = computeInventoryHash;
