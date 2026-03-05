@@ -3718,6 +3718,14 @@
                     <input type="search" id="marketSearchInput" class="market-search"
                            placeholder="Search items, metals, vendors..." autocomplete="off"
                            aria-label="Search market items">
+                    <div class="market-filter-pills" id="marketFilterPills">
+                      <button class="market-filter-pill active" data-metal="all" type="button" aria-pressed="true">All</button>
+                      <button class="market-filter-pill" data-metal="silver" type="button" aria-pressed="false">Silver</button>
+                      <button class="market-filter-pill" data-metal="gold" type="button" aria-pressed="false">Gold</button>
+                      <button class="market-filter-pill" data-metal="goldback" type="button" aria-pressed="false">Goldback</button>
+                      <button class="market-filter-pill" data-metal="platinum" type="button" aria-pressed="false">Platinum</button>
+                      <button class="market-filter-pill" data-metal="palladium" type="button" aria-pressed="false">Palladium</button>
+                    </div>
                     <div class="market-header-controls-right">
                       <div class="market-sort-wrap">
                         <span class="market-header-btn market-sort-label">Sort: Name <span class="btn-chevron">&#9662;</span></span>

@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.52] - 2026-03-05
+
+### Fixed/Added — STAK-433/STAK-434: Market Controls Mobile Fix + Metal Filter Buttons
+
+- **Fixed**: Mobile market view search bar crushed to 2 characters — added `flex-wrap` to controls row at mobile breakpoint (STAK-433)
+- **Fixed**: Expand/Collapse button text flipped when typing in search — now resets to "Expand All" on every re-render (STAK-433)
+- **Added**: Metal filter pill buttons (All/Silver/Gold/Goldback/Platinum/Palladium) in market list view header — filter by metal type with color-coded pills matching existing badge palette (STAK-434)
+- **Added**: Mobile responsive pill layout with wrapping and touch-friendly sizing (STAK-434)
+
+---
+
 ## [3.33.51] - 2026-03-05
 
 ### Fixed — STAK-430: Pre-ship Security Hardening
