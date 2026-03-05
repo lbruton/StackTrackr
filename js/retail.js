@@ -1533,6 +1533,10 @@ const _renderMarketListView = () => {
   // Hide inline disclaimer in list view — disclaimer text lives in the footer instead
   disclaimer.style.display = "none";
 
+  // Reset expand button before any early-return path
+  const expandBtn = safeGetElement("marketExpandAllBtn");
+  if (expandBtn) expandBtn.textContent = "Expand All";
+
   if (_retailSyncInProgress) {
     emptyState.style.display = "none";
     getActiveRetailSlugs().forEach(() => grid.appendChild(_buildSkeletonCard()));
@@ -1587,8 +1591,6 @@ const _renderMarketListView = () => {
   footerRow.appendChild(sponsorBadge);
   footer.appendChild(footerRow);
   grid.appendChild(footer);
-  const expandBtn = safeGetElement("marketExpandAllBtn");
-  if (expandBtn) expandBtn.textContent = "Expand All";
 };
 
 /** Debounced search handler for market list view. */
@@ -1640,8 +1642,12 @@ const _initMarketListViewListeners = () => {
       const pill = e.target.closest(".market-filter-pill");
       if (!pill) return;
       _marketMetalFilter = pill.dataset.metal;
-      pillContainer.querySelectorAll(".market-filter-pill").forEach((p) => p.classList.remove("active"));
+      pillContainer.querySelectorAll(".market-filter-pill").forEach((p) => {
+        p.classList.remove("active");
+        p.setAttribute("aria-pressed", "false");
+      });
       pill.classList.add("active");
+      pill.setAttribute("aria-pressed", "true");
       _renderMarketListView();
     });
   }
