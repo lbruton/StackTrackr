@@ -10,7 +10,9 @@ Called automatically from `/release patch` Phase 3 after the version bump commit
 Identifies which wiki pages are affected by this patch's diff, rewrites only those
 pages, and commits the changes with the same patch branch. No separate PR needed.
 
-Runs as a background Task agent — Phase 4 (PR creation) does not wait.
+**BLOCKING step** — Phase 4 (push & PR creation) MUST wait for wiki updates to
+complete and be committed before proceeding. Wiki changes that land after the PR
+is created are orphaned and never make it into the PR.
 
 ---
 
@@ -193,8 +195,10 @@ Wiki update: no relevant files changed — skipping.
 
 This skill is invoked after the version bump commit in Phase 3 of `/release patch`:
 
-> After committing the version bump, invoke the `wiki-update` skill via the Skill
-> tool as a background Task agent. Do not wait for it before proceeding to Phase 4.
+> After committing the version bump, invoke the `wiki-update` skill. This is a
+> **blocking step** — wiki changes MUST be committed to the patch branch before
+> Phase 4 (push & PR creation). Do NOT proceed to Phase 4 until wiki updates
+> are committed or confirmed as a no-op.
 
 ---
 

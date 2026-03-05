@@ -19,7 +19,7 @@ Works on `file://` and HTTP. Runtime artifact: zero build step, zero install. Se
 
 ## Wiki — Project Technical Documentation
 
-`wiki/` (in-repo) is the **only** technical documentation for this project. There are no other doc sources. **After every code change, update the relevant wiki page(s) in the same PR.** Use `/wiki-update` to auto-detect affected pages via frontmatter `sourceFiles`. For widespread changes, use `/wiki-sweep`.
+`wiki/` (in-repo) is the **only** technical documentation for this project. There are no other doc sources. **Wiki updates MUST be committed to the branch BEFORE pushing or creating a PR.** This is a blocking step — wiki changes after PR creation are orphaned. Use `/wiki-update` (blocking) to auto-detect affected pages via frontmatter `sourceFiles`. For widespread changes, use `/wiki-sweep`.
 
 If a wiki page would become inaccurate after your change, updating it is not optional — treat it as part of the PR diff.
 
