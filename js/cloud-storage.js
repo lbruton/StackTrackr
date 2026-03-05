@@ -485,8 +485,7 @@ async function cloudExchangeCode(code, state) {
       if (data.account_id) {
         localStorage.setItem('cloud_dropbox_account_id', data.account_id);
         // STAK-398 diagnostic: MUST use console.warn (not debugWarn) so it's always visible
-        console.warn('[CloudStorage] Stored Dropbox account_id from token exchange:',
-          data.account_id.slice(0, 8) + '… (' + data.account_id.length + ' chars)');
+        console.warn('[CloudStorage] Stored Dropbox account_id from token exchange: present');
       } else {
         // Fallback: fetch account ID from API — awaited so syncCloudUI runs after account_id is stored
         console.warn('[CloudStorage] Token exchange did NOT include account_id — fetching from API');
@@ -502,10 +501,9 @@ async function cloudExchangeCode(code, state) {
           var info = acctResp.ok ? await acctResp.json() : null;
           if (info && info.account_id) {
             localStorage.setItem('cloud_dropbox_account_id', info.account_id);
-            console.warn('[CloudStorage] Stored Dropbox account_id from API fallback:',
-              info.account_id.slice(0, 8) + '… (' + info.account_id.length + ' chars)');
+            console.warn('[CloudStorage] Stored Dropbox account_id from API fallback: present');
           } else {
-            console.warn('[CloudStorage] API fallback FAILED to get account_id — response:', acctResp.status);
+            console.warn('[CloudStorage] API fallback FAILED to get account_id');
           }
         } catch (e) { console.warn('[CloudStorage] Failed to fetch Dropbox account ID:', e.message); }
       }
