@@ -1874,7 +1874,7 @@ const renderUserImageGrid = async () => {
 
     const info = document.createElement('div');
     info.className = 'pattern-rule-info';
-    info.innerHTML = `<div class="rule-replacement">${name}</div>`;
+    info.innerHTML = '<div class="rule-replacement">' + sanitizeHtml(name) + '</div>';
     row.appendChild(info);
 
     // Actions
