@@ -435,6 +435,21 @@ EOF
 )"
 ```
 
+### Step 3.5: Audit announcements & about.js (MANDATORY before creating PR)
+
+Over a long release cycle, `docs/announcements.md` and `js/about.js` accumulate
+stale per-patch entries. Before creating the ship PR, rewrite both to reflect
+the **full release**:
+
+1. Rewrite `## What's New` in `docs/announcements.md` with **3–5 entries**
+   covering the most significant changes (grouped by theme, not per-patch)
+2. Update `## Development Roadmap` — remove completed items, keep 3–4 forward
+3. Mirror the same entries in `js/about.js` `getEmbeddedWhatsNew()` and
+   `getEmbeddedRoadmap()` (these are the `file://` fallback)
+4. Commit and push to dev before creating the ship PR
+
+See the `/ship` skill Step 3.5 for full format details.
+
 ### Step 4: Mark ready and resolve
 
 ```bash
