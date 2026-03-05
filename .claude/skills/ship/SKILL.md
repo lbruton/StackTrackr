@@ -48,6 +48,51 @@ For each `STAK-###` reference found across tag names and commit messages,
 call `mcp__claude_ai_Linear__get_issue` to get the current title and URL.
 This ensures the PR description is accurate, not just copy-pasted from commits.
 
+## Step 3.5: Audit announcements & about.js (MANDATORY)
+
+The `/release patch` skill updates `docs/announcements.md` and `js/about.js`
+per-patch, but over a long release cycle (many patches) the entries drift and
+accumulate stale content. Before creating the ship PR, audit and rewrite both
+files to reflect the **full release** being shipped.
+
+### announcements.md
+
+1. Read `docs/announcements.md`
+2. Rewrite `## What's New` with **3–5 entries** covering the most significant
+   changes in this release (grouped by theme, not per-patch). Use the version
+   tags from Step 2 as source material. Format:
+   ```markdown
+   - **Title (vX.X.X)**: Summary sentence. Additional detail sentence (STAK-XX).
+   ```
+3. Update `## Development Roadmap` — remove items completed in this release,
+   keep 3–4 forward-looking items.
+
+### about.js — getEmbeddedWhatsNew() + getEmbeddedRoadmap()
+
+These are the `file://` fallback and **MUST mirror announcements.md exactly**.
+
+1. Read `js/about.js` and find `getEmbeddedWhatsNew()` and `getEmbeddedRoadmap()`
+2. Replace their contents with HTML `<li>` versions of the same entries from
+   announcements.md
+3. Each entry: `<li><strong>vVERSION &ndash; TITLE</strong>: Summary</li>`
+
+### Sync check
+
+After updating both files, verify the entries match in count and content.
+Flag any drift before proceeding.
+
+### Commit the update
+
+```bash
+git add docs/announcements.md js/about.js
+git commit -m "docs: update announcements and about.js for vLATEST release"
+git push origin dev
+```
+
+> **Why here?** Individual patches update announcements incrementally, but the
+> ship step is the last chance to ensure the "What's New" modal shows a coherent
+> release summary — not a stale list from 30 patches ago.
+
 ## Step 4: Create the `dev → main` PR
 
 Build a comprehensive title from the version tags:
