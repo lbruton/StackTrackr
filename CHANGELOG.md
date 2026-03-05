@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.51] - 2026-03-05
+
+### Fixed — STAK-430: Pre-ship Security Hardening
+
+- **Fixed**: XSS vulnerability in settings pattern rule display — user-controlled item names now sanitized via `sanitizeHtml()` (STAK-430)
+- **Fixed**: OAuth CSRF protection on localStorage relay path — state parameter validated before processing (STAK-430)
+- **Fixed**: Sync flag leak — `_syncRemoteChangeActive` no longer gets stuck true when password prompt interrupts (STAK-430)
+- **Changed**: Password-change overwrite confirmation now uses styled `appConfirm` modal instead of blocking `window.confirm` (STAK-430)
+- **Changed**: Console output sanitized — removed cryptographic metadata (key lengths, password lengths, partial account IDs) from production logs (STAK-430)
+- **Removed**: Dead sync modal code (~206 lines) — `showSyncUpdateModal` and `showSyncConflictModal` replaced by DiffModal in STAK-413 (STAK-430)
+- **Fixed**: `package.json` version synced from stale `3.32.01` to match `APP_VERSION` (STAK-430)
+
+---
+
 ## [3.33.50] - 2026-03-04
 
 ### Fixed — Spot Health Dot UX, 7-Day Trend, Timezone Formatting (STAK-429)
