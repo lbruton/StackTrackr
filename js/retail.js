@@ -938,6 +938,7 @@ const _marketChartInstances = new Map();
 
 /** Search debounce timer */
 let _marketSearchTimer = null;
+let _marketMetalFilter = "all";
 
 /**
  * Builds a compact vendor link element for the market list card.
@@ -1444,6 +1445,12 @@ const _initMarketCardChart = (slug, detailsEl) => {
  */
 const _getFilteredSortedSlugs = (query, sortKey) => {
   let slugs = [...getActiveRetailSlugs()];
+  if (_marketMetalFilter !== "all") {
+    slugs = slugs.filter((slug) => {
+      const meta = getRetailCoinMeta(slug);
+      return meta.metal === _marketMetalFilter;
+    });
+  }
   if (query && query.trim()) {
     const q = query.trim().toLowerCase();
     slugs = slugs.filter((slug) => {
@@ -1626,6 +1633,18 @@ const _initMarketListViewListeners = () => {
     });
     expandBtn.textContent = allOpen ? "Expand All" : "Collapse All";
   });
+
+  const pillContainer = safeGetElement("marketFilterPills");
+  if (pillContainer) {
+    pillContainer.addEventListener("click", (e) => {
+      const pill = e.target.closest(".market-filter-pill");
+      if (!pill) return;
+      _marketMetalFilter = pill.dataset.metal;
+      pillContainer.querySelectorAll(".market-filter-pill").forEach((p) => p.classList.remove("active"));
+      pill.classList.add("active");
+      _renderMarketListView();
+    });
+  }
 };
 
 // ---------------------------------------------------------------------------
