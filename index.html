@@ -4475,9 +4475,24 @@
       </div>
     </div>
 
-    <!-- Diff Review Modal — reusable change-review UI (STAK-184) -->
+    <!-- Diff Review Modal — reusable change-review UI (STAK-184, STAK-451) -->
+    <style>
+      #diffReviewModal .modal-content {
+        max-height: 90vh;
+        overflow-y: auto;
+      }
+      @media (max-width: 768px) {
+        #diffReviewModal .modal-content {
+          width: 100vw;
+          height: 100dvh;
+          max-width: none;
+          max-height: none;
+          border-radius: 0;
+        }
+      }
+    </style>
     <div class="modal" id="diffReviewModal" style="display: none">
-      <div class="modal-content" style="max-width: 640px">
+      <div class="modal-content" style="max-width: 860px">
         <div class="modal-header">
           <h2 id="diffReviewTitle">Review Changes</h2>
           <button aria-label="Close modal" class="modal-close" id="diffReviewDismissX">&times;</button>
@@ -4486,10 +4501,12 @@
           <div class="cloud-sync-update-meta" id="diffReviewSource"></div>
           <div id="diffReviewCountRow" style="display:none;margin:0.5rem 0 0.25rem;font-size:0.8rem;color:var(--text-muted,#64748b)"></div>
           <div id="diffReviewCountWarning" style="display:none;margin:0.2rem 0 0.5rem;font-size:0.78rem;color:var(--warning,#d97706)"></div>
-          <div id="diffReviewSummary" class="settings-subtext" style="margin:0.75rem 0;font-weight:600;"></div>
-          <div id="diffReviewConflicts" style="display:none;margin-bottom:1rem;"></div>
-          <div id="diffReviewList" style="max-height:320px;overflow-y:auto;border:1px solid var(--border-color,#ddd);border-radius:6px;padding:0.5rem;margin-bottom:1rem;font-size:0.9rem;"></div>
-          <div id="diffReviewSettings" style="margin-bottom:1rem;"></div>
+          <div id="diffSummaryDashboard" style="margin:0.75rem 0"></div>
+          <div id="diffProgressTracker" style="margin:0.5rem 0"></div>
+          <div id="diffSectionConflicts" style="margin-bottom:1rem"></div>
+          <div id="diffSectionOrphans" style="margin-bottom:1rem"></div>
+          <div id="diffSectionModified" style="max-height:320px;overflow-y:auto;border:1px solid var(--border-color,#ddd);border-radius:6px;padding:0.5rem;margin-bottom:1rem;font-size:0.9rem"></div>
+          <div id="diffReviewSettings" style="margin-bottom:1rem"></div>
           <div class="encryption-actions" style="gap:0.5rem;flex-wrap:wrap">
             <button class="btn btn-sm" id="diffReviewSelectAll">Select All</button>
             <button class="btn btn-sm" id="diffReviewDeselectAll">Deselect All</button>

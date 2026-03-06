@@ -2,7 +2,7 @@
 title: Service Worker
 category: frontend
 owner: staktrakr
-lastUpdated: v3.33.55
+lastUpdated: v3.33.56
 date: 2026-03-06
 sourceFiles:
   - sw.js
