@@ -572,23 +572,27 @@
     };
   }
 
+  function _updateApplyButton() {
+    var applyBtn = safeGetElement('diffReviewApplyBtn');
+    if (!applyBtn) return;
+    var count = _checkedCount();
+    var hasSelectableItems = Object.keys(_checkedItems).length > 0;
+    var hasSettings = _options && _options.settingsDiff && _options.settingsDiff.changed && _options.settingsDiff.changed.length > 0;
+    applyBtn.textContent = count > 0 ? 'Apply (' + count + ')' : 'Apply';
+    applyBtn.disabled = hasSelectableItems && count === 0 && !hasSettings;
+    applyBtn.style.opacity = (hasSelectableItems && count === 0 && !hasSettings) ? '0.4' : '';
+  }
+
   function _render() {
     if (!_options) return;
 
     var titleEl = safeGetElement('diffReviewTitle');
     var sourceEl = safeGetElement('diffReviewSource');
-    var summaryEl = safeGetElement('diffReviewSummary');
-    var conflictsEl = safeGetElement('diffReviewConflicts');
-    var listEl = safeGetElement('diffReviewList');
-    var settingsEl = safeGetElement('diffReviewSettings');
-    var applyBtn = safeGetElement('diffReviewApplyBtn');
 
     var diff = _options.diff || {};
     var added = diff.added || [];
     var modified = diff.modified || [];
     var deleted = diff.deleted || [];
-    var unchanged = diff.unchanged || [];
-    var settingsDiff = _options.settingsDiff;
     var conflicts = _options.conflicts;
     var meta = _options.meta;
     var source = _options.source || {};
@@ -617,47 +621,20 @@
       sourceEl.innerHTML = sourceHtml;
     }
 
-    // Summary chips
-    if (summaryEl) {
-      var chips = [];
-      if (added.length > 0) chips.push('<span style="display:inline-flex;align-items:center;gap:0.2rem;padding:0.2rem 0.5rem;border-radius:20px;font-size:0.73rem;font-weight:600;background:rgba(5,150,105,0.12);color:var(--success,#059669)">+' + added.length + ' added</span>');
-      if (modified.length > 0) chips.push('<span style="display:inline-flex;align-items:center;gap:0.2rem;padding:0.2rem 0.5rem;border-radius:20px;font-size:0.73rem;font-weight:600;background:rgba(217,119,6,0.12);color:var(--warning,#d97706)">&#9998; ' + modified.length + ' modified</span>');
-      if (deleted.length > 0) chips.push('<span style="display:inline-flex;align-items:center;gap:0.2rem;padding:0.2rem 0.5rem;border-radius:20px;font-size:0.73rem;font-weight:600;background:rgba(220,38,38,0.12);color:var(--danger,#dc2626)">&minus;' + deleted.length + ' deleted</span>');
-      if (unchanged.length > 0) chips.push('<span style="display:inline-flex;align-items:center;gap:0.2rem;padding:0.2rem 0.5rem;border-radius:20px;font-size:0.73rem;font-weight:600;background:rgba(107,114,128,0.1);color:#6b7280">' + unchanged.length + ' unchanged</span>');
-      if (settingsDiff && settingsDiff.changed && settingsDiff.changed.length > 0) {
-        chips.push('<span style="display:inline-flex;align-items:center;gap:0.2rem;padding:0.2rem 0.5rem;border-radius:20px;font-size:0.73rem;font-weight:600;background:rgba(59,130,246,0.1);color:var(--primary,#3b82f6)">' + settingsDiff.changed.length + ' setting' + (settingsDiff.changed.length > 1 ? 's' : '') + '</span>');
-      }
-      summaryEl.innerHTML = chips.length > 0
-        ? '<div style="display:flex;flex-wrap:wrap;gap:0.35rem">' + chips.join('') + '</div>'
-        : 'No changes detected';
-    }
+    // Count row (backup import flow only)
+    _updateCountRow();
 
-    // Conflicts section
-    if (conflictsEl) {
-      if (conflicts && conflicts.conflicts && conflicts.conflicts.length > 0) {
-        var cHtml = '<div style="border-radius:8px;padding:0.75rem;background:rgba(217,119,6,0.08);border:1px solid rgba(217,119,6,0.2)">';
-        cHtml += '<div style="font-weight:600;font-size:0.85rem;margin-bottom:0.5rem;color:var(--warning,#d97706)">&#9888; ' + conflicts.conflicts.length + ' conflict' + (conflicts.conflicts.length > 1 ? 's' : '') + ' detected</div>';
-        for (var ci = 0; ci < conflicts.conflicts.length; ci++) {
-          var cf = conflicts.conflicts[ci];
-          var res = _conflictResolutions['c' + ci] || 'remote';
-          cHtml += '<div style="padding:0.5rem;border-radius:6px;margin-bottom:0.35rem;font-size:0.8rem;background:rgba(0,0,0,0.06)">';
-          cHtml += '<div style="font-weight:600">' + _esc(cf.itemName || cf.itemKey || 'Item') + '</div>';
-          cHtml += '<div style="font-size:0.73rem;opacity:0.6;margin-bottom:0.35rem">' + _esc(cf.field) + '</div>';
-          cHtml += '<div style="display:flex;gap:0.75rem">';
-          cHtml += '<label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;font-size:0.8rem"><input type="radio" name="diffConflict' + ci + '" value="local" ' + (res === 'local' ? 'checked' : '') + ' data-conflict="' + ci + '" style="width:16px;height:16px;padding:0;border:none;accent-color:var(--primary,#3b82f6)"> Local: <strong>' + _esc(String(cf.localVal != null ? cf.localVal : '\u2014')) + '</strong></label>';
-          cHtml += '<label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;font-size:0.8rem"><input type="radio" name="diffConflict' + ci + '" value="remote" ' + (res === 'remote' ? 'checked' : '') + ' data-conflict="' + ci + '" style="width:16px;height:16px;padding:0;border:none;accent-color:var(--primary,#3b82f6)"> Remote: <strong>' + _esc(String(cf.remoteVal != null ? cf.remoteVal : '\u2014')) + '</strong></label>';
-          cHtml += '</div></div>';
-        }
-        cHtml += '</div>';
-        conflictsEl.innerHTML = cHtml;
-        conflictsEl.style.display = '';
-      } else {
-        conflictsEl.innerHTML = '';
-        conflictsEl.style.display = 'none';
-      }
-    }
+    // Summary dashboard (replaces old summary chips)
+    _renderSummaryDashboard(safeGetElement('diffSummaryDashboard'), diff, conflicts);
 
-    // Change list
+    // Progress tracker (sync only)
+    _renderProgressTracker(safeGetElement('diffProgressTracker'), conflicts, source);
+
+    // Conflict cards (replaces old inline conflict rendering)
+    _renderConflictCards(safeGetElement('diffSectionConflicts'), conflicts);
+
+    // Change list — retarget to diffSectionModified container
+    var listEl = safeGetElement('diffSectionModified');
     if (listEl) {
       var totalChanges = added.length + modified.length + deleted.length;
       var lHtml = '';
@@ -676,46 +653,11 @@
       listEl.innerHTML = lHtml;
     }
 
-    // Settings diff
-    if (settingsEl) {
-      if (settingsDiff && settingsDiff.changed && settingsDiff.changed.length > 0) {
-        var sHtml = '<details style="margin-top:0.25rem" open>';
-        sHtml += '<summary style="cursor:pointer;font-weight:600;font-size:0.8rem;padding:0.4rem 0;user-select:none">';
-        sHtml += settingsDiff.changed.length + ' setting change' + (settingsDiff.changed.length > 1 ? 's' : '') + '</summary>';
-        sHtml += '<div style="padding:0.4rem 0 0.25rem 0;font-size:0.8rem">';
-        for (var si = 0; si < settingsDiff.changed.length; si++) {
-          var sc = settingsDiff.changed[si];
-          sHtml += '<div style="padding:0.2rem 0;display:flex;gap:0.3rem;align-items:baseline">';
-          sHtml += '<span style="opacity:0.5;min-width:80px">' + _esc(sc.key) + '</span>';
-          sHtml += '<span style="text-decoration:line-through;opacity:0.45">' + _esc(String(sc.localVal != null ? sc.localVal : '\u2014')) + '</span>';
-          sHtml += '<span style="opacity:0.35;font-size:0.7rem">&rarr;</span>';
-          sHtml += '<span style="font-weight:500;color:var(--warning,#d97706)">' + _esc(String(sc.remoteVal != null ? sc.remoteVal : '\u2014')) + '</span>';
-          sHtml += '</div>';
-        }
-        sHtml += '</div></details>';
-        settingsEl.innerHTML = sHtml;
-        settingsEl.style.display = '';
-      } else {
-        settingsEl.innerHTML = '';
-        settingsEl.style.display = 'none';
-      }
-    }
+    // Settings cards (replaces old settings <details>)
+    _renderSettingsCards(safeGetElement('diffReviewSettings'), _options.settingsDiff);
 
-    // Apply button count
-    // Only disable when there ARE selectable items but none are checked AND
-    // there are no pending settings changes. Settings are always included when
-    // Apply is clicked, so the button should stay enabled for settings-only apply.
-    if (applyBtn) {
-      var count = _checkedCount();
-      var hasSelectableItems = Object.keys(_checkedItems).length > 0;
-      var hasSettings = _options && _options.settingsDiff && _options.settingsDiff.changed && _options.settingsDiff.changed.length > 0;
-      applyBtn.textContent = count > 0 ? 'Apply (' + count + ')' : 'Apply';
-      applyBtn.disabled = hasSelectableItems && count === 0 && !hasSettings;
-      applyBtn.style.opacity = (hasSelectableItems && count === 0 && !hasSettings) ? '0.4' : '';
-    }
-
-    // Count row (backup import flow only)
-    _updateCountRow();
+    // Apply button
+    _updateApplyButton();
   }
 
   /** Render a meta cell for the source info row */
@@ -937,12 +879,14 @@
       }
     }
 
-    // Settings changes — always included (no per-setting checkboxes)
+    // Settings changes — resolution-aware (local/remote toggle per setting)
     var settingsDiff = _options.settingsDiff || {};
     var changedSettings = settingsDiff.changed || [];
     for (var s = 0; s < changedSettings.length; s++) {
       var setting = changedSettings[s];
-      result.push({ type: 'setting', key: setting.key, value: setting.remoteVal });
+      var resolution = _conflictResolutions['setting-' + setting.key];
+      var value = (resolution === 'local') ? setting.localVal : setting.remoteVal;
+      result.push({ type: 'setting', key: setting.key, value: value });
     }
 
     return result;
@@ -976,8 +920,7 @@
   // ── Wire buttons (called once per show) ──
 
   function _wireEvents() {
-    var listEl = safeGetElement('diffReviewList');
-    var conflictsEl = safeGetElement('diffReviewConflicts');
+    var listEl = safeGetElement('diffSectionModified');
     var selectAllBtn = safeGetElement('diffReviewSelectAll');
     var deselectAllBtn = safeGetElement('diffReviewDeselectAll');
     var selectAllToggleBtn = safeGetElement('diffReviewSelectAllToggle');
@@ -988,16 +931,10 @@
     // Determine whether we're in backup-count mode
     var hasBackupCount = _options && _options.backupCount != null;
 
-    // Event delegation on list
+    // Event delegation on item list
     if (listEl) {
       listEl.removeEventListener('click', _onListClick);
       listEl.addEventListener('click', _onListClick);
-    }
-
-    // Conflict radio delegation
-    if (conflictsEl) {
-      conflictsEl.removeEventListener('change', _onConflictsChange);
-      conflictsEl.addEventListener('change', _onConflictsChange);
     }
 
     // Pill buttons
@@ -1073,6 +1010,7 @@
       _conflictResolutions = {};
       _collapsedCategories = {};
       _expandedModified = {};
+      _expandedSettingsCategories = {};
       _selectAllState = 0;
 
       // Default all items to checked
@@ -1081,10 +1019,18 @@
       for (var m = 0; m < (diff.modified || []).length; m++) _checkedItems['modified-' + m] = true;
       for (var d = 0; d < (diff.deleted || []).length; d++) _checkedItems['deleted-' + d] = true;
 
-      // Default conflict resolutions to 'remote'
+      // Default conflict resolutions to 'remote' (per-field keys)
       if (_options.conflicts && _options.conflicts.conflicts) {
         for (var ci = 0; ci < _options.conflicts.conflicts.length; ci++) {
-          _conflictResolutions['c' + ci] = 'remote';
+          var conflict = _options.conflicts.conflicts[ci];
+          _conflictResolutions['c' + ci + '-' + conflict.field] = 'remote';
+        }
+      }
+
+      // Default settings resolutions to 'remote'
+      if (_options.settingsDiff && _options.settingsDiff.changed) {
+        for (var si = 0; si < _options.settingsDiff.changed.length; si++) {
+          _conflictResolutions['setting-' + _options.settingsDiff.changed[si].key] = 'remote';
         }
       }
 
