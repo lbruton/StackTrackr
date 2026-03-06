@@ -551,6 +551,19 @@ const formatDisplayDate = (dateStr) => {
 };
 
 /**
+ * Global cache for Intl.NumberFormat instances to prevent repetitive
+ * instantiation overhead during loop-based rendering (e.g., inventory list).
+ * Keys are currency codes (e.g., 'USD').
+ */
+const _currencyFormatters = new Map();
+
+/**
+ * Global cache for 'en' locale Intl.NumberFormat instances used specifically
+ * for extracting base currency symbols (STACK-50). Keys are currency codes.
+ */
+const _currencySymbolFormatters = new Map();
+
+/**
  * Formats a number as a currency string using the default currency
  *
  * @param {number|string} value - Number to format
@@ -564,10 +577,12 @@ const formatCurrency = (value, currency = (typeof displayCurrency !== 'undefined
   const rate = (typeof getExchangeRate === 'function') ? getExchangeRate(currency) : 1;
   const converted = num * rate;
   try {
-    return new Intl.NumberFormat(undefined, {
-      style: "currency",
-      currency,
-    }).format(converted);
+    let formatter = _currencyFormatters.get(currency);
+    if (!formatter) {
+      formatter = new Intl.NumberFormat(undefined, { style: "currency", currency });
+      _currencyFormatters.set(currency, formatter);
+    }
+    return formatter.format(converted);
   } catch (e) {
     // Fallback for environments without Intl support
     return `${currency} ${converted.toFixed(2)}`;
@@ -604,7 +619,12 @@ const saveDisplayCurrency = (code) => {
 const getCurrencySymbol = (currency) => {
   const code = currency || (typeof displayCurrency !== 'undefined' ? displayCurrency : 'USD');
   try {
-    const parts = new Intl.NumberFormat('en', { style: 'currency', currency: code }).formatToParts(0);
+    let formatter = _currencySymbolFormatters.get(code);
+    if (!formatter) {
+      formatter = new Intl.NumberFormat('en', { style: 'currency', currency: code });
+      _currencySymbolFormatters.set(code, formatter);
+    }
+    const parts = formatter.formatToParts(0);
     const sym = parts.find(p => p.type === 'currency');
     return sym ? sym.value : code;
   } catch (e) { return code; }
