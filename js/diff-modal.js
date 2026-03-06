@@ -350,6 +350,76 @@
     }
   }
 
+  function _renderConflictCards(container, conflicts) {
+    if (!container) return;
+    if (!conflicts || !conflicts.conflicts || conflicts.conflicts.length === 0) {
+      container.style.display = 'none';
+      return;
+    }
+
+    var grouped = _groupByItem(conflicts.conflicts);
+    var html = '';
+
+    for (var itemName in grouped) {
+      if (!grouped.hasOwnProperty(itemName)) continue;
+      var fields = grouped[itemName];
+
+      html += '<div data-conflict-card="' + _esc(itemName) + '" style="border-radius:8px;border:1px solid var(--border-color,#ddd);padding:0.75rem;margin-bottom:0.75rem">';
+
+      // Card header
+      html += '<div>';
+      html += '<span style="font-weight:600;font-size:0.85rem">' + _esc(itemName) + '</span>';
+      html += '<span style="display:inline-block;background:rgba(217,119,6,0.1);color:#d97706;border-radius:12px;padding:0.1rem 0.5rem;font-size:0.7rem;margin-left:0.5rem">' + fields.length + ' field' + (fields.length !== 1 ? 's' : '') + '</span>';
+      html += '</div>';
+
+      // Field rows
+      for (var f = 0; f < fields.length; f++) {
+        var conflict = fields[f];
+        var resKey = 'c' + conflict.idx + '-' + conflict.field;
+        var selected = _conflictResolutions[resKey] || '';
+        var localStyle = 'padding:0.25rem 0.6rem;border-radius:4px;cursor:pointer;font-size:0.8rem;';
+        var remoteStyle = 'padding:0.25rem 0.6rem;border-radius:4px;cursor:pointer;font-size:0.8rem;';
+
+        if (selected === 'local') {
+          localStyle += 'border:1px solid #22c55e;background:rgba(34,197,94,0.08)';
+          remoteStyle += 'border:1px solid transparent';
+        } else if (selected === 'remote') {
+          localStyle += 'border:1px solid transparent';
+          remoteStyle += 'border:1px solid #22c55e;background:rgba(34,197,94,0.08)';
+        } else {
+          localStyle += 'border:1px solid transparent';
+          remoteStyle += 'border:1px solid transparent';
+        }
+
+        var localDisplay = _esc(String(conflict.localVal != null ? conflict.localVal : '\u2014'));
+        var remoteDisplay = _esc(String(conflict.remoteVal != null ? conflict.remoteVal : '\u2014'));
+
+        html += '<div style="display:flex;align-items:center;gap:0.4rem;padding:0.3rem 0">';
+        html += '<span style="min-width:100px;font-size:0.78rem;opacity:0.6">' + _esc(conflict.field) + '</span>';
+        html += '<span data-resolution="' + _esc(resKey) + '" data-side="local" style="' + localStyle + '">' + localDisplay + '</span>';
+        html += '<span style="opacity:0.3;font-size:0.7rem">\u21C4</span>';
+        html += '<span data-resolution="' + _esc(resKey) + '" data-side="remote" style="' + remoteStyle + '">' + remoteDisplay + '</span>';
+        html += '</div>';
+      }
+
+      html += '</div>';
+    }
+
+    container.innerHTML = html;
+
+    container.onclick = function(e) {
+      var btn = e.target.closest('[data-resolution]');
+      if (!btn) return;
+      var key = btn.getAttribute('data-resolution');
+      var side = btn.getAttribute('data-side');
+      _conflictResolutions[key] = side;
+      _renderConflictCards(container, conflicts);
+      if (typeof _updateProgress === 'function') _updateProgress();
+    };
+
+    container.style.display = '';
+  }
+
   function _render() {
     if (!_options) return;
 
