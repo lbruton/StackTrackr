@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.56] - 2026-03-06
+
+### Added — STAK-451: DiffModal UX Overhaul
+
+- **Added**: Summary dashboard with 4 clickable stat cards (Matched, Conflicts, Remote Only, Local Only) with scroll-to-section navigation (STAK-451)
+- **Added**: Progress tracker bar for sync conflict resolution showing resolved/total count (STAK-451)
+- **Added**: Per-item conflict cards with grouped field rows and click-to-pick local/remote resolution (STAK-451)
+- **Added**: Settings category cards grouping 42 settings into 7 meaningful categories with human-readable labels and per-setting click-to-pick resolution (STAK-451)
+- **Changed**: DiffModal widened from 640px to 860px desktop, full-screen on mobile/tablet (STAK-451)
+- **Changed**: API keys masked in settings diff display — never shown in plain text (STAK-451)
+
+---
+
 ## [3.33.55] - 2026-03-06
 
 ### Added — STAK-449: Dropbox Multi-Account UX
