@@ -2,7 +2,7 @@
 title: Frontend Overview
 category: frontend
 owner: staktrakr
-lastUpdated: v3.33.55
+lastUpdated: v3.33.56
 date: 2026-03-06
 sourceFiles:
   - index.html
@@ -17,7 +17,7 @@ relatedPages:
 ---
 # Frontend Overview
 
-> **Last updated:** v3.33.52 — 2026-03-05
+> **Last updated:** v3.33.56 — 2026-03-06
 > **Source files:** `index.html`, `js/constants.js`, `sw.js`, `js/file-protocol-fix.js`
 
 ## Overview
@@ -71,12 +71,12 @@ index.html  (single-page app — all UI panels, modals, and sections)
 `APP_VERSION` in `js/constants.js` follows the `BRANCH.RELEASE.PATCH` format:
 
 ```text
-3   .   33   .   44
+3   .   33   .   56
 ^       ^        ^
 Branch  Release  Patch
 ```
 
-Current version: **3.33.52**
+Current version: **3.33.56**
 
 Optional state suffixes: `a` = alpha, `b` = beta, `rc` = release candidate.
 
@@ -139,6 +139,24 @@ Full order is canonical in `sw.js` `CORE_ASSETS` and reflected in `index.html`.
 - This ensures inventory reads and writes work even in environments where `file://` origins block `localStorage`.
 
 On `http://` or `https://` origins the wrapping is still installed but never triggered — native `localStorage` calls succeed normally.
+
+### Diff review modal (`#diffReviewModal`)
+
+The diff review modal is a reusable change-review UI used by cloud sync and import flows (STAK-184, STAK-451). It is defined in `index.html` with a scoped `<style>` block immediately before its markup.
+
+**Layout:** `max-width: 860px`. At or below the `768px` breakpoint the modal expands to full-screen (`width: 100vw; height: 100dvh; max-width: none; border-radius: 0`).
+
+**Section containers** inside `#diffReviewModal .modal-body`:
+
+| Element ID | Purpose |
+|---|---|
+| `diffSummaryDashboard` | High-level counts dashboard shown at the top of the review |
+| `diffProgressTracker` | Conflict-resolution progress bar (visible only for cloud sync sources) |
+| `diffSectionConflicts` | Renders conflicting items that require user resolution |
+| `diffSectionOrphans` | Reserved placeholder for future orphan item rendering (currently unused) |
+| `diffSectionModified` | Scrollable list of modified items (max-height 320px, bordered) |
+
+Supporting elements: `diffReviewTitle`, `diffReviewSource`, `diffReviewCountRow`, `diffReviewCountWarning`, `diffReviewSettings`. Action buttons: `diffReviewSelectAll`, `diffReviewDismissX`.
 
 ### Vendor libraries
 
