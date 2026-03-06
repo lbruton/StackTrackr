@@ -23,6 +23,113 @@
   // ── Constants ──
   var MODAL_ID = 'diffReviewModal';
 
+  // ── Settings categories for grouped display ──
+  var SETTINGS_CATEGORIES = {
+    'Display & Appearance': {
+      icon: '\uD83C\uDFA8',
+      keys: ['displayCurrency','appTheme','cardViewStyle','desktopCardView','defaultSortColumn','defaultSortDir','showRealizedGainLoss','metalOrderConfig','settingsItemsPerPage','appTimeZone']
+    },
+    'Chips & Filters': {
+      icon: '\uD83C\uDFF7\uFE0F',
+      keys: ['inlineChipConfig','filterChipCategoryConfig','viewModalSectionConfig','chipMinCount','chipMaxCount','chipCustomGroups','chipBlacklist','chipSortOrder']
+    },
+    'Layout': {
+      icon: '\uD83D\uDCD0',
+      keys: ['layoutSectionConfig','tableImagesEnabled','tableImageSides']
+    },
+    'Tags': {
+      icon: '\uD83D\uDD16',
+      keys: ['tagBlacklist']
+    },
+    'Header Buttons': {
+      icon: '\uD83D\uDD18',
+      keys: ['headerThemeBtnVisible','headerCurrencyBtnVisible','headerTrendBtnVisible','headerSyncBtnVisible','headerMarketBtnVisible','headerVaultBtnVisible','headerRestoreBtnVisible','headerCloudSyncBtnVisible','headerBtnShowText','headerBtnOrder','headerAboutBtnVisible']
+    },
+    'Goldback & Providers': {
+      icon: '\uD83E\uDE99',
+      keys: ['goldback-enabled','goldback-estimate-enabled','goldback-estimate-modifier','enabledSeedRules','apiProviderOrder','providerPriority']
+    },
+    'Numista': {
+      icon: '\uD83D\uDCDA',
+      keys: ['numista_tags_auto','numistaLookupRules','numistaViewFields']
+    }
+  };
+
+  var SETTINGS_LABELS = {
+    'displayCurrency': 'Display Currency',
+    'appTheme': 'Theme',
+    'cardViewStyle': 'Card View Style',
+    'desktopCardView': 'Desktop Card View',
+    'defaultSortColumn': 'Default Sort Column',
+    'defaultSortDir': 'Default Sort Direction',
+    'showRealizedGainLoss': 'Show Realized Gain/Loss',
+    'metalOrderConfig': 'Metal Order',
+    'settingsItemsPerPage': 'Items Per Page',
+    'appTimeZone': 'Time Zone',
+    'inlineChipConfig': 'Inline Chips',
+    'filterChipCategoryConfig': 'Filter Chip Categories',
+    'viewModalSectionConfig': 'View Modal Sections',
+    'chipMinCount': 'Chip Min Count',
+    'chipMaxCount': 'Chip Max Count',
+    'chipCustomGroups': 'Custom Chip Groups',
+    'chipBlacklist': 'Hidden Chips',
+    'chipSortOrder': 'Chip Sort Order',
+    'layoutSectionConfig': 'Section Layout',
+    'tableImagesEnabled': 'Table Images',
+    'tableImageSides': 'Table Image Sides',
+    'tagBlacklist': 'Hidden Tags',
+    'headerThemeBtnVisible': 'Theme Button',
+    'headerCurrencyBtnVisible': 'Currency Button',
+    'headerTrendBtnVisible': 'Trend Button',
+    'headerSyncBtnVisible': 'Sync Button',
+    'headerMarketBtnVisible': 'Market Button',
+    'headerVaultBtnVisible': 'Vault Button',
+    'headerRestoreBtnVisible': 'Restore Button',
+    'headerCloudSyncBtnVisible': 'Cloud Sync Button',
+    'headerBtnShowText': 'Button Labels',
+    'headerBtnOrder': 'Button Order',
+    'headerAboutBtnVisible': 'About Button',
+    'goldback-enabled': 'Goldback Enabled',
+    'goldback-estimate-enabled': 'Goldback Estimates',
+    'goldback-estimate-modifier': 'Estimate Modifier',
+    'enabledSeedRules': 'Seed Rules',
+    'apiProviderOrder': 'Provider Order',
+    'providerPriority': 'Provider Priority',
+    'numista_tags_auto': 'Auto-Tag on Lookup',
+    'numistaLookupRules': 'Lookup Rules',
+    'numistaViewFields': 'View Fields',
+    'metalApiConfig': 'API Keys'
+  };
+
+  function _groupByItem(conflictsArray) {
+    var grouped = {};
+    if (!conflictsArray || !conflictsArray.length) return grouped;
+    for (var i = 0; i < conflictsArray.length; i++) {
+      var c = conflictsArray[i];
+      var name = c.itemName || '';
+      if (!grouped[name]) grouped[name] = [];
+      grouped[name].push({ field: c.field, localVal: c.localVal, remoteVal: c.remoteVal, idx: i });
+    }
+    return grouped;
+  }
+
+  function _formatSettingValue(key, value) {
+    if (key === 'metalApiConfig') return value ? '\u2022\u2022\u2022 configured' : 'not set';
+    if (value === null || value === undefined) return '\u2014';
+    if (typeof value === 'boolean') return value ? 'On' : 'Off';
+    if (Array.isArray(value)) {
+      var label = value.length + ' items';
+      if (value.length > 0 && typeof value[0] === 'string') {
+        var preview = value.slice(0, 2).join(', ');
+        if (value.length > 2) preview += ', \u2026';
+        label += ' (' + _esc(preview) + ')';
+      }
+      return label;
+    }
+    if (typeof value === 'object') return Object.keys(value).length + ' entries';
+    return _esc(String(value));
+  }
+
   // ── Internal state ──
   var _options = null;
   var _checkedItems = {};      // { 'added-0': true, 'modified-2': false, ... }
