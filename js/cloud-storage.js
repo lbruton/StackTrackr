@@ -1158,6 +1158,36 @@ function syncCloudUI() {
       if (textEl) textEl.textContent = connected ? 'Connected' : 'Not connected';
     }
 
+    // STAK-449: Display connected Dropbox account identity
+    if (key === 'dropbox') {
+      const acctInfoRow = safeGetElement('cloudDropboxAccountInfo');
+      const acctText = safeGetElement('cloudDropboxAccountText');
+      const switchBtn = document.querySelector('.cloud-switch-account-btn[data-provider="dropbox"]');
+      const signoutDiv = safeGetElement('cloudDropboxSignoutLink');
+
+      if (connected) {
+        const email = localStorage.getItem('cloud_dropbox_email');
+        const displayName = localStorage.getItem('cloud_dropbox_display_name');
+        let label = 'Unknown account';
+        if (displayName && email) {
+          label = displayName + ' (' + email + ')';
+        } else if (email) {
+          label = email;
+        } else if (displayName) {
+          label = displayName;
+        }
+        if (acctInfoRow) acctInfoRow.style.display = '';
+        if (acctText) acctText.textContent = label;
+        if (switchBtn) switchBtn.style.display = '';
+        if (signoutDiv) signoutDiv.style.display = '';
+      } else {
+        if (acctInfoRow) acctInfoRow.style.display = 'none';
+        if (acctText) acctText.textContent = '';
+        if (switchBtn) switchBtn.style.display = 'none';
+        if (signoutDiv) signoutDiv.style.display = 'none';
+      }
+    }
+
     // Update sync & item count rows
     var syncEl = card.querySelector('.cloud-status-sync');
     var itemsEl = card.querySelector('.cloud-status-items');
