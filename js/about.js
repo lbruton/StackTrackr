@@ -283,11 +283,11 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.33.55 &ndash; Dropbox Multi-Account UX</strong>: Connected Dropbox account email and display name now shown in Cloud settings. Switch Account button forces re-authentication. Sign out of Dropbox helper link for clearing browser sessions (STAK-449)</li>
     <li><strong>v3.33.54 &ndash; Dateless Items Sort as Oldest</strong>: Items with no purchase date now sort as &ldquo;infinitely old&rdquo; &mdash; top when oldest-first, bottom when newest-first (STAK-448)</li>
     <li><strong>v3.33.53 &ndash; Numista N# Search Image URL + Metal Auto-Population</strong>: Numista N# search now auto-populates obverse/reverse image URLs and metal type into inventory items. Field picker shows new checkboxes for images and metal with opt-out control (STAK-431)</li>
     <li><strong>v3.33.52 &ndash; Market Controls Mobile Fix + Metal Filter Buttons</strong>: Fixed mobile search bar crushed to 2 chars and controls overflow. Fixed Expand/Collapse text flip on search. Added metal filter pill buttons (All/Silver/Gold/Goldback/Platinum/Palladium) with color-coded active states (STAK-433, STAK-434)</li>
     <li><strong>v3.33.51 &ndash; Pre-ship Security Hardening</strong>: XSS fix in settings pattern rules. OAuth CSRF protection on relay path. Sync flag leak fix. Console output sanitized to remove cryptographic metadata. Dead sync modal code removed (~206 lines). All confirmations use appConfirm (STAK-430)</li>
-    <li><strong>v3.33.50 &ndash; Spot Health Dot UX, 7-Day Trend, Timezone Formatting</strong>: Spot dot shows orange (syncing) instead of red on fresh installs. Dot respects cache TTL for green status. 7-day trend sorts by date for correct direction. Sync log timestamps respect timezone preference (STAK-429, STAK-408, STAK-384, STAK-399, STAK-281)</li>
   `;
 };
 
