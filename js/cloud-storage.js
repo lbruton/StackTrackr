@@ -521,7 +521,7 @@ async function cloudExchangeCode(code, state) {
           console.warn('[CloudStorage] get_current_account returned no data');
         }
       } catch (e) {
-        console.warn('[CloudStorage] Failed to fetch Dropbox profile — connection still works.', e);
+        console.warn('[CloudStorage] Failed to fetch Dropbox profile — connection still works.');
       }
     }
     sessionStorage.removeItem('cloud_oauth_state');
@@ -1162,7 +1162,7 @@ function syncCloudUI() {
     if (key === 'dropbox') {
       const acctInfoRow = safeGetElement('cloudDropboxAccountInfo');
       const acctText = safeGetElement('cloudDropboxAccountText');
-      const switchBtn = document.querySelector('.cloud-switch-account-btn[data-provider="dropbox"]');
+      const switchBtn = safeGetElement('cloudSwitchAccountBtn_dropbox');
       const signoutDiv = safeGetElement('cloudDropboxSignoutLink');
 
       if (connected) {
