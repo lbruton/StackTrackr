@@ -106,7 +106,7 @@
     if (!conflictsArray || !conflictsArray.length) return grouped;
     for (var i = 0; i < conflictsArray.length; i++) {
       var c = conflictsArray[i];
-      var name = c.itemName || '';
+      var name = c.itemName || c.itemKey || '';
       if (!grouped[name]) grouped[name] = [];
       grouped[name].push({ field: c.field, localVal: c.localVal, remoteVal: c.remoteVal, idx: i });
     }
@@ -276,8 +276,8 @@
     var cards = [
       { count: matched, label: 'Matched', target: 'diffSectionModified', color: '', style: 'opacity:0.5' },
       { count: conflictCount, label: 'Conflicts', target: 'diffSectionConflicts', color: conflictCount > 0 ? 'color:#d97706' : '', style: '' },
-      { count: remoteOnly, label: 'Remote Only', target: 'diffSectionOrphans', color: '', style: '' },
-      { count: localOnly, label: 'Local Only', target: 'diffSectionOrphans', color: '', style: '' }
+      { count: remoteOnly, label: 'Remote Only', target: 'diffSectionModified', color: '', style: '' },
+      { count: localOnly, label: 'Local Only', target: 'diffSectionModified', color: '', style: '' }
     ];
 
     var cardStyle = 'flex:1;min-width:120px;border-radius:8px;padding:0.6rem;border:1px solid var(--border-color,#ddd);cursor:pointer;text-align:center';
@@ -299,7 +299,7 @@
       var target = e.target.closest('[data-scroll-target]');
       if (target) {
         var el = safeGetElement(target.getAttribute('data-scroll-target'));
-        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (el instanceof HTMLElement) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     };
   }
@@ -324,7 +324,7 @@
     var html = '<div style="height:6px;border-radius:3px;background:var(--border-color,#ddd);margin:0.5rem 0">';
     html += '<div style="height:100%;border-radius:3px;background:#22c55e;width:' + pct + '%;transition:width 0.3s"></div>';
     html += '</div>';
-    html += '<div style="font-size:0.75rem;opacity:0.6">' + resolved + ' of ' + total + ' conflicts resolved';
+    html += '<div id="diffProgressText" style="font-size:0.75rem;opacity:0.6">' + resolved + ' of ' + total + ' conflicts resolved';
     if (pct === 100 && total > 0) html += ' &#9989;';
     html += '</div>';
 
@@ -349,8 +349,8 @@
     var bar = container.querySelector('div > div');
     if (bar) bar.style.width = pct + '%';
 
-    var children = container.children;
-    var textDiv = children.length > 1 ? children[children.length - 1] : null;
+    var textDiv = safeGetElement('diffProgressText');
+    if (!(textDiv instanceof HTMLElement)) textDiv = null;
     if (textDiv) {
       var txt = resolved + ' of ' + total + ' conflicts resolved';
       if (pct === 100 && total > 0) txt += ' \u2705';
@@ -431,7 +431,7 @@
   function _renderSettingsCards(container, settingsDiff) {
     if (!container) return;
     var changed = (settingsDiff && settingsDiff.changed) ? settingsDiff.changed : [];
-    var matched = (settingsDiff && settingsDiff.matched) ? settingsDiff.matched : [];
+    var matched = (settingsDiff && (settingsDiff.unchanged || settingsDiff.matched)) ? (settingsDiff.unchanged || settingsDiff.matched) : [];
     if (changed.length === 0 && matched.length === 0) {
       container.innerHTML = '';
       container.style.display = 'none';
@@ -879,6 +879,21 @@
       }
     }
 
+    // Item conflict resolutions — per-field local/remote picks
+    var conflictsArr = (_options.conflicts && _options.conflicts.conflicts) || [];
+    for (var ci = 0; ci < conflictsArr.length; ci++) {
+      var conf = conflictsArr[ci];
+      var resKey = 'c' + ci + '-' + conf.field;
+      var side = _conflictResolutions[resKey] || 'remote';
+      var itemKey = conf.itemKey || conf.itemName || '';
+      result.push({
+        type: 'modify',
+        itemKey: itemKey,
+        field: conf.field,
+        value: (side === 'local') ? conf.localVal : conf.remoteVal
+      });
+    }
+
     // Settings changes — resolution-aware (local/remote toggle per setting)
     var settingsDiff = _options.settingsDiff || {};
     var changedSettings = settingsDiff.changed || [];
@@ -1023,7 +1038,7 @@
       if (_options.conflicts && _options.conflicts.conflicts) {
         for (var ci = 0; ci < _options.conflicts.conflicts.length; ci++) {
           var conflict = _options.conflicts.conflicts[ci];
-          _conflictResolutions['c' + ci + '-' + conflict.field] = 'remote';
+          _conflictResolutions['c' + ci + '-' + conflict.field] = null;
         }
       }
 
