@@ -2,8 +2,8 @@
 title: Retail Modal
 category: frontend
 owner: staktrakr
-lastUpdated: v3.33.52
-date: 2026-03-05
+lastUpdated: v3.33.57
+date: 2026-03-06
 sourceFiles:
   - js/retail-view-modal.js
   - js/retail.js
@@ -424,6 +424,8 @@ Both `_retailViewModalChart` and `_retailViewIntradayChart` must be explicitly d
 ### Opening the modal for a slug not in `RETAIL_COIN_META`
 
 `openRetailViewModal` reads `RETAIL_COIN_META[slug]` and returns early if not found. Dynamic slugs (Goldbacks, manifest-added coins) are resolved via `getRetailCoinMeta(slug)` in `retail.js`, but the modal uses the raw `RETAIL_COIN_META` constant directly. If a new slug from the manifest is not in that constant and has no Goldback pattern match, the modal will silently refuse to open.
+
+As of v3.33.57, `RETAIL_COIN_META` includes 15 hardcoded entries covering all standard coins plus the three Australian silver coins (Kangaroo, Koala, Kookaburra). The manifest's `coins_meta` field provides runtime metadata but is not persisted to localStorage — on page reload before the manifest re-fetches, only the hardcoded entries are available.
 
 ---
 
