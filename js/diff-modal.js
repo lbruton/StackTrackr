@@ -136,6 +136,7 @@
   var _conflictResolutions = {}; // { 'c0': 'local'|'remote', ... }
   var _collapsedCategories = {}; // { added: true, ... }
   var _expandedModified = {};    // { 0: true, 1: false, ... }
+  var _expandedSettingsCategories = {}; // { 'Display & Appearance': true, ... }
   var _selectAllState = 0;  // 0=none, 1=added+modified, 2=all
 
   // ── Helpers ──
@@ -149,6 +150,13 @@
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;');
+  }
+
+  function _titleCase(key) {
+    return key
+      .replace(/([a-z])([A-Z])/g, '$1 $2')
+      .replace(/[-_]/g, ' ')
+      .replace(/\b\w/g, function(c) { return c.toUpperCase(); });
   }
 
   /** Derive a display key for an item */
@@ -418,6 +426,150 @@
     };
 
     container.style.display = '';
+  }
+
+  function _renderSettingsCards(container, settingsDiff) {
+    if (!container) return;
+    var changed = (settingsDiff && settingsDiff.changed) ? settingsDiff.changed : [];
+    var matched = (settingsDiff && settingsDiff.matched) ? settingsDiff.matched : [];
+    if (changed.length === 0 && matched.length === 0) {
+      container.innerHTML = '';
+      container.style.display = 'none';
+      return;
+    }
+
+    // Build category lookup for each entry
+    var catNames = Object.keys(SETTINGS_CATEGORIES);
+    function _findCategory(key) {
+      for (var ci = 0; ci < catNames.length; ci++) {
+        var cat = SETTINGS_CATEGORIES[catNames[ci]];
+        for (var ki = 0; ki < cat.keys.length; ki++) {
+          if (cat.keys[ki] === key) return catNames[ci];
+        }
+      }
+      return 'Other';
+    }
+
+    // Group changed and matched by category
+    var changedByCat = {};
+    var matchedByCat = {};
+    var i;
+    for (i = 0; i < changed.length; i++) {
+      var cCat = _findCategory(changed[i].key);
+      if (!changedByCat[cCat]) changedByCat[cCat] = [];
+      changedByCat[cCat].push(changed[i]);
+    }
+    for (i = 0; i < matched.length; i++) {
+      var mCat = _findCategory(matched[i].key);
+      if (!matchedByCat[mCat]) matchedByCat[mCat] = [];
+      matchedByCat[mCat].push(matched[i]);
+    }
+
+    // Collect all categories that have entries
+    var allCats = {};
+    var catKey;
+    for (catKey in changedByCat) {
+      if (changedByCat.hasOwnProperty(catKey)) allCats[catKey] = true;
+    }
+    for (catKey in matchedByCat) {
+      if (matchedByCat.hasOwnProperty(catKey)) allCats[catKey] = true;
+    }
+
+    var html = '';
+    var renderedCount = 0;
+
+    for (catKey in allCats) {
+      if (!allCats.hasOwnProperty(catKey)) continue;
+      var catChanged = changedByCat[catKey] || [];
+      var catMatched = matchedByCat[catKey] || [];
+      if (catChanged.length === 0 && catMatched.length === 0) continue;
+
+      var catDef = SETTINGS_CATEGORIES[catKey];
+      var catIcon = catDef ? catDef.icon : '\u2699\uFE0F';
+
+      html += '<div style="border-radius:8px;border:1px solid var(--border-color,#ddd);padding:0.75rem;margin-bottom:0.75rem">';
+
+      // Card header
+      html += '<div style="display:flex;align-items:center">';
+      html += '<span style="font-weight:600;font-size:0.85rem">' + catIcon + ' ' + _esc(catKey) + '</span>';
+      if (catChanged.length > 0) {
+        html += '<span style="display:inline-block;background:rgba(217,119,6,0.1);color:#d97706;border-radius:12px;padding:0.1rem 0.5rem;font-size:0.7rem;margin-left:0.5rem">' + catChanged.length + ' diff' + (catChanged.length !== 1 ? 's' : '') + '</span>';
+      }
+      html += '</div>';
+
+      // Changed setting rows
+      for (var ci2 = 0; ci2 < catChanged.length; ci2++) {
+        var entry = catChanged[ci2];
+        var resKey = 'setting-' + entry.key;
+        var selected = _conflictResolutions[resKey] || '';
+        var localBtnStyle = 'padding:0.25rem 0.6rem;border-radius:4px;cursor:pointer;font-size:0.8rem;';
+        var remoteBtnStyle = 'padding:0.25rem 0.6rem;border-radius:4px;cursor:pointer;font-size:0.8rem;';
+
+        if (selected === 'local') {
+          localBtnStyle += 'border:1px solid #22c55e;background:rgba(34,197,94,0.08)';
+          remoteBtnStyle += 'border:1px solid transparent';
+        } else if (selected === 'remote') {
+          localBtnStyle += 'border:1px solid transparent';
+          remoteBtnStyle += 'border:1px solid #22c55e;background:rgba(34,197,94,0.08)';
+        } else {
+          localBtnStyle += 'border:1px solid transparent';
+          remoteBtnStyle += 'border:1px solid transparent';
+        }
+
+        var label = SETTINGS_LABELS[entry.key] || _titleCase(entry.key);
+
+        html += '<div style="display:flex;align-items:center;gap:0.4rem;padding:0.3rem 0">';
+        html += '<span style="min-width:120px;font-size:0.78rem;opacity:0.6">' + _esc(label) + '</span>';
+        html += '<span data-setting-resolution="' + _esc(resKey) + '" data-side="local" style="' + localBtnStyle + '">' + _formatSettingValue(entry.key, entry.localVal) + '</span>';
+        html += '<span style="opacity:0.3;font-size:0.7rem">\u21C4</span>';
+        html += '<span data-setting-resolution="' + _esc(resKey) + '" data-side="remote" style="' + remoteBtnStyle + '">' + _formatSettingValue(entry.key, entry.remoteVal) + '</span>';
+        html += '</div>';
+      }
+
+      // Matched settings section (collapsed by default)
+      if (catMatched.length > 0) {
+        var isExpanded = _expandedSettingsCategories[catKey] || false;
+        html += '<div data-toggle-matched="' + _esc(catKey) + '" style="font-size:0.73rem;cursor:pointer;color:var(--primary,#3b82f6);margin-top:0.3rem">';
+        html += (isExpanded ? 'Hide' : 'Show') + ' ' + catMatched.length + ' matched';
+        html += '</div>';
+
+        if (isExpanded) {
+          for (var mi = 0; mi < catMatched.length; mi++) {
+            var mEntry = catMatched[mi];
+            var mLabel = SETTINGS_LABELS[mEntry.key] || _titleCase(mEntry.key);
+            html += '<div style="display:flex;align-items:center;gap:0.4rem;padding:0.2rem 0;opacity:0.6">';
+            html += '<span style="font-size:0.78rem">\u2713</span>';
+            html += '<span style="min-width:120px;font-size:0.78rem">' + _esc(mLabel) + '</span>';
+            html += '<span style="font-size:0.78rem">both: ' + _formatSettingValue(mEntry.key, mEntry.localVal) + '</span>';
+            html += '</div>';
+          }
+        }
+      }
+
+      html += '</div>';
+      renderedCount++;
+    }
+
+    container.innerHTML = html;
+    container.style.display = renderedCount > 0 ? '' : 'none';
+
+    // Event delegation
+    container.onclick = function(e) {
+      var btn = e.target.closest('[data-setting-resolution]');
+      if (btn) {
+        var key = btn.getAttribute('data-setting-resolution');
+        var side = btn.getAttribute('data-side');
+        _conflictResolutions[key] = side;
+        _renderSettingsCards(container, settingsDiff);
+        return;
+      }
+      var toggle = e.target.closest('[data-toggle-matched]');
+      if (toggle) {
+        var cat = toggle.getAttribute('data-toggle-matched');
+        _expandedSettingsCategories[cat] = !_expandedSettingsCategories[cat];
+        _renderSettingsCards(container, settingsDiff);
+      }
+    };
   }
 
   function _render() {
