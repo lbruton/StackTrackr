@@ -2,8 +2,8 @@
 title: Cloud Sync
 category: frontend
 owner: staktrakr
-lastUpdated: v3.33.51
-date: 2026-03-04
+lastUpdated: v3.33.55
+date: 2026-03-06
 sourceFiles:
   - js/cloud-sync.js
   - js/cloud-storage.js
@@ -160,14 +160,14 @@ getSyncPasswordSilent()
 
 | Function | Signature | Purpose |
 |---|---|---|
-| `cloudAuthStart(provider)` | `(string) → void` | Open OAuth popup (PKCE for Dropbox). Must be called from a click handler to avoid popup blockers. |
-| `cloudExchangeCode(code, state)` | `(string, string) → Promise<void>` | Exchange OAuth code for access/refresh tokens. Validates state parameter against saved session. |
+| `cloudAuthStart(provider, options?)` | `(string, object?) → void` | Open OAuth popup (PKCE for Dropbox). Must be called from a click handler to avoid popup blockers. Optional `options.forceReauth` adds `force_reauthentication=true` to the Dropbox OAuth URL, forcing the login/account-picker screen (STAK-449). |
+| `cloudExchangeCode(code, state)` | `(string, string) → Promise<void>` | Exchange OAuth code for access/refresh tokens. Validates state parameter against saved session. For Dropbox, always calls `/2/users/get_current_account` to fetch and store `email` and `display_name` in localStorage (STAK-449). |
 | `cloudCheckOAuthRelay()` | `() → void` | Fallback relay handler when popup loses `window.opener`. Reads `staktrakr_oauth_result` from localStorage, validates `data.state` against `sessionStorage.getItem('cloud_oauth_state')` before calling `cloudExchangeCode` — rejects with a CSRF warning on mismatch. |
 | `cloudGetToken(provider)` | `(string) → Promise<string\|null>` | Return valid access token. Attempts refresh if expired (with 60s buffer). Clears token and returns null on refresh failure. |
 | `cloudIsConnected(provider)` | `(string) → boolean` | True if a stored token exists for the provider. |
 | `cloudStoreToken(provider, tokenData)` | `(string, object) → void` | Persist token to localStorage under `cloud_token_<provider>`. |
 | `cloudClearToken(provider)` | `(string) → void` | Remove stored token. |
-| `cloudDisconnect(provider)` | `(string) → void` | Full disconnect: clears token, then removes all 13 cloud state keys (`cloud_last_backup`, `cloud_dropbox_account_id`, `cloud_vault_password`, `cloud_sync_enabled`, `cloud_sync_device_id`, `cloud_sync_cursor`, `cloud_sync_last_push`, `cloud_sync_last_pull`, `cloud_sync_override_backup`, `cloud_sync_mode`, `cloud_sync_local_modified`, `cloud_sync_migrated`, `staktrakr_oauth_result`). Cancels any pending `scheduleSyncPush` debounce. Updates UI. |
+| `cloudDisconnect(provider)` | `(string) → void` | Full disconnect: clears token, then removes all 15 cloud state keys (`cloud_last_backup`, `cloud_dropbox_account_id`, `cloud_dropbox_email`, `cloud_dropbox_display_name`, `cloud_vault_password`, `cloud_sync_enabled`, `cloud_sync_device_id`, `cloud_sync_cursor`, `cloud_sync_last_push`, `cloud_sync_last_pull`, `cloud_sync_override_backup`, `cloud_sync_mode`, `cloud_sync_local_modified`, `cloud_sync_migrated`, `staktrakr_oauth_result`). Cancels any pending `scheduleSyncPush` debounce. Updates UI. |
 | `cloudUploadVault(provider, fileBytes, opts)` | `(string, ArrayBuffer, object?) → Promise<void>` | Manual backup upload. Writes versioned `.stvault` file + `staktrakr-latest.json` pointer (unless `opts.skipLatestUpdate` is true). All provider upload responses are validated (`.ok` check) and throw on failure. Records to activity log. |
 | `cloudDownloadVault(provider)` | `(string) → Promise<Uint8Array>` | Download latest backup by pointer, or by listing if no pointer. |
 | `cloudDownloadVaultByName(provider, filename)` | `(string, string) → Promise<Uint8Array>` | Download a specific named backup file. |
@@ -177,7 +177,7 @@ getSyncPasswordSilent()
 | `recordCloudActivity(entry)` | `(object) → void` | Append an entry to the cloud activity log (capped at 500 entries, purges >180 days old). |
 | `renderCloudActivityTable()` | `() → void` | Render the sortable activity table in Settings → Cloud. |
 | `renderSyncHistorySection()` | `() → void` | Render the Sync History section (override backup metadata + restore button). |
-| `syncCloudUI()` | `() → void` | Refresh provider card UI (connect/disconnect buttons, status badge, backup metadata). |
+| `syncCloudUI()` | `() → void` | Refresh provider card UI (connect/disconnect buttons, status badge, backup metadata). For Dropbox, also shows/hides account identity row, Switch Account button, and Sign Out link based on connection state (STAK-449). |
 | `cloudCachePassword(provider, password)` | `(string, string) → void` | XOR-obfuscated session-only password cache (sessionStorage). Starts idle lock timer. |
 | `cloudGetCachedPassword(provider)` | `(string) → string\|null` | Retrieve session-cached password. |
 | `cloudClearCachedPassword()` | `() → void` | Clear session cache and stop idle lock timer. |
@@ -368,6 +368,8 @@ The override backup is the safety net for unwanted sync pulls. It restores raw l
 |---|---|
 | `cloud_vault_password` | User vault password (Unified mode) |
 | `cloud_dropbox_account_id` | Dropbox account ID (used in key derivation for both modes) |
+| `cloud_dropbox_email` | Dropbox account email, displayed in Cloud settings card (STAK-449). Excluded from vault backups via `VAULT_EXCLUDE_KEYS`. |
+| `cloud_dropbox_display_name` | Dropbox display name, displayed alongside email in Cloud settings card (STAK-449). Excluded from vault backups via `VAULT_EXCLUDE_KEYS`. |
 | `cloud_sync_mode` | `'simple'` — deprecated, kept for migration only, will be removed after v3.33 |
 | `cloud_sync_enabled` | `'true'` when auto-sync is active |
 | `cloud_sync_device_id` | Stable per-device UUID |
@@ -381,7 +383,15 @@ The override backup is the safety net for unwanted sync pulls. It restores raw l
 | `cloud_activity_log` | JSON array: cloud activity entries (max 500, 180-day TTL) |
 | `cloud_kraken_seen` | `'true'` after first successful backup (suppresses easter-egg toast) |
 
-**Disconnect cleanup (STAK-425, v3.33.46):** `cloudDisconnect(provider)` removes all cloud state keys except `cloud_kraken_seen`, `cloud_activity_log`, `cloud_backup_history_depth`, and `cloud_vault_idle_timeout`. It also cancels any pending `scheduleSyncPush` debounce to prevent a ghost push after disconnect.
+**Disconnect cleanup (STAK-425, v3.33.46; updated STAK-449, v3.33.55):** `cloudDisconnect(provider)` removes all cloud state keys (including `cloud_dropbox_email` and `cloud_dropbox_display_name`) except `cloud_kraken_seen`, `cloud_activity_log`, `cloud_backup_history_depth`, and `cloud_vault_idle_timeout`. It also cancels any pending `scheduleSyncPush` debounce to prevent a ghost push after disconnect.
+
+### Multi-account UX (STAK-449, v3.33.55)
+
+Users with multiple Dropbox accounts can now see which account is connected and switch between them:
+
+- **Account identity display**: `cloudExchangeCode()` always calls `/2/users/get_current_account` after token exchange to fetch `email` and `name.display_name`. These are stored in `cloud_dropbox_email` and `cloud_dropbox_display_name` and displayed in the Cloud settings card below the "Connected" status indicator.
+- **Switch Account button**: Visible when connected. Calls `cloudDisconnect(provider)` then `cloudAuthStart(provider, { forceReauth: true })`. The `force_reauthentication=true` OAuth parameter forces Dropbox to show the login/account-picker screen instead of auto-selecting the active browser session.
+- **Sign out of Dropbox link**: Opens `https://www.dropbox.com/logout` in a new tab. Does not affect StakTrakr's OAuth state — it only clears the Dropbox browser session so the next Connect or Switch Account starts fresh.
 
 ---
 
