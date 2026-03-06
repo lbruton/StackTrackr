@@ -971,6 +971,8 @@ const ALLOWED_STORAGE_KEYS = [
   CLOUD_VAULT_IDLE_TIMEOUT_KEY,                // number string: vault password idle lock timeout in minutes (15|30|60|120|0=never)
   "cloud_sync_mode",                           // DEPRECATED: kept for migration only — will be removed after v3.33
   "cloud_dropbox_account_id",                  // string: Dropbox account_id for Simple mode key derivation
+  "cloud_dropbox_email",                       // string: Dropbox account email for multi-account UX (STAK-449)
+  "cloud_dropbox_display_name",                // string: Dropbox display name for multi-account UX (STAK-449)
   "cloud_vault_password",                      // string: user vault password stored for persistent unlock
   STORAGE_PERSIST_GRANTED_KEY,                         // boolean string: "true"/"false" — storage persistence grant flag
   "headerBtnOrder",                                    // JSON array: header button card order (STAK-320)
@@ -995,6 +997,8 @@ const VAULT_EXCLUDE_KEYS = [
   'cloud_token_pcloud',
   'cloud_token_box',
   'cloud_dropbox_account_id',
+  'cloud_dropbox_email',
+  'cloud_dropbox_display_name',
   'cloud_vault_password',
   'cloud_sync_device_id',
   'cloud_sync_cursor',
