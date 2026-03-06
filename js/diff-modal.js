@@ -258,6 +258,98 @@
 
   // ── Rendering ──
 
+  function _renderSummaryDashboard(container, diff, conflicts) {
+    if (!container) return;
+    var matched = (diff.unchanged || []).length;
+    var conflictCount = (conflicts && conflicts.conflicts || []).length;
+    var remoteOnly = (diff.added || []).length;
+    var localOnly = (diff.deleted || []).length;
+
+    var cards = [
+      { count: matched, label: 'Matched', target: 'diffSectionModified', color: '', style: 'opacity:0.5' },
+      { count: conflictCount, label: 'Conflicts', target: 'diffSectionConflicts', color: conflictCount > 0 ? 'color:#d97706' : '', style: '' },
+      { count: remoteOnly, label: 'Remote Only', target: 'diffSectionOrphans', color: '', style: '' },
+      { count: localOnly, label: 'Local Only', target: 'diffSectionOrphans', color: '', style: '' }
+    ];
+
+    var cardStyle = 'flex:1;min-width:120px;border-radius:8px;padding:0.6rem;border:1px solid var(--border-color,#ddd);cursor:pointer;text-align:center';
+    var html = '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin:0.75rem 0">';
+    for (var i = 0; i < cards.length; i++) {
+      var card = cards[i];
+      var numStyle = 'font-size:1.4rem;font-weight:700';
+      if (card.style) numStyle += ';' + card.style;
+      if (card.color) numStyle += ';' + card.color;
+      html += '<div data-scroll-target="' + _esc(card.target) + '" style="' + cardStyle + '">';
+      html += '<div style="' + numStyle + '">' + card.count + '</div>';
+      html += '<div style="font-size:0.7rem;opacity:0.6">' + _esc(card.label) + '</div>';
+      html += '</div>';
+    }
+    html += '</div>';
+
+    container.innerHTML = html;
+    container.onclick = function(e) {
+      var target = e.target.closest('[data-scroll-target]');
+      if (target) {
+        var el = safeGetElement(target.getAttribute('data-scroll-target'));
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    };
+  }
+
+  function _renderProgressTracker(container, conflicts, source) {
+    if (!container) return;
+    if (!source || source.type !== 'sync') {
+      container.style.display = 'none';
+      return;
+    }
+
+    var total = 0;
+    var resolved = 0;
+    for (var key in _conflictResolutions) {
+      if (_conflictResolutions.hasOwnProperty(key) && key.charAt(0) === 'c' && key.indexOf('setting-') !== 0) {
+        total++;
+        if (_conflictResolutions[key]) resolved++;
+      }
+    }
+
+    var pct = total > 0 ? Math.round((resolved / total) * 100) : 100;
+    var html = '<div style="height:6px;border-radius:3px;background:var(--border-color,#ddd);margin:0.5rem 0">';
+    html += '<div style="height:100%;border-radius:3px;background:#22c55e;width:' + pct + '%;transition:width 0.3s"></div>';
+    html += '</div>';
+    html += '<div style="font-size:0.75rem;opacity:0.6">' + resolved + ' of ' + total + ' conflicts resolved';
+    if (pct === 100 && total > 0) html += ' &#9989;';
+    html += '</div>';
+
+    container.innerHTML = html;
+    container.style.display = '';
+  }
+
+  function _updateProgress() {
+    var container = safeGetElement('diffProgressTracker');
+    if (!container) return;
+
+    var total = 0;
+    var resolved = 0;
+    for (var key in _conflictResolutions) {
+      if (_conflictResolutions.hasOwnProperty(key) && key.charAt(0) === 'c' && key.indexOf('setting-') !== 0) {
+        total++;
+        if (_conflictResolutions[key]) resolved++;
+      }
+    }
+
+    var pct = total > 0 ? Math.round((resolved / total) * 100) : 100;
+    var bar = container.querySelector('div > div');
+    if (bar) bar.style.width = pct + '%';
+
+    var children = container.children;
+    var textDiv = children.length > 1 ? children[children.length - 1] : null;
+    if (textDiv) {
+      var txt = resolved + ' of ' + total + ' conflicts resolved';
+      if (pct === 100 && total > 0) txt += ' \u2705';
+      textDiv.textContent = txt;
+    }
+  }
+
   function _render() {
     if (!_options) return;
 
