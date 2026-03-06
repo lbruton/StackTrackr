@@ -283,6 +283,7 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
+    <li><strong>v3.33.57 &ndash; Australian Coin Names Fix</strong>: Kangaroo, Koala, and Kookaburra silver coins now display proper names instead of raw slugs in Market view (STAK-452)</li>
     <li><strong>v3.33.56 &ndash; DiffModal UX Overhaul</strong>: Card-based diff review with summary dashboard, per-item conflict cards with click-to-pick resolution, 7 settings category groups with human-readable labels, progress tracker for sync conflicts. Modal widened to 860px desktop, full-screen mobile (STAK-451)</li>
     <li><strong>v3.33.55 &ndash; Dropbox Multi-Account UX</strong>: Connected Dropbox account email and display name now shown in Cloud settings. Switch Account button forces re-authentication. Sign out of Dropbox helper link for clearing browser sessions (STAK-449)</li>
     <li><strong>v3.33.54 &ndash; Dateless Items Sort as Oldest</strong>: Items with no purchase date now sort as &ldquo;infinitely old&rdquo; &mdash; top when oldest-first, bottom when newest-first (STAK-448)</li>

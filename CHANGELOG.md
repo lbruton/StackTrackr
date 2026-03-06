@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.57] - 2026-03-06
+
+### Fixed — STAK-452: Australian Coin Slug Names in Market View
+
+- **Fixed**: Kangaroo, Koala, and Kookaburra silver coins now display proper names instead of raw slug strings in Market view (STAK-452)
+
+---
+
 ## [3.33.56] - 2026-03-06
 
 ### Added — STAK-451: DiffModal UX Overhaul
