@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.55] - 2026-03-06
+
+### Added — STAK-449: Dropbox Multi-Account UX
+
+- **Added**: Connected Dropbox account email and display name now shown in the Cloud settings card below the status indicator (STAK-449)
+- **Added**: "Switch Account" button disconnects the current Dropbox account and re-triggers OAuth with forced re-authentication so users can pick a different account (STAK-449)
+- **Added**: "Sign out of Dropbox" helper link opens the Dropbox logout page in a new tab for clearing browser sessions (STAK-449)
+
+---
+
 ## [3.33.54] - 2026-03-05
 
 ### Fixed — STAK-448: Dateless Items Sort as Oldest

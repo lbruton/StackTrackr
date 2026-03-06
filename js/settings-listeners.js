@@ -1163,6 +1163,10 @@ const bindCloudStorageListeners = () => {
     } else if (btn.classList.contains('cloud-disconnect-btn')) {
       if (typeof cloudDisconnect === 'function') cloudDisconnect(provider);
 
+    } else if (btn.classList.contains('cloud-switch-account-btn')) {
+      if (typeof cloudDisconnect === 'function') cloudDisconnect(provider);
+      if (typeof cloudAuthStart === 'function') cloudAuthStart(provider, { forceReauth: true });
+
     } else if (btn.classList.contains('cloud-backup-btn')) {
       await _cloudBtnAction(btn, 'Checking\u2026', async () => {
         var conflict = await cloudCheckConflict(provider);

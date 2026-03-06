@@ -2,8 +2,8 @@
 title: Data Model
 category: frontend
 owner: staktrakr
-lastUpdated: v3.33.46
-date: 2026-03-04
+lastUpdated: v3.33.55
+date: 2026-03-06
 sourceFiles:
   - js/constants.js
   - js/utils.js
@@ -14,7 +14,7 @@ relatedPages:
 ---
 # Data Model
 
-> **Last updated:** v3.33.46 — 2026-03-04
+> **Last updated:** v3.33.55 — 2026-03-06
 > **Source files:** `js/constants.js`, `js/utils.js`, `js/types.js`
 
 ## Overview
@@ -376,6 +376,8 @@ All keys currently registered in `js/constants.js`. `cleanupStorage()` enforces 
 | `cloud_vault_idle_timeout` | Number string | Vault idle lock timeout in minutes |
 | `cloud_vault_password` | String | Vault password for persistent unlock |
 | `cloud_dropbox_account_id` | String | Dropbox account_id for key derivation |
+| `cloud_dropbox_email` | String | Dropbox account email for multi-account UX (STAK-449) |
+| `cloud_dropbox_display_name` | String | Dropbox display name for multi-account UX (STAK-449) |
 | `cloud_sync_mode` | String | DEPRECATED — kept for migration only |
 | `cloud_sync_migrated` | String | Cloud folder migration flag — `"v2"` indicates flat-to-subfolder migration complete |
 | `cloud_backup_history_depth` | String | Max cloud backups to retain (`"3"`, `"5"`, `"10"`, or `"20"`) |
