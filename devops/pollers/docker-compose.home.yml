@@ -12,8 +12,6 @@ services:
       dockerfile: home-poller/Dockerfile
     container_name: staktrakr-home-poller
     restart: unless-stopped
-    env_file:
-      - .env.home
     environment:
       - DATA_DIR=/data
       - POLLER_ID=home
@@ -24,6 +22,14 @@ services:
       - METRICS_PORT=9100
       - NET_IFACE=eth0
       - POLLER_LOG=/var/log/retail-poller.log
+      - TURSO_DATABASE_URL=${TURSO_DATABASE_URL}
+      - TURSO_AUTH_TOKEN=${TURSO_AUTH_TOKEN}
+      - METAL_PRICE_API_KEY=${METAL_PRICE_API_KEY}
+      - FIRECRAWL_BASE_URL=${FIRECRAWL_BASE_URL:-http://firecrawl-api:3002}
+      - VISION_ENABLED=${VISION_ENABLED:-0}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - FLYIO_TAILSCALE_IP=${FLYIO_TAILSCALE_IP:-100.90.171.110}
+      - FLYIO_HTTP_URL=${FLYIO_HTTP_URL:-https://api2.staktrakr.com/data/retail/providers.json}
     ports:
       - "3010:3010"   # Dashboard
       - "9100:9100"   # Prometheus metrics
