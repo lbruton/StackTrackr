@@ -380,11 +380,12 @@ function renderFlyioCard(h) {
   const ageStr = age != null ? (age < 60 ? `${age}s ago` : `${Math.round(age/60)}m ago`) : "?";
   const stale = age != null && age > 600;
 
-  const tsColor = h.tailscale_ok ? "#22c55e" : "#ef4444";
+  const inDocker = !!process.env.POLLER_ID;
+  const tsColor = h.tailscale_ok ? "#22c55e" : (inDocker ? "#a1a1aa" : "#ef4444");
   const httpColor = h.http_ok ? "#22c55e" : "#ef4444";
   const tsLabel = h.tailscale_ip === "TODO_REPLACE_WITH_IP"
     ? "not configured"
-    : (h.tailscale_ok ? `OK (${h.tailscale_latency})` : "UNREACHABLE");
+    : (h.tailscale_ok ? `OK (${h.tailscale_latency})` : (inDocker ? "N/A (Docker bridge)" : "UNREACHABLE"));
 
   return `<div class="card${stale ? ' card-stale' : ''}">
     <h2>Fly.io Container ${stale ? '<span class="stale-tag">stale</span>' : ''}</h2>
