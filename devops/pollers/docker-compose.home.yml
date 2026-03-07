@@ -1,0 +1,45 @@
+# StakTrakr Home Poller — Docker Compose
+# ────────────────────────────────────────
+# Deploy: docker --context homepoller compose -f docker-compose.home.yml up --build -d
+#
+# Build context is devops/pollers/ so the Dockerfile can reach both
+# shared/ (common code) and home-poller/ (home-specific files).
+
+services:
+  home-poller:
+    build:
+      context: .
+      dockerfile: home-poller/Dockerfile
+    container_name: staktrakr-home-poller
+    restart: unless-stopped
+    env_file:
+      - .env.home
+    environment:
+      - DATA_DIR=/data
+      - POLLER_ID=home
+      - BROWSER_MODE=local
+      - PLAYWRIGHT_LAUNCH=1
+      - PLAYWRIGHT_BROWSERS_PATH=/root/.cache/ms-playwright
+      - DASHBOARD_PORT=3010
+      - METRICS_PORT=9100
+      - NET_IFACE=eth0
+      - POLLER_LOG=/var/log/retail-poller.log
+    ports:
+      - "3010:3010"   # Dashboard
+      - "9100:9100"   # Prometheus metrics
+    volumes:
+      - poller-data:/data
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  poller-data:
+    name: staktrakr-poller-data
+
+networks:
+  default:
+    name: staktrakr-net
+    external: true
