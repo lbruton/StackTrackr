@@ -753,6 +753,24 @@ function renderMainPage(data) {
 <body>
 ${renderNav("home", failureCount)}
 
+<div class="wide-card">
+  <h2>Combined Coverage — All Pollers (hourly union)</h2>
+  ${renderCoverageCards(coverageStats, spotCoverage)}
+</div>
+
+<div class="wide-card">
+  <h2>All Poller Runs \u2014 Turso (last 30) ${tursoNote}</h2>
+  ${renderStatsCards(runStats)}
+  <div class="scroll-table">
+    ${renderRunsTable(tursoRuns?.filter(r => !r.poller_id?.includes('spot')))}
+  </div>
+</div>
+
+<div class="log-panel">
+  <h2>Home Poller Log \u2014 last ${LOG_LINES} lines (${LOG_FILE})</h2>
+  <div class="log-body" id="log">${logHtml}</div>
+</div>
+
 <div class="grid">
   <div class="card">
     <h2>System (home poller VM)</h2>
@@ -780,30 +798,6 @@ ${renderNav("home", failureCount)}
   </div>
 
   ${renderFlyioCard(flyioHealth, flyRuns, tursoUp)}
-</div>
-
-<div class="wide-card">
-  <h2>Combined Coverage — All Pollers (hourly union)</h2>
-  ${renderCoverageCards(coverageStats, spotCoverage)}
-</div>
-
-<div class="wide-card">
-  <h2>All Poller Runs \u2014 Turso (last 30) ${tursoNote}</h2>
-  ${renderStatsCards(runStats)}
-  <div class="scroll-table">
-    ${renderRunsTable(tursoRuns?.filter(r => !r.poller_id?.includes('spot')))}
-  </div>
-  <div style="margin-top:12px;">
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 12px 6px;">
-      <div style="color:var(--muted);font-size:11px;text-transform:uppercase;margin-bottom:8px;">Failure Trend (7 days)</div>
-      ${renderFailureTrendChart(failureTrend)}
-    </div>
-  </div>
-</div>
-
-<div class="log-panel">
-  <h2>Home Poller Log \u2014 last ${LOG_LINES} lines (${LOG_FILE})</h2>
-  <div class="log-body" id="log">${logHtml}</div>
 </div>
 
 <script>
