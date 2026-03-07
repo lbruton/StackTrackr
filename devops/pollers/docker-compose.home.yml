@@ -31,7 +31,8 @@ services:
       - FLYIO_TAILSCALE_IP=${FLYIO_TAILSCALE_IP:-100.90.171.110}
       - FLYIO_HTTP_URL=${FLYIO_HTTP_URL:-https://api2.staktrakr.com/data/retail/providers.json}
     ports:
-      - "3010:3010"   # Dashboard
+      - "3010:3010"   # Dashboard (HTTP)
+      - "3011:3011"   # Dashboard (HTTPS for iframe embed)
       - "9100:9100"   # Prometheus metrics
     volumes:
       - poller-data:/data

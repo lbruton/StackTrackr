@@ -27,6 +27,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     procps \
     iputils-ping \
+    openssl \
     # Chromium dependencies for Playwright
     libnss3 \
     libnspr4 \
@@ -105,6 +106,11 @@ RUN npx playwright install chromium \
 # Move tracker blocklist into app dir
 RUN mv /tmp/tracker-blocklist.txt /app/tracker-blocklist.txt
 
+# ── Self-signed TLS cert for dashboard HTTPS (port 3011) ──
+RUN openssl req -x509 -newkey rsa:2048 -nodes \
+    -keyout /app/tls-key.pem -out /app/tls-cert.pem \
+    -days 3650 -subj "/CN=staktrakr-home-poller"
+
 # ── Supervisord config ───────────────────────────────────
 COPY home-poller/supervisord.conf /etc/supervisor/conf.d/home-poller.conf
 
@@ -112,8 +118,8 @@ COPY home-poller/supervisord.conf /etc/supervisor/conf.d/home-poller.conf
 COPY home-poller/docker-entrypoint.sh /app/docker-entrypoint.sh
 RUN chmod +x /app/docker-entrypoint.sh
 
-# Dashboard + Metrics ports
-EXPOSE 3010 9100
+# Dashboard (HTTP + HTTPS) + Metrics ports
+EXPOSE 3010 3011 9100
 
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
 CMD ["supervisord", "-n", "-c", "/etc/supervisor/supervisord.conf"]
