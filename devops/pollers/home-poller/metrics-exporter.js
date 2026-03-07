@@ -7,7 +7,7 @@
  *
  * Sources:
  *   - /proc (CPU, memory, network, uptime)
- *   - supervisorctl (service health)
+ *   - supervisorctl (service health inside container)
  *   - Turso poller_runs (last run stats per poller)
  *   - Turso provider_failures (failure queue stats)
  */
@@ -95,6 +95,7 @@ function collectServices() {
     }
   } catch {}
 
+  // No systemd inside Docker — redis, rabbitmq, tinyproxy run in separate containers
 
   return metrics;
 }

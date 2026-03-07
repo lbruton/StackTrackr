@@ -26,9 +26,9 @@ import {
 } from "./provider-db.js";
 
 const PORT = parseInt(process.env.DASHBOARD_PORT || "3010", 10);
-const LOG_FILE = process.env.POLLER_LOG || "/var/log/retail-poller.log";
+const LOG_FILE = process.env.POLLER_LOG || "/data/logs/retail-poller.log";
 const LOG_LINES = 300;
-const IFACE = process.env.NET_IFACE || "ens18";
+const IFACE = process.env.NET_IFACE || "eth0";
 const PROVIDERS_FILE = new URL("data/retail/providers.json", import.meta.url).pathname;
 const DATA_DIR = new URL("data/", import.meta.url).pathname;
 
@@ -39,7 +39,7 @@ const DATA_DIR = new URL("data/", import.meta.url).pathname;
   const lines = readFileSync(envFile, "utf8").split("\n");
   for (const line of lines) {
     const m = line.match(/^([A-Z_][A-Z0-9_]*)=(.*)$/);
-    if (m && !process.env[m[1]]) process.env[m[1]] = m[2];
+    if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^[\x27\x22]|[\x27\x22]$/g, "");
   }
 })();
 
@@ -499,6 +499,16 @@ function renderMissingItems(items) {
 function renderCoverageCards(cov, spotCov) {
   if (!cov || !cov.hours || cov.hours.length === 0) return '';
 
+  // ── Style values (from playground Compact preset + user tweaks) ─────
+  const P = 8, G = 24, R = 6, VS = 33, LS = 10, TS = 11, BH = 80, CP = 8, SG = 12;
+
+  function covCard(label, value, sub, color) {
+    return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:' + R + 'px;padding:' + P + 'px;text-align:center;">'
+      + '<div style="color:var(--muted);font-size:' + LS + 'px;text-transform:uppercase;letter-spacing:.03em;margin-bottom:4px;">' + label + '</div>'
+      + '<div style="color:' + color + ';font-size:' + VS + 'px;font-weight:700;font-family:\'Cascadia Code\',\'Fira Code\',monospace;">' + value + (sub ? '<span style="font-size:' + Math.round(VS * 0.58) + 'px;color:var(--muted)">' + sub + '</span>' : '') + '</div>'
+      + '</div>';
+  }
+
   // ── Retail section ──────────────────────────────────────────────────
   const latest = cov.hours[0];
   const last24 = cov.hours.slice(0, 24);
@@ -510,41 +520,33 @@ function renderCoverageCards(cov, spotCov) {
   const missingCount = Math.max(0, cov.totalEnabled - latest.covered);
 
   const retailStatCards = ''
-    + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px;">'
-    + '<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;">'
-    + '<div style="color:var(--muted);font-size:11px;text-transform:uppercase;margin-bottom:4px;">Coverage (latest hour)</div>'
-    + '<div style="color:' + covColor + ';font-size:24px;font-weight:700;">' + latest.pct + '%</div>'
-    + '</div>'
-    + '<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;">'
-    + '<div style="color:var(--muted);font-size:11px;text-transform:uppercase;margin-bottom:4px;">Avg Coverage (24h)</div>'
-    + '<div style="color:' + avgColor + ';font-size:24px;font-weight:700;">' + avg + '%</div>'
-    + '</div>'
-    + '<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;">'
-    + '<div style="color:var(--muted);font-size:11px;text-transform:uppercase;margin-bottom:4px;">Items Covered</div>'
-    + '<div style="color:var(--accent);font-size:24px;font-weight:700;">' + Math.min(latest.covered, cov.totalEnabled) + '<span style="font-size:14px;color:var(--muted)">/' + cov.totalEnabled + '</span></div>'
-    + '</div>'
-    + '<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;">'
-    + '<div style="color:var(--muted);font-size:11px;text-transform:uppercase;margin-bottom:4px;">Missing Items</div>'
-    + '<div style="color:' + (missingCount > 0 ? 'var(--red)' : 'var(--green)') + ';font-size:24px;font-weight:700;">' + missingCount + '</div>'
-    + '</div>'
+    + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:' + G + 'px;margin-bottom:' + G + 'px;">'
+    + covCard('Coverage (latest hour)', latest.pct + '%', '', covColor)
+    + covCard('Avg Coverage (24h)', avg + '%', '', avgColor)
+    + covCard('Items Covered', Math.min(latest.covered, cov.totalEnabled), '/' + cov.totalEnabled, 'var(--accent)')
+    + covCard('Missing Items', missingCount, '', missingCount > 0 ? 'var(--red)' : 'var(--green)')
     + '</div>';
 
   // Use all available hours (up to 48h)
   const allHours = cov.hours.slice(0, 48).reverse();
   const retailBars = allHours.map((h, i) => {
-    const barH = Math.max(2, Math.round(h.pct * 0.5));
-    const c = h.pct >= 90 ? '#22c55e' : h.pct >= 70 ? '#f59e0b' : '#ef4444';
+    // Use per-hour effectiveTotal (how many vendors existed at that hour)
+    // so adding new items doesn't retroactively penalize historical bars.
+    const denom = h.effectiveTotal || cov.totalEnabled;
+    const adjPct = denom > 0 ? Math.min(100, Math.round((h.covered / denom) * 100)) : 0;
+    const barH = Math.max(2, Math.round(adjPct * 0.5));
+    const c = adjPct >= 90 ? '#22c55e' : adjPct >= 70 ? '#f59e0b' : '#ef4444';
     const hLabel = h.hour.slice(11, 16);
-    return '<div style="flex:1;min-width:0;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-end;" title="' + hLabel + ': ' + Math.min(h.covered, cov.totalEnabled) + '/' + cov.totalEnabled + ' (' + h.pct + '%)">'
+    return '<div style="flex:1;min-width:0;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-end;" title="' + hLabel + ': ' + h.covered + '/' + denom + ' (' + adjPct + '%)">'
       + '<div style="height:' + barH + 'px;background:' + c + ';border-radius:2px;"></div>'
       + '<div style="text-align:center;overflow:hidden;height:28px;display:flex;align-items:flex-start;justify-content:center;"><span style="font-size:7px;color:var(--muted);white-space:nowrap;writing-mode:vertical-lr;transform:rotate(180deg);">' + hLabel + '</span></div>'
       + '</div>';
   }).join('');
 
   const retailBarCard = ''
-    + '<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 12px 6px;">'
-    + '<div style="color:var(--muted);font-size:11px;text-transform:uppercase;margin-bottom:8px;">Retail Coverage Trend (' + allHours.length + 'h)</div>'
-    + '<div style="display:flex;gap:1px;align-items:flex-end;height:55px;">' + retailBars + '</div>'
+    + '<div style="background:var(--surface);border:1px solid var(--border);border-radius:' + R + 'px;padding:' + CP + 'px ' + CP + 'px ' + Math.round(CP * 0.5) + 'px;">'
+    + '<div style="color:var(--muted);font-size:' + LS + 'px;text-transform:uppercase;letter-spacing:.03em;margin-bottom:8px;">Retail Coverage Trend (' + allHours.length + 'h)</div>'
+    + '<div style="display:flex;gap:1px;align-items:flex-end;height:' + BH + 'px;">' + retailBars + '</div>'
     + '</div>';
 
   // ── Spot section ────────────────────────────────────────────────────
@@ -555,48 +557,50 @@ function renderCoverageCards(cov, spotCov) {
       ? Math.round((spotCov.coveredIntervals / spotCov.totalIntervals) * 100) : 0;
     const spotColor = spotPct >= 90 ? 'var(--green)' : spotPct >= 70 ? 'var(--amber)' : 'var(--red)';
 
+    // Build poller breakdown data for 4th card
     const pollerEntries = Object.entries(spotCov.byPoller || {});
-    const pollerCards = pollerEntries.map(([id, cnt]) => {
+    const pollerColors = { 'home-spot': '#818cf8', 'fly-spot': '#38bdf8', 'backfill': '#f59e0b' };
+    const pollers = pollerEntries.map(([id, cnt]) => {
       const pPct = spotCov.totalIntervals > 0 ? Math.round(cnt / spotCov.totalIntervals * 100) : 0;
-      const pColor = pPct >= 80 ? 'var(--green)' : pPct >= 50 ? 'var(--amber)' : 'var(--red)';
-      return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;">'
-        + '<div style="color:var(--muted);font-size:11px;text-transform:uppercase;margin-bottom:4px;">' + id + '</div>'
-        + '<div style="color:' + pColor + ';font-size:24px;font-weight:700;">' + pPct + '%</div>'
-        + '<div style="color:var(--muted);font-size:10px;">' + cnt + '/' + spotCov.totalIntervals + '</div>'
-        + '</div>';
-    }).join('');
+      return { name: id, count: cnt, pct: pPct, color: pollerColors[id] || '#94a3b8' };
+    });
+    const maxPct = Math.max(...pollers.map(p => p.pct), 1);
 
-    const emptySlots = Math.max(0, 2 - pollerEntries.length);
-    const emptyCards = Array(emptySlots).fill(
-      '<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;opacity:0.3;">'
-      + '<div style="color:var(--muted);font-size:11px;text-transform:uppercase;margin-bottom:4px;">&mdash;</div>'
-      + '<div style="color:var(--muted);font-size:24px;font-weight:700;">&mdash;</div>'
+    // Combined sources %
+    const combinedPct = pollers.reduce((s, p) => s + p.pct, 0);
+    const combinedColor = combinedPct >= 90 ? 'var(--green)' : combinedPct >= 70 ? 'var(--amber)' : 'var(--red)';
+
+    // Card 4: Source Breakdown with mini horizontal bars
+    const breakdownCard = '<div style="background:var(--surface);border:1px solid var(--border);border-radius:' + R + 'px;padding:' + P + 'px;text-align:center;">'
+      + '<div style="color:var(--muted);font-size:' + LS + 'px;text-transform:uppercase;letter-spacing:.03em;margin-bottom:4px;">Source Breakdown</div>'
+      + '<div style="display:flex;flex-direction:column;gap:4px;margin-top:6px;">'
+      + pollers.map(p => '<div style="display:flex;align-items:center;gap:6px;">'
+        + '<div style="width:8px;height:8px;border-radius:50%;background:' + p.color + ';flex-shrink:0;"></div>'
+        + '<span style="font-size:10px;color:var(--muted);min-width:64px;text-align:left;">' + p.name + '</span>'
+        + '<div style="flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;">'
+        + '<div style="height:100%;width:' + (maxPct > 0 ? Math.round(p.pct / maxPct * 100) : 0) + '%;background:' + p.color + ';border-radius:3px;"></div>'
+        + '</div>'
+        + '<span style="font-size:10px;min-width:28px;text-align:right;font-family:monospace;color:' + p.color + ';">' + p.pct + '%</span>'
+        + '</div>').join('')
       + '</div>'
-    ).join('');
+      + '</div>';
 
     const spotStatCards = ''
-      + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px;">'
-      + '<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;">'
-      + '<div style="color:var(--muted);font-size:11px;text-transform:uppercase;margin-bottom:4px;">Spot Coverage (' + spotCov.hours + 'h)</div>'
-      + '<div style="color:' + spotColor + ';font-size:24px;font-weight:700;">' + spotPct + '%</div>'
-      + '</div>'
-      + '<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;">'
-      + '<div style="color:var(--muted);font-size:11px;text-transform:uppercase;margin-bottom:4px;">Intervals Hit</div>'
-      + '<div style="color:var(--accent);font-size:24px;font-weight:700;">' + spotCov.coveredIntervals + '<span style="font-size:14px;color:var(--muted)">/' + spotCov.totalIntervals + '</span></div>'
-      + '</div>'
-      + pollerCards + emptyCards
+      + '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:' + G + 'px;margin-bottom:' + G + 'px;">'
+      + covCard('Spot Coverage (' + spotCov.hours + 'h)', spotPct + '%', '', spotColor)
+      + covCard('Intervals Hit', spotCov.coveredIntervals, '/' + spotCov.totalIntervals, 'var(--accent)')
+      + covCard('Combined Sources', combinedPct + '%', '', combinedColor)
+      + breakdownCard
       + '</div>';
 
     // Spot bars — generate placeholders for ALL expected 15-min slots
     const spotIntervals = spotCov.intervals || [];
     const spotMap = new Map(spotIntervals.map(q => [q.quarter, q]));
 
-    // Build all expected quarters
     const allQuarters = [];
     const now = new Date();
     const hoursBack = spotCov.hours || 6;
     const start = new Date(now.getTime() - hoursBack * 3600000);
-    // Round start down to nearest 15 min
     start.setMinutes(Math.floor(start.getMinutes() / 15) * 15, 0, 0);
     for (let t = new Date(start); t <= now; t = new Date(t.getTime() + 15 * 60000)) {
       const iso = t.toISOString();
@@ -608,7 +612,6 @@ function renderCoverageCards(cov, spotCov) {
       const data = spotMap.get(q);
       const label = q.slice(11);
       if (!data) {
-        // Empty slot — no data
         return '<div style="flex:1;min-width:0;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-end;" title="' + label + ': no data">'
           + '<div style="height:2px;background:#334155;border-radius:2px;"></div>'
           + '<div style="text-align:center;overflow:hidden;height:28px;display:flex;align-items:flex-start;justify-content:center;"><span style="font-size:7px;color:#475569;white-space:nowrap;writing-mode:vertical-lr;transform:rotate(180deg);">' + label + '</span></div>'
@@ -625,28 +628,27 @@ function renderCoverageCards(cov, spotCov) {
     }).join('');
 
     const spotBarCard = ''
-      + '<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 12px 6px;">'
-      + '<div style="color:var(--muted);font-size:11px;text-transform:uppercase;margin-bottom:8px;">Spot Price Trend (15-min intervals, ' + hoursBack + 'h)</div>'
-      + '<div style="display:flex;gap:1px;align-items:flex-end;height:55px;">' + spotBars + '</div>'
+      + '<div style="background:var(--surface);border:1px solid var(--border);border-radius:' + R + 'px;padding:' + CP + 'px ' + CP + 'px ' + Math.round(CP * 0.5) + 'px;">'
+      + '<div style="color:var(--muted);font-size:' + LS + 'px;text-transform:uppercase;letter-spacing:.03em;margin-bottom:8px;">Spot Price Trend (15-min intervals, ' + hoursBack + 'h)</div>'
+      + '<div style="display:flex;gap:1px;align-items:flex-end;height:' + BH + 'px;">' + spotBars + '</div>'
       + '</div>';
 
     spotSection = ''
-      + '<div style="margin-bottom:16px;">'
-      + '<h3 style="font-size:12px;text-transform:uppercase;color:var(--muted);margin:0 0 8px;">Spot Price Coverage</h3>'
+      + '<div style="margin-bottom:' + SG + 'px;">'
+      + '<h3 style="font-size:' + TS + 'px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:0 0 8px;">Spot Price Coverage</h3>'
       + spotStatCards
       + spotBarCard
       + '</div>';
   }
 
   // ── Assemble ────────────────────────────────────────────────────────
-  return '<div style="margin-bottom:16px;">'
-    + '<h3 style="font-size:12px;text-transform:uppercase;color:var(--muted);margin:0 0 8px;">Retail Price Coverage</h3>'
+  return '<div style="margin-bottom:' + SG + 'px;">'
+    + '<h3 style="font-size:' + TS + 'px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:0 0 8px;">Retail Price Coverage</h3>'
     + retailStatCards
     + retailBarCard
     + '</div>'
     + spotSection;
 }
-
 
 function renderFailureTrendChart(trend) {
   if (!trend || trend.length === 0) {
@@ -692,10 +694,10 @@ function renderMainPage(data) {
     </tr>`).join("");
 
   const dockerRows = (dockerContainers || []).map((c) => {
-    const color = c.state === "running" ? "#22c55e" : "#ef4444";
+    const stColor = c.state === "running" ? "#22c55e" : c.state === "exited" ? "#ef4444" : "#f59e0b";
     return `<tr>
       <td>${escHtml(c.name)}</td>
-      <td><span class="badge" style="background:${color}">${c.state}</span></td>
+      <td><span class="badge" style="background:${stColor}">${c.state}</span></td>
       <td class="detail">${escHtml(c.status)}</td>
     </tr>`;
   }).join("");
@@ -768,13 +770,13 @@ ${renderNav("home", failureCount)}
   </div>
 
   <div class="card">
-    <h2>Poller Services</h2>
+    <h2>Services (supervisord)</h2>
     <table><tbody>${supRows}</tbody></table>
   </div>
 
   <div class="card">
-    <h2>Docker Stack</h2>
-    ${dockerRows ? `<table><tbody>${dockerRows}</tbody></table>` : '<p class="no-data">Docker socket not mounted</p>'}
+    <h2>Docker Containers</h2>
+    <table><tbody>${dockerRows || '<tr><td colspan="3" class="no-data">Docker socket not available</td></tr>'}</tbody></table>
   </div>
 
   ${renderFlyioCard(flyioHealth, flyRuns, tursoUp)}
@@ -783,19 +785,19 @@ ${renderNav("home", failureCount)}
 <div class="wide-card">
   <h2>Combined Coverage — All Pollers (hourly union)</h2>
   ${renderCoverageCards(coverageStats, spotCoverage)}
+</div>
+
+<div class="wide-card">
+  <h2>All Poller Runs \u2014 Turso (last 30) ${tursoNote}</h2>
+  ${renderStatsCards(runStats)}
+  <div class="scroll-table">
+    ${renderRunsTable(tursoRuns?.filter(r => !r.poller_id?.includes('spot')))}
+  </div>
   <div style="margin-top:12px;">
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 12px 6px;">
       <div style="color:var(--muted);font-size:11px;text-transform:uppercase;margin-bottom:8px;">Failure Trend (7 days)</div>
       ${renderFailureTrendChart(failureTrend)}
     </div>
-  </div>
-</div>
-
-<div class="wide-card">
-  <h2>Retail Poller Runs \u2014 Turso (last 30) ${tursoNote}</h2>
-  ${renderStatsCards(runStats)}
-  <div class="scroll-table">
-    ${renderRunsTable(tursoRuns?.filter(r => !r.poller_id?.includes('spot')))}
   </div>
 </div>
 
@@ -1004,7 +1006,7 @@ function renderProvidersPage(providers, scrapeStatus, failureCount, readOnly) {
         <strong>${escHtml(coin.name)}</strong>
         <code style="color:var(--muted);margin:0 8px;">${escHtml(slug)}</code>
         ${metalBadge(metal)}
-        <span style="color:var(--muted);font-size:12px;margin-left:8px;">${coin.weight_oz || 1} oz \u00B7 ${vendorCount} vendor${vendorCount !== 1 ? "s" : ""}</span>
+        <span style="color:var(--muted);font-size:12px;margin-left:8px;">${metal === "goldback" ? (coin.weight_oz || 1) + "/1000 oz gold" : (coin.weight_oz || 1) + " oz"} \u00B7 ${vendorCount} vendor${vendorCount !== 1 ? "s" : ""}</span>
         ${readOnly ? "" : `<span style="margin-left:auto;display:flex;gap:4px;">
           <button class="btn-edit-coin" data-slug="${escAttr(slug)}" style="background:#1e3a5f;color:var(--accent);font-size:11px;">Edit</button>
           <button class="btn-del-coin" data-slug="${escAttr(slug)}" data-name="${escAttr(coin.name)}" data-vendors="${vendorCount}" style="background:#7f1d1d;color:#fca5a5;font-size:11px;">Delete</button>
@@ -1487,12 +1489,18 @@ document.getElementById('vendor-save').addEventListener('click', async () => {
 const btnExport = document.getElementById('btn-export');
 if (btnExport) btnExport.addEventListener('click', async () => {
   btnExport.disabled = true;
-  btnExport.textContent = 'Exporting...';
-  const r = await fetch('/providers/export', { method: 'POST' });
-  const j = await r.json();
-  btnExport.disabled = false;
-  btnExport.textContent = 'Export to API';
-  showToast(j.message, r.ok);
+  btnExport.textContent = 'Publishing to API...';
+  try {
+    const r = await fetch('/providers/export', { method: 'POST' });
+    const j = await r.json();
+    btnExport.disabled = false;
+    btnExport.textContent = 'Export to API';
+    showToast(j.message, j.published !== false);
+  } catch (err) {
+    btnExport.disabled = false;
+    btnExport.textContent = 'Export to API';
+    showToast('Network error: ' + err.message, false);
+  }
 });
 </script>
 </body>
@@ -1516,7 +1524,7 @@ function renderFailuresPage(failures, missingItems, failureCount) {
     return `<tr>
       <td><strong>${escHtml(f.coinName)}</strong><br><code style="color:var(--muted);font-size:11px;">${escHtml(f.coinSlug)}</code></td>
       <td>${escHtml(f.vendorId)}</td>
-      <td class="url-cell">${escHtml(f.url || "")}</td>
+      <td class="url-cell">${f.url ? `<a href="${escAttr(f.url)}" target="_blank" title="${escAttr(f.url)}" style="color:var(--accent);">${escHtml(f.url.length > 60 ? f.url.slice(0, 57) + "..." : f.url)}</a>` : ""}</td>
       <td style="color:#f87171;font-weight:700;text-align:center;">${escHtml(String(f.failureCount))}</td>
       <td style="color:var(--muted);font-size:12px">${ageStr}</td>
       <td style="color:var(--muted);font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escAttr(f.lastError || "")}">${escHtml(f.lastError || "")}</td>
@@ -1584,6 +1592,119 @@ document.querySelectorAll('.btn-disable').forEach(btn => {
     if (r.ok) btn.closest('tr').style.opacity = '0.4';
   });
 });
+
+// ── Diagnose button (Claude Code on VM) ─────────────────────────────────
+document.querySelectorAll('.btn-diagnose').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const coin = btn.dataset.coin;
+    const vendor = btn.dataset.vendor;
+    const url = btn.dataset.url;
+    if (!url) { alert('No URL configured for this vendor.'); return; }
+    btn.disabled = true;
+    btn.textContent = '\\u23F3 Running...';
+    btn.style.opacity = '0.6';
+    try {
+      const r = await fetch('/api/diagnose', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ coinSlug: coin, vendorId: vendor, url })
+      });
+      const j = await r.json();
+      if (j.error) {
+        alert('Diagnosis error: ' + j.error);
+      } else {
+        const overlay = document.createElement('div');
+        overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:300;display:flex;justify-content:center;align-items:center;padding:20px;';
+        overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+        const modal = document.createElement('div');
+        modal.style.cssText = 'background:#1e293b;border:1px solid #334155;border-radius:12px;max-width:850px;width:100%;max-height:85vh;display:flex;flex-direction:column;position:relative;';
+        const header = document.createElement('div');
+        header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid #334155;flex-shrink:0;';
+        header.innerHTML = '<div>'
+          + '<div style="font-size:15px;font-weight:700;color:#e2e8f0;">Diagnosis: ' + coin + ':' + vendor + '</div>'
+          + '<div style="font-size:12px;color:#94a3b8;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:600px;">' + url + '</div>'
+          + '<div style="font-size:11px;color:#64748b;margin-top:2px;">Engine: ' + (j.engine || '?') + ' \\u00B7 Firecrawl: ' + (j.scrapeLength || 0) + ' chars \\u00B7 Playwright: ' + (j.playwrightLength || 0) + ' chars</div>'
+          + '</div>';
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = '\\u2715';
+        closeBtn.style.cssText = 'background:#334155;color:#e2e8f0;width:32px;height:32px;border-radius:6px;border:none;cursor:pointer;font-size:16px;flex-shrink:0;margin-left:12px;';
+        closeBtn.onmouseover = () => { closeBtn.style.background = '#ef4444'; };
+        closeBtn.onmouseout = () => { closeBtn.style.background = '#334155'; };
+        closeBtn.onclick = () => overlay.remove();
+        header.appendChild(closeBtn);
+        const body = document.createElement('div');
+        body.style.cssText = 'padding:16px 20px;overflow-y:auto;flex:1;font-family:"Cascadia Code","Fira Code",monospace;font-size:13px;line-height:1.7;white-space:pre-wrap;color:#e2e8f0;';
+        body.textContent = j.result || '(no output)';
+        const footer = document.createElement('div');
+        footer.style.cssText = 'display:flex;gap:8px;padding:12px 20px;border-top:1px solid #334155;flex-shrink:0;';
+        const copyBtn = document.createElement('button');
+        copyBtn.textContent = '\\uD83D\\uDCCB Copy Markdown';
+        copyBtn.style.cssText = 'background:#166534;color:#86efac;padding:6px 14px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-weight:600;';
+        copyBtn.onclick = () => {
+          var NL = String.fromCharCode(10);
+          var BT = String.fromCharCode(96,96,96);
+          var parts = ['## Diagnosis: ' + coin + ':' + vendor, '**URL:** ' + url, '**Engine:** ' + (j.engine || '?'), '**Date:** ' + new Date().toISOString(), '', BT, (j.result || ''), BT, ''];
+          navigator.clipboard.writeText(parts.join(NL)).then(function() {
+            copyBtn.textContent = 'Copied!';
+            setTimeout(function() { copyBtn.textContent = 'Copy Markdown'; }, 2000);
+          });
+        };
+        const copyRawBtn = document.createElement('button');
+        copyRawBtn.textContent = '\\uD83D\\uDCC4 Copy Raw';
+        copyRawBtn.style.cssText = 'background:#1e3a5f;color:var(--accent);padding:6px 14px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-weight:600;';
+        copyRawBtn.onclick = function() {
+          navigator.clipboard.writeText(j.result || '').then(function() {
+            copyRawBtn.textContent = 'Copied!';
+            setTimeout(function() { copyRawBtn.textContent = 'Copy Raw'; }, 2000);
+          });
+        };
+        footer.appendChild(copyBtn);
+        footer.appendChild(copyRawBtn);
+        modal.appendChild(header);
+        modal.appendChild(body);
+        modal.appendChild(footer);
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+      }
+    } catch (err) {
+      alert('Request failed: ' + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '\\uD83E\\uDD16 Diagnose';
+      btn.style.opacity = '1';
+    }
+  });
+});
+
+// ── Browserbase button ──────────────────────────────────────────────────
+document.querySelectorAll('.btn-browserbase').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const url = btn.dataset.url;
+    if (!url) { alert('No URL configured for this vendor.'); return; }
+    btn.disabled = true;
+    btn.textContent = '\\u23F3 Launching...';
+    try {
+      const r = await fetch('/api/browserbase', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ url, coinSlug: btn.dataset.coin, vendorId: btn.dataset.vendor })
+      });
+      const j = await r.json();
+      if (j.error) {
+        alert('Browserbase error: ' + j.error);
+      } else if (j.liveUrl) {
+        window.open(j.liveUrl, '_blank');
+      } else {
+        alert('Session created but no live URL returned.');
+      }
+    } catch (err) {
+      alert('Request failed: ' + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '\\uD83C\\uDF10 Browserbase';
+    }
+  });
+});
 </script>
 </body>
 </html>`;
@@ -1612,6 +1733,11 @@ async function getFailureCount(client) {
 }
 
 async function handleRequest(req, res) {
+  // Allow iframe embedding from spec-workflow dashboard
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("X-Frame-Options", "ALLOWALL");
+  res.setHeader("Content-Security-Policy", "frame-ancestors *");
+
   const url = req.url.split("?")[0];
   const query = new URLSearchParams(req.url.split("?")[1] || "");
 
@@ -1835,6 +1961,7 @@ async function handleRequest(req, res) {
   }
 
   // ── POST /providers/export ─────────────────────────────────────────────
+  // Exports providers.json locally, then triggers Fly.io publish via Machines API
   if (req.method === "POST" && url === "/providers/export") {
     try {
       const client = getTursoClient();
@@ -1842,8 +1969,41 @@ async function handleRequest(req, res) {
       writeFileSync(PROVIDERS_FILE, json, "utf8");
       const bytes = Buffer.byteLength(json, "utf8");
       const timestamp = new Date().toISOString();
+
+      // Trigger Fly.io publish via Machines API
+      let published = false;
+      let publishMsg = "skipped (no Fly config)";
+      const flyToken = process.env.FLY_API_TOKEN;
+      const flyMachineId = process.env.FLY_MACHINE_ID;
+      if (flyToken && flyMachineId) {
+        try {
+          const execRes = await fetch(
+            `https://api.machines.dev/v1/apps/staktrakr/machines/${flyMachineId}/exec`,
+            {
+              method: "POST",
+              headers: { Authorization: `Bearer ${flyToken}`, "Content-Type": "application/json" },
+              body: JSON.stringify({
+                command: ["/bin/bash", "-c",
+                  "git config --global user.name 'StakTrakr Poller' && " +
+                  "git config --global user.email 'poller@staktrakr.local' && " +
+                  "/app/run-publish.sh"],
+                timeout: 60,
+              }),
+            }
+          );
+          const result = await execRes.json();
+          published = result.exit_code === 0;
+          publishMsg = published ? "published" : `failed: ${(result.stderr || "unknown").slice(0, 200)}`;
+        } catch (pubErr) {
+          publishMsg = `error: ${pubErr.message}`;
+        }
+      }
+
+      const msg = published
+        ? `Exported ${fmtBytes(bytes)} → published to API at ${timestamp}`
+        : `Exported ${fmtBytes(bytes)} at ${timestamp} (publish ${publishMsg})`;
       res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ ok: true, message: `Exported ${fmtBytes(bytes)} at ${timestamp}` }));
+      res.end(JSON.stringify({ ok: true, published, message: msg }));
     } catch (err) {
       res.writeHead(500, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ ok: false, message: `Export failed: ${err.message}` }));
@@ -2056,7 +2216,7 @@ async function handleRequest(req, res) {
         result: aiResult,
       };
       try {
-        const logFile = "/var/log/diagnose.jsonl";
+        const logFile = "/data/logs/diagnose.jsonl";
         const { appendFileSync } = await import("node:fs");
         appendFileSync(logFile, JSON.stringify(logEntry) + "\n");
       } catch { /* non-critical — don't fail the request */ }
@@ -2205,14 +2365,14 @@ server.listen(PORT, "0.0.0.0", () => {
   console.log(`[dashboard] Listening on http://0.0.0.0:${PORT}`);
 });
 
-// HTTPS on port 3011 for iframe embedding in spec-workflow dashboard
-const HTTPS_PORT = 3011;
+// ── HTTPS server (self-signed cert for iframe embedding) ──
+const HTTPS_PORT = Number(process.env.DASHBOARD_HTTPS_PORT || 3011);
 try {
-  const tlsOpts = {
+  const httpsOpts = {
     key: readFileSync("/app/tls-key.pem"),
     cert: readFileSync("/app/tls-cert.pem"),
   };
-  const httpsServer = createHttpsServer(tlsOpts, (req, res) => {
+  const httpsServer = createHttpsServer(httpsOpts, (req, res) => {
     handleRequest(req, res).catch((err) => {
       console.error("[dashboard] HTTPS request error:", err);
       res.writeHead(500);
@@ -2220,8 +2380,8 @@ try {
     });
   });
   httpsServer.listen(HTTPS_PORT, "0.0.0.0", () => {
-    console.log(`[dashboard] Listening on https://0.0.0.0:${HTTPS_PORT}`);
+    console.log(`[dashboard] HTTPS listening on https://0.0.0.0:${HTTPS_PORT}`);
   });
-} catch (err) {
-  console.warn(`[dashboard] HTTPS disabled — ${err.message}`);
+} catch (e) {
+  console.warn("[dashboard] HTTPS disabled — cert not found:", e.message);
 }
