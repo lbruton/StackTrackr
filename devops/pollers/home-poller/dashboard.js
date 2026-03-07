@@ -75,6 +75,26 @@ async function fetchRunsFromTurso() {
   }
 }
 
+async function fetchFlyioRuns(client) {
+  if (!client) return null;
+  try {
+    const result = await client.execute({
+      sql: `
+        SELECT poller_id, started_at, finished_at, status,
+               total, captured, failures, error
+        FROM poller_runs
+        WHERE poller_id LIKE 'fly-%'
+        ORDER BY started_at DESC
+        LIMIT 10
+      `,
+      args: [],
+    });
+    return result.rows;
+  } catch {
+    return null;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // System data collectors
 // ---------------------------------------------------------------------------
@@ -145,6 +165,43 @@ function getSupervisordStatus() {
 function getSystemdStatus() {
   // No systemd inside Docker — redis, rabbitmq, tinyproxy run in separate containers
   return [];
+}
+
+function getDockerContainers() {
+  // Query sibling containers via Docker socket (mounted or via curl to host)
+  // Use /proc/1/cpuset to detect if we're in Docker, then query via host gateway
+  try {
+    const raw = execSync(
+      'curl -sf --unix-socket /var/run/docker.sock "http://localhost/containers/json?filters=%7B%22network%22%3A%5B%22staktrakr-net%22%5D%7D" 2>/dev/null || echo "[]"',
+      { timeout: 5000 }
+    ).toString().trim();
+    const containers = JSON.parse(raw);
+    return containers.map(c => ({
+      name: (c.Names?.[0] || "?").replace(/^\//, ""),
+      image: (c.Image || "?").split(":")[0].split("/").pop(),
+      state: c.State || "unknown",
+      status: c.Status || "?",
+    }));
+  } catch {
+    // Also try listing all staktrakr-* containers without network filter
+    try {
+      const raw = execSync(
+        'curl -sf --unix-socket /var/run/docker.sock "http://localhost/containers/json?all=true" 2>/dev/null || echo "[]"',
+        { timeout: 5000 }
+      ).toString().trim();
+      const all = JSON.parse(raw);
+      return all
+        .filter(c => (c.Names?.[0] || "").match(/staktrakr|firecrawl|tailscale/i))
+        .map(c => ({
+          name: (c.Names?.[0] || "?").replace(/^\//, ""),
+          image: (c.Image || "?").split(":")[0].split("/").pop(),
+          state: c.State || "unknown",
+          status: c.Status || "?",
+        }));
+    } catch {
+      return [];
+    }
+  }
 }
 
 function readLog() {
@@ -365,36 +422,59 @@ function renderStatsCards(stats) {
   </div>`;
 }
 
-function renderFlyioCard(h) {
-  if (!h) {
-    return `<div class="card">
-      <h2>Fly.io Container</h2>
-      <p class="no-data">Health check not yet run.<br>
-      Set FLYIO_TAILSCALE_IP and enable check-flyio.sh in cron.</p>
-    </div>`;
+function renderFlyioCard(h, flyRuns, tursoUp) {
+  // HTTP health (from check-flyio.sh JSON file)
+  let httpLine = "";
+  if (h) {
+    const age = h.checked_at
+      ? Math.round((Date.now() - new Date(h.checked_at)) / 1000)
+      : null;
+    const ageStr = age != null ? (age < 60 ? `${age}s ago` : `${Math.round(age/60)}m ago`) : "?";
+    const httpColor = h.http_ok ? "#22c55e" : "#ef4444";
+    httpLine = `
+      <div class="stat-row"><span>API endpoint</span>
+        <span class="stat-val" style="color:${httpColor}">${h.http_ok ? `OK (${h.http_code})` : `FAIL (${h.http_code || "no resp"})`}</span></div>
+      <div class="stat-row"><span>Last checked</span>
+        <span class="stat-val">${ageStr}</span></div>`;
+  } else {
+    httpLine = `<div class="stat-row"><span>API endpoint</span>
+      <span class="stat-val" style="color:#a1a1aa">Awaiting first check</span></div>`;
   }
 
-  const age = h.checked_at
-    ? Math.round((Date.now() - new Date(h.checked_at)) / 1000)
-    : null;
-  const ageStr = age != null ? (age < 60 ? `${age}s ago` : `${Math.round(age/60)}m ago`) : "?";
-  const stale = age != null && age > 600;
+  // Turso connectivity
+  const tursoColor = tursoUp ? "#22c55e" : "#ef4444";
+  const tursoLabel = tursoUp ? "OK" : "OFFLINE";
 
-  const inDocker = !!process.env.POLLER_ID;
-  const tsColor = h.tailscale_ok ? "#22c55e" : (inDocker ? "#a1a1aa" : "#ef4444");
-  const httpColor = h.http_ok ? "#22c55e" : "#ef4444";
-  const tsLabel = h.tailscale_ip === "TODO_REPLACE_WITH_IP"
-    ? "not configured"
-    : (h.tailscale_ok ? `OK (${h.tailscale_latency})` : (inDocker ? "N/A (Docker bridge)" : "UNREACHABLE"));
+  // Recent Fly.io runs
+  let runsHtml = "";
+  if (flyRuns && flyRuns.length > 0) {
+    const rows = flyRuns.slice(0, 5).map(r => {
+      const pid = escHtml(r.poller_id);
+      const time = r.started_at ? r.started_at.replace("T", " ").slice(0, 19) : "?";
+      const statusColor = r.status === "done" ? "#22c55e" : (r.status === "running" ? "#3b82f6" : "#ef4444");
+      const prices = `${r.captured ?? 0}/${r.total ?? 0}`;
+      return `<tr>
+        <td><span class="badge" style="background:${statusColor}">${pid}</span></td>
+        <td class="detail">${time}</td>
+        <td>${prices}</td>
+        <td>${r.failures ?? 0}</td>
+      </tr>`;
+    }).join("");
+    runsHtml = `
+      <div style="margin-top:8px">
+        <table><thead><tr><th>Poller</th><th>Started</th><th>Prices</th><th>Fail</th></tr></thead>
+        <tbody>${rows}</tbody></table>
+      </div>`;
+  } else {
+    runsHtml = `<p class="no-data" style="margin-top:8px">No Fly.io runs in Turso yet.</p>`;
+  }
 
-  return `<div class="card${stale ? ' card-stale' : ''}">
-    <h2>Fly.io Container ${stale ? '<span class="stale-tag">stale</span>' : ''}</h2>
-    <div class="stat-row"><span>Tailscale (${escHtml(h.tailscale_ip)})</span>
-      <span class="stat-val" style="color:${tsColor}">${tsLabel}</span></div>
-    <div class="stat-row"><span>HTTP (${escHtml(h.http_url)})</span>
-      <span class="stat-val" style="color:${httpColor}">${h.http_ok ? `OK (${h.http_code})` : `FAIL (${h.http_code || "no resp"})`}</span></div>
-    <div class="stat-row"><span>Last checked</span>
-      <span class="stat-val">${ageStr}</span></div>
+  return `<div class="card">
+    <h2>Fly.io Container</h2>
+    <div class="stat-row"><span>Turso DB</span>
+      <span class="stat-val" style="color:${tursoColor}">${tursoLabel}</span></div>
+    ${httpLine}
+    ${runsHtml}
   </div>`;
 }
 
@@ -615,7 +695,7 @@ function renderFailureTrendChart(trend) {
 }
 
 function renderMainPage(data) {
-  const { net, cpu, uptime, supervisord, systemd, logLines, tursoRuns, tursoError, flyioHealth, runStats, failureCount, coverageStats, spotCoverage, failureTrend } = data;
+  const { net, cpu, uptime, supervisord, systemd, logLines, tursoRuns, tursoError, tursoUp, flyioHealth, runStats, failureCount, coverageStats, spotCoverage, failureTrend, flyRuns, dockerContainers } = data;
 
   const supRows = supervisord.map((s) => `
     <tr>
@@ -624,12 +704,14 @@ function renderMainPage(data) {
       <td class="detail">${s.detail}</td>
     </tr>`).join("");
 
-  const sysdRows = systemd.map((s) => `
-    <tr>
-      <td>${s.name}</td>
-      <td><span class="badge" style="background:${s.active ? "#22c55e" : "#ef4444"}">${s.active ? "active" : "inactive"}</span></td>
-      <td></td>
-    </tr>`).join("");
+  const dockerRows = (dockerContainers || []).map((c) => {
+    const color = c.state === "running" ? "#22c55e" : "#ef4444";
+    return `<tr>
+      <td>${escHtml(c.name)}</td>
+      <td><span class="badge" style="background:${color}">${c.state}</span></td>
+      <td class="detail">${escHtml(c.status)}</td>
+    </tr>`;
+  }).join("");
 
   const logHtml = logLines.map((l) =>
     `<div class="${logLineClass(l)}">${escHtml(l)}</div>`
@@ -699,11 +781,16 @@ ${renderNav("home", failureCount)}
   </div>
 
   <div class="card">
-    <h2>Services</h2>
-    <table><tbody>${supRows}${sysdRows}</tbody></table>
+    <h2>Poller Services</h2>
+    <table><tbody>${supRows}</tbody></table>
   </div>
 
-  ${renderFlyioCard(flyioHealth)}
+  <div class="card">
+    <h2>Docker Stack</h2>
+    ${dockerRows ? `<table><tbody>${dockerRows}</tbody></table>` : '<p class="no-data">Docker socket not mounted</p>'}
+  </div>
+
+  ${renderFlyioCard(flyioHealth, flyRuns, tursoUp)}
 </div>
 
 <div class="wide-card">
@@ -2083,7 +2170,7 @@ async function handleRequest(req, res) {
   }
 
   const client = getTursoClient();
-  const [tursoResult, runStats, failureCount, net, cpu, uptime, supervisord, systemd, logLines, flyioHealth, coverageStats, spotCoverage, failureTrend] = await Promise.all([
+  const [tursoResult, runStats, failureCount, net, cpu, uptime, supervisord, systemd, logLines, flyioHealth, coverageStats, spotCoverage, failureTrend, flyRuns, dockerContainers] = await Promise.all([
     fetchRunsFromTurso().then(rows => ({ rows, error: null })).catch(err => ({ rows: null, error: err.message })),
     client ? getRunStats(client).catch(() => null) : Promise.resolve(null),
     client ? getFailureCount(client) : Promise.resolve(0),
@@ -2097,17 +2184,22 @@ async function handleRequest(req, res) {
     client ? getCoverageStats(client, 48).catch(() => null) : Promise.resolve(null),
     client ? getSpotCoverage(client, 48).catch(() => null) : Promise.resolve(null),
     client ? getFailureTrend(client).catch(() => []) : Promise.resolve([]),
+    client ? fetchFlyioRuns(client).catch(() => null) : Promise.resolve(null),
+    Promise.resolve(getDockerContainers()),
   ]);
 
   const html = renderMainPage({
     net, cpu, uptime, supervisord, systemd, logLines, flyioHealth,
     tursoRuns: tursoResult.rows,
     tursoError: tursoResult.error,
+    tursoUp: !tursoResult.error,
     runStats,
     failureCount,
     coverageStats,
     spotCoverage,
     failureTrend,
+    flyRuns,
+    dockerContainers,
   });
 
   res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
