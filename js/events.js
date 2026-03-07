@@ -2438,12 +2438,12 @@ const setupDataManagementListeners = () => {
 const setupImportExportListeners = () => {
   debugLog("Setting up import/export listeners...");
 
-  // Import triads: Override / Merge / File-input for each format
-  setupFormatImport(elements.importCsvOverride, elements.importCsvMerge, elements.importCsvFile, importCsv, "CSV");
-  setupFormatImport(elements.importJsonOverride, elements.importJsonMerge, elements.importJsonFile, importJson, "JSON");
+  // Import pairs: Import button / File-input for each format (Merge buttons removed — all imports route through DiffModal)
+  setupFormatImport(elements.importCsvOverride, null, elements.importCsvFile, importCsv, "CSV");
+  setupFormatImport(elements.importJsonOverride, null, elements.importJsonFile, importJson, "JSON");
   setupFormatImport(
     document.getElementById("importNumistaBtn"),
-    document.getElementById("mergeNumistaBtn"),
+    null,
     elements.numistaImportFile, importNumistaCsv, "Numista CSV"
   );
 

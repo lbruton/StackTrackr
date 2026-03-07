@@ -91,14 +91,11 @@ const elements = {
   // Import elements
   importCsvFile: null,
   importCsvOverride: null,
-  importCsvMerge: null,
   importJsonFile: null,
   importJsonOverride: null,
-  importJsonMerge: null,
   importProgress: null,
   importProgressText: null,
   numistaImportFile: null,
-  numistaMerge: null,
 
   // Export elements
   exportCsvBtn: null,
