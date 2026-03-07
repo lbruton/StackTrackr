@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StakTrakr — DiffModal Item Cards Playground</title>
+<style>
+/* ═══════════════════════════════════════════
+   STAKTRAKR DESIGN TOKENS (production)
+   ═══════════════════════════════════════════ */
+:root {
+  --primary: #6366f1;
+  --primary-hover: #818cf8;
+  --primary-dim: rgba(99,102,241,0.15);
+  --gain: #22c55e;
+  --gain-dim: rgba(34,197,94,0.12);
+  --loss: #ef4444;
+  --loss-dim: rgba(239,68,68,0.12);
+  --warning: #d97706;
+  --warning-dim: rgba(217,119,6,0.12);
+  --info: #3b82f6;
+  --info-dim: rgba(59,130,246,0.12);
+
+  --bg-body: #0f1117;
+  --bg-card: #1a1d27;
+  --bg-card-hover: #22253a;
+  --bg-tertiary: #262a3a;
+  --bg-input: #1e2130;
+  --text-primary: #f0f0f5;
+  --text-secondary: #b0b3c6;
+  --text-muted: #6b7094;
+  --border-color: rgba(255,255,255,0.08);
+  --border-active: rgba(99,102,241,0.4);
+
+  --radius: 8px;
+  --radius-lg: 12px;
+  --radius-pill: 999px;
+  --shadow: 0 4px 24px rgba(0,0,0,0.3);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.5);
+  --glass: rgba(255,255,255,0.03);
+
+  --gold: #FFD700;
+  --silver: #C0C0C0;
+  --platinum: #E5E4E2;
+  --palladium: #CED0CE;
+}
+
+/* Light theme override */
+[data-theme="light"] {
+  --bg-body: #f5f5f8;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f0f0f5;
+  --bg-tertiary: #e8e9f0;
+  --bg-input: #f0f0f5;
+  --text-primary: #1a1a2e;
+  --text-secondary: #4a4b6a;
+  --text-muted: #8b8da8;
+  --border-color: rgba(0,0,0,0.1);
+  --border-active: rgba(99,102,241,0.4);
+  --glass: rgba(0,0,0,0.03);
+  --shadow: 0 4px 24px rgba(0,0,0,0.08);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg-body);
+  color: var(--text-primary);
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+/* ═══════════════════════════════════════════
+   LAYOUT
+   ═══════════════════════════════════════════ */
+.app-container { max-width: 640px; margin: 0 auto; padding: 1rem; }
+
+.app-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.75rem 1rem; margin-bottom: 1rem;
+  background: var(--bg-card); border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+}
+.app-header h1 { font-size: 1.1rem; font-weight: 600; }
+.app-header h1 span { color: var(--primary); }
+
+/* ═══════════════════════════════════════════
+   CONTROLS PANEL
+   ═══════════════════════════════════════════ */
+.controls-panel {
+  display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+  padding: 0.6rem 1rem; margin-bottom: 1rem;
+  background: var(--bg-card); border-radius: var(--radius);
+  border: 1px solid var(--border-color); font-size: 0.8rem;
+}
+.controls-panel label {
+  display: flex; align-items: center; gap: 0.4rem;
+  cursor: pointer; color: var(--text-secondary);
+}
+.controls-panel input[type="checkbox"] {
+  width: 14px; height: 14px; accent-color: var(--primary);
+}
+
+/* ═══════════════════════════════════════════
+   SHARED: PILLS, BADGES
+   ═══════════════════════════════════════════ */
+.pill {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  padding: 0.15rem 0.5rem; border-radius: var(--radius-pill);
+  font-size: 0.7rem; font-weight: 600; border: none;
+  white-space: nowrap;
+}
+.pill-gain { background: var(--gain-dim); color: var(--gain); }
+.pill-loss { background: var(--loss-dim); color: var(--loss); }
+.pill-warning { background: var(--warning-dim); color: var(--warning); }
+.pill-muted { background: var(--bg-tertiary); color: var(--text-muted); }
+
+/* ═══════════════════════════════════════════
+   SECTION HEADERS
+   ═══════════════════════════════════════════ */
+.diff-section { margin-bottom: 1rem; }
+
+.section-header {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.5rem 0.65rem;
+  background: var(--bg-card); border: 1px solid var(--border-color);
+  border-radius: var(--radius); cursor: pointer;
+  user-select: none; transition: background 0.15s;
+  margin-bottom: 0.5rem;
+}
+.section-header:hover { background: var(--bg-card-hover); }
+.section-icon { font-size: 0.85rem; flex-shrink: 0; }
+.section-label { font-size: 0.82rem; font-weight: 600; flex: 1; }
+.section-count {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 1.3rem; height: 1.3rem; border-radius: var(--radius-pill);
+  font-size: 0.65rem; font-weight: 700;
+}
+.section-count.gain { background: var(--gain-dim); color: var(--gain); }
+.section-count.loss { background: var(--loss-dim); color: var(--loss); }
+.section-count.warning { background: var(--warning-dim); color: var(--warning); }
+.section-toggle {
+  font-size: 0.65rem; color: var(--text-muted);
+  transition: transform 0.2s; flex-shrink: 0;
+}
+.section-header.collapsed .section-toggle { transform: rotate(-90deg); }
+.section-body { transition: all 0.2s; }
+.section-body.hidden { display: none; }
+
+/* ═══════════════════════════════════════════
+   ITEM CARDS — Added / Deleted (simple)
+   ═══════════════════════════════════════════ */
+.item-card {
+  display: flex; align-items: center; gap: 0.6rem;
+  border: 1px solid var(--border-color); border-radius: var(--radius);
+  padding: 0.65rem; margin-bottom: 0.5rem;
+  background: var(--bg-card); transition: border-color 0.15s;
+}
+.item-card:hover { border-color: var(--border-active); }
+.item-card:last-child { margin-bottom: 0; }
+
+.item-card .card-checkbox {
+  width: 16px; height: 16px; accent-color: var(--primary);
+  flex-shrink: 0; cursor: pointer;
+}
+
+/* Image / metal emoji placeholder */
+.item-thumb {
+  width: 40px; height: 40px; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem; flex-shrink: 0;
+  border: 1px solid var(--border-color);
+}
+.item-thumb.gold { background: rgba(255,215,0,0.12); }
+.item-thumb.silver { background: rgba(192,192,192,0.12); }
+.item-thumb.platinum { background: rgba(229,228,226,0.12); }
+.item-thumb.palladium { background: rgba(206,208,206,0.12); }
+
+.item-thumb img {
+  width: 100%; height: 100%; object-fit: cover;
+  border-radius: 5px; display: none;
+}
+.show-images .item-thumb img { display: block; }
+.show-images .item-thumb .thumb-emoji { display: none; }
+
+.item-identity { flex: 1; min-width: 0; }
+.item-name {
+  font-weight: 600; font-size: 0.85rem;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.item-meta {
+  display: flex; gap: 0.35rem; align-items: center;
+  font-size: 0.73rem; color: var(--text-muted); opacity: 0.5;
+  margin-top: 0.1rem;
+}
+.item-meta .dot { font-size: 0.5rem; }
+
+/* Deleted/local-only accent */
+.item-card.deleted-card {
+  border-left: 3px solid var(--loss);
+}
+
+/* ═══════════════════════════════════════════
+   MODIFIED ITEM CARDS (expandable)
+   ═══════════════════════════════════════════ */
+.modified-card {
+  border: 1px solid var(--border-color); border-radius: var(--radius);
+  padding: 0.65rem; margin-bottom: 0.5rem;
+  background: var(--bg-card); transition: border-color 0.15s;
+}
+.modified-card:hover { border-color: var(--border-active); }
+.modified-card:last-child { margin-bottom: 0; }
+
+.modified-card-header {
+  display: flex; align-items: center; gap: 0.6rem;
+  cursor: pointer; user-select: none;
+}
+
+.modified-card .master-checkbox {
+  width: 16px; height: 16px; accent-color: var(--primary);
+  flex-shrink: 0; cursor: pointer;
+}
+
+.modified-card .changes-pill {
+  font-size: 0.68rem; flex-shrink: 0;
+}
+
+.modified-card .expand-toggle {
+  font-size: 0.6rem; color: var(--text-muted);
+  transition: transform 0.2s; flex-shrink: 0; margin-left: auto;
+}
+.modified-card.collapsed .expand-toggle { transform: rotate(-90deg); }
+
+/* Field diff rows */
+.field-diffs { padding-top: 0.5rem; margin-top: 0.5rem; border-top: 1px solid var(--border-color); }
+.field-diffs.hidden { display: none; }
+
+.field-row {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.35rem 0; font-size: 0.8rem;
+  border-bottom: 1px solid rgba(255,255,255,0.025);
+}
+.field-row:last-child { border-bottom: none; }
+
+.field-row .field-checkbox {
+  width: 14px; height: 14px; accent-color: var(--primary);
+  flex-shrink: 0; cursor: pointer;
+}
+.field-label {
+  min-width: 100px; font-size: 0.72rem; color: var(--text-muted);
+  text-transform: capitalize; font-weight: 500; flex-shrink: 0;
+}
+.field-local {
+  text-decoration: line-through; opacity: 0.45;
+  font-size: 0.8rem;
+}
+.field-arrow { color: var(--text-muted); font-size: 0.75rem; margin: 0 0.15rem; flex-shrink: 0; }
+.field-remote { font-weight: 500; color: var(--warning); font-size: 0.8rem; }
+
+/* ═══════════════════════════════════════════
+   SCROLLBAR
+   ═══════════════════════════════════════════ */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--bg-tertiary); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* ═══════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════ */
+@media (max-width: 480px) {
+  .app-container { padding: 0.5rem; }
+  .field-label { min-width: 80px; }
+  .item-name { font-size: 0.8rem; }
+}
+
+/* ═══════════════════════════════════════════
+   ANIMATION
+   ═══════════════════════════════════════════ */
+.fade-in { animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+</head>
+<body>
+<div class="app-container">
+
+  <!-- HEADER -->
+  <header class="app-header">
+    <h1>DiffModal Item Cards <span>Playground</span></h1>
+    <span style="font-size:0.7rem;color:var(--text-muted);">STAK-454</span>
+  </header>
+
+  <!-- CONTROLS PANEL -->
+  <div class="controls-panel">
+    <label>
+      <input type="checkbox" id="ctrl-dark" checked>
+      Dark Theme
+    </label>
+    <label>
+      <input type="checkbox" id="ctrl-images">
+      Show Image Placeholders
+    </label>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       (a) ADDED ITEMS SECTION
+       ═══════════════════════════════════════ -->
+  <div class="diff-section fade-in" id="section-added">
+    <div class="section-header" data-section="added">
+      <span class="section-icon">+</span>
+      <span class="section-label">Added</span>
+      <span class="section-count gain">3</span>
+      <span class="section-toggle">&#9660;</span>
+    </div>
+    <div class="section-body" id="body-added">
+
+      <div class="item-card">
+        <input type="checkbox" class="card-checkbox" checked>
+        <div class="item-thumb gold" data-uuid="aaa-001">
+          <!-- Async image loads here via imageCache.getImage(uuid) -->
+          <img src="" alt="">
+          <span class="thumb-emoji">&#129689;</span>
+        </div>
+        <div class="item-identity">
+          <div class="item-name">2024 American Gold Eagle 1oz</div>
+          <div class="item-meta">
+            <span>Gold</span><span class="dot">&#8226;</span>
+            <span>1oz</span><span class="dot">&#8226;</span>
+            <span>Qty 2</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="item-card">
+        <input type="checkbox" class="card-checkbox" checked>
+        <div class="item-thumb silver" data-uuid="aaa-002">
+          <img src="" alt="">
+          <span class="thumb-emoji">&#129689;</span>
+        </div>
+        <div class="item-identity">
+          <div class="item-name">2024 Canadian Silver Maple 1oz</div>
+          <div class="item-meta">
+            <span>Silver</span><span class="dot">&#8226;</span>
+            <span>1oz</span><span class="dot">&#8226;</span>
+            <span>Qty 10</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="item-card">
+        <input type="checkbox" class="card-checkbox" checked>
+        <div class="item-thumb platinum" data-uuid="aaa-003">
+          <img src="" alt="">
+          <span class="thumb-emoji">&#129689;</span>
+        </div>
+        <div class="item-identity">
+          <div class="item-name">2024 Platinum Britannia 1oz</div>
+          <div class="item-meta">
+            <span>Platinum</span><span class="dot">&#8226;</span>
+            <span>1oz</span><span class="dot">&#8226;</span>
+            <span>Qty 1</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       (b) MODIFIED ITEMS SECTION
+       ═══════════════════════════════════════ -->
+  <div class="diff-section fade-in" id="section-modified">
+    <div class="section-header" data-section="modified">
+      <span class="section-icon">&#9998;</span>
+      <span class="section-label">Modified</span>
+      <span class="section-count warning">2</span>
+      <span class="section-toggle">&#9660;</span>
+    </div>
+    <div class="section-body" id="body-modified">
+
+      <!-- Modified card 1: Silver Eagle -->
+      <div class="modified-card" id="mod-1">
+        <div class="modified-card-header" data-card="mod-1">
+          <input type="checkbox" class="master-checkbox" checked>
+          <div class="item-thumb silver" data-uuid="mod-001">
+            <img src="" alt="">
+            <span class="thumb-emoji">&#129689;</span>
+          </div>
+          <div class="item-identity">
+            <div class="item-name">SAMPLE - American Silver Eagle 2025</div>
+            <div class="item-meta">
+              <span>Silver</span><span class="dot">&#8226;</span>
+              <span>1oz</span>
+            </div>
+          </div>
+          <span class="pill pill-warning changes-pill">3 fields changed</span>
+          <span class="expand-toggle">&#9660;</span>
+        </div>
+        <div class="field-diffs" data-fields-for="mod-1">
+          <div class="field-row">
+            <input type="checkbox" class="field-checkbox" checked>
+            <span class="field-label">Purchase Price</span>
+            <span class="field-local">$28.50</span>
+            <span class="field-arrow">&#8594;</span>
+            <span class="field-remote">$31.00</span>
+          </div>
+          <div class="field-row">
+            <input type="checkbox" class="field-checkbox" checked>
+            <span class="field-label">Quantity</span>
+            <span class="field-local">5</span>
+            <span class="field-arrow">&#8594;</span>
+            <span class="field-remote">3</span>
+          </div>
+          <div class="field-row">
+            <input type="checkbox" class="field-checkbox" checked>
+            <span class="field-label">Notes</span>
+            <span class="field-local">BU</span>
+            <span class="field-arrow">&#8594;</span>
+            <span class="field-remote">Proof</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modified card 2: Gold Maple -->
+      <div class="modified-card" id="mod-2">
+        <div class="modified-card-header" data-card="mod-2">
+          <input type="checkbox" class="master-checkbox" checked>
+          <div class="item-thumb gold" data-uuid="mod-002">
+            <img src="" alt="">
+            <span class="thumb-emoji">&#129689;</span>
+          </div>
+          <div class="item-identity">
+            <div class="item-name">SAMPLE - Canadian Gold Maple 2025</div>
+            <div class="item-meta">
+              <span>Gold</span><span class="dot">&#8226;</span>
+              <span>1oz</span>
+            </div>
+          </div>
+          <span class="pill pill-warning changes-pill">2 fields changed</span>
+          <span class="expand-toggle">&#9660;</span>
+        </div>
+        <div class="field-diffs" data-fields-for="mod-2">
+          <div class="field-row">
+            <input type="checkbox" class="field-checkbox" checked>
+            <span class="field-label">Purchase Price</span>
+            <span class="field-local">$1,850.00</span>
+            <span class="field-arrow">&#8594;</span>
+            <span class="field-remote">$1,920.00</span>
+          </div>
+          <div class="field-row">
+            <input type="checkbox" class="field-checkbox" checked>
+            <span class="field-label">Grade</span>
+            <span class="field-local">MS69</span>
+            <span class="field-arrow">&#8594;</span>
+            <span class="field-remote">MS70</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       (c) DELETED / LOCAL ONLY SECTION
+       ═══════════════════════════════════════ -->
+  <div class="diff-section fade-in" id="section-deleted">
+    <div class="section-header" data-section="deleted">
+      <span class="section-icon">&#8722;</span>
+      <span class="section-label">Deleted</span>
+      <span class="section-count loss">2</span>
+      <span class="section-toggle">&#9660;</span>
+    </div>
+    <div class="section-body" id="body-deleted">
+
+      <div class="item-card deleted-card">
+        <input type="checkbox" class="card-checkbox" checked>
+        <div class="item-thumb silver" data-uuid="del-001">
+          <img src="" alt="">
+          <span class="thumb-emoji">&#129689;</span>
+        </div>
+        <div class="item-identity">
+          <div class="item-name">2023 American Silver Eagle</div>
+          <div class="item-meta">
+            <span>Silver</span><span class="dot">&#8226;</span>
+            <span>1oz</span><span class="dot">&#8226;</span>
+            <span>Qty 5</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="item-card deleted-card">
+        <input type="checkbox" class="card-checkbox" checked>
+        <div class="item-thumb gold" data-uuid="del-002">
+          <img src="" alt="">
+          <span class="thumb-emoji">&#129689;</span>
+        </div>
+        <div class="item-identity">
+          <div class="item-name">2022 Gold Krugerrand 1oz</div>
+          <div class="item-meta">
+            <span>Gold</span><span class="dot">&#8226;</span>
+            <span>1oz</span><span class="dot">&#8226;</span>
+            <span>Qty 1</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ═══════════════════════════════════════════
+   CONTROLS PANEL
+   ═══════════════════════════════════════════ */
+(function() {
+  var ctrlDark = document.getElementById('ctrl-dark');
+  var ctrlImages = document.getElementById('ctrl-images');
+
+  ctrlDark.addEventListener('change', function() {
+    document.documentElement.setAttribute('data-theme', this.checked ? 'dark' : 'light');
+  });
+
+  ctrlImages.addEventListener('change', function() {
+    document.body.classList.toggle('show-images', this.checked);
+  });
+})();
+
+/* ═══════════════════════════════════════════
+   SECTION COLLAPSE / EXPAND
+   ═══════════════════════════════════════════ */
+(function() {
+  var headers = document.querySelectorAll('.section-header');
+  headers.forEach(function(header) {
+    header.addEventListener('click', function(e) {
+      if (e.target.tagName === 'INPUT') return;
+      var sectionName = this.getAttribute('data-section');
+      var body = document.getElementById('body-' + sectionName);
+      if (!body) return;
+      var isCollapsed = this.classList.toggle('collapsed');
+      body.classList.toggle('hidden', isCollapsed);
+    });
+  });
+})();
+
+/* ═══════════════════════════════════════════
+   MODIFIED CARD EXPAND / COLLAPSE
+   ═══════════════════════════════════════════ */
+(function() {
+  var modHeaders = document.querySelectorAll('.modified-card-header');
+  modHeaders.forEach(function(header) {
+    header.addEventListener('click', function(e) {
+      if (e.target.tagName === 'INPUT') return;
+      var cardId = this.getAttribute('data-card');
+      var card = document.getElementById(cardId);
+      var diffs = document.querySelector('[data-fields-for="' + cardId + '"]');
+      if (!card || !diffs) return;
+      var isCollapsed = card.classList.toggle('collapsed');
+      diffs.classList.toggle('hidden', isCollapsed);
+    });
+  });
+})();
+
+/* ═══════════════════════════════════════════
+   MASTER CHECKBOX + FIELD CHECKBOX SYNC
+   ═══════════════════════════════════════════ */
+(function() {
+  var modCards = document.querySelectorAll('.modified-card');
+
+  modCards.forEach(function(card) {
+    var master = card.querySelector('.master-checkbox');
+    var fieldBoxes = card.querySelectorAll('.field-checkbox');
+
+    if (!master || fieldBoxes.length === 0) return;
+
+    master.addEventListener('change', function() {
+      var checked = this.checked;
+      fieldBoxes.forEach(function(fb) { fb.checked = checked; });
+      this.indeterminate = false;
+    });
+
+    fieldBoxes.forEach(function(fb) {
+      fb.addEventListener('change', function() {
+        syncMaster(master, fieldBoxes);
+      });
+    });
+  });
+
+  function syncMaster(master, fieldBoxes) {
+    var total = fieldBoxes.length;
+    var checkedCount = 0;
+    fieldBoxes.forEach(function(fb) { if (fb.checked) checkedCount++; });
+
+    if (checkedCount === 0) {
+      master.checked = false;
+      master.indeterminate = false;
+    } else if (checkedCount === total) {
+      master.checked = true;
+      master.indeterminate = false;
+    } else {
+      master.checked = false;
+      master.indeterminate = true;
+    }
+  }
+})();
+
+/* ═══════════════════════════════════════════
+   SIMPLE CARD CHECKBOX (Added / Deleted)
+   Checkboxes are native — no extra JS needed
+   for basic toggle. This block is reserved for
+   future select-all logic.
+   ═══════════════════════════════════════════ */
+</script>
+</body>
+</html>
