@@ -16,6 +16,9 @@ const RETAIL_COIN_META = {
   "maple-silver":            { name: "Silver Maple Leaf",        weight: 1.0,  metal: "silver"   },
   "britannia-silver":        { name: "Silver Britannia",         weight: 1.0,  metal: "silver"   },
   "krugerrand-silver":       { name: "Silver Krugerrand",        weight: 1.0,  metal: "silver"   },
+  "kangaroo-silver":         { name: "Silver Kangaroo",          weight: 1.0,  metal: "silver"   },
+  "koala-silver":            { name: "Silver Koala",             weight: 1.0,  metal: "silver"   },
+  "kookaburra-silver":       { name: "Silver Kookaburra",        weight: 1.0,  metal: "silver"   },
   "generic-silver-round":    { name: "Generic Silver Round",     weight: 1.0,  metal: "silver"   },
   "generic-silver-bar-10oz": { name: "Generic 10oz Silver Bar",  weight: 10.0, metal: "silver"   },
   "age":                     { name: "American Gold Eagle",      weight: 1.0,  metal: "gold"     },
@@ -23,9 +26,6 @@ const RETAIL_COIN_META = {
   "maple-gold":              { name: "Gold Maple Leaf",          weight: 1.0,  metal: "gold"     },
   "krugerrand-gold":         { name: "Gold Krugerrand",          weight: 1.0,  metal: "gold"     },
   "ape":                     { name: "American Platinum Eagle",   weight: 1.0, metal: "platinum" },
-  "kangaroo-silver":         { name: "Silver Kangaroo",           weight: 1.0,  metal: "silver"   },
-  "koala-silver":            { name: "Silver Koala",              weight: 1.0,  metal: "silver"   },
-  "kookaburra-silver":       { name: "Silver Kookaburra",         weight: 1.0,  metal: "silver"   },
   "goldback-oklahoma-g1":    { name: "G1 Oklahoma Goldback",     weight: 0.001, metal: "goldback" },
 };
 
