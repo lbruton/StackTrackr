@@ -622,10 +622,10 @@
     html += '<div class="dm-section-actions">';
     if (isAdded) {
       html += '<button class="dm-btn dm-btn-sm dm-btn-primary" data-bulk-action="import" data-bulk-section="added">Import All</button>';
-      html += '<button class="dm-btn dm-btn-sm dm-btn-secondary" data-bulk-action="skip" data-bulk-section="added">Skip All</button>';
+      html += '<button class="dm-btn dm-btn-sm dm-btn-muted" data-bulk-action="skip" data-bulk-section="added">Skip All</button>';
     } else {
-      html += '<button class="dm-btn dm-btn-sm dm-btn-secondary" data-bulk-action="keep" data-bulk-section="deleted">Keep All</button>';
-      html += '<button class="dm-btn dm-btn-sm dm-btn-loss" data-bulk-action="remove" data-bulk-section="deleted">Remove All</button>';
+      html += '<button class="dm-btn dm-btn-sm dm-btn-gain" data-bulk-action="keep" data-bulk-section="deleted">Keep All</button>';
+      html += '<button class="dm-btn dm-btn-sm dm-btn-muted" data-bulk-action="remove" data-bulk-section="deleted">Remove All</button>';
     }
     html += '</div>';
     html += '</div>';
@@ -656,14 +656,16 @@
       if (item.weight != null) html += '<span>&#8226;</span><span>' + item.weight + ' ' + _esc(item.weightUnit || 'oz') + '</span>';
       if (item.qty != null) html += '<span>&#8226;</span><span>Qty: ' + item.qty + '</span>';
       html += '</div></div>';
-      // Action buttons
+      // Action buttons — active action gets prominent color, inactive gets muted
       html += '<div class="dm-orphan-actions">';
       if (isAdded) {
-        html += '<button class="dm-btn dm-btn-sm dm-btn-primary dm-action-btn" data-set-action="import" data-idx="' + i + '" data-type="' + type + '">&#8595; Import</button>';
-        html += '<button class="dm-btn dm-btn-sm dm-btn-secondary dm-skip-btn" data-set-action="skip" data-idx="' + i + '" data-type="' + type + '">Skip</button>';
+        var importActive = (action === 'import');
+        html += '<button class="dm-btn dm-btn-sm ' + (importActive ? 'dm-btn-primary' : 'dm-btn-muted') + ' dm-action-btn" data-set-action="import" data-idx="' + i + '" data-type="' + type + '">&#8595; Import</button>';
+        html += '<button class="dm-btn dm-btn-sm ' + (!importActive ? 'dm-btn-loss' : 'dm-btn-muted') + ' dm-skip-btn" data-set-action="skip" data-idx="' + i + '" data-type="' + type + '">Skip</button>';
       } else {
-        html += '<button class="dm-btn dm-btn-sm dm-btn-secondary dm-keep-btn" data-set-action="keep" data-idx="' + i + '" data-type="' + type + '">Keep</button>';
-        html += '<button class="dm-btn dm-btn-sm dm-btn-loss dm-remove-btn" data-set-action="remove" data-idx="' + i + '" data-type="' + type + '">Remove</button>';
+        var keepActive = (action === 'keep');
+        html += '<button class="dm-btn dm-btn-sm ' + (keepActive ? 'dm-btn-gain' : 'dm-btn-muted') + ' dm-keep-btn" data-set-action="keep" data-idx="' + i + '" data-type="' + type + '">Keep</button>';
+        html += '<button class="dm-btn dm-btn-sm ' + (!keepActive ? 'dm-btn-loss' : 'dm-btn-muted') + ' dm-remove-btn" data-set-action="remove" data-idx="' + i + '" data-type="' + type + '">Remove</button>';
       }
       html += '</div>';
       html += '</div>';
@@ -928,6 +930,28 @@
 
   // ── Event delegation (STAK-454 — card-based interactions) ──
 
+  /** Swap a button's style class based on active state and section type */
+  function _swapBtnClass(btn, sectionType, actionName, isActive) {
+    btn.classList.remove('dm-btn-primary', 'dm-btn-gain', 'dm-btn-loss', 'dm-btn-muted', 'dm-btn-secondary');
+    if (!isActive) {
+      btn.classList.add('dm-btn-muted');
+      return;
+    }
+    // Active: positive actions get their accent color, negative actions get loss
+    if (actionName === 'import') btn.classList.add('dm-btn-primary');
+    else if (actionName === 'keep') btn.classList.add('dm-btn-gain');
+    else btn.classList.add('dm-btn-loss'); // skip, remove
+  }
+
+  /** Update both action buttons on an orphan card to reflect the current action */
+  function _updateOrphanBtnStyles(card, type, action) {
+    var btns = card.querySelectorAll('[data-set-action]');
+    for (var bi = 0; bi < btns.length; bi++) {
+      var btnAction = btns[bi].dataset.setAction;
+      _swapBtnClass(btns[bi], type, btnAction, btnAction === action);
+    }
+  }
+
   /** Handle clicks on orphan cards (Added/Deleted) */
   function _onOrphanClick(e) {
     var target = e.target;
@@ -944,12 +968,13 @@
       // Also sync _checkedItems for backward compat
       if (type === 'added') _checkedItems[key] = (action !== 'skip');
       if (type === 'deleted') _checkedItems[key] = (action === 'remove');
-      // Toggle visual state
+      // Toggle visual state on card and buttons
       var card = actionBtn.closest('.dm-orphan-card');
       if (card) {
         var isSkipped = (action === 'skip' || action === 'remove');
         card.classList.toggle('skipped', isSkipped);
         card.dataset.action = action;
+        _updateOrphanBtnStyles(card, type, action);
       }
       _updateApplyCount();
       return;
@@ -971,6 +996,17 @@
         var bSkipped = (bulkAction === 'skip' || bulkAction === 'remove');
         bCard.classList.toggle('skipped', bSkipped);
         bCard.dataset.action = bulkAction;
+        _updateOrphanBtnStyles(bCard, bulkSection, bulkAction);
+      }
+      // Update bulk button styles in section header
+      var sectionWrapper = bulkBtn.closest('.dm-section-wrapper');
+      if (sectionWrapper) {
+        var bulkBtns = sectionWrapper.querySelectorAll('[data-bulk-action]');
+        for (var bbi = 0; bbi < bulkBtns.length; bbi++) {
+          var bb = bulkBtns[bbi];
+          var isActive = (bb.dataset.bulkAction === bulkAction);
+          _swapBtnClass(bb, bulkSection, bb.dataset.bulkAction, isActive);
+        }
       }
       _updateApplyCount();
       return;
@@ -1510,7 +1546,7 @@
         }
       }
       for (var d = 0; d < (diff.deleted || []).length; d++) {
-        _checkedItems['deleted-' + d] = true;
+        _checkedItems['deleted-' + d] = false;
         _orphanActions['deleted-' + d] = 'keep';
       }
 
