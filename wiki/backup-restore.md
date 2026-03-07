@@ -2,8 +2,8 @@
 title: Backup & Restore
 category: frontend
 owner: staktrakr
-lastUpdated: v3.33.55
-date: 2026-03-06
+lastUpdated: v3.33.58
+date: 2026-03-07
 sourceFiles:
   - js/cloud-storage.js
   - js/cloud-sync.js
@@ -15,7 +15,7 @@ relatedPages:
 ---
 # Backup & Restore
 
-> **Last updated:** v3.33.51 — 2026-03-05
+> **Last updated:** v3.33.58 — 2026-03-07
 > **Source files:** `js/cloud-storage.js`, `js/cloud-sync.js`, `js/utils.js`, `js/vault.js`
 
 ## Overview
@@ -59,7 +59,7 @@ There is no dedicated `backup.js` or `restore.js`. All backup and restore logic 
 - **All imports go through `buildImportValidationResult()` before DiffModal opens.** Items that fail validation are surfaced as a pre-validation warning toast and excluded from the DiffModal. If all items are invalid, the import is aborted with an error toast.
 - **All exports embed `exportOrigin` (`window.location.origin`).** On import, if the file's `exportOrigin` differs from the current domain, a cross-domain warning toast is shown before the DiffModal opens. This is informational only and never blocks the import.
 - **DiffModal shows a live count header** (Backup / Current / After import) and a warning when the projected count is less than the backup count.
-- **A summary banner appears after every import** (`showImportSummaryBanner()`) showing added / updated / removed / skipped counts, with collapsible skip reasons when items were rejected.
+- **A toast notification appears after every import** showing added / updated / removed / skipped counts. The former persistent `showImportSummaryBanner()` was removed in v3.33.58 — all post-import feedback now uses the standard toast system.
 
 ---
 
@@ -129,7 +129,7 @@ All remote changes (both sync updates and conflicts) flow directly into `handleR
 `js/utils.js` provides the import validation pipeline shared across all import paths:
 
 - `buildImportValidationResult(items, skippedNonPM)` — batch validation before DiffModal
-- `showImportSummaryBanner(result)` — persistent dismissible banner after import completes
+
 - `saveData(key, value)` / `loadData(key)` — all localStorage reads/writes go through these (never direct `localStorage.setItem`)
 - `sanitizeImportedItem(item)` — sanitizes raw imported item before validation
 
@@ -263,7 +263,7 @@ The backup/export panel shows a `<small class="format-desc">` beneath each optio
 5. If all invalid: abort with error toast
 6. If some invalid: show warning toast, proceed with valid items only
 7. Open `DiffModal` with `backupCount` and `localCount` for live count header
-8. On apply: merge items, call post-restore sequence, show `showImportSummaryBanner(result)`
+8. On apply: merge items, call post-restore sequence, show import summary toast
 
 ### ZIP Restore (`restoreBackupZip`)
 
@@ -369,7 +369,6 @@ Image blobs are NOT restored via vault — requires a separate ZIP or image vaul
 | Function | Signature | Purpose |
 |----------|-----------|---------|
 | `buildImportValidationResult` | `(items, skippedNonPM)` → `object` | Batch-validate sanitized items; returns `{ valid, invalid, skippedNonPM, skippedCount }` |
-| `showImportSummaryBanner` | `(result)` | Render dismissible summary banner above inventory table after import |
 | `saveData` | `(key, value)` | Write to localStorage via allowed-key guard |
 | `loadData` | `(key, defaultValue)` | Read from localStorage with JSON parse |
 
@@ -486,10 +485,10 @@ All JSON/CSV/vault imports use a **merge strategy** (not replace-all):
 | "Numista images came back immediately after vault restore" | Expected behavior. Numista CDN URLs (`obverseImageUrl`, `reverseImageUrl`) are stored on the inventory items in localStorage, so they survive any vault restore without touching IDB. | No action needed — this is correct. |
 | "Image vault upload failed during cloud push" | Image vault upload is non-fatal — the inventory vault still succeeds. | Check Dropbox token validity. The next successful push will retry the image vault if the hash changed. |
 | "Conflict prompt appeared after cloud pull" | Both local and remote have diverged — last push is more recent than last pull, meaning both sides have independent changes. | Review the DiffModal and choose which version to keep. |
-| "DiffModal shows fewer items than I expected" | Pre-validation in `buildImportValidationResult()` filters out invalid items before DiffModal opens. The count header shows backup count (including skipped) vs. projected count. | Check the pre-validation warning toast for the number of skipped items and their reasons. The post-import summary banner also lists skip reasons. |
+| "DiffModal shows fewer items than I expected" | Pre-validation in `buildImportValidationResult()` filters out invalid items before DiffModal opens. The count header shows backup count (including skipped) vs. projected count. | Check the pre-validation warning toast for the number of skipped items and their reasons. |
 | "I see a yellow cross-domain warning on import" | The file's `exportOrigin` (e.g., `https://beta.staktrakr.com`) differs from the current domain. | The warning is informational only. Proceed if you intentionally want to merge across environments. |
 | "The JSON file I exported doesn't look like a plain array anymore" | `exportJson()` now wraps items in an object with `items` and `exportMeta` fields. | Both the wrapped format and the legacy plain-array format are supported on import. Old files still import correctly. |
-| "Import shows a banner but also a toast" | If `safeGetElement()` cannot find the inventory table container, `showImportSummaryBanner()` falls back to `showToast()`. | Verify the inventory container element id is present in the DOM at import time. |
+| "Import only shows a toast, not the old banner" | The persistent `showImportSummaryBanner()` was removed in v3.33.58. All post-import feedback now uses standard toast notifications. | This is expected behavior. The toast shows added/updated/removed counts. |
 | "Push was blocked with 'Empty vault — pull first'" | Empty-vault guard in `pushSyncVault()` detected remote has items but local is empty. | Pull from cloud first to restore local inventory, then push will proceed normally. |
 | "OAuth relay rejected with 'state mismatch'" | `cloudCheckOAuthRelay` validates the `state` parameter from the localStorage relay against `cloud_oauth_state` in `sessionStorage`. A mismatch means the relay entry is stale or from a different OAuth session. | Re-initiate the OAuth flow from Settings → Cloud → Connect. |
 
