@@ -7,7 +7,7 @@
  *
  * Sources:
  *   - /proc (CPU, memory, network, uptime)
- *   - supervisorctl + systemctl (service health)
+ *   - supervisorctl (service health)
  *   - Turso poller_runs (last run stats per poller)
  *   - Turso provider_failures (failure queue stats)
  */
@@ -95,14 +95,6 @@ function collectServices() {
     }
   } catch {}
 
-  for (const svc of ["redis-server", "rabbitmq-server", "cron", "tailscaled", "tinyproxy"]) {
-    try {
-      execSync(`systemctl is-active --quiet ${svc}`, { timeout: 2000 });
-      metrics.push(`poller_service_up{service="${svc}",manager="systemd"} 1`);
-    } catch {
-      metrics.push(`poller_service_up{service="${svc}",manager="systemd"} 0`);
-    }
-  }
 
   return metrics;
 }
