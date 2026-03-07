@@ -1,5 +1,6 @@
 ## What's New
 
+- **Australian Coin Names Fix (v3.33.57)**: Kangaroo, Koala, and Kookaburra silver coins now display proper names instead of raw slugs in Market view (STAK-452).
 - **DiffModal UX Overhaul (v3.33.56)**: Card-based diff review with summary dashboard, per-item conflict cards with click-to-pick resolution, 7 settings category groups with human-readable labels, progress tracker for sync conflicts. Modal widened to 860px desktop, full-screen mobile (STAK-451).
 - **Dropbox Multi-Account UX (v3.33.55)**: Connected Dropbox account email and display name now shown in Cloud settings. Switch Account button forces re-authentication. Sign out of Dropbox helper link for clearing browser sessions (STAK-449).
 - **Dateless Items Sort as Oldest (v3.33.54)**: Items with no purchase date now sort as "infinitely old" — top when oldest-first, bottom when newest-first (STAK-448).
