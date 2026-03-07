@@ -3,7 +3,7 @@
 **For Claude Code (Desktop CLI)** — Local Mac development with MCP servers and skills.
 **For Claude.ai (Web)** — Use `AGENTS.md` instead. This file contains local-only tooling instructions.
 
-> See `~/.claude/CLAUDE.md` for global workflow rules (push safety, version checkout gate, PR lifecycle, MCP tools, code search tiers, UI design workflow, plugins).
+> See `~/.claude/CLAUDE.md` for global workflow rules (gates, branching, PR lifecycle, MCP servers, plugins, code search tiers, UI design workflow).
 
 ---
 
@@ -15,15 +15,15 @@ Works on `file://` and HTTP. Runtime artifact: zero build step, zero install. Se
 **Portfolio model**: Purchase Price / Melt Value / Retail Price. `meltValue` = `weight * qty * spot`.
 **Version format**: `BRANCH.RELEASE.PATCH` in `js/constants.js`. Use `/release` skill to bump (touches 7 files).
 
-**Patch versioning habit**: Run `/release patch` after every meaningful committed change — bug fix, UX tweak, feature addition. Each patch tag (`v3.32.03`) is a breadcrumb that lets us reconstruct a clean changelog at release time. Don't batch multiple changes under one version bump. The rule: **one meaningful change = one patch tag**.
+**Patch versioning habit**: Run `/release patch` after every meaningful committed change. Each patch tag (`v3.32.03`) is a breadcrumb for clean changelogs at release time. The rule: **one meaningful change = one patch tag**.
 
 ## Wiki — Project Technical Documentation
 
-`wiki/` (in-repo) is the **only** technical documentation for this project. There are no other doc sources. **Wiki updates MUST be committed to the branch BEFORE pushing or creating a PR.** This is a blocking step — wiki changes after PR creation are orphaned. Use `/wiki-update` (blocking) to auto-detect affected pages via frontmatter `sourceFiles`. For widespread changes, use `/wiki-sweep`.
+`wiki/` (in-repo) is the **only** technical documentation for this project. **Wiki updates MUST be committed to the branch BEFORE pushing or creating a PR.** Use `/wiki-update` (blocking) to auto-detect affected pages via frontmatter `sourceFiles`. For widespread changes, use `/wiki-sweep`.
 
 If a wiki page would become inaccurate after your change, updating it is not optional — treat it as part of the PR diff.
 
-### Source File → Wiki Page Matrix
+### Source File to Wiki Page Matrix
 
 When you change a file, update every wiki page listed in its row.
 
@@ -65,35 +65,23 @@ When you change a file, update every wiki page listed in its row.
 
 > **Separation of duties:** `StakTrakr` = frontend only. All API backend poller code, Fly.io devops, and GHA data workflows live in `lbruton/StakTrakrApi`. Do not add poller scripts, Fly.io config, or data-pipeline workflows to this repo.
 
-**Runbook:** See wiki/ for current runbooks: [`health.md`](wiki/health.md), [`fly-container.md`](wiki/fly-container.md), [`spot-pipeline.md`](wiki/spot-pipeline.md). (`docs/devops/api-infrastructure-runbook.md` is deprecated.)
+**Runbook:** See wiki/ for current runbooks: [`health.md`](wiki/health.md), [`fly-container.md`](wiki/fly-container.md), [`spot-pipeline.md`](wiki/spot-pipeline.md).
 
 Three feeds served from `lbruton/StakTrakrApi` **api branch** via GitHub Pages at `api.staktrakr.com`:
 
-| Feed | File | Poller | Stale threshold | Healthy check |
-|---|---|---|---|---|
-| Market prices | `data/api/manifest.json` | Fly.io retail cron (StakTrakrApi) | 30 min | `generated_at` within 30 min |
-| Spot prices | `data/hourly/YYYY/MM/DD/HH.json` | Fly.io `run-spot.sh` cron (StakTrakrApi) | 75 min | Last hourly file within 75 min |
-| Goldback | `data/api/goldback-spot.json` | Fly.io `run-goldback.sh` hourly :01 (StakTrakrApi) | 25h | `scraped_at` within 25h |
+| Feed | File | Poller | Stale threshold |
+|---|---|---|---|
+| Market prices | `data/api/manifest.json` | Fly.io retail cron | 30 min |
+| Spot prices | `data/hourly/YYYY/MM/DD/HH.json` | Fly.io `run-spot.sh` cron | 75 min |
+| Goldback | `data/api/goldback-spot.json` | Fly.io `run-goldback.sh` hourly :01 | 25h |
 
-**Critical:** `spot-history-YYYY.json` is a **seed file** (noon UTC daily), NOT live data. `api-health.js` currently checks it for spot freshness — always shows ~10h stale even when poller is healthy. Open bug (STAK-265 follow-up).
+**Critical:** `spot-history-YYYY.json` is a **seed file** (noon UTC daily), NOT live data.
 
-**NEVER start a local Docker spot-poller container.** `devops/spot-poller/` is a ghost directory — no live code, no container, no docker-compose.yml. Spot polling is Fly.io container cron only (`run-spot.sh` at `5,20,35,50 * * * *`).
+**NEVER start a local Docker spot-poller container.** `devops/spot-poller/` is a ghost directory. Spot polling is Fly.io container cron only.
 
-**No active failures as of 2026-02-22.** `sync-api-repos.yml` and `retail-price-poller.yml` deleted — both are gone.
+**Home poller SSH:** `ssh -T homepoller '<cmd>'` (LAN) or `ssh -T homepoller-ts '<cmd>'` (Tailscale). See `homepoller-ssh` skill.
 
-**Home poller SSH:** `ssh -T homepoller '<cmd>'` (LAN) or `ssh -T homepoller-ts '<cmd>'` (Tailscale). Full reference in `homepoller-ssh` skill. User `stakpoller` has NOPASSWD sudo.
-
-**Quick health check:**
-
-```bash
-# One-liner — paste into terminal
-curl -s https://api.staktrakr.com/data/api/manifest.json | python3 -c "
-import sys,json; from datetime import datetime,timezone; d=json.load(sys.stdin)
-age=(datetime.now(timezone.utc)-datetime.fromisoformat(d['generated_at'].replace('Z','+00:00'))).total_seconds()/60
-print(f'Market: {age:.0f}m ago  {\"✅\" if age<=30 else \"⚠️\"}')"
-fly logs --app staktrakr | grep -E 'spot|run-spot' | tail -5
-gh run list --repo lbruton/StakTrakrApi --workflow "Merge Poller Branches" --limit 3
-```
+**Quick health check:** See [wiki/health.md](wiki/health.md) for one-liners and monitoring commands.
 
 **mem0 recall:** `/remember api infrastructure` or `/remember active poller failures`
 
@@ -105,7 +93,7 @@ gh run list --repo lbruton/StakTrakrApi --workflow "Merge Poller Branches" --lim
 - **New JS files**: add to `sw.js` CORE_ASSETS AND script load order in `index.html` (70 script files, strict order)
 - **innerHTML**: always `sanitizeHtml()` on user content
 - **sw.js CACHE_NAME**: auto-stamped by pre-commit hook (`devops/hooks/stamp-sw-cache.sh`)
-- **Duplicate check**: when editing frontend code, check `events.js` AND `api.js` for duplicate function definitions before making changes — edits to the wrong file are a recurring source of lost time
+- **Duplicate check**: when editing frontend code, check `events.js` AND `api.js` for duplicate function definitions before making changes
 
 ## Testing
 
@@ -113,11 +101,13 @@ gh run list --repo lbruton/StakTrakrApi --workflow "Merge Poller Branches" --lim
 
 **TDD enforcement:** Write runbook test blocks BEFORE implementing code. Run `/bb-test sections=NN` after implementation to verify. Use `/browserbase-test-maintenance` to add test blocks after shipping a spec.
 
-**Test API keys** are stored in Infisical for tests requiring authentication (Numista, PCGS, etc.). Use the `secrets` skill to fetch them before running tests. Inject keys into localStorage via Stagehand after navigating to the app.
+**Ralph Loop oracle:** `/bb-test sections=NN` is the natural completion oracle for iterative bug fixes via `/ralph-loop` — set `--completion-promise` to the expected pass output so the loop exits automatically when tests go green.
 
-**Cloud sync and OAuth flows cannot be tested via Browserbase** — Cloudflare preview deployments use a different origin, which breaks Dropbox OAuth (the registered redirect URI only matches `beta.staktrakr.com`). Cloud sync fixes must be merged to `dev` first and tested manually by the user at `beta.staktrakr.com`.
+**Test API keys** are stored in Infisical. Use the `secrets` skill to fetch them before running tests. Inject keys into localStorage via Stagehand after navigating to the app.
 
-**Deprecated tests:** `tests/depreciated/` contains archived Playwright `.spec.js` files and legacy Browserbase TypeScript tests (`tests/depreciated/browserbase-legacy/`). These are kept as reference only — do not add to or run them.
+**Cloud sync and OAuth flows cannot be tested via Browserbase** — Cloudflare preview deployments use a different origin, which breaks Dropbox OAuth (registered redirect URI only matches `beta.staktrakr.com`).
+
+**Deprecated tests:** `tests/depreciated/` contains archived Playwright and legacy Browserbase tests. Reference only — do not add to or run them.
 
 ## Linear
 
@@ -127,6 +117,8 @@ Team: `f876864d-ff80-4231-ae6c-a8e5cb69aca4`
 
 ## Project Skills
 
-In `.claude/skills/`: `api-infrastructure`, `bb-test`, `brainstorming`, `browserbase-test-maintenance`, `bug-report`, `coding-standards`, `devops-dashboard`, `finishing-a-development-branch`, `homepoller-ssh`, `markdown-standards`, `prime`, `release`, `repo-boundaries`, `retail-poller`, `retail-provider-fix`, `scan-mentions`, `seed-sync`, `ship`, `sync-poller`, `ui-mockup`, `wiki-audit`, `wiki-search`, `wiki-sweep`, `wiki-update`.
+In `.claude/skills/`: `api-infrastructure`, `bb-test`, `brainstorming`, `browserbase-test-maintenance`, `bug-report`, `coding-standards`, `devops-dashboard`, `finishing-a-development-branch`, `gsd`, `homepoller-ssh`, `markdown-standards`, `release`, `repo-boundaries`, `retail-poller`, `retail-provider-fix`, `scan-mentions`, `seed-sync`, `ship`, `sync-poller`, `ui-mockup`, `wiki-audit`, `wiki-search`, `wiki-sweep`, `wiki-update`.
+
+Note: `/prime` is now a user-level skill (`~/.claude/skills/prime/`) that works across all projects.
 
 Use `/sync-instructions` after significant codebase changes.
