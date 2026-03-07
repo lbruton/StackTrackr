@@ -816,7 +816,16 @@
           if (!item) return;
           try {
             imageCache.resolveImageUrlForItem(item, side).then(function(url) {
-              if (url) el.innerHTML = '<img src="' + url + '" style="width:100%;height:100%;object-fit:cover;border-radius:var(--radius,8px)" alt="' + side + '">';
+              if (url) {
+                el.innerHTML = '<img src="' + url + '" style="width:100%;height:100%;object-fit:cover;border-radius:var(--radius,8px)" alt="' + side + '">';
+                return;
+              }
+              // Fallback: CDN URL from item properties (same as main app tier 2)
+              var urlKey = side === 'reverse' ? 'reverseImageUrl' : 'obverseImageUrl';
+              var cdnUrl = item[urlKey];
+              if (cdnUrl && /^https?:\/\/.+\..+/i.test(cdnUrl)) {
+                el.innerHTML = '<img src="' + cdnUrl + '" style="width:100%;height:100%;object-fit:cover;border-radius:var(--radius,8px)" alt="' + side + '">';
+              }
             }).catch(function() { /* silent fallback to OBV/REV text */ });
           } catch(e) { /* imageCache not available */ }
         })(thumbs[t]);
