@@ -145,7 +145,7 @@ GitHub Pages is configured to serve the **`api` branch**. The `Merge Poller Bran
 
 | Change type | Action needed |
 |-------------|--------------|
-| Fly.io poller code change | `git push origin main` to StakTrakrApi + `fly deploy` from `devops/fly-poller/` |
+| Fly.io poller code change | Push to StakTrakr branch + `cd devops/pollers && fly deploy --config remote-poller/fly.toml` |
 | Home poller code change | Push to StakTrakr branch + Portainer API redeploy (see `sync-poller` skill) |
 | Provider URL fix | Update via dashboard at `192.168.1.81:3010/providers` or `provider-db.js` — no redeploy |
 | New Fly.io secret | `fly secrets set KEY=value --app staktrakr` |
