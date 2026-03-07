@@ -721,12 +721,7 @@
 
 
   /** Metal emoji for item card image placeholders */
-  function _metalEmoji(metal) {
-    var m = (metal || '').toLowerCase();
-    if (m === 'gold') return '\uD83E\uDE99';
-    if (m === 'silver') return '\uD83E\uDE99';
-    if (m === 'platinum') return '\uD83E\uDE99';
-    if (m === 'palladium') return '\uD83E\uDE99';
+  function _metalEmoji() {
     return '\uD83E\uDE99';
   }
 
@@ -804,8 +799,8 @@
       // Metadata
       var detail = [];
       if (item.metal) detail.push(_esc(item.metal));
-      if (item.weight != null) detail.push(item.weight + _esc(item.weightUnit || 'oz'));
-      if (item.qty != null) detail.push('\u00d7 ' + item.qty);
+      if (item.weight != null) detail.push(_esc(item.weight) + _esc(item.weightUnit || 'oz'));
+      if (item.qty != null) detail.push('\u00d7 ' + _esc(item.qty));
       if (detail.length > 0) {
         html += '<div style="font-size:0.73rem;opacity:0.5;margin-top:0.1rem">' + detail.join(' \u00b7 ') + '</div>';
       }
@@ -982,7 +977,7 @@
         }
         // Update master checkbox state
         _checkedItems[masterKey] = !noneChecked;
-        var masterCb = target.closest('[data-cat="modified"]') || safeGetElement('diffSectionModified');
+        var masterCb = safeGetElement('diffSectionModified');
         if (masterCb) {
           var mc = masterCb.querySelector('[data-check="' + masterKey + '"]');
           if (mc) {
