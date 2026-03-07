@@ -783,19 +783,35 @@
     return html;
   }
 
-  /** Load images asynchronously for items with data-uuid attributes */
+  /** Load images asynchronously using resolveImageUrlForItem (same as main app) */
   function _loadItemImages() {
     try {
       var modal = safeGetElement(MODAL_ID);
-      if (!modal || typeof imageCache === 'undefined') return;
+      if (!modal || typeof imageCache === 'undefined' || !imageCache.resolveImageUrlForItem) return;
+
+      // Build UUID → item lookup from current diff data
+      var itemByUuid = {};
+      var diff = _options ? _options.diff || {} : {};
+      var allItems = (diff.added || []).concat(diff.deleted || []);
+      for (var mi = 0; mi < (diff.modified || []).length; mi++) {
+        allItems.push((diff.modified || [])[mi].item);
+      }
+      for (var ai = 0; ai < allItems.length; ai++) {
+        if (allItems[ai] && allItems[ai].uuid) {
+          itemByUuid[allItems[ai].uuid] = allItems[ai];
+        }
+      }
+
       var thumbs = modal.querySelectorAll('[data-uuid]');
       for (var t = 0; t < thumbs.length; t++) {
         (function(el) {
           var uuid = el.dataset.uuid;
           var side = el.dataset.side || 'obverse';
           if (!uuid) return;
+          var item = itemByUuid[uuid];
+          if (!item) return;
           try {
-            imageCache.getUserImageUrl(uuid, side).then(function(url) {
+            imageCache.resolveImageUrlForItem(item, side).then(function(url) {
               if (url) el.innerHTML = '<img src="' + url + '" style="width:100%;height:100%;object-fit:cover;border-radius:var(--radius,8px)" alt="' + side + '">';
             }).catch(function() { /* silent fallback to OBV/REV text */ });
           } catch(e) { /* imageCache not available */ }
