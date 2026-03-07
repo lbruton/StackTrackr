@@ -153,8 +153,8 @@ The diff review modal is a reusable change-review UI used by cloud sync and impo
 | `diffSummaryDashboard` | High-level counts dashboard shown at the top of the review |
 | `diffProgressTracker` | Conflict-resolution progress bar (visible only for cloud sync sources) |
 | `diffSectionConflicts` | Renders conflicting items that require user resolution |
-| `diffSectionOrphans` | Reserved placeholder for future orphan item rendering (currently unused) |
-| `diffSectionModified` | Scrollable list of modified items (max-height 320px, bordered) |
+| `diffSectionOrphans` | Renders Added and Deleted item cards with metal-colored image placeholders and async image loading |
+| `diffSectionModified` | Renders Modified item cards with expandable per-field checkboxes for granular merge selection (max-height 500px, bordered) |
 
 Supporting elements: `diffReviewTitle`, `diffReviewSource`, `diffReviewCountRow`, `diffReviewCountWarning`, `diffReviewSettings`. Action buttons: `diffReviewSelectAll`, `diffReviewDismissX`.
 
