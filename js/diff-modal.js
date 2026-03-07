@@ -296,13 +296,16 @@
   function _renderSummaryDashboard(container, diff, conflicts) {
     if (!container) return;
     var matched = (diff.unchanged || []).length;
-    var conflictCount = (conflicts && conflicts.conflicts || []).length;
+    var syncConflicts = (conflicts && conflicts.conflicts || []).length;
+    var modifiedCount = (diff.modified || []).length;
+    // Show whichever is relevant: true sync conflicts, or modified items for imports
+    var conflictCount = syncConflicts > 0 ? syncConflicts : modifiedCount;
     var remoteOnly = (diff.added || []).length;
     var localOnly = (diff.deleted || []).length;
 
     var cards = [
       { count: matched, label: 'Matched', target: 'diffSectionModified', color: '', style: 'opacity:0.5' },
-      { count: conflictCount, label: 'Conflicts', target: 'diffSectionConflicts', color: conflictCount > 0 ? 'color:#d97706' : '', style: '' },
+      { count: conflictCount, label: 'Conflicts', target: syncConflicts > 0 ? 'diffSectionConflicts' : 'diffSectionModified', color: conflictCount > 0 ? 'color:#d97706' : '', style: '' },
       { count: remoteOnly, label: 'Remote Only', target: 'diffSectionModified', color: '', style: '' },
       { count: localOnly, label: 'Local Only', target: 'diffSectionModified', color: '', style: '' }
     ];
