@@ -181,13 +181,14 @@ COPY --from=playwright-svc /usr/src/app /opt/playwright-service
 COPY --from=playwright-svc /usr/local/share/playwright /usr/local/share/playwright
 
 # ── PostgreSQL init SQL ─────────────────────────────────
-COPY nuq-postgres-init.sql /opt/postgres/nuq.sql
+COPY remote-poller/nuq-postgres-init.sql /opt/postgres/nuq.sql
 
 # ── Retail poller app ───────────────────────────────────
 WORKDIR /app
 RUN mv /tmp/tracker-blocklist.txt /app/tracker-blocklist.txt
 
-COPY package.json ./
+# ── Shared poller code (single source of truth) ──────────
+COPY shared/package.json ./
 RUN npm install --omit=dev
 
 # Spot-poller Python deps
@@ -195,12 +196,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends python3-pip \
     && rm -rf /var/lib/apt/lists/* \
     && python3 -m pip install --no-cache-dir --break-system-packages "requests>=2.32.4" python-dotenv
 
-COPY *.js ./
-COPY run-local.sh run-goldback.sh run-spot.sh run-publish.sh run-retry.sh ./
-RUN chmod +x run-local.sh run-goldback.sh run-spot.sh run-publish.sh run-retry.sh
+COPY shared/*.js ./
 
-# Spot-poller Python source (copied into build context by pre-deploy)
-COPY spot-poller/ /app/spot-poller/
+# Spot-poller Python source
+COPY shared/spot-poller/ /app/spot-poller/
+
+# ── Remote-specific files ─────────────────────────────────
+COPY remote-poller/run-local.sh remote-poller/run-goldback.sh remote-poller/run-spot.sh remote-poller/run-publish.sh remote-poller/run-retry.sh ./
+RUN chmod +x run-local.sh run-goldback.sh run-spot.sh run-publish.sh run-retry.sh
 
 # Git config for committing
 RUN git config --global user.name "StakTrakr Poller" \
@@ -221,10 +224,10 @@ RUN (echo "0 * * * * root . /etc/environment; /app/run-local.sh >> /var/log/reta
     && chmod 0644 /etc/cron.d/retail-poller
 
 # ── Supervisord config ──────────────────────────────────
-COPY supervisord.conf /etc/supervisor/conf.d/staktrakr.conf
+COPY remote-poller/supervisord.conf /etc/supervisor/conf.d/staktrakr.conf
 
 # ── Entrypoint ──────────────────────────────────────────
-COPY docker-entrypoint.sh /app/docker-entrypoint.sh
+COPY remote-poller/docker-entrypoint.sh /app/docker-entrypoint.sh
 RUN chmod +x /app/docker-entrypoint.sh
 
 EXPOSE 8080

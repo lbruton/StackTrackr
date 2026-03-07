@@ -55,9 +55,13 @@ const FIRECRAWL_TIMEOUT_MS = 55_000; // extended timeout for Firecrawl-preferred
 const RETRY_ATTEMPTS = 2;
 const RETRY_DELAY_MS = 3_000;
 
-// Jitter between requests: 2–8 seconds (randomised anti-pattern fingerprinting)
+// Jitter between requests — randomised anti-pattern fingerprinting.
+// Fly.io (datacenter IP) uses longer delays to avoid rate limits.
+const POLLER_ID = process.env.POLLER_ID || "unknown";
 function jitter() {
-  return new Promise(r => setTimeout(r, 500 + Math.random() * 1_500));
+  const base = POLLER_ID === "home" ? 500 : 2_000;
+  const range = POLLER_ID === "home" ? 1_500 : 6_000;
+  return new Promise(r => setTimeout(r, base + Math.random() * range));
 }
 
 // Fisher-Yates shuffle (in-place)
@@ -486,8 +490,7 @@ const FLY_PROXY_URL = process.env.FLY_PROXY_URL || null;
 const FLY_PW_SERVICE_PORT = process.env.FLY_PW_SERVICE_PORT || "3004";
 function resolveProxy(providerId) {
   const cfg = providerCfg(providerId);
-  const pollerId = process.env.POLLER_ID || "unknown";
-  const target = cfg.proxy?.[pollerId] || null;
+  const target = cfg.proxy?.[POLLER_ID] || null;
   if (target === "fly") return FLY_PROXY_URL;
   if (target === "home") return HOME_PROXY_URL;
   return null;
@@ -749,16 +752,15 @@ async function main() {
 
   // Start run log entry in Turso.
   // First, mark any orphaned "running" rows from previous crashed runs as "error".
-  const pollerId = process.env.POLLER_ID || "unknown";
   let runId = null;
   if (db) {
     try {
       await db.execute({
         sql: `UPDATE poller_runs SET status = 'error', error = 'orphaned — process crashed or was killed'
               WHERE poller_id = ? AND status = 'running'`,
-        args: [pollerId],
+        args: [POLLER_ID],
       });
-      runId = await startRunLog(db, { pollerId, startedAt: scrapedAt, total: targets.length });
+      runId = await startRunLog(db, { pollerId: POLLER_ID, startedAt: scrapedAt, total: targets.length });
     } catch (err) {
       warn(`Run log start failed (non-fatal): ${err.message.slice(0, 80)}`);
     }

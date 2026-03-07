@@ -5,7 +5,7 @@ app = 'staktrakr'
 primary_region = 'iad'
 
 [build]
-  dockerfile = "Dockerfile"
+  dockerfile = "remote-poller/Dockerfile"
 
 [env]
   POLLER_ID = "api"

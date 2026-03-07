@@ -1,11 +1,20 @@
 ---
 title: Fly.io Container
 category: infrastructure
-owner: staktrakr-api
-lastUpdated: v3.33.25
-date: 2026-03-02
-sourceFiles: []
-relatedPages: []
+owner: staktrakr
+lastUpdated: v3.33.57
+date: 2026-03-07
+sourceFiles:
+  - devops/pollers/remote-poller/Dockerfile
+  - devops/pollers/remote-poller/fly.toml
+  - devops/pollers/remote-poller/docker-entrypoint.sh
+  - devops/pollers/remote-poller/supervisord.conf
+  - devops/pollers/shared/price-extract.js
+  - devops/pollers/shared/api-export.js
+relatedPages:
+  - home-poller
+  - architecture-overview
+  - health
 ---
 
 # Fly.io Container
@@ -170,10 +179,12 @@ The `stale` flag is available for future frontend UI use. Vendor is kept in the 
 
 ## Deployment
 
+All poller code now lives in **StakTrakr** at `devops/pollers/`. The build context is `devops/pollers/` (parent directory), and the Dockerfile references `shared/` for common code and `remote-poller/` for Fly-specific files.
+
 ```bash
-# From repo root
-cd devops/fly-poller
-fly deploy
+# Deploy from StakTrakr repo
+cd devops/pollers
+fly deploy --config remote-poller/fly.toml
 
 # After deploy, verify services
 fly ssh console --app staktrakr -C "supervisorctl status"
@@ -193,6 +204,8 @@ fly ssh console --app staktrakr -C "curl -s https://ifconfig.me"
 ```
 
 **Code changes** require `fly deploy`. **Provider URL changes** do not — pollers read from Turso on each run. Use the [dashboard](home-poller.md) at `http://192.168.1.81:3010/providers` or `provider-db.js` CRUD functions. See [Provider Database](provider-database.md).
+
+> **Migration note (2026-03-07):** Fly.io code was previously deployed from `StakTrakrApi/devops/fly-poller/`. All code has been consolidated into `StakTrakr/devops/pollers/` with shared JS in `shared/` and Fly-specific files in `remote-poller/`. The `shared/` code is the single source of truth for both pollers.
 
 ---
 
