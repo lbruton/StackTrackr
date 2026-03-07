@@ -1,15 +1,11 @@
 #!/bin/bash
-# StakTrakr — Fly.io container health check via Tailscale
-# =========================================================
-# Pings the Fly.io container's Tailscale IP and checks its
-# public HTTP endpoint. Logs result to poller log and writes
-# a one-line status file readable by the dashboard.
+# StakTrakr — Fly.io container health check
+# ============================================
+# Checks Fly.io's public HTTP endpoint and optionally pings
+# its Tailscale IP. Writes status JSON for the dashboard.
 #
-# Run manually or add to cron.
-# Suggested cron (every 5 min, as root):
-#   */5 * * * * root /opt/poller/check-flyio.sh >> /var/log/retail-poller.log 2>&1
-#
-# Set FLYIO_TAILSCALE_IP once the container is back up.
+# Inside Docker (bridge network), Tailscale IPs are not routable
+# so the ping is best-effort. The HTTP check is the primary signal.
 
 FLYIO_TAILSCALE_IP="${FLYIO_TAILSCALE_IP:-100.90.171.110}"
 FLYIO_HTTP_URL="${FLYIO_HTTP_URL:-https://api2.staktrakr.com/data/retail/providers.json}"
@@ -18,21 +14,17 @@ TIMEOUT=10
 
 log() { echo "[$(date -u +%H:%M:%S)] [flyio-check] $*"; }
 
-# ── Tailscale ping ────────────────────────────────────────────────────────────
-if [ "$FLYIO_TAILSCALE_IP" = "TODO_REPLACE_WITH_IP" ]; then
-  log "WARN: FLYIO_TAILSCALE_IP not set — skipping Tailscale ping"
-  ts_ok=false
-  ts_ms="?"
-else
-  # Use ICMP ping — works from Docker via host Tailscale routing
+# ── Tailscale ping (best-effort — may not work from Docker bridge) ────────────
+ts_ok=false
+ts_ms="skipped"
+if [ "$FLYIO_TAILSCALE_IP" != "TODO_REPLACE_WITH_IP" ] && command -v ping > /dev/null 2>&1; then
   if ping -c 1 -W "$TIMEOUT" "$FLYIO_TAILSCALE_IP" > /dev/null 2>&1; then
     ts_ms=$(ping -c 1 -W "$TIMEOUT" "$FLYIO_TAILSCALE_IP" 2>/dev/null | grep -oP 'time=\K[0-9.]+' | head -1)
     ts_ok=true
     log "Tailscale ping OK (${ts_ms:-?}ms)"
   else
-    ts_ok=false
     ts_ms="timeout"
-    log "WARN: Tailscale ping FAILED"
+    log "INFO: Tailscale ping failed (expected from Docker bridge network)"
   fi
 fi
 
