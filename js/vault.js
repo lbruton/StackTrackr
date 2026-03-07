@@ -692,16 +692,6 @@ async function vaultRestoreWithPreview(fileBytes, password) {
           showToast('Backup restored: ' + (parts.length > 0 ? parts.join(', ') : 'no changes applied'));
         }
 
-        // Post-import summary banner (STAK-374)
-        if (typeof showImportSummaryBanner === 'function') {
-          showImportSummaryBanner({
-            added: addCount,
-            modified: modCount,
-            deleted: delCount,
-            skipped: 0,
-            skippedReasons: []
-          });
-        }
 
         // Restore companion photo vault if present
         if (capturedImageFile && typeof vaultDecryptAndRestoreImages === 'function') {
