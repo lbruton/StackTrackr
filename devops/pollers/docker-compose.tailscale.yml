@@ -1,0 +1,36 @@
+# StakTrakr Tailscale Sidecar — Network identity for StakTrakr services
+# ──────────────────────────────────────────────────────────────────────
+# Provides the Tailscale interface (100.112.198.50) that tinyproxy
+# binds to. Other containers join via network_mode: container:tailscale-staktrakr
+#
+# First deploy: migrate host state into the volume first:
+#   docker volume create tailscale-staktrakr-state
+#   sudo cp -a /var/lib/tailscale/. /var/lib/docker/volumes/tailscale-staktrakr-state/_data/
+#
+# Deploy: Portainer API stack from git repo
+
+services:
+  tailscale:
+    image: tailscale/tailscale:latest
+    container_name: tailscale-staktrakr
+    hostname: stacktrckr-home
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    volumes:
+      - tailscale-state:/var/lib/tailscale
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      - TS_STATE_DIR=/var/lib/tailscale
+      - TS_USERSPACE=false
+      - TS_ACCEPT_DNS=false
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+volumes:
+  tailscale-state:
+    name: tailscale-staktrakr-state
