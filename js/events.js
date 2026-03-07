@@ -347,32 +347,23 @@ const handleImageDeletion = async (uuid) => {
 };
 
 /**
- * Sets up the override/merge/file-input triad for a single import format.
- * @param {HTMLElement|null} overrideBtn - "Override" button element
- * @param {HTMLElement|null} mergeBtn - "Merge" button element
+ * Sets up import button(s) and file-input for a single import format.
+ * All imports route through the DiffModal for review — no silent override.
+ * @param {HTMLElement|null} overrideBtn - Primary "Import" button element
+ * @param {HTMLElement|null} mergeBtn - Legacy "Merge" button element (pending removal)
  * @param {HTMLElement|null} fileInput - Hidden file input element
- * @param {Function} importFn - Import function (file, isOverride) => void
+ * @param {Function} importFn - Import function (file, override) => void
  * @param {string} formatName - Human label (e.g. "CSV", "JSON", "Numista CSV")
  */
 const setupFormatImport = (overrideBtn, mergeBtn, fileInput, importFn, formatName) => {
-  let isOverride = false;
-
   if (overrideBtn && fileInput) {
-    safeAttachListener(overrideBtn, "click", async () => {
-      const confirmed = await appConfirm(
-        `Importing ${formatName} will overwrite all existing data. To combine data, choose Merge instead. Press OK to continue.`,
-        `${formatName} Import`,
-      );
-      if (confirmed) {
-        isOverride = true;
-        fileInput.click();
-      }
-    }, `${formatName} override button`);
+    safeAttachListener(overrideBtn, "click", () => {
+      fileInput.click();
+    }, `${formatName} import button`);
   }
 
   if (mergeBtn && fileInput) {
     safeAttachListener(mergeBtn, "click", () => {
-      isOverride = false;
       fileInput.click();
     }, `${formatName} merge button`);
   }
@@ -380,7 +371,7 @@ const setupFormatImport = (overrideBtn, mergeBtn, fileInput, importFn, formatNam
   optionalListener(fileInput, "change", function (e) {
     if (e.target.files.length > 0) {
       const file = e.target.files[0];
-      importFn(file, isOverride);
+      importFn(file, false);
     }
     this.value = "";
   }, `${formatName} import`);
@@ -2447,12 +2438,12 @@ const setupDataManagementListeners = () => {
 const setupImportExportListeners = () => {
   debugLog("Setting up import/export listeners...");
 
-  // Import triads: Override / Merge / File-input for each format
-  setupFormatImport(elements.importCsvOverride, elements.importCsvMerge, elements.importCsvFile, importCsv, "CSV");
-  setupFormatImport(elements.importJsonOverride, elements.importJsonMerge, elements.importJsonFile, importJson, "JSON");
+  // Import pairs: Import button / File-input for each format (Merge buttons removed — all imports route through DiffModal)
+  setupFormatImport(elements.importCsvOverride, null, elements.importCsvFile, importCsv, "CSV");
+  setupFormatImport(elements.importJsonOverride, null, elements.importJsonFile, importJson, "JSON");
   setupFormatImport(
     document.getElementById("importNumistaBtn"),
-    document.getElementById("mergeNumistaBtn"),
+    null,
     elements.numistaImportFile, importNumistaCsv, "Numista CSV"
   );
 
