@@ -2,8 +2,8 @@
 title: Vendor Quirks
 category: infrastructure
 owner: staktrakr
-lastUpdated: v3.33.52
-date: 2026-03-05
+lastUpdated: v3.33.57
+date: 2026-03-06
 sourceFiles:
   - js/retail.js
   - js/api.js

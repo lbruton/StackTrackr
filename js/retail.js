@@ -4,6 +4,7 @@
 /** All tracked coin slugs, display order */
 const RETAIL_SLUGS = [
   "ase", "maple-silver", "britannia-silver", "krugerrand-silver",
+  "kangaroo-silver", "koala-silver", "kookaburra-silver",
   "generic-silver-round", "generic-silver-bar-10oz",
   "age", "buffalo", "maple-gold", "krugerrand-gold", "ape",
   "goldback-oklahoma-g1",
@@ -15,6 +16,9 @@ const RETAIL_COIN_META = {
   "maple-silver":            { name: "Silver Maple Leaf",        weight: 1.0,  metal: "silver"   },
   "britannia-silver":        { name: "Silver Britannia",         weight: 1.0,  metal: "silver"   },
   "krugerrand-silver":       { name: "Silver Krugerrand",        weight: 1.0,  metal: "silver"   },
+  "kangaroo-silver":         { name: "Silver Kangaroo",          weight: 1.0,  metal: "silver"   },
+  "koala-silver":            { name: "Silver Koala",             weight: 1.0,  metal: "silver"   },
+  "kookaburra-silver":       { name: "Silver Kookaburra",        weight: 1.0,  metal: "silver"   },
   "generic-silver-round":    { name: "Generic Silver Round",     weight: 1.0,  metal: "silver"   },
   "generic-silver-bar-10oz": { name: "Generic 10oz Silver Bar",  weight: 10.0, metal: "silver"   },
   "age":                     { name: "American Gold Eagle",      weight: 1.0,  metal: "gold"     },
