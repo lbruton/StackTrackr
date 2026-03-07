@@ -557,6 +557,8 @@ const formatDisplayDate = (dateStr) => {
  * @param {string} [currency=DEFAULT_CURRENCY] - ISO currency code
  * @returns {string} Formatted currency string (e.g., "$1,234.56")
  */
+const _currencyFormatters = new Map();
+
 const formatCurrency = (value, currency = (typeof displayCurrency !== 'undefined' ? displayCurrency : DEFAULT_CURRENCY)) => {
   const num = parseFloat(value);
   if (isNaN(num)) return "";
@@ -564,10 +566,15 @@ const formatCurrency = (value, currency = (typeof displayCurrency !== 'undefined
   const rate = (typeof getExchangeRate === 'function') ? getExchangeRate(currency) : 1;
   const converted = num * rate;
   try {
-    return new Intl.NumberFormat(undefined, {
-      style: "currency",
-      currency,
-    }).format(converted);
+    let formatter = _currencyFormatters.get(currency);
+    if (!formatter) {
+      formatter = new Intl.NumberFormat(undefined, {
+        style: "currency",
+        currency,
+      });
+      _currencyFormatters.set(currency, formatter);
+    }
+    return formatter.format(converted);
   } catch (e) {
     // Fallback for environments without Intl support
     return `${currency} ${converted.toFixed(2)}`;
