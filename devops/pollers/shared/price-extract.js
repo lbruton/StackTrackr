@@ -57,7 +57,7 @@ const RETRY_DELAY_MS = 3_000;
 
 // Jitter between requests: 2–8 seconds (randomised anti-pattern fingerprinting)
 function jitter() {
-  return new Promise(r => setTimeout(r, 2_000 + Math.random() * 6_000));
+  return new Promise(r => setTimeout(r, 500 + Math.random() * 1_500));
 }
 
 // Fisher-Yates shuffle (in-place)
@@ -402,55 +402,141 @@ function sleep(ms) {
   return new Promise(r => setTimeout(r, ms));
 }
 
-// Providers that need extra wait time to render prices (JS-heavy SPAs).
-// jmbullion/herobullion: Next.js/React, needs ~5s to populate price tables.
-// monumentmetals: full SPA (React Native Web), router doesn't mount until ~6s.
-// bullionexchanges: React/Magento SPA, pricing grid doesn't render until ~6-8s.
-const SLOW_PROVIDERS = new Set(["jmbullion", "herobullion", "monumentmetals", "summitmetals", "bullionexchanges"]);
+// ---------------------------------------------------------------------------
+// Per-Provider Scraping Configuration
+// ---------------------------------------------------------------------------
+// Single source of truth for all vendor-specific scraping behavior.
+// Replaces scattered SLOW_PROVIDERS, FIRECRAWL_PREFERRED_PROVIDERS,
+// FIRECRAWL_TABLE_PARSE_PROVIDERS, FRACTIONAL_EXEMPT_PROVIDERS, and
+// inline if-chains for timeouts/waitFor/waitUntil.
+//
+// proxy.{pollerId}: "fly" = route through Fly.io proxy, "home" = route through
+//   home residential proxy, null = use poller's own IP.
 
-// Providers where self-hosted Firecrawl is unreliable — skip Phase 1 entirely,
-// fall straight through to Playwright Phase 2.
-// UPDATE 2026-02-26: jmbullion and bullionexchanges REMOVED. Firecrawl now works
-// for both via the Playwright Service (port 3003) with waitFor from SLOW_PROVIDERS.
-// Raw chromium.launch() in Phase 2 gets 403'd by bot detection on both sites,
-// but Firecrawl's Playwright Service has stealth patches that bypass it.
-// Keeping the set empty — default routing is Phase 0 (Playwright-direct) first;
-// vendors needing Firecrawl are in FIRECRAWL_PREFERRED_PROVIDERS instead.
-const PLAYWRIGHT_ONLY_PROVIDERS = new Set([]);
+const PROVIDER_DEFAULTS = {
+  phase: "phase0",             // try Phase 0 (Playwright-direct) first
+  waitFor: 0,                  // Firecrawl waitFor (ms) — 0 = no extra wait
+  waitUntil: "networkidle",    // Phase 0 page.goto waitUntil
+  waitAfter: 0,                // Phase 0 extra wait after page load (ms)
+  timeout: SCRAPE_TIMEOUT_MS,  // Firecrawl abort timeout
+  onlyMainContent: true,       // Firecrawl onlyMainContent flag
+  retryOn408: true,            // allow retry on Firecrawl 408 timeout
+  fractionalExempt: false,     // skip fractional_weight nav false-positive check
+  proxy: {},                   // per-poller proxy routing
+};
 
-// Vendors whose pages use HTML pricing tables that Playwright-direct cannot
-// parse correctly. innerText strips pipe delimiters, so firstTableRowFirstPrice()
-// silently fails and firstInRangePriceProse() grabs wrong prices from nav/header
-// elements. These vendors skip Phase 0 and go straight to Phase 1 (Firecrawl),
-// which converts HTML tables to markdown pipes for correct extraction.
-const FIRECRAWL_PREFERRED_PROVIDERS = new Set([
-  "apmex",            // HTML table → innerText loses pipes → wrong price
-  "monumentmetals",   // Same table extraction issue
-  "jmbullion",        // Bot detection + prose table needs Firecrawl stealth
-  "bullionexchanges", // Bot detection requires Firecrawl stealth patches
-]);
+const PROVIDER_CONFIG = {
+  apmex: {
+    phase: "firecrawl",         // HTML table → innerText loses pipes → wrong price
+    waitFor: 8000,
+    timeout: FIRECRAWL_TIMEOUT_MS,
+  },
+  monumentmetals: {
+    phase: "firecrawl",         // Same table extraction issue as apmex
+    waitFor: 5000,
+    timeout: 35_000,
+    retryOn408: false,          // page either renders in time or doesn't
+  },
+  jmbullion: {
+    phase: "firecrawl",         // Bot detection + prose table needs Firecrawl
+    waitFor: 10_000,
+    timeout: 40_000,
+    onlyMainContent: false,     // React pages return empty with onlyMainContent
+    retryOn408: false,          // retrying won't help — skip to save ~40s
+    fractionalExempt: true,     // mega-menu lists fractional coins on every page
+  },
+  bullionexchanges: {
+    phase: "firecrawl",         // Cloudflare bot management — needs stealth
+    waitFor: 15_000,            // React pricing grid needs 12-15s to fully hydrate
+    timeout: 70_000,            // extended timeout for 15s waitFor + round-trip
+    fractionalExempt: true,     // Related Products section lists fractional variants
+    proxy: {
+      home: "fly",              // home poller routes through Fly.io (better CF reputation)
+      fly: null,                // Fly.io uses its own IP (93%+ success rate)
+    },
+  },
+  sdbullion: {
+    waitUntil: "domcontentloaded",  // fast — no need for networkidle
+  },
+  herobullion: {
+    waitUntil: "domcontentloaded",  // fast — no need for networkidle
+    waitAfter: 2_000,              // light JS hydration wait
+  },
+  summitmetals: {
+    // defaults are fine — phase0 + networkidle
+  },
+  goldback: {
+    // defaults are fine — phase0 + networkidle
+  },
+};
 
-// Subset of FIRECRAWL_PREFERRED_PROVIDERS that are in the set due to HTML table
-// parsing only — not bot detection. Phase 0 Playwright-direct is safe for these
-// on individual product detail pages (e.g. goldback slugs) where the page shows
-// a single price element rather than a multi-row pricing table.
-// jmbullion and bullionexchanges are intentionally excluded: they require
-// Firecrawl's stealth patches to avoid 403s from bot detection on datacenter IPs.
+// Merge defaults into each provider config
+for (const [id, cfg] of Object.entries(PROVIDER_CONFIG)) {
+  PROVIDER_CONFIG[id] = { ...PROVIDER_DEFAULTS, ...cfg, proxy: { ...PROVIDER_DEFAULTS.proxy, ...cfg.proxy } };
+}
+
+// Helper: get config for a provider (falls back to defaults for unknown vendors)
+function providerCfg(providerId) {
+  return PROVIDER_CONFIG[providerId] || PROVIDER_DEFAULTS;
+}
+
+// Resolve proxy URL for this provider on the current poller instance
+const FLY_PROXY_URL = process.env.FLY_PROXY_URL || null;
+// Port of the Fly.io-proxied playwright-service (for BEx Cloudflare bypass)
+const FLY_PW_SERVICE_PORT = process.env.FLY_PW_SERVICE_PORT || "3004";
+function resolveProxy(providerId) {
+  const cfg = providerCfg(providerId);
+  const pollerId = process.env.POLLER_ID || "unknown";
+  const target = cfg.proxy?.[pollerId] || null;
+  if (target === "fly") return FLY_PROXY_URL;
+  if (target === "home") return HOME_PROXY_URL;
+  return null;
+}
+
+// Compatibility shims — used in code that still references the old Sets.
+// TODO: Remove these after all callsites are refactored to use providerCfg().
+const SLOW_PROVIDERS = new Set(Object.entries(PROVIDER_CONFIG).filter(([,c]) => c.waitFor > 0).map(([id]) => id));
+const FIRECRAWL_PREFERRED_PROVIDERS = new Set(Object.entries(PROVIDER_CONFIG).filter(([,c]) => c.phase === "firecrawl").map(([id]) => id));
 const FIRECRAWL_TABLE_PARSE_PROVIDERS = new Set(["apmex", "monumentmetals"]);
+const PLAYWRIGHT_ONLY_PROVIDERS = new Set([]);  // kept empty — all routing is via PROVIDER_CONFIG.phase
+const FRACTIONAL_EXEMPT_PROVIDERS = new Set(Object.entries(PROVIDER_CONFIG).filter(([,c]) => c.fractionalExempt).map(([id]) => id));
 
-// Providers whose pages structurally include fractional coin thumbnails/links in
-// their global nav or mega-menu, causing false fractional_weight detection even
-// on the correct 1-oz product page. For these, skip the fractional_weight check
-// and rely on URL correctness (providers.json) + metal price range validation.
-//   jmbullion: mega-menu always lists "1/2 oz Gold Eagle", "1/4 oz Gold Eagle", etc.
-//              regardless of which product page is loaded.
-//   bullionexchanges: Related Products section lists fractional variants (e.g.
-//              "1/2 oz Platinum American Eagle") on every product page.
-const FRACTIONAL_EXEMPT_PROVIDERS = new Set(["jmbullion", "bullionexchanges"]);
+
+
+// Scrape via proxied playwright-service (port 3004) — bypasses Firecrawl entirely.
+// Returns plain text (like Phase 0 innerText), not markdown.
+// Used for vendors behind Cloudflare that need the Fly.io IP.
+async function scrapeViaProxy(url, waitFor = 15000, timeout = 40000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeout);
+  try {
+    const resp = await fetch(`http://localhost:${FLY_PW_SERVICE_PORT}/scrape`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url, wait_after_load: waitFor, timeout }),
+      signal: controller.signal,
+    });
+    if (!resp.ok) throw new Error(`playwright-service-fly HTTP ${resp.status}`);
+    const json = await resp.json();
+    if (json.pageStatusCode && json.pageStatusCode >= 400) {
+      throw new Error(`upstream ${json.pageStatusCode}: ${json.pageError || "error"}`);
+    }
+    // Convert HTML to plain text (strip tags) for extractPrice()
+    const html = json.content || "";
+    const text = html.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
+                     .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
+                     .replace(/<[^>]+>/g, " ")
+                     .replace(/\s+/g, " ")
+                     .trim();
+    return text;
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 async function scrapeUrl(url, providerId = "", attempt = 1) {
   const controller = new AbortController();
-  const scrapeTimeout = FIRECRAWL_PREFERRED_PROVIDERS.has(providerId) ? FIRECRAWL_TIMEOUT_MS : SCRAPE_TIMEOUT_MS;
+  const scrapeTimeout = providerCfg(providerId).timeout;
   const timer = setTimeout(() => controller.abort(), scrapeTimeout);
 
   const body = {
@@ -458,14 +544,13 @@ async function scrapeUrl(url, providerId = "", attempt = 1) {
     formats: ["markdown"],
     // JM Bullion's React pages sometimes return empty markdown with onlyMainContent.
     // Disable it for JM — our MARKDOWN_CUTOFF_PATTERNS handle noise removal instead.
-    onlyMainContent: providerId !== "jmbullion",
+    onlyMainContent: providerCfg(providerId).onlyMainContent,
   };
   // JS-heavy SPAs need time to mount and render prices; 8s covers all slow providers.
   // (Bumped from 6s after jmbullion/bullionexchanges were removed from PLAYWRIGHT_ONLY;
   // their React SPAs need the extra 2s to fully render pricing tables.)
-  if (SLOW_PROVIDERS.has(providerId)) {
-    body.waitFor = providerId === "jmbullion" ? 12000 : 8000;
-  }
+  const cfgWaitFor = providerCfg(providerId).waitFor;
+  if (cfgWaitFor > 0) body.waitFor = cfgWaitFor;
 
   try {
     const response = await fetch(`${FIRECRAWL_BASE_URL}/v1/scrape`, {
@@ -485,6 +570,14 @@ async function scrapeUrl(url, providerId = "", attempt = 1) {
       if (response.status === 403) {
         throw Object.assign(
           new Error(`HTTP 403 (blocked): ${text.slice(0, 200)}`),
+          { skipRetry: true }
+        );
+      }
+      // 408 = Firecrawl scrape timeout. For jmbullion, retrying won't help —
+      // the page either renders in time or it doesn't. Skip retries to save ~40s.
+      if (response.status === 408 && !providerCfg(providerId).retryOn408) {
+        throw Object.assign(
+          new Error(`HTTP 408 (scrape timeout, jmb/monument retry disabled): ${text.slice(0, 200)}`),
           { skipRetry: true }
         );
       }
@@ -556,7 +649,8 @@ async function scrapeWithPlaywrightDirect(url, providerId, coin) {
     });
 
     await page.setExtraHTTPHeaders({ "Accept-Language": "en-US,en;q=0.9" });
-    const response = await page.goto(url, { waitUntil: "networkidle", timeout: DIRECT_TIMEOUT_MS });
+    const phase0WaitUntil = providerCfg(providerId).waitUntil;
+    const response = await page.goto(url, { waitUntil: phase0WaitUntil, timeout: DIRECT_TIMEOUT_MS });
 
     // 403 = bot detection — bail immediately, let Firecrawl handle it
     if (response && response.status() === 403) {
@@ -564,9 +658,11 @@ async function scrapeWithPlaywrightDirect(url, providerId, coin) {
       return null;
     }
 
-    // Extra wait for JS-heavy SPAs
-    if (SLOW_PROVIDERS.has(providerId)) {
-      await page.waitForTimeout(8_000);
+    // Per-provider extra wait for JS rendering (Phase A: herobullion 8s->2s)
+    // Phase 0 wait handled by providerCfg().waitAfter
+    const phase0Wait = providerCfg(providerId).waitAfter;
+    if (phase0Wait > 0) {
+      await page.waitForTimeout(phase0Wait);
     }
 
     const text = await page.evaluate(() => document.body.innerText);
@@ -730,7 +826,34 @@ async function main() {
         if (i > 0) log(`  → ${coinSlug}/${provider.id}: fallback URL [${i}]: ${url}`);
 
         try {
-          const markdown = await scrapeUrl(url, provider.id);
+          // Proxy-first path: if this provider routes through an alternate IP,
+          // try the proxied playwright-service first (e.g., Fly.io IP for BEx).
+          let markdown;
+          const proxyTarget = resolveProxy(provider.id);
+          if (proxyTarget) {
+            try {
+              const cfg = providerCfg(provider.id);
+              const proxyText = await scrapeViaProxy(url, cfg.waitFor, cfg.timeout);
+              // scrapeViaProxy returns plain text (like Phase 0), not markdown.
+              // Use it directly for extraction — preprocessMarkdown handles both.
+              const proxyCleaned = preprocessMarkdown(proxyText, provider.id);
+              const proxyStock = detectStockStatus(proxyCleaned, coin.weight_oz || 1, provider.id);
+              const proxyExtracted = extractPrice(proxyCleaned, coin.metal, coin.weight_oz || 1, provider.id);
+              if (proxyExtracted) {
+                log(`  extractPrice ${provider.id}: matched=${proxyExtracted.matchedBy} price=$${proxyExtracted.price.toFixed(2)} (fly-proxy)`);
+                price = proxyExtracted.price;
+                source = "fly-proxy";
+                inStock = proxyStock.inStock;
+                finalUrl = url;
+                log(`  \u2713 ${coinSlug}/${provider.id}: $${price.toFixed(2)} (fly-proxy)${!inStock ? " OOS" : ""}`);
+                break;
+              }
+              log(`  \u21bb ${coinSlug}/${provider.id}: fly-proxy returned no price, falling back to firecrawl`);
+            } catch (proxyErr) {
+              warn(`  \u2717 ${provider.id} fly-proxy error: ${proxyErr.message.slice(0, 80)}, falling back`);
+            }
+          }
+          markdown = await scrapeUrl(url, provider.id);
           const cleaned = preprocessMarkdown(markdown, provider.id);
           const stock = detectStockStatus(cleaned, coin.weight_oz || 1, provider.id);
 

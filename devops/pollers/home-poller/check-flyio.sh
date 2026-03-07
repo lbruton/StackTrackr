@@ -1,11 +1,15 @@
 #!/bin/bash
-# StakTrakr — Fly.io container health check
-# ============================================
-# Checks Fly.io's public HTTP endpoint and optionally pings
-# its Tailscale IP. Writes status JSON for the dashboard.
+# StakTrakr — Fly.io container health check via Tailscale
+# =========================================================
+# Pings the Fly.io container's Tailscale IP and checks its
+# public HTTP endpoint. Logs result to poller log and writes
+# a one-line status file readable by the dashboard.
 #
-# Inside Docker (bridge network), Tailscale IPs are not routable
-# so the ping is best-effort. The HTTP check is the primary signal.
+# Run manually or add to cron.
+# Suggested cron (every 5 min, as root):
+#   */5 * * * * root /opt/poller/check-flyio.sh >> /var/log/retail-poller.log 2>&1
+#
+# Set FLYIO_TAILSCALE_IP once the container is back up.
 
 FLYIO_TAILSCALE_IP="${FLYIO_TAILSCALE_IP:-100.90.171.110}"
 FLYIO_HTTP_URL="${FLYIO_HTTP_URL:-https://api2.staktrakr.com/data/retail/providers.json}"
@@ -14,7 +18,7 @@ TIMEOUT=10
 
 log() { echo "[$(date -u +%H:%M:%S)] [flyio-check] $*"; }
 
-# ── Tailscale ping (best-effort — may not work from Docker bridge) ────────────
+# ── Tailscale ping (best-effort from Docker bridge) ──────────────────────────
 ts_ok=false
 ts_ms="skipped"
 if [ "$FLYIO_TAILSCALE_IP" != "TODO_REPLACE_WITH_IP" ] && command -v ping > /dev/null 2>&1; then
