@@ -451,7 +451,7 @@ const PROVIDER_CONFIG = {
     timeout: 70_000,            // extended timeout for 15s waitFor + round-trip
     fractionalExempt: true,     // Related Products section lists fractional variants
     proxy: {
-      home: "fly",              // home poller routes through Fly.io (better CF reputation)
+      home: null,               // home poller is on residential IP — no proxy needed
       fly: null,                // Fly.io uses its own IP (93%+ success rate)
     },
   },
