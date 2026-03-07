@@ -184,11 +184,13 @@ const createBackupZip = async () => {
       zip.file('item_tags.json', JSON.stringify(itemTagsData, null, 2));
     }
 
-    // 4. Generate and add CSV export (portfolio format)
+    // 4. Generate and add CSV export (portfolio format — synced with exportCsv())
     const csvHeaders = [
-      "Date", "Metal", "Type", "Name", "Qty", "Weight(oz)", "Weight Unit", "Purity",
-      "Purchase Price", "Melt Value", "Retail Price", "Gain/Loss",
-      "Purchase Location", "N#", "PCGS #", "Serial Number", "Tags", "Notes"
+      "Date","Metal","Type","Name","Year","Qty","Weight(oz)","Weight Unit","Purity",
+      "Purchase Price","Melt Value","Retail Price","Gain/Loss",
+      "Purchase Location","Storage Location","N#","PCGS #","Grade","Grading Authority","Cert #","Serial Number","Notes","Tags","UUID",
+      "Obverse Image URL","Reverse Image URL",
+      "Disposition Type","Disposition Date","Disposition Amount","Realized Gain/Loss"
     ];
     const sortedInventory = sortInventoryByDateNewestFirst();
     const csvRows = [];
@@ -206,6 +208,7 @@ const createBackupZip = async () => {
         item.metal || 'Silver',
         item.type,
         item.name,
+        item.year || '',
         item.qty,
         parseFloat(item.weight).toFixed(4),
         item.weightUnit || 'oz',
@@ -215,11 +218,22 @@ const createBackupZip = async () => {
         formatCurrency(item.marketValue || 0),
         gainLoss !== null ? formatCurrency(gainLoss) : '—',
         item.purchaseLocation,
+        item.storageLocation || '',
         item.numistaId || '',
         item.pcgsNumber || '',
+        item.grade || '',
+        item.gradingAuthority || '',
+        item.certNumber || '',
         item.serialNumber || '',
+        item.notes || '',
         typeof getItemTags === 'function' ? getItemTags(item.uuid).join('; ') : '',
-        item.notes || ''
+        item.uuid || '',
+        item.obverseImageUrl || '',
+        item.reverseImageUrl || '',
+        item.disposition ? (typeof DISPOSITION_TYPES !== 'undefined' && DISPOSITION_TYPES[item.disposition.type] ? DISPOSITION_TYPES[item.disposition.type].label : item.disposition.type) : '',
+        item.disposition ? (item.disposition.date || '') : '',
+        item.disposition ? (item.disposition.amount || 0) : '',
+        item.disposition ? (item.disposition.realizedGainLoss || 0) : ''
       ]);
     }
     const csvContent = Papa.unparse([csvHeaders, ...csvRows]);
@@ -2789,9 +2803,7 @@ const showImportDiffReview = (parsedItems, sourceInfo, options, onComplete) => {
     debugLog('showImportDiffReview fallback', 'DiffEngine/DiffModal unavailable');
     inventory = inventory.concat(parsedItems);
     _postImportCleanup(parsedItems, options.pendingTagsByUuid);
-    if (typeof showImportSummaryBanner === 'function') {
-      showImportSummaryBanner({ added: parsedItems.length, modified: 0, deleted: 0, skipped: 0, skippedReasons: [] });
-    }
+    if (typeof showToast === 'function') showToast('Import complete: ' + parsedItems.length + ' added');
     if (onComplete) onComplete({ added: parsedItems.length, modified: 0, deleted: 0 });
     return;
   }
@@ -2801,13 +2813,23 @@ const showImportDiffReview = (parsedItems, sourceInfo, options, onComplete) => {
   // Enrich imported items: copy local UUID when serials match, so DiffEngine
   // can match them by the same key tier.
   const localUuidBySerial = new Map();
+  const localUuidByNumista = new Map();
   for (const item of inventory) {
     if (item.serial && item.uuid) localUuidBySerial.set(String(item.serial), item.uuid);
+    // STAK-454: Also index by numistaId+date for CSV imports (which lack serial)
+    if (item.numistaId && item.uuid) {
+      localUuidByNumista.set(item.numistaId + '|' + (item.date || ''), item.uuid);
+    }
   }
   for (const item of parsedItems) {
     if (!item.uuid && item.serial) {
       const localUuid = localUuidBySerial.get(String(item.serial));
       if (localUuid) item.uuid = localUuid;
+    }
+    // STAK-454: Fallback — match by numistaId+date when serial enrichment missed
+    if (!item.uuid && item.numistaId) {
+      const numistaUuid = localUuidByNumista.get(item.numistaId + '|' + (item.date || ''));
+      if (numistaUuid) item.uuid = numistaUuid;
     }
   }
 
@@ -2886,20 +2908,6 @@ const showImportDiffReview = (parsedItems, sourceInfo, options, onComplete) => {
         showToast('Import complete: ' + (parts.length > 0 ? parts.join(', ') : 'no changes applied'));
       }
 
-      // Post-import summary banner (STAK-374)
-      if (typeof showImportSummaryBanner === 'function') {
-        var _skippedReasons = [];
-        if (options.validationResult && options.validationResult.invalid) {
-          _skippedReasons = options.validationResult.invalid.slice(0, 5).map(function(i) { return i.reasons[0]; });
-        }
-        showImportSummaryBanner({
-          added: selectedChanges.filter(function(c) { return c.type === 'add'; }).length,
-          modified: selectedChanges.filter(function(c) { return c.type === 'modify'; }).length,
-          deleted: selectedChanges.filter(function(c) { return c.type === 'delete'; }).length,
-          skipped: options.validationResult ? (options.validationResult.skippedCount || 0) : 0,
-          skippedReasons: _skippedReasons
-        });
-      }
 
       if (onComplete) onComplete({ added: addCount, modified: modCount, deleted: delCount });
 

@@ -130,6 +130,28 @@
     return _esc(String(value));
   }
 
+  // ── Metal helpers ──
+
+  var _metalRgb = {
+    gold: '255,215,0', silver: '192,192,192',
+    platinum: '229,228,226', palladium: '206,208,206'
+  };
+  var _metalCssVar = {
+    gold: 'var(--gold)', silver: 'var(--silver)',
+    platinum: 'var(--platinum)', palladium: 'var(--palladium)'
+  };
+
+  function _metalColor(metal) {
+    var key = (metal || '').toLowerCase();
+    return _metalCssVar[key] || 'var(--text-muted,#6b7094)';
+  }
+
+  function _metalBgGradient(metal) {
+    var key = (metal || '').toLowerCase();
+    var rgb = _metalRgb[key] || '128,128,128';
+    return 'linear-gradient(135deg, rgba(' + rgb + ',0.15), rgba(' + rgb + ',0.05))';
+  }
+
   // ── Internal state ──
   var _options = null;
   var _checkedItems = {};      // { 'added-0': true, 'modified-2': false, ... }
@@ -138,6 +160,12 @@
   var _expandedModified = {};    // { 0: true, 1: false, ... }
   var _expandedSettingsCategories = {}; // { 'Display & Appearance': true, ... }
   var _selectAllState = 0;  // 0=none, 1=added+modified, 2=all
+
+  // Card-based state (STAK-454)
+  var _orphanActions = {};       // { 'added-0': 'import'|'skip', 'deleted-1': 'keep'|'remove' }
+  var _fieldSelections = {};     // { 'conflict-0-purchasePrice': 'local'|'remote' }
+  var _resolvedConflicts = {};   // { 0: true, 1: true }
+  var _blobUrls = [];            // Tracked blob URLs for revocation on re-render/close
 
   // ── Helpers ──
 
@@ -269,15 +297,18 @@
   function _renderSummaryDashboard(container, diff, conflicts) {
     if (!container) return;
     var matched = (diff.unchanged || []).length;
-    var conflictCount = (conflicts && conflicts.conflicts || []).length;
+    var syncConflicts = (conflicts && conflicts.conflicts || []).length;
+    var modifiedCount = (diff.modified || []).length;
+    // Show whichever is relevant: true sync conflicts, or modified items for imports
+    var conflictCount = syncConflicts > 0 ? syncConflicts : modifiedCount;
     var remoteOnly = (diff.added || []).length;
     var localOnly = (diff.deleted || []).length;
 
     var cards = [
       { count: matched, label: 'Matched', target: 'diffSectionModified', color: '', style: 'opacity:0.5' },
-      { count: conflictCount, label: 'Conflicts', target: 'diffSectionConflicts', color: conflictCount > 0 ? 'color:#d97706' : '', style: '' },
-      { count: remoteOnly, label: 'Remote Only', target: 'diffSectionModified', color: '', style: '' },
-      { count: localOnly, label: 'Local Only', target: 'diffSectionModified', color: '', style: '' }
+      { count: conflictCount, label: 'Conflicts', target: syncConflicts > 0 ? 'diffSectionConflicts' : 'diffSectionModified', color: conflictCount > 0 ? 'color:#d97706' : '', style: '' },
+      { count: remoteOnly, label: 'Remote Only', target: 'diffSectionOrphans', color: '', style: '' },
+      { count: localOnly, label: 'Local Only', target: 'diffSectionOrphans', color: '', style: '' }
     ];
 
     var cardStyle = 'flex:1;min-width:120px;border-radius:8px;padding:0.6rem;border:1px solid var(--border-color,#ddd);cursor:pointer;text-align:center';
@@ -572,6 +603,258 @@
     };
   }
 
+  // ── Card-based renderers (STAK-454 — matches playground/diffmodal-item-cards.html) ──
+
+  /** Shared card header: dual OBV/REV thumbnails + item identity. Used by orphan and conflict cards. */
+  function _renderCardHeader(item, uuid) {
+    var grad = _metalBgGradient(item.metal);
+    var mColor = _metalColor(item.metal);
+    var html = '';
+    // Dual OBV/REV thumbnails
+    html += '<div class="dm-item-thumb-pair">';
+    html += '<div class="dm-item-thumb" style="background:' + grad + '"' + (uuid ? ' data-uuid="' + _esc(uuid) + '" data-side="obverse"' : '') + '><span style="color:' + mColor + ';font-size:0.55rem">OBV</span></div>';
+    html += '<div class="dm-item-thumb" style="background:' + grad + '"' + (uuid ? ' data-uuid="' + _esc(uuid) + '" data-side="reverse"' : '') + '><span style="color:' + mColor + ';font-size:0.55rem">REV</span></div>';
+    html += '</div>';
+    return html;
+  }
+
+  /** Render Added or Deleted items as orphan cards. Returns HTML string. */
+  function _renderOrphanCards(type, items) {
+    if (!items || items.length === 0) return '';
+    var collapsed = _collapsedCategories[type];
+    var isAdded = (type === 'added');
+    var sectionColor = isAdded ? 'var(--info,#3b82f6)' : 'var(--loss,#ef4444)';
+    var sectionIcon = isAdded ? '&#8595;' : '&#8593;';
+    var sectionLabel = isAdded ? 'Added / Remote Only' : 'Deleted / Local Only';
+
+    var html = '<div class="dm-section-wrapper" data-section="' + type + '" style="margin-top:1rem">';
+
+    // Section header
+    html += '<div class="dm-section-header">';
+    html += '<div class="dm-section-title">';
+    html += '<span class="dm-collapse-toggle' + (collapsed ? ' collapsed' : '') + '" data-cat-toggle="' + type + '">' + (collapsed ? '&#9654;' : '&#9660;') + '</span>';
+    html += '<span style="color:' + sectionColor + '">' + sectionIcon + '</span> ' + sectionLabel;
+    html += '<span class="dm-chip">' + items.length + ' item' + (items.length !== 1 ? 's' : '') + '</span>';
+    html += '</div>';
+    html += '<div class="dm-section-actions">';
+    if (isAdded) {
+      html += '<button class="dm-btn dm-btn-sm dm-btn-primary" data-bulk-action="import" data-bulk-section="added">Import All</button>';
+      html += '<button class="dm-btn dm-btn-sm dm-btn-muted" data-bulk-action="skip" data-bulk-section="added">Skip All</button>';
+    } else {
+      html += '<button class="dm-btn dm-btn-sm dm-btn-gain" data-bulk-action="keep" data-bulk-section="deleted">Keep All</button>';
+      html += '<button class="dm-btn dm-btn-sm dm-btn-muted" data-bulk-action="remove" data-bulk-section="deleted">Remove All</button>';
+    }
+    html += '</div>';
+    html += '</div>';
+
+    // Section body
+    html += '<div class="dm-section-body' + (collapsed ? ' collapsed' : '') + '">';
+    var showAll = _collapsedCategories['_showAll_' + type];
+    var limit = (!showAll && items.length > 30) ? 30 : items.length;
+    for (var i = 0; i < limit; i++) {
+      var item = items[i];
+      var key = type + '-' + i;
+      var action = _orphanActions[key] || (isAdded ? 'import' : 'keep');
+      var isSkipped = (isAdded && action === 'skip') || (!isAdded && action === 'remove');
+      var mColor = _metalColor(item.metal);
+      var uuid = item.uuid || '';
+
+      html += '<div class="dm-card dm-orphan-card' + (isSkipped ? ' skipped' : '') + '" data-action="' + action + '" data-idx="' + i + '" data-type="' + type + '">';
+      html += _renderCardHeader(item, uuid);
+      // Item identity
+      html += '<div class="dm-item-identity">';
+      html += '<div class="dm-item-name" style="color:' + mColor + '">' + _esc(item.name || 'Unnamed item') + '</div>';
+      html += '<div class="dm-item-meta">';
+      html += '<span style="color:' + mColor + '">' + _esc(item.metal || '') + '</span>';
+      if (item.weight != null) html += '<span>&#8226;</span><span>' + _esc(String(item.weight)) + ' ' + _esc(item.weightUnit || 'oz') + '</span>';
+      if (item.qty != null) html += '<span>&#8226;</span><span>Qty: ' + _esc(String(item.qty)) + '</span>';
+      html += '</div></div>';
+      // Action buttons — active action gets prominent color, inactive gets muted
+      html += '<div class="dm-orphan-actions">';
+      if (isAdded) {
+        var importActive = (action === 'import');
+        html += '<button class="dm-btn dm-btn-sm ' + (importActive ? 'dm-btn-primary' : 'dm-btn-muted') + ' dm-action-btn" data-set-action="import" data-idx="' + i + '" data-type="' + type + '">&#8595; Import</button>';
+        html += '<button class="dm-btn dm-btn-sm ' + (!importActive ? 'dm-btn-loss' : 'dm-btn-muted') + ' dm-skip-btn" data-set-action="skip" data-idx="' + i + '" data-type="' + type + '">Skip</button>';
+      } else {
+        var keepActive = (action === 'keep');
+        html += '<button class="dm-btn dm-btn-sm ' + (keepActive ? 'dm-btn-gain' : 'dm-btn-muted') + ' dm-keep-btn" data-set-action="keep" data-idx="' + i + '" data-type="' + type + '">Keep</button>';
+        html += '<button class="dm-btn dm-btn-sm ' + (!keepActive ? 'dm-btn-loss' : 'dm-btn-muted') + ' dm-remove-btn" data-set-action="remove" data-idx="' + i + '" data-type="' + type + '">Remove</button>';
+      }
+      html += '</div>';
+      html += '</div>';
+    }
+    if (!showAll && items.length > 30) {
+      html += '<div class="dm-show-more" data-show-more="' + type + '" style="text-align:center;padding:0.5rem;font-size:0.78rem;cursor:pointer;color:var(--primary,#6366f1)">Show ' + (items.length - 30) + ' more...</div>';
+    }
+    html += '</div></div>';
+    return html;
+  }
+
+  /** Render Modified items as conflict cards with click-to-pick field values. Returns HTML string. */
+  function _renderModifiedSection(modifiedItems) {
+    if (!modifiedItems || modifiedItems.length === 0) return '';
+
+    var collapsed = _collapsedCategories.modified;
+    var html = '<div class="dm-section-wrapper" data-section="modified" style="margin-top:1rem">';
+
+    // Section header
+    html += '<div class="dm-section-header">';
+    html += '<div class="dm-section-title">';
+    html += '<span class="dm-collapse-toggle' + (collapsed ? ' collapsed' : '') + '" data-cat-toggle="modified">' + (collapsed ? '&#9654;' : '&#9660;') + '</span>';
+    html += '<span style="color:var(--warning,#d97706)">&#9888;</span> Modified / Conflicts';
+    html += '<span class="dm-chip">' + modifiedItems.length + ' item' + (modifiedItems.length !== 1 ? 's' : '') + '</span>';
+    html += '</div>';
+    html += '<div class="dm-section-actions">';
+    html += '<button class="dm-btn dm-btn-sm dm-btn-secondary" data-global-action="keep-all-local">Keep All Local</button>';
+    html += '<button class="dm-btn dm-btn-sm dm-btn-secondary" data-global-action="keep-all-remote">Keep All Remote</button>';
+    html += '</div>';
+    html += '</div>';
+
+    // Resolve progress
+    var resolvedCount = 0;
+    for (var rc = 0; rc < modifiedItems.length; rc++) {
+      if (_resolvedConflicts[rc]) resolvedCount++;
+    }
+    var remaining = modifiedItems.length - resolvedCount;
+    var pct = modifiedItems.length > 0 ? Math.round((resolvedCount / modifiedItems.length) * 100) : 0;
+
+    html += '<div class="dm-resolve-status">';
+    html += '<span class="dm-status-text">Resolved <strong>' + resolvedCount + '</strong> of <strong>' + modifiedItems.length + '</strong> conflicts</span>';
+    if (remaining === 0 && modifiedItems.length > 0) {
+      html += '<span class="dm-pill dm-pill-gain">All resolved &#10003;</span>';
+    } else {
+      html += '<span class="dm-pill dm-pill-warning">' + remaining + ' remaining</span>';
+    }
+    html += '</div>';
+    html += '<div class="dm-progress-bar"><div class="dm-progress-fill" style="width:' + pct + '%"></div></div>';
+
+    // Section body
+    html += '<div class="dm-section-body' + (collapsed ? ' collapsed' : '') + '">';
+
+    for (var i = 0; i < modifiedItems.length; i++) {
+      var mod = modifiedItems[i];
+      var item = mod.item;
+      var changes = mod.changes || [];
+      var mColor = _metalColor(item.metal);
+      var uuid = item.uuid || '';
+      var isResolved = _resolvedConflicts[i];
+      var itemKey = _itemKey(item);
+
+      html += '<div class="dm-card dm-conflict-card' + (isResolved ? ' resolved' : '') + '" id="dm-conflict-' + i + '">';
+
+      // Card header
+      html += '<div class="dm-conflict-card-header" data-toggle-conflict="' + i + '" style="cursor:pointer">';
+      html += _renderCardHeader(item, uuid);
+      // Identity
+      html += '<div class="dm-item-identity">';
+      html += '<div class="dm-item-name">' + _esc(item.name || 'Unnamed item') + '</div>';
+      html += '<div class="dm-item-meta">';
+      html += '<span style="color:' + mColor + '">' + _esc(item.metal || '') + '</span>';
+      if (item.weight != null) html += '<span>&#8226;</span><span>' + _esc(String(item.weight)) + ' ' + _esc(item.weightUnit || 'oz') + '</span>';
+      html += '<span>&#8226;</span><span class="dm-chip" style="font-size:0.65rem">ID: ' + _esc(itemKey).substring(0, 16) + '</span>';
+      html += '</div></div>';
+      // Field count pill
+      if (isResolved) {
+        html += '<span class="dm-pill dm-pill-gain">&#10003; Resolved</span>';
+      } else {
+        html += '<span class="dm-pill dm-pill-warning">' + changes.length + ' field' + (changes.length !== 1 ? 's' : '') + ' changed</span>';
+      }
+      html += '</div>';
+
+      // Conflict details (field rows)
+      var detailsCollapsed = isResolved;
+      html += '<div class="dm-conflict-details' + (detailsCollapsed ? ' collapsed' : '') + '" id="dm-conflict-details-' + i + '">';
+      for (var c = 0; c < changes.length; c++) {
+        var ch = changes[c];
+        var fKey = 'conflict-' + i + '-' + ch.field;
+        var sel = _fieldSelections[fKey] || 'remote';
+        var localSelected = sel === 'local' ? ' selected' : '';
+        var remoteSelected = sel === 'remote' ? ' selected' : '';
+
+        html += '<div class="dm-field-diff">';
+        html += '<div class="dm-field-label">' + _esc(ch.field) + '</div>';
+        var localDisplay = (ch.localVal != null && ch.localVal !== '') ? String(ch.localVal) : '\u2014';
+        var remoteDisplay = (ch.remoteVal != null && ch.remoteVal !== '') ? String(ch.remoteVal) : '\u2014';
+        html += '<div class="dm-field-value local' + localSelected + '" data-field="' + _esc(ch.field) + '" data-card="' + i + '" title="' + _esc(localDisplay) + '">' + _esc(localDisplay) + '</div>';
+        html += '<div class="dm-field-arrow">&#10231;</div>';
+        html += '<div class="dm-field-value remote' + remoteSelected + '" data-field="' + _esc(ch.field) + '" data-card="' + i + '" title="' + _esc(remoteDisplay) + '">' + _esc(remoteDisplay) + '</div>';
+        html += '</div>';
+      }
+      // Card actions
+      html += '<div class="dm-card-actions">';
+      html += '<button class="dm-btn dm-btn-sm dm-btn-secondary" data-card-action="keep-local" data-card="' + i + '">Keep All Local</button>';
+      html += '<button class="dm-btn dm-btn-sm dm-btn-secondary" data-card-action="keep-remote" data-card="' + i + '">Keep All Remote</button>';
+      html += '<button class="dm-btn dm-btn-sm dm-btn-primary" data-card-action="resolve" data-card="' + i + '">&#10003; Confirm</button>';
+      html += '</div>';
+      html += '</div>'; // .dm-conflict-details
+
+      html += '</div>'; // .dm-conflict-card
+    }
+
+    html += '</div></div>';
+    return html;
+  }
+
+  /** Load images asynchronously using resolveImageUrlForItem (same as main app) */
+  function _loadItemImages() {
+    try {
+      // Revoke previous blob URLs to prevent memory leaks
+      for (var bi = 0; bi < _blobUrls.length; bi++) {
+        try { URL.revokeObjectURL(_blobUrls[bi]); } catch(e) { /* ignore */ }
+      }
+      _blobUrls = [];
+
+      var modal = safeGetElement(MODAL_ID);
+      if (!modal || typeof imageCache === 'undefined' || !imageCache.resolveImageUrlForItem) return;
+
+      // Build UUID → item lookup from current diff data
+      var itemByUuid = {};
+      var diff = _options ? _options.diff || {} : {};
+      var allItems = (diff.added || []).concat(diff.deleted || []);
+      for (var mi = 0; mi < (diff.modified || []).length; mi++) {
+        allItems.push((diff.modified || [])[mi].item);
+      }
+      for (var ai = 0; ai < allItems.length; ai++) {
+        if (allItems[ai] && allItems[ai].uuid) {
+          itemByUuid[allItems[ai].uuid] = allItems[ai];
+        }
+      }
+
+      var thumbs = modal.querySelectorAll('[data-uuid]');
+      for (var t = 0; t < thumbs.length; t++) {
+        (function(el) {
+          var uuid = el.dataset.uuid;
+          var side = el.dataset.side || 'obverse';
+          if (!uuid) return;
+          var item = itemByUuid[uuid];
+          if (!item) return;
+          try {
+            imageCache.resolveImageUrlForItem(item, side).then(function(url) {
+              var imgUrl = url;
+              if (!imgUrl) {
+                // Fallback: CDN URL from item properties (same as main app tier 2)
+                var urlKey = side === 'reverse' ? 'reverseImageUrl' : 'obverseImageUrl';
+                var cdnUrl = item[urlKey];
+                if (cdnUrl && /^https?:\/\/[^\s"'<>]+$/i.test(cdnUrl)) {
+                  imgUrl = cdnUrl;
+                }
+              }
+              if (imgUrl) {
+                if (imgUrl.indexOf('blob:') === 0) _blobUrls.push(imgUrl);
+                var img = document.createElement('img');
+                img.src = imgUrl;
+                img.alt = side;
+                img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:var(--radius,8px)';
+                el.textContent = '';
+                el.appendChild(img);
+              }
+            }).catch(function() { /* silent fallback to OBV/REV text */ });
+          } catch(e) { /* imageCache not available */ }
+        })(thumbs[t]);
+      }
+    } catch(e) { /* silent */ }
+  }
+
   function _updateApplyButton() {
     var applyBtn = safeGetElement('diffReviewApplyBtn');
     if (!applyBtn) return;
@@ -633,25 +916,33 @@
     // Conflict cards (replaces old inline conflict rendering)
     _renderConflictCards(safeGetElement('diffSectionConflicts'), conflicts);
 
-    // Change list — retarget to diffSectionModified container
-    var listEl = safeGetElement('diffSectionModified');
-    if (listEl) {
-      var totalChanges = added.length + modified.length + deleted.length;
-      var lHtml = '';
-
-      if (totalChanges === 0) {
-        lHtml = '<div style="padding:2rem;text-align:center;opacity:0.45;font-size:0.85rem">No item changes detected</div>';
-      } else {
-        // Added
-        if (added.length > 0) lHtml += _renderCategory('added', 'Added', '+', added);
-        // Modified
-        if (modified.length > 0) lHtml += _renderCategory('modified', 'Modified', '&#9998;', modified);
-        // Deleted
-        if (deleted.length > 0) lHtml += _renderCategory('deleted', 'Deleted', '&minus;', deleted);
-      }
-
-      listEl.innerHTML = lHtml;
+    // Orphan cards (Added + Deleted) — render into #diffSectionOrphans
+    var orphanEl = safeGetElement('diffSectionOrphans');
+    if (orphanEl) {
+      var orphanHtml = '';
+      if (added.length > 0) orphanHtml += _renderOrphanCards('added', added);
+      if (deleted.length > 0) orphanHtml += _renderOrphanCards('deleted', deleted);
+      orphanEl.innerHTML = orphanHtml;
+      orphanEl.style.display = orphanHtml ? '' : 'none';
     }
+
+    // Modified conflict cards — render into #diffSectionModified
+    var modifiedEl = safeGetElement('diffSectionModified');
+    if (modifiedEl) {
+      var modHtml = '';
+      if (modified.length > 0) {
+        modHtml = _renderModifiedSection(modified);
+      } else {
+        var totalChanges = added.length + deleted.length;
+        if (totalChanges === 0) {
+          modHtml = '<div style="padding:2rem;text-align:center;opacity:0.45;font-size:0.85rem">No item changes detected</div>';
+        }
+      }
+      modifiedEl.innerHTML = modHtml;
+    }
+
+    // Async image loading
+    _loadItemImages();
 
     // Settings cards (replaces old settings <details>)
     _renderSettingsCards(safeGetElement('diffReviewSettings'), _options.settingsDiff);
@@ -668,92 +959,93 @@
       + '</div>';
   }
 
-  /** Color configs per category */
-  var _catColors = {
-    added:   { bg: 'rgba(5,150,105,0.12)', color: 'var(--success,#059669)' },
-    modified:{ bg: 'rgba(217,119,6,0.12)',  color: 'var(--warning,#d97706)' },
-    deleted: { bg: 'rgba(220,38,38,0.12)',  color: 'var(--danger,#dc2626)' }
-  };
+  // _renderCategory() has been replaced by _renderOrphanCards() and _renderModifiedSection() (STAK-454)
 
-  /** Render a category group (added/modified/deleted) */
-  function _renderCategory(type, label, icon, items) {
-    var collapsed = _collapsedCategories[type];
-    var cc = _catColors[type];
-    var html = '<div data-cat="' + type + '" style="' + (collapsed ? '' : '') + '">';
+  // ── Event delegation (STAK-454 — card-based interactions) ──
 
-    // Header
-    html += '<div class="diff-cat-header" data-cat-toggle="' + type + '" style="display:flex;align-items:center;gap:0.4rem;padding:0.5rem 0.65rem;cursor:pointer;user-select:none;font-size:0.8rem;font-weight:600">';
-    html += '<span style="font-size:0.6rem;opacity:0.4;transition:transform 0.2s;' + (collapsed ? 'transform:rotate(-90deg)' : '') + '">&#9660;</span>';
-    html += '<span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:4px;font-size:0.7rem;font-weight:700;background:' + cc.bg + ';color:' + cc.color + '">' + icon + '</span>';
-    html += '<span>' + label + '</span>';
-    html += '<span style="font-weight:400;opacity:0.5;font-size:0.73rem">(' + items.length + ')</span>';
-    html += '</div>';
-
-    // Items
-    html += '<div class="diff-cat-items" style="' + (collapsed ? 'display:none' : '') + '">';
-    for (var i = 0; i < items.length; i++) {
-      var key = type + '-' + i;
-      var checked = _checkedItems[key] !== false; // default true
-      var item = type === 'modified' ? items[i].item : items[i];
-      var name = _esc(item.name || 'Unnamed item');
-
-      html += '<div style="display:flex;align-items:flex-start;gap:0.5rem;padding:0.45rem 0.65rem;font-size:0.85rem">';
-      html += '<input type="checkbox" data-check="' + key + '" ' + (checked ? 'checked' : '') + ' style="width:16px;height:16px;min-width:16px;padding:0;border:none;accent-color:var(--primary,#3b82f6);margin-top:2px;flex-shrink:0;cursor:pointer">';
-      html += '<div style="flex-shrink:0;width:20px;height:20px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;margin-top:1px;background:' + cc.bg + ';color:' + cc.color + '">' + icon + '</div>';
-
-      html += '<div style="flex:1;min-width:0">';
-
-      if (type === 'modified') {
-        var mod = items[i];
-        var expanded = _expandedModified[i];
-        html += '<div class="diff-mod-toggle" data-mod-idx="' + i + '" style="cursor:pointer">';
-        html += '<div style="font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + name + ' <span style="font-size:0.65rem;opacity:0.35">' + (expanded ? '&#9650;' : '&#9660;') + '</span></div>';
-        html += '<div style="font-size:0.73rem;opacity:0.5;margin-top:0.1rem">' + mod.changes.length + ' field' + (mod.changes.length > 1 ? 's' : '') + ' changed</div>';
-        if (expanded) {
-          html += '<div style="margin-top:0.35rem;padding-left:0.25rem;font-size:0.78rem">';
-          for (var c = 0; c < mod.changes.length; c++) {
-            var ch = mod.changes[c];
-            html += '<div style="padding:0.15rem 0;display:flex;gap:0.3rem;align-items:baseline">';
-            html += '<span style="opacity:0.5;min-width:80px">' + _esc(ch.field) + '</span>';
-            html += '<span style="text-decoration:line-through;opacity:0.45">' + _esc(String(ch.localVal != null ? ch.localVal : '\u2014')) + '</span>';
-            html += '<span style="opacity:0.35;font-size:0.7rem">&rarr;</span>';
-            html += '<span style="font-weight:500;color:var(--warning,#d97706)">' + _esc(String(ch.remoteVal != null ? ch.remoteVal : '\u2014')) + '</span>';
-            html += '</div>';
-          }
-          html += '</div>';
-        }
-        html += '</div>';
-      } else {
-        html += '<div style="font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + name + '</div>';
-        // Detail line
-        var detail = [];
-        if (item.metal) detail.push(_esc(item.metal));
-        if (item.weight != null) detail.push(item.weight + _esc(item.weightUnit || 'oz'));
-        if (item.qty != null) detail.push('\u00d7 ' + item.qty);
-        if (detail.length > 0) {
-          html += '<div style="font-size:0.73rem;opacity:0.5;margin-top:0.1rem">' + detail.join(' \u00b7 ') + '</div>';
-        }
-      }
-
-      html += '</div></div>';
+  /** Swap a button's style class based on active state and section type */
+  function _swapBtnClass(btn, sectionType, actionName, isActive) {
+    btn.classList.remove('dm-btn-primary', 'dm-btn-gain', 'dm-btn-loss', 'dm-btn-muted', 'dm-btn-secondary');
+    if (!isActive) {
+      btn.classList.add('dm-btn-muted');
+      return;
     }
-    html += '</div></div>';
-    return html;
+    // Active: positive actions get their accent color, negative actions get loss
+    if (actionName === 'import') btn.classList.add('dm-btn-primary');
+    else if (actionName === 'keep') btn.classList.add('dm-btn-gain');
+    else btn.classList.add('dm-btn-loss'); // skip, remove
   }
 
-  // ── Event delegation ──
+  /** Update both action buttons on an orphan card to reflect the current action */
+  function _updateOrphanBtnStyles(card, type, action) {
+    var btns = card.querySelectorAll('[data-set-action]');
+    for (var bi = 0; bi < btns.length; bi++) {
+      var btnAction = btns[bi].dataset.setAction;
+      _swapBtnClass(btns[bi], type, btnAction, btnAction === action);
+    }
+  }
 
-  function _onListClick(e) {
+  /** Handle clicks on orphan cards (Added/Deleted) */
+  function _onOrphanClick(e) {
     var target = e.target;
 
-    // Checkbox toggle
-    if (target.type === 'checkbox' && target.dataset.check) {
-      _checkedItems[target.dataset.check] = target.checked;
+    // Orphan card action button (Import/Skip/Keep/Remove)
+    var actionBtn = target.closest('[data-set-action]');
+    if (actionBtn) {
+      e.stopPropagation();
+      var action = actionBtn.dataset.setAction;
+      var idx = parseInt(actionBtn.dataset.idx, 10);
+      var type = actionBtn.dataset.type;
+      var key = type + '-' + idx;
+      _orphanActions[key] = action;
+      // Also sync _checkedItems for backward compat
+      if (type === 'added') _checkedItems[key] = (action !== 'skip');
+      if (type === 'deleted') _checkedItems[key] = (action === 'remove');
+      // Toggle visual state on card and buttons
+      var card = actionBtn.closest('.dm-orphan-card');
+      if (card) {
+        var isSkipped = (action === 'skip' || action === 'remove');
+        card.classList.toggle('skipped', isSkipped);
+        card.dataset.action = action;
+        _updateOrphanBtnStyles(card, type, action);
+      }
       _updateApplyCount();
       return;
     }
 
-    // Category collapse toggle
+    // Bulk action buttons (Import All, Skip All, Keep All, Remove All)
+    var bulkBtn = target.closest('[data-bulk-action]');
+    if (bulkBtn) {
+      var bulkAction = bulkBtn.dataset.bulkAction;
+      var bulkSection = bulkBtn.dataset.bulkSection;
+      var cards = e.currentTarget.querySelectorAll('.dm-orphan-card[data-type="' + bulkSection + '"]');
+      for (var bi = 0; bi < cards.length; bi++) {
+        var bCard = cards[bi];
+        var bIdx = parseInt(bCard.dataset.idx, 10);
+        var bKey = bulkSection + '-' + bIdx;
+        _orphanActions[bKey] = bulkAction;
+        if (bulkSection === 'added') _checkedItems[bKey] = (bulkAction !== 'skip');
+        if (bulkSection === 'deleted') _checkedItems[bKey] = (bulkAction === 'remove');
+        var bSkipped = (bulkAction === 'skip' || bulkAction === 'remove');
+        bCard.classList.toggle('skipped', bSkipped);
+        bCard.dataset.action = bulkAction;
+        _updateOrphanBtnStyles(bCard, bulkSection, bulkAction);
+      }
+      // Update bulk button styles in section header
+      var sectionWrapper = bulkBtn.closest('.dm-section-wrapper');
+      if (sectionWrapper) {
+        var bulkBtns = sectionWrapper.querySelectorAll('[data-bulk-action]');
+        for (var bbi = 0; bbi < bulkBtns.length; bbi++) {
+          var bb = bulkBtns[bbi];
+          var isActive = (bb.dataset.bulkAction === bulkAction);
+          _swapBtnClass(bb, bulkSection, bb.dataset.bulkAction, isActive);
+        }
+      }
+      _updateApplyCount();
+      return;
+    }
+
+    // Section collapse toggle
     var catToggle = target.closest('[data-cat-toggle]');
     if (catToggle) {
       var cat = catToggle.dataset.catToggle;
@@ -762,32 +1054,206 @@
       return;
     }
 
-    // Modified row expand toggle
-    var modToggle = target.closest('.diff-mod-toggle');
-    if (modToggle) {
-      var idx = parseInt(modToggle.dataset.modIdx, 10);
-      _expandedModified[idx] = !_expandedModified[idx];
+    // Show more button
+    var showMore = target.closest('[data-show-more]');
+    if (showMore) {
+      var smType = showMore.dataset.showMore;
+      // Remove the limit and re-render (set a flag to show all)
+      _collapsedCategories['_showAll_' + smType] = true;
       _render();
       return;
     }
   }
 
-  function _onConflictsChange(e) {
-    if (e.target.type === 'radio' && e.target.dataset.conflict != null) {
-      _conflictResolutions['c' + e.target.dataset.conflict] = e.target.value;
+  /** Handle clicks on modified/conflict cards */
+  function _onModifiedClick(e) {
+    var target = e.target;
+
+    // Field value click (click to pick local or remote)
+    var fieldVal = target.closest('.dm-field-value');
+    if (fieldVal && fieldVal.dataset.field && fieldVal.dataset.card != null) {
+      var field = fieldVal.dataset.field;
+      var cardIdx = parseInt(fieldVal.dataset.card, 10);
+      var fKey = 'conflict-' + cardIdx + '-' + field;
+      var side = fieldVal.classList.contains('local') ? 'local' : 'remote';
+      _fieldSelections[fKey] = side;
+      // Update visual: remove selected from sibling, add to clicked
+      var row = fieldVal.closest('.dm-field-diff');
+      if (row) {
+        var siblings = row.querySelectorAll('.dm-field-value');
+        for (var si = 0; si < siblings.length; si++) siblings[si].classList.remove('selected');
+      }
+      fieldVal.classList.add('selected');
+      _updateApplyCount();
+      return;
     }
+
+    // Per-card action buttons (Keep All Local, Keep All Remote, Confirm)
+    var cardAction = target.closest('[data-card-action]');
+    if (cardAction) {
+      var action = cardAction.dataset.cardAction;
+      var ci = parseInt(cardAction.dataset.card, 10);
+      var card = e.currentTarget.querySelector('#dm-conflict-' + ci);
+      if (!card) return;
+
+      if (action === 'keep-local' || action === 'keep-remote') {
+        var pickSide = action === 'keep-local' ? 'local' : 'remote';
+        var fieldVals = card.querySelectorAll('.dm-field-value.' + pickSide);
+        for (var fvi = 0; fvi < fieldVals.length; fvi++) {
+          var fv = fieldVals[fvi];
+          var fRow = fv.closest('.dm-field-diff');
+          if (fRow) {
+            var fSiblings = fRow.querySelectorAll('.dm-field-value');
+            for (var fsi = 0; fsi < fSiblings.length; fsi++) fSiblings[fsi].classList.remove('selected');
+          }
+          fv.classList.add('selected');
+          if (fv.dataset.field) {
+            _fieldSelections['conflict-' + ci + '-' + fv.dataset.field] = pickSide;
+          }
+        }
+        _updateApplyCount();
+        return;
+      }
+
+      if (action === 'resolve') {
+        // Validate all fields have a selection
+        var fieldDiffs = card.querySelectorAll('.dm-field-diff');
+        var allResolved = true;
+        for (var fd = 0; fd < fieldDiffs.length; fd++) {
+          if (!fieldDiffs[fd].querySelector('.dm-field-value.selected')) {
+            allResolved = false;
+            // Flash unresolved field
+            fieldDiffs[fd].style.background = 'rgba(239,68,68,0.1)';
+            (function(el) {
+              setTimeout(function() { el.style.background = ''; }, 600);
+            })(fieldDiffs[fd]);
+          }
+        }
+        if (!allResolved) return;
+
+        // Mark resolved
+        _resolvedConflicts[ci] = true;
+        card.classList.add('resolved');
+        var pill = card.querySelector('.dm-conflict-card-header .dm-pill');
+        if (pill) {
+          pill.className = 'dm-pill dm-pill-gain';
+          pill.innerHTML = '&#10003; Resolved';
+        }
+        // Collapse the details
+        var details = card.querySelector('.dm-conflict-details');
+        if (details) details.classList.add('collapsed');
+
+        // Update progress
+        _updateModifiedProgress();
+        _updateApplyCount();
+        return;
+      }
+      return;
+    }
+
+    // Global Keep All Local / Keep All Remote
+    var globalAction = target.closest('[data-global-action]');
+    if (globalAction) {
+      var gAction = globalAction.dataset.globalAction;
+      var gSide = gAction === 'keep-all-local' ? 'local' : 'remote';
+      var allFieldVals = e.currentTarget.querySelectorAll('.dm-field-value.' + gSide);
+      for (var gfi = 0; gfi < allFieldVals.length; gfi++) {
+        var gfv = allFieldVals[gfi];
+        var gRow = gfv.closest('.dm-field-diff');
+        if (gRow) {
+          var gSiblings = gRow.querySelectorAll('.dm-field-value');
+          for (var gsi = 0; gsi < gSiblings.length; gsi++) gSiblings[gsi].classList.remove('selected');
+        }
+        gfv.classList.add('selected');
+        if (gfv.dataset.field && gfv.dataset.card != null) {
+          _fieldSelections['conflict-' + gfv.dataset.card + '-' + gfv.dataset.field] = gSide;
+        }
+      }
+      _updateApplyCount();
+      return;
+    }
+
+    // Conflict card header click — toggle expand/collapse
+    var conflictToggle = target.closest('[data-toggle-conflict]');
+    if (conflictToggle) {
+      var tIdx = parseInt(conflictToggle.dataset.toggleConflict, 10);
+      var tDetails = e.currentTarget.querySelector('#dm-conflict-details-' + tIdx);
+      if (tDetails) tDetails.classList.toggle('collapsed');
+      return;
+    }
+
+    // Section collapse toggle
+    var catToggle = target.closest('[data-cat-toggle]');
+    if (catToggle) {
+      var cat = catToggle.dataset.catToggle;
+      _collapsedCategories[cat] = !_collapsedCategories[cat];
+      _render();
+      return;
+    }
+  }
+
+  /** Update the modified section's progress bar and status text */
+  function _updateModifiedProgress() {
+    var diff = _options ? _options.diff || {} : {};
+    var modified = diff.modified || [];
+    if (modified.length === 0) return;
+    var resolved = 0;
+    for (var i = 0; i < modified.length; i++) {
+      if (_resolvedConflicts[i]) resolved++;
+    }
+    var remaining = modified.length - resolved;
+    var pct = Math.round((resolved / modified.length) * 100);
+
+    // Update progress bar
+    var bar = safeGetElement('diffSectionModified');
+    if (bar) {
+      var fill = bar.querySelector('.dm-progress-fill');
+      if (fill) fill.style.width = pct + '%';
+      var statusText = bar.querySelector('.dm-status-text');
+      if (statusText) statusText.innerHTML = 'Resolved <strong>' + resolved + '</strong> of <strong>' + modified.length + '</strong> conflicts';
+      var pillEl = bar.querySelector('.dm-resolve-status .dm-pill');
+      if (pillEl) {
+        if (remaining === 0) {
+          pillEl.className = 'dm-pill dm-pill-gain';
+          pillEl.innerHTML = 'All resolved &#10003;';
+        } else {
+          pillEl.className = 'dm-pill dm-pill-warning';
+          pillEl.textContent = remaining + ' remaining';
+        }
+      }
+    }
+  }
+
+  /** Count selected items for the Apply button (card-based state) */
+  function _cardBasedCount() {
+    var count = 0;
+    var diff = _options ? _options.diff || {} : {};
+    var added = diff.added || [];
+    var modified = diff.modified || [];
+    var deleted = diff.deleted || [];
+
+    for (var a = 0; a < added.length; a++) {
+      if (_orphanActions['added-' + a] !== 'skip') count++;
+    }
+    for (var m = 0; m < modified.length; m++) {
+      count++; // modified items always included (user picks field winners)
+    }
+    for (var d = 0; d < deleted.length; d++) {
+      if (_orphanActions['deleted-' + d] === 'remove') count++;
+    }
+    return count;
   }
 
   /** Update just the Apply button count without full re-render */
   function _updateApplyCount() {
     var applyBtn = safeGetElement('diffReviewApplyBtn');
     if (applyBtn) {
-      var count = _checkedCount();
-      var hasSelectableItems = Object.keys(_checkedItems).length > 0;
+      var hasCardState = Object.keys(_orphanActions).length > 0 || Object.keys(_fieldSelections).length > 0;
+      var count = hasCardState ? _cardBasedCount() : _checkedCount();
       var hasSettings = _options && _options.settingsDiff && _options.settingsDiff.changed && _options.settingsDiff.changed.length > 0;
       applyBtn.textContent = count > 0 ? 'Apply (' + count + ')' : 'Apply';
-      applyBtn.disabled = hasSelectableItems && count === 0 && !hasSettings;
-      applyBtn.style.opacity = (hasSelectableItems && count === 0 && !hasSettings) ? '0.4' : '';
+      applyBtn.disabled = count === 0 && !hasSettings;
+      applyBtn.style.opacity = (count === 0 && !hasSettings) ? '0.4' : '';
     }
     _updateCountRow();
   }
@@ -796,47 +1262,111 @@
 
   function _selectAll() {
     var diff = _options.diff || {};
-    for (var i = 0; i < (diff.added || []).length; i++) _checkedItems['added-' + i] = true;
-    for (var j = 0; j < (diff.modified || []).length; j++) _checkedItems['modified-' + j] = true;
-    for (var k = 0; k < (diff.deleted || []).length; k++) _checkedItems['deleted-' + k] = true;
-    _render(); // _render calls _updateCountRow internally
+    // Card-based: set all orphan actions to include
+    for (var i = 0; i < (diff.added || []).length; i++) {
+      _orphanActions['added-' + i] = 'import';
+      _checkedItems['added-' + i] = true;
+    }
+    for (var j = 0; j < (diff.modified || []).length; j++) {
+      _checkedItems['modified-' + j] = true;
+      // Select all remote for each modified field
+      var mod = (diff.modified || [])[j];
+      if (mod && mod.changes) {
+        for (var c = 0; c < mod.changes.length; c++) {
+          _fieldSelections['conflict-' + j + '-' + mod.changes[c].field] = 'remote';
+        }
+      }
+    }
+    for (var k = 0; k < (diff.deleted || []).length; k++) {
+      _orphanActions['deleted-' + k] = 'remove';
+      _checkedItems['deleted-' + k] = true;
+    }
+    _render();
   }
 
   function _deselectAll() {
-    for (var key in _checkedItems) {
-      if (_checkedItems.hasOwnProperty(key)) _checkedItems[key] = false;
+    var diff = _options.diff || {};
+    for (var i = 0; i < (diff.added || []).length; i++) {
+      _orphanActions['added-' + i] = 'skip';
+      _checkedItems['added-' + i] = false;
     }
-    _render(); // _render calls _updateCountRow internally
+    for (var k in _checkedItems) {
+      if (_checkedItems.hasOwnProperty(k)) _checkedItems[k] = false;
+    }
+    for (var d = 0; d < (diff.deleted || []).length; d++) {
+      _orphanActions['deleted-' + d] = 'keep';
+    }
+    // Reset modified field selections to local (deselect = keep local values)
+    for (var m = 0; m < (diff.modified || []).length; m++) {
+      var mod = (diff.modified || [])[m];
+      if (mod && mod.changes) {
+        for (var c = 0; c < mod.changes.length; c++) {
+          _fieldSelections['conflict-' + m + '-' + mod.changes[c].field] = 'local';
+        }
+      }
+    }
+    _render();
   }
 
   /**
    * Toggle "Select All / Deselect All" for the backup import flow.
-   * First call selects all added + modified; label changes to "Deselect All".
-   * Second call deselects all; label goes back to "Select All".
    */
   function _toggleSelectAll() {
-    const diff = _options ? _options.diff || {} : {};
+    var diff = _options ? _options.diff || {} : {};
     _selectAllState = (_selectAllState + 1) % 3;
     if (_selectAllState === 1) {
-      // First press: select added + modified, keep deleted unchecked
-      for (let i = 0; i < (diff.added || []).length; i++) _checkedItems['added-' + i] = true;
-      for (let j = 0; j < (diff.modified || []).length; j++) _checkedItems['modified-' + j] = true;
-      for (let k = 0; k < (diff.deleted || []).length; k++) _checkedItems['deleted-' + k] = false;
+      // First press: import all added, keep deleted untouched
+      for (var i = 0; i < (diff.added || []).length; i++) {
+        _orphanActions['added-' + i] = 'import';
+        _checkedItems['added-' + i] = true;
+      }
+      for (var j = 0; j < (diff.modified || []).length; j++) {
+        _checkedItems['modified-' + j] = true;
+        var mod1 = (diff.modified || [])[j];
+        if (mod1 && mod1.changes) {
+          for (var c1 = 0; c1 < mod1.changes.length; c1++) {
+            _fieldSelections['conflict-' + j + '-' + mod1.changes[c1].field] = 'remote';
+          }
+        }
+      }
+      for (var k = 0; k < (diff.deleted || []).length; k++) {
+        _orphanActions['deleted-' + k] = 'keep';
+        _checkedItems['deleted-' + k] = false;
+      }
     } else if (_selectAllState === 2) {
-      // Second press: also select deleted rows
-      for (let k = 0; k < (diff.deleted || []).length; k++) _checkedItems['deleted-' + k] = true;
+      // Second press: also mark deleted for removal
+      for (var k2 = 0; k2 < (diff.deleted || []).length; k2++) {
+        _orphanActions['deleted-' + k2] = 'remove';
+        _checkedItems['deleted-' + k2] = true;
+      }
     } else {
       // Third press: deselect all
-      for (const key in _checkedItems) {
+      for (var a = 0; a < (diff.added || []).length; a++) {
+        _orphanActions['added-' + a] = 'skip';
+        _checkedItems['added-' + a] = false;
+      }
+      for (var key in _checkedItems) {
         if (_checkedItems.hasOwnProperty(key)) _checkedItems[key] = false;
       }
+      for (var d = 0; d < (diff.deleted || []).length; d++) {
+        _orphanActions['deleted-' + d] = 'keep';
+      }
+      // Reset field selections to local
+      for (var m3 = 0; m3 < (diff.modified || []).length; m3++) {
+        var mod3 = (diff.modified || [])[m3];
+        if (mod3 && mod3.changes) {
+          for (var c3 = 0; c3 < mod3.changes.length; c3++) {
+            _fieldSelections['conflict-' + m3 + '-' + mod3.changes[c3].field] = 'local';
+          }
+        }
+      }
     }
-    const toggleBtn = safeGetElement('diffReviewSelectAllToggle');
+    var toggleBtn = safeGetElement('diffReviewSelectAllToggle');
     if (toggleBtn) {
-      const labels = ['Select All', 'Add Deleted', 'Deselect All'];
+      var labels = ['Select All', 'Add Deleted', 'Deselect All'];
       toggleBtn.textContent = labels[_selectAllState];
     }
-    _render(); // _render calls _updateCountRow internally
+    _render();
   }
 
   // ── Apply / Cancel ──
@@ -847,39 +1377,61 @@
     var added = diff.added || [];
     var modified = diff.modified || [];
     var deleted = diff.deleted || [];
+    var hasCardState = Object.keys(_orphanActions).length > 0 || Object.keys(_fieldSelections).length > 0;
 
-    // Added items
+    // Added items — card state or legacy fallback
     for (var a = 0; a < added.length; a++) {
-      if (_checkedItems['added-' + a] !== false) {
+      var includeAdded = hasCardState
+        ? (_orphanActions['added-' + a] !== 'skip')
+        : (_checkedItems['added-' + a] !== false);
+      if (includeAdded) {
         result.push({ type: 'add', item: added[a] });
       }
     }
 
-    // Modified items — one entry per changed field
+    // Modified items — per-field selection via _fieldSelections
     for (var m = 0; m < modified.length; m++) {
-      if (_checkedItems['modified-' + m] !== false) {
-        var mod = modified[m];
-        var key = _itemKey(mod.item);
+      var mod = modified[m];
+      var mKey = _itemKey(mod.item);
+      if (hasCardState) {
+        // Card-based: always emit all fields, user picks local vs remote per field
         for (var c = 0; c < mod.changes.length; c++) {
           var ch = mod.changes[c];
+          var fSel = _fieldSelections['conflict-' + m + '-' + ch.field] || 'remote';
           result.push({
             type: 'modify',
-            itemKey: key,
+            itemKey: mKey,
             field: ch.field,
-            value: ch.remoteVal
+            value: fSel === 'local' ? ch.localVal : ch.remoteVal
           });
+        }
+      } else {
+        // Legacy fallback: emit all fields if item is checked
+        if (_checkedItems['modified-' + m] !== false) {
+          for (var c2 = 0; c2 < mod.changes.length; c2++) {
+            var ch2 = mod.changes[c2];
+            result.push({
+              type: 'modify',
+              itemKey: mKey,
+              field: ch2.field,
+              value: ch2.remoteVal
+            });
+          }
         }
       }
     }
 
-    // Deleted items
+    // Deleted items — card state or legacy fallback
     for (var d = 0; d < deleted.length; d++) {
-      if (_checkedItems['deleted-' + d] !== false) {
+      var includeDeleted = hasCardState
+        ? (_orphanActions['deleted-' + d] === 'remove')
+        : (_checkedItems['deleted-' + d] !== false);
+      if (includeDeleted) {
         result.push({ type: 'delete', itemKey: _itemKey(deleted[d]) });
       }
     }
 
-    // Item conflict resolutions — per-field local/remote picks
+    // Item conflict resolutions (sync-specific conflicts section — separate from modified cards)
     var conflictsArr = (_options.conflicts && _options.conflicts.conflicts) || [];
     for (var ci = 0; ci < conflictsArr.length; ci++) {
       var conf = conflictsArr[ci];
@@ -894,7 +1446,7 @@
       });
     }
 
-    // Settings changes — resolution-aware (local/remote toggle per setting)
+    // Settings changes
     var settingsDiff = _options.settingsDiff || {};
     var changedSettings = settingsDiff.changed || [];
     for (var s = 0; s < changedSettings.length; s++) {
@@ -946,10 +1498,15 @@
     // Determine whether we're in backup-count mode
     var hasBackupCount = _options && _options.backupCount != null;
 
-    // Event delegation on item list
+    // Event delegation on card containers
+    var orphanEl = safeGetElement('diffSectionOrphans');
+    if (orphanEl) {
+      orphanEl.removeEventListener('click', _onOrphanClick);
+      orphanEl.addEventListener('click', _onOrphanClick);
+    }
     if (listEl) {
-      listEl.removeEventListener('click', _onListClick);
-      listEl.addEventListener('click', _onListClick);
+      listEl.removeEventListener('click', _onModifiedClick);
+      listEl.addEventListener('click', _onModifiedClick);
     }
 
     // Pill buttons
@@ -1027,12 +1584,30 @@
       _expandedModified = {};
       _expandedSettingsCategories = {};
       _selectAllState = 0;
+      _orphanActions = {};
+      _fieldSelections = {};
+      _resolvedConflicts = {};
 
-      // Default all items to checked
+      // Default all items to checked (legacy compat) + initialize card-based state
       var diff = _options.diff || {};
-      for (var a = 0; a < (diff.added || []).length; a++) _checkedItems['added-' + a] = true;
-      for (var m = 0; m < (diff.modified || []).length; m++) _checkedItems['modified-' + m] = true;
-      for (var d = 0; d < (diff.deleted || []).length; d++) _checkedItems['deleted-' + d] = true;
+      for (var a = 0; a < (diff.added || []).length; a++) {
+        _checkedItems['added-' + a] = true;
+        _orphanActions['added-' + a] = 'import';
+      }
+      for (var m = 0; m < (diff.modified || []).length; m++) {
+        _checkedItems['modified-' + m] = true;
+        // Initialize per-field selections to 'remote' (default: accept incoming)
+        var mod = (diff.modified || [])[m];
+        if (mod && mod.changes) {
+          for (var fc = 0; fc < mod.changes.length; fc++) {
+            _fieldSelections['conflict-' + m + '-' + mod.changes[fc].field] = 'remote';
+          }
+        }
+      }
+      for (var d = 0; d < (diff.deleted || []).length; d++) {
+        _checkedItems['deleted-' + d] = false;
+        _orphanActions['deleted-' + d] = 'keep';
+      }
 
       // Default conflict resolutions to 'remote' (per-field keys)
       if (_options.conflicts && _options.conflicts.conflicts) {
@@ -1068,6 +1643,11 @@
      * Close the modal programmatically.
      */
     close: function () {
+      // Revoke tracked blob URLs to prevent memory leaks
+      for (var bi = 0; bi < _blobUrls.length; bi++) {
+        try { URL.revokeObjectURL(_blobUrls[bi]); } catch(e) { /* ignore */ }
+      }
+      _blobUrls = [];
       if (typeof closeModalById === 'function') {
         closeModalById(MODAL_ID);
       } else {

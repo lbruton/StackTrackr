@@ -173,15 +173,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     debugLog("Phase 3: Initializing import/export elements...");
     elements.importCsvFile = safeGetElement("importCsvFile");
     elements.importCsvOverride = safeGetElement("importCsvOverride");
-    elements.importCsvMerge = safeGetElement("importCsvMerge");
     elements.importJsonFile = safeGetElement("importJsonFile");
     elements.importJsonOverride = safeGetElement("importJsonOverride");
-    elements.importJsonMerge = safeGetElement("importJsonMerge");
     elements.importProgress = safeGetElement("importProgress");
     elements.importProgressText = safeGetElement("importProgressText");
     elements.numistaImportBtn = safeGetElement("numistaImportBtn");
     elements.numistaImportFile = safeGetElement("numistaImportFile");
-    elements.numistaMerge = safeGetElement("numistaMerge");
       elements.numistaImportOptions = safeGetElement("numistaImportOptions");
       elements.exportCsvBtn = safeGetElement("exportCsvBtn");
     elements.exportJsonBtn = safeGetElement("exportJsonBtn");
