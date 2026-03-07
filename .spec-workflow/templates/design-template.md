@@ -76,6 +76,35 @@ graph TD
 - [Additional properties as needed]
 ```
 
+## UI Impact Assessment
+
+### Has UI Changes: [Yes / No]
+
+_If **No**, skip this section entirely. If **Yes**, complete all fields below — this gates Phase 4._
+
+### Visual Scope
+- **Impact Level:** [New screen / New modal or panel / Redesign existing component / Minor element additions]
+- **Components Affected:** [List every UI component this spec creates or modifies]
+- **Prototype Required:** [Yes — if 3+ data elements, new layout, or uncertain visual hierarchy / No — single-element additions with clear analogues]
+
+### Prototype Artifacts
+- **Stitch Screen IDs:** [To be filled during prototype phase — leave blank in design doc]
+- **Playground File:** [To be filled during prototype phase — leave blank in design doc]
+- **Reference HTML/Mockup:** [Path to any existing prototype, mockup, or reference HTML provided with the spec]
+
+### Design Constraints
+- **Theme Compatibility:** [Must work in: light / dark / sepia / all]
+- **Existing Patterns to Match:** [Name specific existing components whose visual style this should follow]
+- **Responsive Behavior:** [How this renders on mobile / tablet / desktop]
+
+### Visual Approval Gate
+> **BLOCKING:** If `Prototype Required` is **Yes**, no UI implementation task may begin until:
+> 1. A Stitch mockup or equivalent visual is created and reviewed
+> 2. A Playground prototype (or reference HTML) is interactively approved by the user
+> 3. Both artifact paths are filled in above
+>
+> This gate is enforced in Phase 4 — the orchestrator MUST check this section before dispatching any task tagged with `ui:true`.
+
 ## Error Handling
 
 ### Error Scenarios
@@ -89,14 +118,11 @@ graph TD
 
 ## Testing Strategy
 
-### Unit Testing
-- [Unit testing approach]
-- [Key components to test]
+### Runbook E2E Tests (Primary)
+- Identify affected `tests/runbook/` section(s): [01-page-load, 02-crud, 03-backup-restore, 04-import-export, 05-market, 06-ui-ux, 07-activity-log, 08-spot-prices]
+- New test blocks to write (TDD — before implementation): [describe tests]
+- Run via `/bb-test sections=NN` against PR preview URL
 
-### Integration Testing
-- [Integration testing approach]
-- [Key flows to test]
-
-### End-to-End Testing
-- [E2E testing approach]
-- [User scenarios to test]
+### Manual Verification
+- [Any flows that require manual testing, e.g., OAuth/Dropbox cloud sync at beta.staktrakr.com]
+- [Flows requiring API keys from Infisical]

@@ -6,6 +6,37 @@
 - **GitHub PR:** [#NNN](https://github.com/owner/repo/pull/NNN)
 - **Spec Path:** `.spec-workflow/specs/{spec-name}/`
 
+## UI Prototype Gate (conditional — include ONLY if design.md declares `Has UI Changes: Yes` AND `Prototype Required: Yes`)
+
+> **BLOCKING:** Tasks 0.1–0.3 MUST be completed and approved before ANY task tagged `ui:true` begins.
+> If the spec has no UI changes, delete this entire section.
+
+- [ ] 0.1 Create visual mockup (Stitch or equivalent)
+  - Invoke the `ui-mockup` skill (Step 1–4) OR the `frontend-design` skill
+  - If design.md references a prototype HTML file, use it as the starting point
+  - Generate mockups for all states: populated, loading, empty, error
+  - Include light and dark theme variants
+  - Purpose: Establish visual direction before writing any UI code
+  - _Requirements: All UI-related requirements_
+  - _Prompt: Role: UI/UX Designer | Task: Create visual mockups using the ui-mockup skill (Stitch) or frontend-design skill for all new/modified UI components described in design.md. Cover all visual states (populated, loading, empty, error) and theme variants (light, dark). If a reference HTML prototype exists at the path noted in design.md, use it as the baseline. | Restrictions: Do NOT write any production code. Output is mockup artifacts only. | Success: Stitch screen IDs or equivalent visual artifacts are generated and presented to the user for review._
+
+- [ ] 0.2 Build interactive prototype (Playground)
+  - Invoke the `playground` skill using the approved mockup as spec
+  - Must use the project's actual tech stack (Bootstrap 5, CSS variables, data-theme attribute)
+  - Include realistic sample data, interactive controls, and all data states
+  - Purpose: Validate UX feel and interactions before production code
+  - _Requirements: All UI-related requirements_
+  - _Prompt: Role: Frontend Prototyper | Task: Build an interactive single-file HTML playground using the playground skill. Source visual design from the approved Stitch mockup (Task 0.1). Use the project's actual CSS framework and theme system. Include realistic data, clickable controls, hover states, and all data states (populated, loading, empty, error). | Restrictions: This is a throwaway prototype — do NOT integrate into the codebase. Must match the project's tech stack. | Success: User can interact with the prototype in a browser, validate layout/UX, and give explicit approval before implementation begins._
+
+- [ ] 0.3 Visual approval checkpoint
+  - Present prototype to user for explicit approval
+  - Update design.md `Prototype Artifacts` section with Stitch IDs and playground file path
+  - Purpose: Hard gate — no UI implementation proceeds without visual sign-off
+  - _Requirements: All UI-related requirements_
+  - _Prompt: Role: Project Coordinator | Task: Present the interactive prototype (Task 0.2) to the user. Ask explicitly - does this look and feel right? Collect approval or revision feedback. If approved, update the UI Impact Assessment section in design.md with the Stitch screen IDs and playground file path. | Restrictions: Do NOT proceed to any ui:true implementation task until the user explicitly approves the prototype. Verbal approval IS accepted for this visual checkpoint (unlike spec phase approvals). | Success: User has approved the visual design. design.md Prototype Artifacts section is populated. Implementation tasks may now begin._
+
+---
+
 - [ ] 1. Create core interfaces in src/types/feature.ts
   - File: src/types/feature.ts
   - Define TypeScript interfaces for feature data structures
@@ -123,19 +154,26 @@
   - _Prompt: Role: React Developer with expertise in state management and API integration | Task: Implement feature-specific components following requirements 5.2 and 5.3, using API hooks from src/hooks/useApi.ts and extending BaseComponent patterns | Restrictions: Must use existing state management patterns, handle loading and error states properly, maintain component performance | Success: Components are fully functional with proper state management, API integration works smoothly, user experience is responsive and intuitive_
 
 - [ ] 6. Integration and testing
-  - Plan integration approach
-  - _Leverage: src/utils/integrationUtils.ts, tests/helpers/testUtils.ts_
+  - Plan integration approach and identify affected runbook sections for TDD test authoring
+  - _Leverage: tests/runbook/*.md, /browserbase-test-maintenance skill_
   - _Requirements: 6.0_
-  - _Prompt: Role: Integration Engineer with expertise in system integration and testing strategies | Task: Plan comprehensive integration approach following requirement 6.0, leveraging integration utilities from src/utils/integrationUtils.ts and test helpers | Restrictions: Must consider all system components, ensure proper test coverage, maintain integration test reliability | Success: Integration plan is comprehensive and feasible, all system components work together correctly, integration points are well-tested_
+  - _Prompt: Role: Integration Engineer with expertise in system integration and testing strategies | Task: Plan comprehensive integration approach following requirement 6.0. Identify which tests/runbook/ section files are affected by this spec and write new runbook test blocks BEFORE implementation tasks begin (TDD). Use the /browserbase-test-maintenance skill for format guidance and section mapping. | Restrictions: Must consider all system components, ensure proper test coverage, write tests in the standard 7-field runbook format | Success: Integration plan is comprehensive, runbook test blocks are written for all new user-facing behavior, tests are appended to the correct section files_
 
-- [ ] 6.1 Write end-to-end tests
-  - Write user journey tests using Browserbase/Stagehand natural-language automation
-  - Test against the PR preview URL (get from Cloudflare Pages check on the draft PR)
-  - _Leverage: /bb-test skill, mcp__browserbase__* tools, PR preview URL from gh pr checks_
+- [ ] 6.1 Write end-to-end runbook tests (TDD — write BEFORE implementation)
+  - Write runbook test blocks in tests/runbook/*.md for new user-facing behavior
+  - Use the /browserbase-test-maintenance skill for the standard 7-field format
+  - Map implementation changes to the correct runbook section file
+  - _Leverage: /browserbase-test-maintenance skill, tests/runbook/*.md section files_
   - _Requirements: All_
-  - _Prompt: Role: QA Automation Engineer with expertise in Browserbase/Stagehand natural-language browser automation | Task: Implement end-to-end tests for all critical user journeys using Browserbase Stagehand tools (browserbase_session_create, stagehand_navigate, stagehand_act, stagehand_extract, browserbase_screenshot). Test against the PR preview URL — get it with: gh pr checks <PR_NUMBER> --json name,state,targetUrl | python3 -c "import sys,json; checks=json.load(sys.stdin); [print(c['targetUrl']) for c in checks if 'pages.dev' in c.get('targetUrl','')]". Do NOT use Playwright or browserless — they are unavailable. Each test step has a 10-minute timeout: if a step stalls, skip it and log a warning. | Restrictions: Use stagehand_act for all interactions, stagehand_extract for all assertions, no javascript_tool. Test real user workflows end-to-end. | Success: All critical user journeys tested against PR preview URL, session recording available in Browserbase dashboard, results logged via log-implementation_
+  - _Prompt: Role: QA Automation Engineer with expertise in Browserbase/Stagehand natural-language browser automation | Task: Write runbook test blocks in tests/runbook/*.md for all new user-facing behavior using the /browserbase-test-maintenance skill. Each test block must use the 7-field format (Test name, Added, Preconditions, Steps, Pass criteria, Tags, Section). Map changes to the correct section file. After implementation, verify by running /bb-test sections=NN against the PR preview URL. | Restrictions: Use the standard runbook format, append to section files (never modify existing tests), act steps must be atomic. No Playwright, no browserless. | Success: All new user-facing behavior has corresponding runbook test blocks, tests pass when run via /bb-test against the PR preview URL_
 
-- [ ] 6.2 Final integration and cleanup
+- [ ] 6.2 Verify tests against PR preview
+  - Run /bb-test sections=NN against PR preview URL to verify all new tests pass
+  - _Leverage: /bb-test skill, PR preview URL from gh pr checks_
+  - _Requirements: All_
+  - _Prompt: Role: QA Automation Engineer | Task: Run /bb-test sections=NN against the PR preview URL to verify all new runbook tests pass. Get the preview URL with: gh pr checks <PR_NUMBER> --json name,state,targetUrl. For 1-3 tests, consider manual verification via Chrome DevTools instead of a full Browserbase session. | Restrictions: Do NOT use Playwright or browserless. | Success: All new tests pass against the PR preview URL_
+
+- [ ] 6.3 Final integration and cleanup
   - Integrate all components
   - Fix any integration issues
   - Clean up code and documentation

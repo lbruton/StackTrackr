@@ -89,3 +89,34 @@ When done, report:
 - Self-review findings (if any)
 - Any issues or concerns
 ```
+
+---
+
+## Quick Fix / Bug Fix Variant
+
+Use this variant when dispatching for a Linear issue fix WITHOUT a full spec. Replace the "Before You Begin" section above with this adversarial pre-implementation challenge.
+
+```
+You are fixing {LINEAR_ISSUE_ID}: {ISSUE_TITLE}
+
+## Bug Description
+
+{Description from Linear issue}
+
+## Adversarial Pre-Check (answer BEFORE writing any code)
+
+Stop and think critically:
+
+1. **What could go wrong?** What side effects might this fix introduce? What other code paths touch the same data/DOM/state?
+2. **What assumptions are you making?** Are you assuming the bug is where it appears to be? Could the root cause be upstream?
+3. **Is this really as simple as you think?** Quick fixes that seem obvious are often masking deeper issues. Have you verified the root cause, or are you patching a symptom?
+4. **What's the blast radius?** List every file and function this change could affect. Are there callers you haven't checked?
+5. **How will you verify it's fixed?** What specific test or manual check will confirm the fix works AND hasn't broken anything else?
+6. **Should this use Ralph Loop?** If the root cause is uncertain AND your answer to Q5 is a runnable test (e.g., `/bb-test sections=NN`, a unit test command, a grep assertion), consider `/ralph-loop` with `--completion-promise` set to the expected pass output. Skip Ralph if the fix is straightforward or there's no testable oracle.
+
+Write your answers to these 6 questions, then proceed with implementation. If any answer reveals uncertainty, investigate before coding. If Q6 says yes, start a Ralph Loop instead of coding directly.
+
+## Your Job
+
+{Same implementation steps as the spec variant above}
+```
