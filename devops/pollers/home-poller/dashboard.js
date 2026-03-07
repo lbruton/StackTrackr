@@ -168,39 +168,22 @@ function getSystemdStatus() {
 }
 
 function getDockerContainers() {
-  // Query sibling containers via Docker socket (mounted or via curl to host)
-  // Use /proc/1/cpuset to detect if we're in Docker, then query via host gateway
   try {
     const raw = execSync(
-      'curl -sf --unix-socket /var/run/docker.sock "http://localhost/containers/json?filters=%7B%22network%22%3A%5B%22staktrakr-net%22%5D%7D" 2>/dev/null || echo "[]"',
+      'curl -sf --unix-socket /var/run/docker.sock "http://localhost/containers/json?all=true" 2>/dev/null || echo "[]"',
       { timeout: 5000 }
     ).toString().trim();
-    const containers = JSON.parse(raw);
-    return containers.map(c => ({
-      name: (c.Names?.[0] || "?").replace(/^\//, ""),
-      image: (c.Image || "?").split(":")[0].split("/").pop(),
-      state: c.State || "unknown",
-      status: c.Status || "?",
-    }));
+    const all = JSON.parse(raw);
+    return all
+      .filter(c => (c.Names?.[0] || "").match(/staktrakr|firecrawl|tailscale|tinyproxy/i))
+      .map(c => ({
+        name: (c.Names?.[0] || "?").replace(/^\//, ""),
+        image: (c.Image || "?").split(":")[0].split("/").pop(),
+        state: c.State || "unknown",
+        status: c.Status || "?",
+      }));
   } catch {
-    // Also try listing all staktrakr-* containers without network filter
-    try {
-      const raw = execSync(
-        'curl -sf --unix-socket /var/run/docker.sock "http://localhost/containers/json?all=true" 2>/dev/null || echo "[]"',
-        { timeout: 5000 }
-      ).toString().trim();
-      const all = JSON.parse(raw);
-      return all
-        .filter(c => (c.Names?.[0] || "").match(/staktrakr|firecrawl|tailscale/i))
-        .map(c => ({
-          name: (c.Names?.[0] || "?").replace(/^\//, ""),
-          image: (c.Image || "?").split(":")[0].split("/").pop(),
-          state: c.State || "unknown",
-          status: c.Status || "?",
-        }));
-    } catch {
-      return [];
-    }
+    return [];
   }
 }
 
