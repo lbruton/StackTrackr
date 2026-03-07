@@ -1,11 +1,11 @@
 ---
 name: homepoller-ssh
-description: Use when troubleshooting the home poller, checking service health, viewing logs, restarting services, updating poller code, or running any command on the home VM. Also use when the words home poller, homepoller, 192.168.1.81, supervisord, retail-poller.log, or residential proxy appear in context.
+description: Use when troubleshooting the home poller, checking service health, viewing logs, restarting services, redeploying stacks, or running any command on the home VM. Also use when the words home poller, homepoller, 192.168.1.81, Portainer, Docker stack, retail-poller.log, or residential proxy appear in context.
 ---
 
-# Home Poller SSH
+# Home Poller SSH — Docker/Portainer Architecture
 
-Direct SSH access from this Mac to the home poller VM. Replaces the old workflow of delegating to a Claude agent running in the home VM's terminal.
+The home poller runs as Docker containers managed by Portainer on an Ubuntu VM. Code deploys via Portainer API from git (StakTrakr repo, `devops/pollers/` directory).
 
 ## Connection
 
@@ -14,13 +14,11 @@ Direct SSH access from this Mac to the home poller VM. Replaces the old workflow
 | `homepoller` | LAN | 192.168.1.81 | ~0.5ms |
 | `homepoller-ts` | Tailscale | 100.112.198.50 | ~36ms |
 
-**Always use `-T`** (no PTY) for non-interactive commands — prevents duplicate output:
+**Always use `-T`** (no PTY) for non-interactive commands:
 
 ```bash
 ssh -T homepoller '<command>'
 ```
-
-Use `homepoller-ts` as fallback when off the home LAN or when LAN connectivity is unreliable.
 
 **User:** `stakpoller` — has `NOPASSWD: ALL` sudo via `/etc/sudoers.d/stakpoller`.
 
@@ -28,30 +26,68 @@ Use `homepoller-ts` as fallback when off the home LAN or when LAN connectivity i
 
 ---
 
+## Docker Stacks (Portainer-Managed)
+
+All services run as Docker containers on the `staktrakr-net` bridge network. Portainer manages four git-based stacks:
+
+| Stack | Stack ID | Container(s) | Ports | Compose file |
+|-------|----------|---------------|-------|--------------|
+| home-poller | 7 | `staktrakr-home-poller` | 3010 (HTTP), 3011 (HTTPS), 9100 (metrics) | `devops/pollers/docker-compose.home.yml` |
+| firecrawl | 4 | `firecrawl-api`, workers | 3002 | `devops/firecrawl-docker/docker-compose.yml` |
+| tinyproxy | 5 | `tinyproxy-staktrakr` | 8888 | `devops/pollers/docker-compose.tinyproxy.yml` |
+| tailscale | 8 | `tailscale-staktrakr` | — (network namespace) | `devops/pollers/docker-compose.tailscale.yml` |
+
+**Portainer UI:** `https://192.168.1.81:9443` (HTTPS only, self-signed cert)
+
+**Docker is snap-installed.** Volume mountpoint: `/var/snap/docker/common/var-lib-docker/volumes/`
+
+---
+
 ## Quick Diagnostics
 
 ```bash
-# Service health (supervisord — 5 services)
-ssh -T homepoller 'sudo /usr/bin/supervisorctl -c /etc/supervisor/supervisord.conf status'
+# All StakTrakr containers
+ssh -T homepoller 'docker ps --filter network=staktrakr-net --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"'
 
-# Service health (systemd — 7 services)
-ssh -T homepoller 'systemctl is-active redis-server rabbitmq-server cron tailscaled tinyproxy grafana-server prometheus'
+# Home poller supervisord services (inside container)
+ssh -T homepoller 'docker exec staktrakr-home-poller supervisorctl status'
 
-# Recent poller log
-ssh -T homepoller 'tail -50 /var/log/retail-poller.log'
+# Recent poller log (persistent volume)
+ssh -T homepoller 'docker exec staktrakr-home-poller tail -50 /data/logs/retail-poller.log'
 
-# Dashboard / metrics logs
-ssh -T homepoller 'sudo tail -20 /var/log/supervisor/dashboard.log'
-ssh -T homepoller 'sudo tail -20 /var/log/supervisor/metrics-exporter.log'
+# Spot poller log
+ssh -T homepoller 'docker exec staktrakr-home-poller tail -30 /data/logs/spot-poller.log'
+
+# Goldback poller log
+ssh -T homepoller 'docker exec staktrakr-home-poller tail -20 /data/logs/goldback-poller.log'
+
+# Fly.io health check log
+ssh -T homepoller 'docker exec staktrakr-home-poller tail -20 /data/logs/flyio-check.log'
+
+# Provider export log
+ssh -T homepoller 'docker exec staktrakr-home-poller tail -20 /data/logs/provider-export.log'
+
+# Dashboard / metrics supervisor logs
+ssh -T homepoller 'docker exec staktrakr-home-poller tail -20 /var/log/supervisor/dashboard.log'
+ssh -T homepoller 'docker exec staktrakr-home-poller tail -20 /var/log/supervisor/metrics-exporter.log'
 
 # Check if poller lock is stuck
-ssh -T homepoller 'ls -la /tmp/retail-poller.lock 2>/dev/null || echo "No lock"'
+ssh -T homepoller 'docker exec staktrakr-home-poller ls -la /tmp/retail-poller.lock 2>/dev/null || echo "No lock"'
 
-# Test single coin
-ssh -T homepoller 'COINS=ase bash /opt/poller/run-home.sh'
+# Cron schedule
+ssh -T homepoller 'docker exec staktrakr-home-poller cat /etc/cron.d/home-poller'
 
-# Check Firecrawl/Playwright
+# Firecrawl health
 ssh -T homepoller 'curl -sf http://localhost:3002/v1/scrape -X POST -H "Content-Type: application/json" -d "{\"url\":\"https://example.com\"}" | head -c 200'
+
+# Tailscale sidecar status
+ssh -T homepoller 'docker exec tailscale-staktrakr tailscale status'
+
+# Tinyproxy test (via Tailscale sidecar network)
+ssh -T homepoller 'docker exec tailscale-staktrakr curl -sf --proxy http://localhost:8888 https://api.ipify.org'
+
+# Disk usage
+ssh -T homepoller 'df -h / && echo "---" && docker system df'
 ```
 
 ---
@@ -60,109 +96,94 @@ ssh -T homepoller 'curl -sf http://localhost:3002/v1/scrape -X POST -H "Content-
 
 | Task | Command |
 |------|---------|
-| Restart all supervisord services | `ssh -T homepoller 'sudo /usr/bin/supervisorctl -c /etc/supervisor/supervisord.conf restart all'` |
-| Restart single service | `ssh -T homepoller 'sudo /usr/bin/supervisorctl -c /etc/supervisor/supervisord.conf restart <name>'` |
-| Clear stuck lockfile | `ssh -T homepoller 'sudo rm -f /tmp/retail-poller.lock'` |
-| Fix log permissions | `ssh -T homepoller 'sudo touch /var/log/retail-poller.log && sudo chown stakpoller:stakpoller /var/log/retail-poller.log && sudo chmod 664 /var/log/retail-poller.log'` |
-| View cron schedule | `ssh -T homepoller 'cat /etc/cron.d/retail-poller'` |
-| Check .env key names (no values) | `ssh -T homepoller 'grep -oP "^[A-Z_]+" /opt/poller/.env'` |
-| Check disk usage | `ssh -T homepoller 'df -h /'` |
-| Check Node version | `ssh -T homepoller 'node --version'` |
+| Restart home-poller container | `ssh -T homepoller 'docker restart staktrakr-home-poller'` |
+| Restart supervisord service inside container | `ssh -T homepoller 'docker exec staktrakr-home-poller supervisorctl restart <name>'` |
+| Clear stuck lockfile | `ssh -T homepoller 'docker exec staktrakr-home-poller rm -f /tmp/retail-poller.lock'` |
+| View cron schedule | `ssh -T homepoller 'docker exec staktrakr-home-poller cat /etc/cron.d/home-poller'` |
+| Check env vars (names only) | `ssh -T homepoller 'docker exec staktrakr-home-poller printenv \| grep -oP "^[A-Z_]+"'` |
+| Test single coin | `ssh -T homepoller 'docker exec -e COINS=ase staktrakr-home-poller bash /app/run-home.sh'` |
+| Trigger full scrape | `ssh -T homepoller 'docker exec staktrakr-home-poller bash /app/run-home.sh'` |
+| View container logs (Docker) | `ssh -T homepoller 'docker logs --tail 50 staktrakr-home-poller'` |
+| Restart Tailscale sidecar | `ssh -T homepoller 'docker restart tailscale-staktrakr'` |
+| Restart tinyproxy | `ssh -T homepoller 'docker restart tinyproxy-staktrakr'` |
 
 ---
 
-## Pre-Update Backup (MANDATORY before updating poller code)
+## Deploying Code Changes (Portainer API)
 
-Before pulling any new code onto the VM, capture the current state of all running scripts. This lets you roll back by copying the backup files back to `/opt/poller/` if an update breaks something.
+Code deploys via Portainer's git-based stack redeploy. No SSH file copying needed — Portainer pulls from the git branch directly.
+
+### Redeploy home-poller stack
+
+The home-poller stack requires env vars on every redeploy (Portainer does not persist them across git redeployments):
 
 ```bash
-SNAPSHOT_TS=$(date -u '+%Y-%m-%d_%H-%M')
-SNAPSHOT_DIR="/Volumes/DATA/GitHub/StakTrakrApi/devops/deploy-backups/home-${SNAPSHOT_TS}"
-mkdir -p "$SNAPSHOT_DIR/scripts" "$SNAPSHOT_DIR/logs"
+# Get secrets from Infisical first (use secrets skill)
+# Then redeploy via Portainer API:
 
-# Copy all running scripts from the VM via tar (excludes node_modules, .env, secrets)
-ssh -T homepoller 'tar -czf - -C /opt/poller --exclude=node_modules --exclude=.git --exclude=.env --exclude="*.lock" .' \
-  | tar -xzf - -C "$SNAPSHOT_DIR/scripts/" 2>/dev/null
+PORTAINER_URL="https://localhost:9443"
+PORTAINER_TOKEN="ptr_up8kGvSt8RFeme2PZNlg4NX9XkqzsPoufZ+b2l+UI2o="
+STACK_ID=7
+ENDPOINT_ID=3
 
-# Capture service state
-ssh -T homepoller 'sudo /usr/bin/supervisorctl -c /etc/supervisor/supervisord.conf status' \
-  > "$SNAPSHOT_DIR/logs/supervisord-status.txt" 2>&1
-ssh -T homepoller 'tail -200 /var/log/retail-poller.log' \
-  > "$SNAPSHOT_DIR/logs/retail-poller.log" 2>&1
-ssh -T homepoller 'node --version && echo "npm: $(npm --version)"' \
-  > "$SNAPSHOT_DIR/logs/node-info.txt" 2>&1
-
-# Record metadata
-cat > "$SNAPSHOT_DIR/README.txt" <<EOF
-Pre-update snapshot: $(date -u '+%Y-%m-%d %H:%M UTC')
-Home VM: 192.168.1.81 (/opt/poller)
-Purpose: VM state before curl-update from StakTrakrApi main
-EOF
-
-# Commit the snapshot to StakTrakrApi main
-cd /Volumes/DATA/GitHub/StakTrakrApi
-git add devops/deploy-backups/
-git commit -m "chore: pre-home-update snapshot ${SNAPSHOT_TS}
-
-VM state captured before curl-update of /opt/poller from StakTrakrApi main
-
-Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
-git push origin main
+ssh -T homepoller "curl -sk -X PUT \
+  '${PORTAINER_URL}/api/stacks/${STACK_ID}/git/redeploy?endpointId=${ENDPOINT_ID}' \
+  -H 'X-API-Key: ${PORTAINER_TOKEN}' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    \"pullImage\": true,
+    \"prune\": true,
+    \"env\": [
+      {\"name\": \"TURSO_DATABASE_URL\", \"value\": \"<from-infisical>\"},
+      {\"name\": \"TURSO_AUTH_TOKEN\", \"value\": \"<from-infisical>\"},
+      {\"name\": \"METAL_PRICE_API_KEY\", \"value\": \"<from-infisical>\"},
+      {\"name\": \"GEMINI_API_KEY\", \"value\": \"<from-infisical>\"},
+      {\"name\": \"FIRECRAWL_BASE_URL\", \"value\": \"http://firecrawl-api:3002\"},
+      {\"name\": \"FLYIO_TAILSCALE_IP\", \"value\": \"100.90.171.110\"},
+      {\"name\": \"FLYIO_HTTP_URL\", \"value\": \"https://api2.staktrakr.com/data/retail/providers.json\"}
+    ]
+  }'"
 ```
 
-**Why:** The home poller often has files edited directly on the VM that haven't been synced to the repo yet. This snapshot captures the live state — if the update breaks something, copy `$SNAPSHOT_DIR/scripts/` files back to `/opt/poller/` via `scp`.
-
-**Retention:** Prune snapshots older than 30 days when `ls devops/deploy-backups/` gets crowded.
-
----
-
-## Updating Poller Code
-
-Pull latest from StakTrakrApi main branch:
+### Redeploy other stacks (no env vars needed)
 
 ```bash
-ssh -T homepoller 'bash -s' << 'SCRIPT'
-cd /opt/poller
-
-# Shared scraper files — source: devops/fly-poller/
-FLY=https://raw.githubusercontent.com/lbruton/StakTrakrApi/main/devops/fly-poller
-for f in price-extract.js capture.js db.js turso-client.js provider-db.js merge-prices.js \
-         api-export.js serve.js vision-patch.js extract-vision.js import-from-log.js \
-         goldback-scraper.js monitor-oos.sh spot-extract.js backfill-spot.js package.json; do
-  curl -sf "$FLY/$f" -o "$f" || echo "WARN: $f not found in fly-poller"
-done
-
-# Home-only files — source: devops/home-scraper/
-HOME=https://raw.githubusercontent.com/lbruton/StakTrakrApi/main/devops/home-scraper
-for f in run-home.sh run-fbp.sh check-flyio.sh setup-lxc.sh; do
-  curl -sf "$HOME/$f" -o "$f" || echo "WARN: $f not found in home-scraper"
-done
-
-npm install
-echo "Update complete"
-SCRIPT
+# Tailscale (stack 8), tinyproxy (stack 5), firecrawl (stack 4)
+ssh -T homepoller "curl -sk -X PUT \
+  '${PORTAINER_URL}/api/stacks/<STACK_ID>/git/redeploy?endpointId=${ENDPOINT_ID}' \
+  -H 'X-API-Key: ${PORTAINER_TOKEN}' \
+  -H 'Content-Type: application/json' \
+  -d '{\"pullImage\": true, \"prune\": true}'"
 ```
+
+**Git branch:** Currently `feat/DEV-72-pollers-directory` — will be `dev` after PR merge.
 
 ---
 
-## Stack Reference
+## Key Paths
 
-| Component | Manager | Port |
-|-----------|---------|------|
-| Firecrawl API | supervisord | localhost:3002 |
-| Firecrawl Worker | supervisord | — |
-| Playwright Service | supervisord | localhost:3003 |
-| Dashboard | supervisord | 0.0.0.0:3010 |
-| Metrics Exporter | supervisord | 0.0.0.0:9100 |
-| Redis | systemd | localhost:6379 |
-| RabbitMQ | systemd | localhost:5672 |
-| Grafana | systemd | 0.0.0.0:3000 |
-| Prometheus | systemd | 0.0.0.0:9090 |
-| tinyproxy | systemd | 0.0.0.0:8888 |
-| Tailscale | systemd | tailscale0 |
-| Cron | systemd | — |
+| Location | Path |
+|----------|------|
+| Poller scripts (in container) | `/app/` |
+| Persistent data volume | `/data/` (Docker volume `staktrakr-poller-data`) |
+| Logs (persistent) | `/data/logs/retail-poller.log`, `spot-poller.log`, `goldback-poller.log`, `provider-export.log`, `flyio-check.log` |
+| Supervisord logs (ephemeral) | `/var/log/supervisor/` |
+| Cron schedule | `/etc/cron.d/home-poller` |
+| TLS cert (HTTPS dashboard) | `/app/tls-cert.pem`, `/app/tls-key.pem` |
+| Tracker blocklist | `/app/tracker-blocklist.txt` |
+| Source code (repo) | `StakTrakr/devops/pollers/shared/` + `devops/pollers/home-poller/` |
 
-**Key paths:** `/opt/poller/` (scripts), `/var/log/retail-poller.log` (poller), `/var/log/supervisor/` (services), `/etc/supervisor/conf.d/staktrakr.conf` (supervisord config).
+---
+
+## Cron Schedule (inside container)
+
+| Job | Schedule | Offset from Fly.io |
+|-----|----------|-------------------|
+| Retail scrape (`run-home.sh`) | `:30` every hour | Fly.io runs at `:00` |
+| Spot prices (`spot-extract.js`) | `:15, :45` every hour | Fly.io runs at `:00, :30` |
+| Goldback (`goldback-scraper.js`) | `:31` every hour | Fly.io runs at `:01` |
+| Provider export (`export-providers-json.js`) | Every 5 min | Same as Fly.io |
+| Fly.io health check (`check-flyio.sh`) | Every 5 min | — |
 
 ---
 
@@ -170,8 +191,10 @@ SCRIPT
 
 **Running without `-T`**: Commands output twice (once from PTY, once from stdout). Always `ssh -T`.
 
-**Forgetting sudo for supervisorctl**: The supervisord socket requires root. Always prefix with `sudo`.
+**Forgetting `docker exec`**: All poller commands run INSIDE the container. `ssh -T homepoller 'tail /data/logs/...'` will fail — the volume is only mounted inside the container. Use `docker exec staktrakr-home-poller ...`.
 
-**Editing files on the VM directly**: Poller source is owned by `StakTrakrApi`. Edit there, then curl-update on the VM. Only home-only files (dashboard.js, check-flyio.sh, supervisord config) should be edited directly.
+**Missing env vars on redeploy**: Portainer git-based stacks lose env vars on redeploy. Always pass the full `env` array (see deploy section above). If Turso queries fail after redeploy, this is almost certainly the cause.
 
-**Using the wrong supervisorctl path**: Must include `-c /etc/supervisor/supervisord.conf` — the default config path doesn't work on this VM.
+**Editing files on the VM directly**: Code is deployed from git via Portainer. Edit in the StakTrakr repo (`devops/pollers/`), push, then redeploy the stack. Do not `docker exec` to edit files — changes are lost on next redeploy.
+
+**Wrong Portainer URL**: Portainer is HTTPS on port 9443, not HTTP on 9000. Use `https://localhost:9443` from the VM.
