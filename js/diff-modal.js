@@ -770,9 +770,9 @@
         html += '<div class="dm-field-label">' + _esc(ch.field) + '</div>';
         var localDisplay = (ch.localVal != null && ch.localVal !== '') ? String(ch.localVal) : '\u2014';
         var remoteDisplay = (ch.remoteVal != null && ch.remoteVal !== '') ? String(ch.remoteVal) : '\u2014';
-        html += '<div class="dm-field-value local' + localSelected + '" data-field="' + _esc(ch.field) + '" data-card="' + i + '">' + _esc(localDisplay) + '</div>';
+        html += '<div class="dm-field-value local' + localSelected + '" data-field="' + _esc(ch.field) + '" data-card="' + i + '" title="' + _esc(localDisplay) + '">' + _esc(localDisplay) + '</div>';
         html += '<div class="dm-field-arrow">&#10231;</div>';
-        html += '<div class="dm-field-value remote' + remoteSelected + '" data-field="' + _esc(ch.field) + '" data-card="' + i + '">' + _esc(remoteDisplay) + '</div>';
+        html += '<div class="dm-field-value remote' + remoteSelected + '" data-field="' + _esc(ch.field) + '" data-card="' + i + '" title="' + _esc(remoteDisplay) + '">' + _esc(remoteDisplay) + '</div>';
         html += '</div>';
       }
       // Card actions
