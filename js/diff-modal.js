@@ -133,13 +133,11 @@
   // ── Internal state ──
   var _options = null;
   var _checkedItems = {};      // { 'added-0': true, 'modified-2': false, ... }
-  var _checkedFields = {};      // { 'modified-0-purchasePrice': true, ... }
   var _conflictResolutions = {}; // { 'c0': 'local'|'remote', ... }
   var _collapsedCategories = {}; // { added: true, ... }
   var _expandedModified = {};    // { 0: true, 1: false, ... }
   var _expandedSettingsCategories = {}; // { 'Display & Appearance': true, ... }
   var _selectAllState = 0;  // 0=none, 1=added+modified, 2=all
-  var _showAllItems = {};    // { added: true, deleted: true, modified: true }
 
   // ── Helpers ──
 
@@ -172,24 +170,8 @@
   /** Count currently checked items */
   function _checkedCount() {
     var count = 0;
-    var diff = _options ? _options.diff || {} : {};
     for (var k in _checkedItems) {
-      if (!_checkedItems.hasOwnProperty(k) || !_checkedItems[k]) continue;
-      // For modified items, count individual fields instead of the whole item
-      if (k.indexOf('modified-') === 0) {
-        var mIdx = parseInt(k.split('-')[1], 10);
-        var modItem = (diff.modified || [])[mIdx];
-        if (modItem) {
-          var changes = modItem.changes || [];
-          for (var c = 0; c < changes.length; c++) {
-            if (_checkedFields['modified-' + mIdx + '-' + changes[c].field] !== false) {
-              count++;
-            }
-          }
-        }
-      } else {
-        count++;
-      }
+      if (_checkedItems.hasOwnProperty(k) && _checkedItems[k]) count++;
     }
     return count;
   }
@@ -651,51 +633,25 @@
     // Conflict cards (replaces old inline conflict rendering)
     _renderConflictCards(safeGetElement('diffSectionConflicts'), conflicts);
 
-    // Item cards — Added and Deleted render to #diffSectionOrphans
-    var orphanEl = safeGetElement('diffSectionOrphans');
-    if (orphanEl) {
-      var orphanHtml = '';
-      orphanHtml += _renderItemCards(orphanEl, added, 'added', 'Added');
-      orphanHtml += _renderItemCards(orphanEl, deleted, 'deleted', 'Deleted');
-      if (orphanHtml) {
-        orphanEl.style.display = '';
-        orphanEl.innerHTML = orphanHtml;
+    // Change list — retarget to diffSectionModified container
+    var listEl = safeGetElement('diffSectionModified');
+    if (listEl) {
+      var totalChanges = added.length + modified.length + deleted.length;
+      var lHtml = '';
+
+      if (totalChanges === 0) {
+        lHtml = '<div style="padding:2rem;text-align:center;opacity:0.45;font-size:0.85rem">No item changes detected</div>';
       } else {
-        orphanEl.style.display = 'none';
-        orphanEl.innerHTML = '';
+        // Added
+        if (added.length > 0) lHtml += _renderCategory('added', 'Added', '+', added);
+        // Modified
+        if (modified.length > 0) lHtml += _renderCategory('modified', 'Modified', '&#9998;', modified);
+        // Deleted
+        if (deleted.length > 0) lHtml += _renderCategory('deleted', 'Deleted', '&minus;', deleted);
       }
-    }
 
-    // Item cards — Modified renders to #diffSectionModified
-    var modEl = safeGetElement('diffSectionModified');
-    if (modEl) {
-      var modHtml = _renderModifiedCards(modEl, modified);
-      if (modHtml) {
-        modEl.style.display = '';
-        modEl.innerHTML = modHtml;
-      } else {
-        modEl.style.display = 'none';
-        modEl.innerHTML = '';
-      }
+      listEl.innerHTML = lHtml;
     }
-
-    // No changes message
-    if (added.length + modified.length + deleted.length === 0) {
-      var noChangesHtml = '<div style="padding:2rem;text-align:center;opacity:0.45;font-size:0.85rem">No item changes detected</div>';
-      if (modEl) { modEl.style.display = ''; modEl.innerHTML = noChangesHtml; }
-    }
-
-    // Set indeterminate state on master checkboxes (must happen after innerHTML)
-    var modal = safeGetElement('diffReviewModal');
-    if (modal) {
-      var indets = modal.querySelectorAll('[data-indeterminate="true"]');
-      for (var ii = 0; ii < indets.length; ii++) {
-        indets[ii].indeterminate = true;
-      }
-    }
-
-    // Async image loading
-    _loadItemImages();
 
     // Settings cards (replaces old settings <details>)
     _renderSettingsCards(safeGetElement('diffReviewSettings'), _options.settingsDiff);
@@ -719,233 +675,70 @@
     deleted: { bg: 'rgba(220,38,38,0.12)',  color: 'var(--danger,#dc2626)' }
   };
 
-
-  /** Metal emoji for item card image placeholders */
-  function _metalEmoji() {
-    return '\uD83E\uDE99';
-  }
-
-  /** Background color per metal for card image area */
-  function _metalBgColor(metal) {
-    var m = (metal || '').toLowerCase();
-    if (m === 'gold') return 'rgba(255,215,0,0.12)';
-    if (m === 'silver') return 'rgba(192,192,192,0.12)';
-    if (m === 'platinum') return 'rgba(229,228,226,0.12)';
-    if (m === 'palladium') return 'rgba(206,208,206,0.12)';
-    return 'rgba(255,255,255,0.06)';
-  }
-
-  /** Text color per metal for card image area */
-  function _metalTextColor(metal) {
-    var m = (metal || '').toLowerCase();
-    if (m === 'gold') return 'var(--gold,#FFD700)';
-    if (m === 'silver') return 'var(--silver,#C0C0C0)';
-    if (m === 'platinum') return 'var(--platinum,#E5E4E2)';
-    if (m === 'palladium') return 'var(--palladium,#CED0CE)';
-    return 'var(--text-secondary)';
-  }
-
-  /** Render Added or Deleted items as bordered cards */
-  function _renderItemCards(container, items, type, label) {
-    if (!container || !items || items.length === 0) {
-      if (container) {
-        container.style.display = 'none';
-        container.innerHTML = '';
-      }
-      return '';
-    }
-
-    var cc = _catColors[type];
+  /** Render a category group (added/modified/deleted) */
+  function _renderCategory(type, label, icon, items) {
     var collapsed = _collapsedCategories[type];
-    var icon = (type === 'deleted') ? '&minus;' : '+';
-    var html = '';
+    var cc = _catColors[type];
+    var html = '<div data-cat="' + type + '" style="' + (collapsed ? '' : '') + '">';
 
-    // Section header
-    html += '<div data-cat-toggle="' + type + '" style="display:flex;align-items:center;gap:0.4rem;padding:0.5rem 0.65rem;cursor:pointer;user-select:none">';
+    // Header
+    html += '<div class="diff-cat-header" data-cat-toggle="' + type + '" style="display:flex;align-items:center;gap:0.4rem;padding:0.5rem 0.65rem;cursor:pointer;user-select:none;font-size:0.8rem;font-weight:600">';
     html += '<span style="font-size:0.6rem;opacity:0.4;transition:transform 0.2s;' + (collapsed ? 'transform:rotate(-90deg)' : '') + '">&#9660;</span>';
     html += '<span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:4px;font-size:0.7rem;font-weight:700;background:' + cc.bg + ';color:' + cc.color + '">' + icon + '</span>';
-    html += '<span style="font-weight:600;font-size:0.8rem">' + _esc(label) + '</span>';
+    html += '<span>' + label + '</span>';
     html += '<span style="font-weight:400;opacity:0.5;font-size:0.73rem">(' + items.length + ')</span>';
     html += '</div>';
 
-    // Card container
-    html += '<div style="padding:0 0.65rem;' + (collapsed ? 'display:none' : '') + '">';
-
-    var limit = (_showAllItems[type] || items.length <= 20) ? items.length : 20;
-    for (var i = 0; i < limit; i++) {
-      var item = items[i];
+    // Items
+    html += '<div class="diff-cat-items" style="' + (collapsed ? 'display:none' : '') + '">';
+    for (var i = 0; i < items.length; i++) {
       var key = type + '-' + i;
-      var checked = _checkedItems[key] !== false;
+      var checked = _checkedItems[key] !== false; // default true
+      var item = type === 'modified' ? items[i].item : items[i];
       var name = _esc(item.name || 'Unnamed item');
-      var metalBg = _metalBgColor(item.metal);
-      var metalCol = _metalTextColor(item.metal);
 
-      // Card wrapper
-      html += '<div style="border-radius:8px;border:1px solid var(--border-color,rgba(255,255,255,0.08));padding:0.65rem;margin-bottom:0.5rem;background:var(--bg-card,#1a1d27)">';
-      html += '<div style="display:flex;gap:0.5rem;align-items:center">';
+      html += '<div style="display:flex;align-items:flex-start;gap:0.5rem;padding:0.45rem 0.65rem;font-size:0.85rem">';
+      html += '<input type="checkbox" data-check="' + key + '" ' + (checked ? 'checked' : '') + ' style="width:16px;height:16px;min-width:16px;padding:0;border:none;accent-color:var(--primary,#3b82f6);margin-top:2px;flex-shrink:0;cursor:pointer">';
+      html += '<div style="flex-shrink:0;width:20px;height:20px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;margin-top:1px;background:' + cc.bg + ';color:' + cc.color + '">' + icon + '</div>';
 
-      // Checkbox
-      html += '<input type="checkbox" data-check="' + key + '" ' + (checked ? 'checked' : '') + ' style="width:16px;height:16px;min-width:16px;padding:0;border:none;accent-color:var(--primary,#3b82f6);flex-shrink:0;cursor:pointer">';
-
-      // Image area
-      html += '<div' + (item.uuid ? ' data-uuid="' + _esc(item.uuid) + '"' : '') + ' style="width:40px;height:40px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;background:' + metalBg + ';color:' + metalCol + '">';
-      html += _metalEmoji(item.metal);
-      html += '</div>';
-
-      // Content area
       html += '<div style="flex:1;min-width:0">';
-      html += '<div style="font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + name + '</div>';
 
-      // Metadata
-      var detail = [];
-      if (item.metal) detail.push(_esc(item.metal));
-      if (item.weight != null) detail.push(_esc(item.weight) + _esc(item.weightUnit || 'oz'));
-      if (item.qty != null) detail.push('\u00d7 ' + _esc(item.qty));
-      if (detail.length > 0) {
-        html += '<div style="font-size:0.73rem;opacity:0.5;margin-top:0.1rem">' + detail.join(' \u00b7 ') + '</div>';
-      }
-
-      html += '</div>'; // content area
-      html += '</div>'; // flex row
-      html += '</div>'; // card
-    }
-
-    // "Show N more" button
-    if (items.length > 20) {
-      var remaining = items.length - 20;
-      html += '<div data-show-more="' + type + '" style="font-size:0.78rem;text-align:center;cursor:pointer;padding:0.5rem;opacity:0.6">Show ' + remaining + ' more</div>';
-    }
-
-    html += '</div>'; // card container
-
-    return html;
-  }
-
-  /** Render Modified items as expandable cards with per-field checkboxes */
-  function _renderModifiedCards(container, modifiedItems) {
-    if (!container || !modifiedItems || modifiedItems.length === 0) {
-      if (container) {
-        container.style.display = 'none';
-        container.innerHTML = '';
-      }
-      return '';
-    }
-
-    var cc = _catColors.modified;
-    var collapsed = _collapsedCategories.modified;
-    var html = '';
-
-    // Section header
-    html += '<div data-cat-toggle="modified" style="display:flex;align-items:center;gap:0.4rem;padding:0.5rem 0.65rem;cursor:pointer;user-select:none">';
-    html += '<span style="font-size:0.6rem;opacity:0.4;transition:transform 0.2s;' + (collapsed ? 'transform:rotate(-90deg)' : '') + '">&#9660;</span>';
-    html += '<span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:4px;font-size:0.7rem;font-weight:700;background:' + cc.bg + ';color:' + cc.color + '">&#9998;</span>';
-    html += '<span style="font-weight:600;font-size:0.8rem">' + _esc('Modified') + '</span>';
-    html += '<span style="font-weight:400;opacity:0.5;font-size:0.73rem">(' + modifiedItems.length + ')</span>';
-    html += '</div>';
-
-    // Card container
-    html += '<div style="padding:0 0.65rem;' + (collapsed ? 'display:none' : '') + '">';
-
-    var limit = (_showAllItems.modified || modifiedItems.length <= 20) ? modifiedItems.length : 20;
-    for (var i = 0; i < limit; i++) {
-      var mod = modifiedItems[i];
-      var item = mod.item;
-      var changes = mod.changes || [];
-      var key = 'modified-' + i;
-      var checked = _checkedItems[key] !== false;
-      var name = _esc(item.name || 'Unnamed item');
-      var metalBg = _metalBgColor(item.metal);
-      var metalCol = _metalTextColor(item.metal);
-      var expanded = _expandedModified[i];
-
-      // Count checked fields for indeterminate hint
-      var checkedFieldCount = 0;
-      for (var fc = 0; fc < changes.length; fc++) {
-        if (_checkedFields[key + '-' + changes[fc].field] !== false) {
-          checkedFieldCount++;
-        }
-      }
-      var allFieldsChecked = checkedFieldCount === changes.length;
-      var someFieldsChecked = checkedFieldCount > 0 && !allFieldsChecked;
-
-      // Card wrapper
-      html += '<div style="border-radius:8px;border:1px solid var(--border-color,rgba(255,255,255,0.08));padding:0.65rem;margin-bottom:0.5rem;background:var(--bg-card,#1a1d27)">';
-      html += '<div style="display:flex;gap:0.5rem;align-items:center">';
-
-      // Master checkbox
-      html += '<input type="checkbox" data-check="' + key + '"' + (someFieldsChecked ? ' data-indeterminate="true"' : '') + ' ' + (checked ? 'checked' : '') + ' style="width:16px;height:16px;min-width:16px;padding:0;border:none;accent-color:var(--primary,#3b82f6);flex-shrink:0;cursor:pointer">';
-
-      // Image area
-      html += '<div' + (item.uuid ? ' data-uuid="' + _esc(item.uuid) + '"' : '') + ' style="width:40px;height:40px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;background:' + metalBg + ';color:' + metalCol + '">';
-      html += _metalEmoji(item.metal);
-      html += '</div>';
-
-      // Item identity
-      html += '<div style="flex:1;min-width:0">';
-      html += '<div style="font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + name;
-      html += '<span style="display:inline-block;background:rgba(217,119,6,0.1);color:#d97706;border-radius:12px;padding:0.1rem 0.5rem;font-size:0.7rem;margin-left:0.4rem">' + changes.length + ' field' + (changes.length !== 1 ? 's' : '') + ' changed</span>';
-      html += '</div>';
-      html += '</div>';
-
-      // Expand toggle
-      html += '<div class="diff-mod-toggle" data-mod-idx="' + i + '" style="cursor:pointer;padding:0.25rem 0.4rem;user-select:none">';
-      html += '<span style="font-size:0.65rem;opacity:0.35;transition:transform 0.2s;display:inline-block;' + (expanded ? '' : 'transform:rotate(-90deg)') + '">&#9660;</span>';
-      html += '</div>';
-
-      html += '</div>'; // flex row
-
-      // Expanded field rows
-      if (expanded) {
-        for (var fi = 0; fi < changes.length; fi++) {
-          var ch = changes[fi];
-          var fieldKey = key + '-' + ch.field;
-          var fieldChecked = _checkedFields[fieldKey] !== false;
-          var localDisplay = ch.localVal == null ? '\u2014' : _esc(String(ch.localVal));
-          var remoteDisplay = ch.remoteVal == null ? '\u2014' : _esc(String(ch.remoteVal));
-
-          html += '<div style="display:flex;align-items:center;gap:0.5rem;padding:0.2rem 0 0.2rem 3rem">';
-          html += '<input type="checkbox" data-field-check="' + fieldKey + '" ' + (fieldChecked ? 'checked' : '') + ' style="width:14px;height:14px;min-width:14px;padding:0;border:none;accent-color:var(--primary,#3b82f6);flex-shrink:0;cursor:pointer">';
-          html += '<span style="min-width:100px;font-size:0.78rem;opacity:0.5">' + _esc(ch.field) + '</span>';
-          html += '<span style="text-decoration:line-through;opacity:0.45;font-size:0.78rem">' + localDisplay + '</span>';
-          html += '<span style="opacity:0.35;font-size:0.7rem">&rarr;</span>';
-          html += '<span style="font-weight:500;color:var(--warning,#d97706);font-size:0.78rem">' + remoteDisplay + '</span>';
+      if (type === 'modified') {
+        var mod = items[i];
+        var expanded = _expandedModified[i];
+        html += '<div class="diff-mod-toggle" data-mod-idx="' + i + '" style="cursor:pointer">';
+        html += '<div style="font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + name + ' <span style="font-size:0.65rem;opacity:0.35">' + (expanded ? '&#9650;' : '&#9660;') + '</span></div>';
+        html += '<div style="font-size:0.73rem;opacity:0.5;margin-top:0.1rem">' + mod.changes.length + ' field' + (mod.changes.length > 1 ? 's' : '') + ' changed</div>';
+        if (expanded) {
+          html += '<div style="margin-top:0.35rem;padding-left:0.25rem;font-size:0.78rem">';
+          for (var c = 0; c < mod.changes.length; c++) {
+            var ch = mod.changes[c];
+            html += '<div style="padding:0.15rem 0;display:flex;gap:0.3rem;align-items:baseline">';
+            html += '<span style="opacity:0.5;min-width:80px">' + _esc(ch.field) + '</span>';
+            html += '<span style="text-decoration:line-through;opacity:0.45">' + _esc(String(ch.localVal != null ? ch.localVal : '\u2014')) + '</span>';
+            html += '<span style="opacity:0.35;font-size:0.7rem">&rarr;</span>';
+            html += '<span style="font-weight:500;color:var(--warning,#d97706)">' + _esc(String(ch.remoteVal != null ? ch.remoteVal : '\u2014')) + '</span>';
+            html += '</div>';
+          }
           html += '</div>';
         }
+        html += '</div>';
+      } else {
+        html += '<div style="font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + name + '</div>';
+        // Detail line
+        var detail = [];
+        if (item.metal) detail.push(_esc(item.metal));
+        if (item.weight != null) detail.push(item.weight + _esc(item.weightUnit || 'oz'));
+        if (item.qty != null) detail.push('\u00d7 ' + item.qty);
+        if (detail.length > 0) {
+          html += '<div style="font-size:0.73rem;opacity:0.5;margin-top:0.1rem">' + detail.join(' \u00b7 ') + '</div>';
+        }
       }
 
-      html += '</div>'; // card
+      html += '</div></div>';
     }
-
-    // "Show N more" button
-    if (modifiedItems.length > 20) {
-      var remaining = modifiedItems.length - 20;
-      html += '<div data-show-more="modified" style="font-size:0.78rem;text-align:center;cursor:pointer;padding:0.5rem;opacity:0.6">Show ' + remaining + ' more</div>';
-    }
-
-    html += '</div>'; // card container
-
+    html += '</div></div>';
     return html;
-  }
-
-  /** Load item images asynchronously for cards with data-uuid */
-  function _loadItemImages() {
-    try {
-      if (typeof imageCache === 'undefined' || !imageCache || !imageCache.getUserImageUrl) return;
-      var modal = safeGetElement('diffReviewModal');
-      if (!modal) return;
-      var els = modal.querySelectorAll('[data-uuid]');
-      for (var i = 0; i < els.length; i++) {
-        (function (el) {
-          imageCache.getUserImageUrl(el.dataset.uuid, 'obverse').then(function (url) {
-            if (url) {
-              el.innerHTML = '<img src="' + url + '" style="width:40px;height:40px;object-fit:cover;border-radius:6px" alt="">';
-            }
-          }).catch(function () { /* silent fallback — keep emoji */ });
-        })(els[i]);
-      }
-    } catch (ex) {
-      // imageCache not available — silently keep emoji placeholders
-    }
   }
 
   // ── Event delegation ──
@@ -953,68 +746,9 @@
   function _onListClick(e) {
     var target = e.target;
 
-    // Per-field checkbox toggle
-    if (target.type === 'checkbox' && target.dataset.fieldCheck) {
-      var fKey = target.dataset.fieldCheck;
-      _checkedFields[fKey] = target.checked;
-      // Sync master checkbox — parse item index from key like 'modified-0-fieldName'
-      var parts = fKey.split('-');
-      var itemIdx = parseInt(parts[1], 10);
-      var masterKey = 'modified-' + itemIdx;
-      var diff = _options.diff || {};
-      var modItem = (diff.modified || [])[itemIdx];
-      if (modItem) {
-        var changes = modItem.changes || [];
-        var allChecked = true;
-        var noneChecked = true;
-        for (var fc = 0; fc < changes.length; fc++) {
-          var cfk = 'modified-' + itemIdx + '-' + changes[fc].field;
-          if (_checkedFields[cfk] !== false) {
-            noneChecked = false;
-          } else {
-            allChecked = false;
-          }
-        }
-        // Update master checkbox state
-        _checkedItems[masterKey] = !noneChecked;
-        var masterCb = safeGetElement('diffSectionModified');
-        if (masterCb) {
-          var mc = masterCb.querySelector('[data-check="' + masterKey + '"]');
-          if (mc) {
-            mc.checked = !noneChecked;
-            mc.indeterminate = !allChecked && !noneChecked;
-          }
-        }
-      }
-      _updateApplyCount();
-      return;
-    }
-
     // Checkbox toggle
     if (target.type === 'checkbox' && target.dataset.check) {
-      var chkKey = target.dataset.check;
-      _checkedItems[chkKey] = target.checked;
-      // If this is a modified master checkbox, toggle all field checkboxes too
-      if (chkKey.indexOf('modified-') === 0) {
-        var mIdx = parseInt(chkKey.split('-')[1], 10);
-        var diff2 = _options.diff || {};
-        var modItem2 = (diff2.modified || [])[mIdx];
-        if (modItem2) {
-          var changes2 = modItem2.changes || [];
-          for (var fc2 = 0; fc2 < changes2.length; fc2++) {
-            _checkedFields['modified-' + mIdx + '-' + changes2[fc2].field] = target.checked;
-          }
-          // Update field checkbox DOM elements without full re-render
-          var container2 = target.closest('[style*="border-radius:8px"]');
-          if (container2) {
-            var fieldCbs = container2.querySelectorAll('[data-field-check]');
-            for (var fi2 = 0; fi2 < fieldCbs.length; fi2++) {
-              fieldCbs[fi2].checked = target.checked;
-            }
-          }
-        }
-        target.indeterminate = false;
-      }
+      _checkedItems[target.dataset.check] = target.checked;
       _updateApplyCount();
       return;
     }
@@ -1033,14 +767,6 @@
     if (modToggle) {
       var idx = parseInt(modToggle.dataset.modIdx, 10);
       _expandedModified[idx] = !_expandedModified[idx];
-      _render();
-      return;
-    }
-
-    // "Show more" button
-    var showMoreBtn = target.closest('[data-show-more]');
-    if (showMoreBtn) {
-      _showAllItems[showMoreBtn.dataset.showMore] = true;
       _render();
       return;
     }
@@ -1129,22 +855,19 @@
       }
     }
 
-    // Modified items — one entry per checked field
+    // Modified items — one entry per changed field
     for (var m = 0; m < modified.length; m++) {
       if (_checkedItems['modified-' + m] !== false) {
         var mod = modified[m];
         var key = _itemKey(mod.item);
         for (var c = 0; c < mod.changes.length; c++) {
           var ch = mod.changes[c];
-          // Only emit fields that are individually checked (backward compat: if key missing, treat as true)
-          if (_checkedFields['modified-' + m + '-' + ch.field] !== false) {
-            result.push({
-              type: 'modify',
-              itemKey: key,
-              field: ch.field,
-              value: ch.remoteVal
-            });
-          }
+          result.push({
+            type: 'modify',
+            itemKey: key,
+            field: ch.field,
+            value: ch.remoteVal
+          });
         }
       }
     }
@@ -1229,13 +952,6 @@
       listEl.addEventListener('click', _onListClick);
     }
 
-    // Event delegation on orphan items (added/deleted cards)
-    var orphanListEl = safeGetElement('diffSectionOrphans');
-    if (orphanListEl) {
-      orphanListEl.removeEventListener('click', _onListClick);
-      orphanListEl.addEventListener('click', _onListClick);
-    }
-
     // Pill buttons
     var btnStyle = 'display:inline-flex;align-items:center;gap:0.3rem;border-radius:999px;font-size:0.73rem;font-weight:500;cursor:pointer;transition:all 0.15s;';
 
@@ -1306,27 +1022,17 @@
 
       // Reset internal state
       _checkedItems = {};
-      _checkedFields = {};
       _conflictResolutions = {};
       _collapsedCategories = {};
       _expandedModified = {};
       _expandedSettingsCategories = {};
       _selectAllState = 0;
-      _showAllItems = {};
 
       // Default all items to checked
       var diff = _options.diff || {};
       for (var a = 0; a < (diff.added || []).length; a++) _checkedItems['added-' + a] = true;
       for (var m = 0; m < (diff.modified || []).length; m++) _checkedItems['modified-' + m] = true;
       for (var d = 0; d < (diff.deleted || []).length; d++) _checkedItems['deleted-' + d] = true;
-
-      // Default all modified item fields to checked (accept remote)
-      for (var mf = 0; mf < (diff.modified || []).length; mf++) {
-        var modChanges = diff.modified[mf].changes || [];
-        for (var c = 0; c < modChanges.length; c++) {
-          _checkedFields['modified-' + mf + '-' + modChanges[c].field] = true;
-        }
-      }
 
       // Default conflict resolutions to 'remote' (per-field keys)
       if (_options.conflicts && _options.conflicts.conflicts) {
