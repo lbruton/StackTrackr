@@ -429,25 +429,28 @@ function renderFlyioCard(h, flyRuns, tursoUp) {
   const tursoColor = tursoUp ? "#22c55e" : "#ef4444";
   const tursoLabel = tursoUp ? "OK" : "OFFLINE";
 
-  // Recent Fly.io runs
+  // Fly.io last-hour summary
   let runsHtml = "";
   if (flyRuns && flyRuns.length > 0) {
-    const rows = flyRuns.slice(0, 5).map(r => {
-      const pid = escHtml(r.poller_id);
-      const time = r.started_at ? r.started_at.replace("T", " ").slice(0, 19) : "?";
-      const statusColor = r.status === "done" ? "#22c55e" : (r.status === "running" ? "#3b82f6" : "#ef4444");
-      const prices = `${r.captured ?? 0}/${r.total ?? 0}`;
-      return `<tr>
-        <td><span class="badge" style="background:${statusColor}">${pid}</span></td>
-        <td class="detail">${time}</td>
-        <td>${prices}</td>
-        <td>${r.failures ?? 0}</td>
-      </tr>`;
-    }).join("");
+    const oneHourAgo = new Date(Date.now() - 3600000).toISOString();
+    const recent = flyRuns.filter(r => r.started_at > oneHourAgo);
+    const retailRuns = recent.filter(r => r.poller_id?.includes("retail"));
+    const spotRuns = recent.filter(r => r.poller_id?.includes("spot"));
+    const lastRetail = retailRuns[0];
+    const retailStatus = lastRetail
+      ? `${lastRetail.captured ?? 0}/${lastRetail.total ?? 0} prices`
+      : "no run";
+    const retailColor = lastRetail?.status === "done" ? "#22c55e" : (lastRetail ? "#3b82f6" : "#a1a1aa");
+    const spotCount = spotRuns.filter(r => r.status === "done").length;
+    const spotTotal = 2; // expected 2 spot runs/hour from fly
+    const spotColor = spotCount >= spotTotal ? "#22c55e" : (spotCount > 0 ? "#eab308" : "#ef4444");
+
     runsHtml = `
       <div style="margin-top:8px">
-        <table><thead><tr><th>Poller</th><th>Started</th><th>Prices</th><th>Fail</th></tr></thead>
-        <tbody>${rows}</tbody></table>
+        <div class="stat-row"><span>Retail (last hour)</span>
+          <span class="stat-val" style="color:${retailColor}">${retailStatus}</span></div>
+        <div class="stat-row"><span>Spot (last hour)</span>
+          <span class="stat-val" style="color:${spotColor}">${spotCount}/${spotTotal} runs</span></div>
       </div>`;
   } else {
     runsHtml = `<p class="no-data" style="margin-top:8px">No Fly.io runs in Turso yet.</p>`;
@@ -789,10 +792,10 @@ ${renderNav("home", failureCount)}
 </div>
 
 <div class="wide-card">
-  <h2>All Poller Runs \u2014 Turso (last 30) ${tursoNote}</h2>
+  <h2>Retail Poller Runs \u2014 Turso (last 30) ${tursoNote}</h2>
   ${renderStatsCards(runStats)}
   <div class="scroll-table">
-    ${renderRunsTable(tursoRuns)}
+    ${renderRunsTable(tursoRuns?.filter(r => !r.poller_id?.includes('spot')))}
   </div>
 </div>
 
