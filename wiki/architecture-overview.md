@@ -2,15 +2,21 @@
 title: Architecture Overview
 category: infrastructure
 owner: staktrakr, staktrakr-api
-lastUpdated: v3.33.25
-date: 2026-03-02
-sourceFiles: []
-relatedPages: []
+lastUpdated: v3.33.57
+date: 2026-03-07
+sourceFiles:
+  - devops/pollers/docker-compose.home.yml
+  - devops/pollers/docker-compose.tailscale.yml
+  - devops/pollers/docker-compose.tinyproxy.yml
+relatedPages:
+  - home-poller
+  - poller-parity
+  - cron-schedule
 ---
 
 # Architecture Overview
 
-> **Last verified:** 2026-03-02 — full audit from live Fly.io container source code. Dual poller (different scrape pipelines since API-3), Turso shared DB, 11 coins, 7 vendors.
+> **Last verified:** 2026-03-07 — Docker/Portainer architecture on home VM, Fly.io container in cloud. Dual poller (different scrape pipelines since API-3), Turso shared DB, 11 coins, 7 vendors.
 
 ---
 
@@ -20,39 +26,54 @@ relatedPages: []
 ┌─────────────────────────────────────────────────────────────┐
 │  Fly.io Container (staktrakr, dfw)                          │
 │                                                             │
-│  ┌─────────────┐  ┌──────────────┐                          │
-│  │ run-local.sh│  │ run-spot.sh  │                          │
-│  │ 15,45 * * * │  │ 0,30 * * * * │<!-- STALE: CLAUDE.md documents run-spot.sh at 5,20,35,50 * * * * — verify actual cron schedule in StakTrakrApi -->                          │
-│  └──────┬──────┘  └──────┬───────┘                          │
-│         │                │ → Turso spot_prices + JSON files  │
+│  ┌─────────────┐  ┌──────────────┐  ┌───────────────┐      │
+│  │ run-local.sh│  │ run-spot.sh  │  │run-goldback.sh│      │
+│  │ 15,45 * * * │  │ 0,30 * * * * │  │ 1 * * * *    │      │
+│  └──────┬──────┘  └──────┬───────┘  └──────┬────────┘      │
+│         │                │                  │               │
 │  ┌──────▼──────────────────────────────────────────────┐   │
 │  │  Self-hosted Firecrawl (port 3002)                   │   │
 │  │  Playwright Service (port 3003)                      │   │
 │  │  Redis, RabbitMQ, PostgreSQL 17                      │   │
 │  └──────────────────────────────────────────────────────┘   │
-│                                                             │
-│  ┌──────────────┐                                           │
+│         │                                                    │
+│  ┌──────▼───────┐                                           │
 │  │run-publish.sh│  8,23,38,53 * * * *                      │
 │  │api-export.js │◄── Turso (price_snapshots + spot_prices)  │
 │  └──────┬───────┘                                           │
 │         │ force-push HEAD:api                               │
 └─────────┼───────────────────────────────────────────────────┘
           │
+          │    Tailscale mesh (residential proxy path)
+          │    ┌─────────────────────────────────────────┐
+          │    │ tailscale-staktrakr (100.112.198.50)     │
+          │    │   └─ tinyproxy-staktrakr (:8888)        │
+          │    └─────────────────────────────────────────┘
+          │
 ┌─────────▼───────────────────────────────────────────────────┐
-│  Home VM (Ubuntu LXC, 192.168.1.81)                         │
-│  run-home.sh  30 * * * *                                        │
-│  Firecrawl + Playwright (supervisord)                       │
-│  Dashboard (port 3010), Metrics Exporter (port 9100)        │
-│  Grafana (port 3000), Prometheus (port 9090)                │
-│                │                                             │
-│                └──► Turso (same DB, POLLER_ID=home)          │
+│  Home VM — Docker/Portainer (192.168.1.81:9443)             │
+│                                                              │
+│  ┌─ staktrakr-home-poller ─────────────────────────────┐    │
+│  │  Cron: retail :30, spot :15/:45, goldback :31       │    │
+│  │  Dashboard (HTTP 3010, HTTPS 3011)                   │    │
+│  │  Metrics Exporter (9100)                             │    │
+│  │  Supervisord (cron + dashboard + metrics)            │    │
+│  └──────────────────────────┬──────────────────────────┘    │
+│                              │                               │
+│  ┌─ firecrawl-api ──────────┤                               │
+│  │  Firecrawl self-hosted   │                               │
+│  │  (port 3002)             │                               │
+│  └──────────────────────────┘                               │
+│                              │                               │
+│                              └──► Turso (same DB,            │
+│                                   POLLER_ID=home)            │
 └─────────────────────────────────────────────────────────────┘
 
           │
           ▼
   Turso (libSQL cloud)
   price_snapshots  — retail prices (both pollers)
-  spot_prices      — spot prices (Fly.io spot poller)
+  spot_prices      — spot prices (both pollers)
   poller_runs      — run metadata (both pollers)
   provider_failures — per-URL failure log (both pollers)
           │
@@ -74,10 +95,11 @@ relatedPages: []
 
 | Repo | Owns |
 |------|------|
-| `lbruton/StakTrakrApi` | All API backend: poller code (`devops/`), GHA workflows, data files served via GitHub Pages |
-| `lbruton/StakTrakr` | Frontend app code, Cloudflare Pages deployment, local dev tools |
-| `lbruton/stakscrapr` | Home VM full stack — identical Firecrawl+Playwright+scraper core PLUS dashboard.js, tinyproxy/Cox residential proxy, Tailscale exit node config |
+| `lbruton/StakTrakr` | Frontend app code, **all poller code** (`devops/pollers/`), Docker configs, Cloudflare Pages deployment, skills, wiki |
+| `lbruton/StakTrakrApi` | Fly.io fly.toml (transitioning), `api` branch data publishing, GHA workflows |
 | `StakTrakr/wiki/` | This wiki — in-repo Docsify documentation (shared infrastructure + frontend) |
+
+> **`stakscrapr` is retired.** All poller code migrated to `StakTrakr/devops/pollers/` as of 2026-03-07.
 
 ---
 
@@ -109,8 +131,10 @@ GitHub Pages is configured to serve the **`api` branch**. The `Merge Poller Bran
 |-----------|-----------|-------|
 | Fly.io `staktrakr` app | All-in-one container: Firecrawl + pollers + serve.js | cloud |
 | Turso `staktrakrapi` DB | libSQL cloud — dual-poller write-through store (retail + spot) | cloud |
-| Home VM | Secondary poller + monitoring stack (Grafana, Prometheus) | 192.168.1.81 |
-| tinyproxy | Residential HTTP proxy on home VM for Fly.io scraper traffic | 192.168.1.81:8888 |
+| Home VM Docker stacks | 4 containers: home-poller, firecrawl, tinyproxy, tailscale sidecar | 192.168.1.81 |
+| Portainer | Docker stack manager for home VM | 192.168.1.81:9443 |
+| tinyproxy container | Residential HTTP proxy for Fly.io scraper traffic (shares Tailscale network) | Docker |
+| Tailscale sidecar | Network namespace for tinyproxy, Tailscale node identity | Docker |
 | MetalPriceAPI | Spot price data source | cloud |
 | Gemini API | Vision cross-validation | cloud |
 | GitHub Pages | Static JSON API host | cloud |
@@ -121,11 +145,12 @@ GitHub Pages is configured to serve the **`api` branch**. The `Merge Poller Bran
 
 | Change type | Action needed |
 |-------------|--------------|
-| Poller code change | `git push origin main` + `fly deploy` from `devops/fly-poller/` |
-| Provider URL fix | Update directly in Turso via `provider-db.js` or the dashboard — auto-synced next cycle, no redeploy |
-| Home poller code update | curl files from `raw.githubusercontent.com/lbruton/StakTrakrApi/main/devops/fly-poller/` |
+| Fly.io poller code change | `git push origin main` to StakTrakrApi + `fly deploy` from `devops/fly-poller/` |
+| Home poller code change | Push to StakTrakr branch + Portainer API redeploy (see `sync-poller` skill) |
+| Provider URL fix | Update via dashboard at `192.168.1.81:3010/providers` or `provider-db.js` — no redeploy |
 | New Fly.io secret | `fly secrets set KEY=value --app staktrakr` |
-| GHA workflow change | Push to `main` branch — GHA reads from main |
+| Home poller env var change | Pass updated `env` array on next Portainer redeploy |
+| GHA workflow change | Push to `main` branch of StakTrakrApi — GHA reads from main |
 
 ---
 
