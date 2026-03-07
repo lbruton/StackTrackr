@@ -13,6 +13,7 @@
  */
 
 import { createServer } from "node:http";
+import { createServer as createHttpsServer } from "node:https";
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { execSync, spawn } from "node:child_process";
 import { createClient } from "@libsql/client";
@@ -2200,3 +2201,24 @@ const server = createServer((req, res) => {
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`[dashboard] Listening on http://0.0.0.0:${PORT}`);
 });
+
+// HTTPS on port 3011 for iframe embedding in spec-workflow dashboard
+const HTTPS_PORT = 3011;
+try {
+  const tlsOpts = {
+    key: readFileSync("/app/tls-key.pem"),
+    cert: readFileSync("/app/tls-cert.pem"),
+  };
+  const httpsServer = createHttpsServer(tlsOpts, (req, res) => {
+    handleRequest(req, res).catch((err) => {
+      console.error("[dashboard] HTTPS request error:", err);
+      res.writeHead(500);
+      res.end("Internal error");
+    });
+  });
+  httpsServer.listen(HTTPS_PORT, "0.0.0.0", () => {
+    console.log(`[dashboard] Listening on https://0.0.0.0:${HTTPS_PORT}`);
+  });
+} catch (err) {
+  console.warn(`[dashboard] HTTPS disabled — ${err.message}`);
+}
