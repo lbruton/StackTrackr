@@ -184,11 +184,13 @@ const createBackupZip = async () => {
       zip.file('item_tags.json', JSON.stringify(itemTagsData, null, 2));
     }
 
-    // 4. Generate and add CSV export (portfolio format)
+    // 4. Generate and add CSV export (portfolio format — synced with exportCsv())
     const csvHeaders = [
-      "Date", "Metal", "Type", "Name", "Qty", "Weight(oz)", "Weight Unit", "Purity",
-      "Purchase Price", "Melt Value", "Retail Price", "Gain/Loss",
-      "Purchase Location", "N#", "PCGS #", "Serial Number", "Tags", "Notes"
+      "Date","Metal","Type","Name","Year","Qty","Weight(oz)","Weight Unit","Purity",
+      "Purchase Price","Melt Value","Retail Price","Gain/Loss",
+      "Purchase Location","Storage Location","N#","PCGS #","Grade","Grading Authority","Cert #","Serial Number","Notes","Tags","UUID",
+      "Obverse Image URL","Reverse Image URL",
+      "Disposition Type","Disposition Date","Disposition Amount","Realized Gain/Loss"
     ];
     const sortedInventory = sortInventoryByDateNewestFirst();
     const csvRows = [];
@@ -206,6 +208,7 @@ const createBackupZip = async () => {
         item.metal || 'Silver',
         item.type,
         item.name,
+        item.year || '',
         item.qty,
         parseFloat(item.weight).toFixed(4),
         item.weightUnit || 'oz',
@@ -215,11 +218,22 @@ const createBackupZip = async () => {
         formatCurrency(item.marketValue || 0),
         gainLoss !== null ? formatCurrency(gainLoss) : '—',
         item.purchaseLocation,
+        item.storageLocation || '',
         item.numistaId || '',
         item.pcgsNumber || '',
+        item.grade || '',
+        item.gradingAuthority || '',
+        item.certNumber || '',
         item.serialNumber || '',
+        item.notes || '',
         typeof getItemTags === 'function' ? getItemTags(item.uuid).join('; ') : '',
-        item.notes || ''
+        item.uuid || '',
+        item.obverseImageUrl || '',
+        item.reverseImageUrl || '',
+        item.disposition ? (typeof DISPOSITION_TYPES !== 'undefined' && DISPOSITION_TYPES[item.disposition.type] ? DISPOSITION_TYPES[item.disposition.type].label : item.disposition.type) : '',
+        item.disposition ? (item.disposition.date || '') : '',
+        item.disposition ? (item.disposition.amount || 0) : '',
+        item.disposition ? (item.disposition.realizedGainLoss || 0) : ''
       ]);
     }
     const csvContent = Papa.unparse([csvHeaders, ...csvRows]);
