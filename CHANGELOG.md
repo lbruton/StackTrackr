@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.58] - 2026-03-07
+
+### Added — STAK-454: DiffModal Item Cards
+
+- **Added**: Item cards with bordered card layout, metal-colored image placeholders, and async image loading replace flat checkbox rows in DiffModal (STAK-454)
+- **Added**: Per-field checkboxes on modified items enabling granular merge field selection with master checkbox indeterminate state (STAK-454)
+- **Added**: "N fields changed" pill badge on modified item cards with expand/collapse toggle (STAK-454)
+- **Changed**: Apply button count now reflects individual field selections, not just item-level selections (STAK-454)
+
+---
+
 ## [3.33.57] - 2026-03-06
 
 ### Fixed — STAK-452: Australian Coin Slug Names in Market View
