@@ -15,8 +15,6 @@ services:
     restart: unless-stopped
     ports:
       - "3002:3002"
-    env_file:
-      - .env
     environment:
       HOST: "0.0.0.0"
       PORT: "3002"
@@ -29,6 +27,10 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       POSTGRES_DB: ${POSTGRES_DB:-postgres}
       NUQ_RABBITMQ_URL: amqp://rabbitmq:5672
+      USE_DB_AUTHENTICATION: ${USE_DB_AUTHENTICATION:-false}
+      BULL_AUTH_KEY: ${BULL_AUTH_KEY:-changeme}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       ENV: local
     depends_on:
       redis:
@@ -44,8 +46,6 @@ services:
     image: ghcr.io/firecrawl/firecrawl:latest
     container_name: firecrawl-worker
     restart: unless-stopped
-    env_file:
-      - .env
     environment:
       REDIS_URL: redis://redis:6379
       REDIS_RATE_LIMIT_URL: redis://redis:6379
@@ -56,6 +56,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       POSTGRES_DB: ${POSTGRES_DB:-postgres}
       NUQ_RABBITMQ_URL: amqp://rabbitmq:5672
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       FLY_PROCESS_GROUP: worker
       ENV: local
     depends_on:
