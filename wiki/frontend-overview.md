@@ -2,8 +2,8 @@
 title: Frontend Overview
 category: frontend
 owner: staktrakr
-lastUpdated: v3.33.56
-date: 2026-03-06
+lastUpdated: v3.33.58
+date: 2026-03-07
 sourceFiles:
   - index.html
   - js/constants.js
@@ -17,7 +17,7 @@ relatedPages:
 ---
 # Frontend Overview
 
-> **Last updated:** v3.33.56 — 2026-03-06
+> **Last updated:** v3.33.58 — 2026-03-07
 > **Source files:** `index.html`, `js/constants.js`, `sw.js`, `js/file-protocol-fix.js`
 
 ## Overview
@@ -142,7 +142,7 @@ On `http://` or `https://` origins the wrapping is still installed but never tri
 
 ### Diff review modal (`#diffReviewModal`)
 
-The diff review modal is a reusable change-review UI used by cloud sync and import flows (STAK-184, STAK-451). It is defined in `index.html` with a scoped `<style>` block immediately before its markup.
+The diff review modal is a reusable change-review UI used by cloud sync and import flows (STAK-184, STAK-451, STAK-454). It is defined in `index.html` with a scoped `<style>` block immediately before its markup. All CSS classes are prefixed with `dm-` and scoped under `#diffReviewModal` to avoid conflicts with existing app styles.
 
 **Layout:** `max-width: 860px`. At or below the `768px` breakpoint the modal expands to full-screen (`width: 100vw; height: 100dvh; max-width: none; border-radius: 0`).
 
@@ -153,8 +153,10 @@ The diff review modal is a reusable change-review UI used by cloud sync and impo
 | `diffSummaryDashboard` | High-level counts dashboard shown at the top of the review |
 | `diffProgressTracker` | Conflict-resolution progress bar (visible only for cloud sync sources) |
 | `diffSectionConflicts` | Renders conflicting items that require user resolution |
-| `diffSectionOrphans` | Renders Added and Deleted item cards with metal-colored image placeholders and async image loading |
-| `diffSectionModified` | Renders Modified item cards with expandable per-field checkboxes for granular merge selection (max-height 500px, bordered) |
+| `diffSectionOrphans` | Card-based rendering of Added and Deleted items. Each card shows dual OBV/REV image thumbnails (3-tier: IndexedDB blob → CDN URL → metal gradient placeholder), metal-colored name, weight/qty metadata, and Import/Skip or Keep/Remove action buttons |
+| `diffSectionModified` | Card-based rendering of Modified items with expandable per-field click-to-pick values (local vs remote), resolve progress bar, and per-card/section-level bulk actions (max-height 500px, bordered) |
+
+**State model (STAK-454):** The card-based UI uses three state objects: `_orphanActions` (per-item import/skip/keep/remove), `_fieldSelections` (per-field local/remote winner), and `_resolvedConflicts` (confirmed conflict cards). Legacy `_checkedItems` is maintained for backward compatibility with older callers.
 
 Supporting elements: `diffReviewTitle`, `diffReviewSource`, `diffReviewCountRow`, `diffReviewCountWarning`, `diffReviewSettings`. Action buttons: `diffReviewSelectAll`, `diffReviewDismissX`.
 
