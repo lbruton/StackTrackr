@@ -24,16 +24,15 @@ if [ "$FLYIO_TAILSCALE_IP" = "TODO_REPLACE_WITH_IP" ]; then
   ts_ok=false
   ts_ms="?"
 else
-  # tailscale ping returns something like: "pong from staktrakr (100.x.x.x) via ... in Xms"
-  ping_out=$(tailscale ping --timeout="${TIMEOUT}s" --c=1 "$FLYIO_TAILSCALE_IP" 2>&1)
-  if echo "$ping_out" | grep -q "pong"; then
-    ts_ms=$(echo "$ping_out" | grep -oP 'in \K[0-9.]+ms' | head -1)
+  # Use ICMP ping — works from Docker via host Tailscale routing
+  if ping -c 1 -W "$TIMEOUT" "$FLYIO_TAILSCALE_IP" > /dev/null 2>&1; then
+    ts_ms=$(ping -c 1 -W "$TIMEOUT" "$FLYIO_TAILSCALE_IP" 2>/dev/null | grep -oP 'time=\K[0-9.]+' | head -1)
     ts_ok=true
-    log "Tailscale ping OK (${ts_ms:-?})"
+    log "Tailscale ping OK (${ts_ms:-?}ms)"
   else
     ts_ok=false
     ts_ms="timeout"
-    log "WARN: Tailscale ping FAILED — $ping_out"
+    log "WARN: Tailscale ping FAILED"
   fi
 fi
 

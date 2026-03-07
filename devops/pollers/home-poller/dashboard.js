@@ -142,15 +142,9 @@ function getSupervisordStatus() {
   }
 }
 
-function getSystemdStatus(services) {
-  return services.map((svc) => {
-    try {
-      execSync(`systemctl is-active --quiet ${svc}`, { timeout: 2000 });
-      return { name: svc, active: true };
-    } catch {
-      return { name: svc, active: false };
-    }
-  });
+function getSystemdStatus() {
+  // No systemd inside Docker — redis, rabbitmq, tinyproxy run in separate containers
+  return [];
 }
 
 function readLog() {
@@ -2096,7 +2090,7 @@ async function handleRequest(req, res) {
     Promise.resolve(getCpuMem()),
     Promise.resolve(getUptime()),
     Promise.resolve(getSupervisordStatus()),
-    Promise.resolve(getSystemdStatus(["redis-server", "rabbitmq-server", "cron", "tailscaled", "tinyproxy"])),
+    Promise.resolve(getSystemdStatus()),
     Promise.resolve(readLog()),
     Promise.resolve(getFlyioHealth()),
     client ? getCoverageStats(client, 48).catch(() => null) : Promise.resolve(null),

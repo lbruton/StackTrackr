@@ -26,6 +26,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     ca-certificates \
     procps \
+    iputils-ping \
     # Chromium dependencies for Playwright
     libnss3 \
     libnspr4 \
