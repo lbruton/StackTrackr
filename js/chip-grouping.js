@@ -385,7 +385,7 @@
     let html = '<table class="chip-grouping-table"><thead><tr><th>Chip Name</th><th></th></tr></thead><tbody>';
     _blacklistArr.forEach(name => {
       html += `<tr>
-        <td>${_escHtml(name)}</td>
+        <td>${escapeHtml(name)}</td>
         <td><button class="chip-grouping-delete" data-blacklist-name="${_escAttr(name)}" title="Remove from blacklist">&times;</button></td>
       </tr>`;
     });
@@ -431,8 +431,8 @@
         </tr>`;
       } else {
         html += `<tr>
-          <td>${_escHtml(group.label)}</td>
-          <td class="chip-grouping-patterns">${_escHtml(group.patterns.join(', '))}</td>
+          <td>${escapeHtml(group.label)}</td>
+          <td class="chip-grouping-patterns">${escapeHtml(group.patterns.join(', '))}</td>
           <td><input type="checkbox" ${checked} data-toggle-group="${_escAttr(group.id)}" title="Toggle rule"></td>
           <td class="chip-grouping-actions">
             <button class="chip-grouping-edit" data-edit-group="${_escAttr(group.id)}" title="Edit rule">&#9998;</button>
@@ -730,12 +730,6 @@
   // ---------------------------------------------------------------------------
   // Helpers
   // ---------------------------------------------------------------------------
-
-  const _escHtml = (str) => {
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-  };
 
   const _escAttr = (str) => {
     return str.replace(/"/g, '&quot;').replace(/'/g, '&#39;');

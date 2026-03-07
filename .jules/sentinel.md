@@ -17,3 +17,8 @@
 **Vulnerability:** Security degradation when `generateUUID` is unavailable and the fallback uses `Math.random()`, undermining the hardening provided by `crypto.randomUUID()` / `crypto.getRandomValues()`.
 **Learning:** Fallback implementations for security utilities must preserve the same cryptographic properties as the primary implementation. In a vanilla JS, global-scope architecture, load-order fragility can accidentally route calls to insecure fallbacks, effectively undoing security upgrades even if no runtime errors occur.
 **Prevention:** Avoid using weak PRNGs such as `Math.random()` in ID or token generation paths. When designing fallbacks for globals like `generateUUID`, use `crypto.getRandomValues()` directly — it is available in every targeted environment (modern browsers, file:// protocol, Node 15+) and matches the precedent in `cloud-sync.js`.
+
+## 2025-05-27 - [CRITICAL] Insecure `escapeHtml` implementation creating mXSS vulnerability
+**Vulnerability:** Found multiple instances (`js/autocomplete.js`, `js/chip-grouping.js`) of custom implementations of `escapeHtml` that use the DOM to escape HTML (i.e. `div.textContent = str; return div.innerHTML;`). This approach can be bypassed with mutation XSS (mXSS) depending on browser behavior and parsing idiosyncrasies.
+**Learning:** This approach existed due to decentralized utility function implementations, ignoring the secure, regex-based `escapeHtml` helper already present globally in `js/utils.js`.
+**Prevention:** Avoid writing custom escape functions. Always use the globally available and explicitly reviewed `escapeHtml` function defined in `js/utils.js` across the codebase.
