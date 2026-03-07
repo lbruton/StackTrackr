@@ -165,6 +165,7 @@
   var _orphanActions = {};       // { 'added-0': 'import'|'skip', 'deleted-1': 'keep'|'remove' }
   var _fieldSelections = {};     // { 'conflict-0-purchasePrice': 'local'|'remote' }
   var _resolvedConflicts = {};   // { 0: true, 1: true }
+  var _blobUrls = [];            // Tracked blob URLs for revocation on re-render/close
 
   // ── Helpers ──
 
@@ -306,8 +307,8 @@
     var cards = [
       { count: matched, label: 'Matched', target: 'diffSectionModified', color: '', style: 'opacity:0.5' },
       { count: conflictCount, label: 'Conflicts', target: syncConflicts > 0 ? 'diffSectionConflicts' : 'diffSectionModified', color: conflictCount > 0 ? 'color:#d97706' : '', style: '' },
-      { count: remoteOnly, label: 'Remote Only', target: 'diffSectionModified', color: '', style: '' },
-      { count: localOnly, label: 'Local Only', target: 'diffSectionModified', color: '', style: '' }
+      { count: remoteOnly, label: 'Remote Only', target: 'diffSectionOrphans', color: '', style: '' },
+      { count: localOnly, label: 'Local Only', target: 'diffSectionOrphans', color: '', style: '' }
     ];
 
     var cardStyle = 'flex:1;min-width:120px;border-radius:8px;padding:0.6rem;border:1px solid var(--border-color,#ddd);cursor:pointer;text-align:center';
@@ -604,6 +605,19 @@
 
   // ── Card-based renderers (STAK-454 — matches playground/diffmodal-item-cards.html) ──
 
+  /** Shared card header: dual OBV/REV thumbnails + item identity. Used by orphan and conflict cards. */
+  function _renderCardHeader(item, uuid) {
+    var grad = _metalBgGradient(item.metal);
+    var mColor = _metalColor(item.metal);
+    var html = '';
+    // Dual OBV/REV thumbnails
+    html += '<div class="dm-item-thumb-pair">';
+    html += '<div class="dm-item-thumb" style="background:' + grad + '"' + (uuid ? ' data-uuid="' + _esc(uuid) + '" data-side="obverse"' : '') + '><span style="color:' + mColor + ';font-size:0.55rem">OBV</span></div>';
+    html += '<div class="dm-item-thumb" style="background:' + grad + '"' + (uuid ? ' data-uuid="' + _esc(uuid) + '" data-side="reverse"' : '') + '><span style="color:' + mColor + ';font-size:0.55rem">REV</span></div>';
+    html += '</div>';
+    return html;
+  }
+
   /** Render Added or Deleted items as orphan cards. Returns HTML string. */
   function _renderOrphanCards(type, items) {
     if (!items || items.length === 0) return '';
@@ -635,29 +649,25 @@
 
     // Section body
     html += '<div class="dm-section-body' + (collapsed ? ' collapsed' : '') + '">';
-    var limit = items.length > 30 ? 30 : items.length;
+    var showAll = _collapsedCategories['_showAll_' + type];
+    var limit = (!showAll && items.length > 30) ? 30 : items.length;
     for (var i = 0; i < limit; i++) {
       var item = items[i];
       var key = type + '-' + i;
       var action = _orphanActions[key] || (isAdded ? 'import' : 'keep');
       var isSkipped = (isAdded && action === 'skip') || (!isAdded && action === 'remove');
-      var grad = _metalBgGradient(item.metal);
       var mColor = _metalColor(item.metal);
       var uuid = item.uuid || '';
 
       html += '<div class="dm-card dm-orphan-card' + (isSkipped ? ' skipped' : '') + '" data-action="' + action + '" data-idx="' + i + '" data-type="' + type + '">';
-      // Dual OBV/REV thumbnails
-      html += '<div class="dm-item-thumb-pair">';
-      html += '<div class="dm-item-thumb" style="background:' + grad + '"' + (uuid ? ' data-uuid="' + _esc(uuid) + '" data-side="obverse"' : '') + '><span style="color:' + mColor + ';font-size:0.55rem">OBV</span></div>';
-      html += '<div class="dm-item-thumb" style="background:' + grad + '"' + (uuid ? ' data-uuid="' + _esc(uuid) + '" data-side="reverse"' : '') + '><span style="color:' + mColor + ';font-size:0.55rem">REV</span></div>';
-      html += '</div>';
+      html += _renderCardHeader(item, uuid);
       // Item identity
       html += '<div class="dm-item-identity">';
       html += '<div class="dm-item-name" style="color:' + mColor + '">' + _esc(item.name || 'Unnamed item') + '</div>';
       html += '<div class="dm-item-meta">';
       html += '<span style="color:' + mColor + '">' + _esc(item.metal || '') + '</span>';
-      if (item.weight != null) html += '<span>&#8226;</span><span>' + item.weight + ' ' + _esc(item.weightUnit || 'oz') + '</span>';
-      if (item.qty != null) html += '<span>&#8226;</span><span>Qty: ' + item.qty + '</span>';
+      if (item.weight != null) html += '<span>&#8226;</span><span>' + _esc(String(item.weight)) + ' ' + _esc(item.weightUnit || 'oz') + '</span>';
+      if (item.qty != null) html += '<span>&#8226;</span><span>Qty: ' + _esc(String(item.qty)) + '</span>';
       html += '</div></div>';
       // Action buttons — active action gets prominent color, inactive gets muted
       html += '<div class="dm-orphan-actions">';
@@ -673,7 +683,7 @@
       html += '</div>';
       html += '</div>';
     }
-    if (items.length > 30) {
+    if (!showAll && items.length > 30) {
       html += '<div class="dm-show-more" data-show-more="' + type + '" style="text-align:center;padding:0.5rem;font-size:0.78rem;cursor:pointer;color:var(--primary,#6366f1)">Show ' + (items.length - 30) + ' more...</div>';
     }
     html += '</div></div>';
@@ -725,7 +735,6 @@
       var mod = modifiedItems[i];
       var item = mod.item;
       var changes = mod.changes || [];
-      var grad = _metalBgGradient(item.metal);
       var mColor = _metalColor(item.metal);
       var uuid = item.uuid || '';
       var isResolved = _resolvedConflicts[i];
@@ -735,17 +744,13 @@
 
       // Card header
       html += '<div class="dm-conflict-card-header" data-toggle-conflict="' + i + '" style="cursor:pointer">';
-      // Thumbnails
-      html += '<div class="dm-item-thumb-pair">';
-      html += '<div class="dm-item-thumb" style="background:' + grad + '"' + (uuid ? ' data-uuid="' + _esc(uuid) + '" data-side="obverse"' : '') + '><span style="color:' + mColor + ';font-size:0.55rem">OBV</span></div>';
-      html += '<div class="dm-item-thumb" style="background:' + grad + '"' + (uuid ? ' data-uuid="' + _esc(uuid) + '" data-side="reverse"' : '') + '><span style="color:' + mColor + ';font-size:0.55rem">REV</span></div>';
-      html += '</div>';
+      html += _renderCardHeader(item, uuid);
       // Identity
       html += '<div class="dm-item-identity">';
       html += '<div class="dm-item-name">' + _esc(item.name || 'Unnamed item') + '</div>';
       html += '<div class="dm-item-meta">';
       html += '<span style="color:' + mColor + '">' + _esc(item.metal || '') + '</span>';
-      if (item.weight != null) html += '<span>&#8226;</span><span>' + item.weight + ' ' + _esc(item.weightUnit || 'oz') + '</span>';
+      if (item.weight != null) html += '<span>&#8226;</span><span>' + _esc(String(item.weight)) + ' ' + _esc(item.weightUnit || 'oz') + '</span>';
       html += '<span>&#8226;</span><span class="dm-chip" style="font-size:0.65rem">ID: ' + _esc(itemKey).substring(0, 16) + '</span>';
       html += '</div></div>';
       // Field count pill
@@ -793,6 +798,12 @@
   /** Load images asynchronously using resolveImageUrlForItem (same as main app) */
   function _loadItemImages() {
     try {
+      // Revoke previous blob URLs to prevent memory leaks
+      for (var bi = 0; bi < _blobUrls.length; bi++) {
+        try { URL.revokeObjectURL(_blobUrls[bi]); } catch(e) { /* ignore */ }
+      }
+      _blobUrls = [];
+
       var modal = safeGetElement(MODAL_ID);
       if (!modal || typeof imageCache === 'undefined' || !imageCache.resolveImageUrlForItem) return;
 
@@ -819,15 +830,23 @@
           if (!item) return;
           try {
             imageCache.resolveImageUrlForItem(item, side).then(function(url) {
-              if (url) {
-                el.innerHTML = '<img src="' + url + '" style="width:100%;height:100%;object-fit:cover;border-radius:var(--radius,8px)" alt="' + side + '">';
-                return;
+              var imgUrl = url;
+              if (!imgUrl) {
+                // Fallback: CDN URL from item properties (same as main app tier 2)
+                var urlKey = side === 'reverse' ? 'reverseImageUrl' : 'obverseImageUrl';
+                var cdnUrl = item[urlKey];
+                if (cdnUrl && /^https?:\/\/[^\s"'<>]+$/i.test(cdnUrl)) {
+                  imgUrl = cdnUrl;
+                }
               }
-              // Fallback: CDN URL from item properties (same as main app tier 2)
-              var urlKey = side === 'reverse' ? 'reverseImageUrl' : 'obverseImageUrl';
-              var cdnUrl = item[urlKey];
-              if (cdnUrl && /^https?:\/\/.+\..+/i.test(cdnUrl)) {
-                el.innerHTML = '<img src="' + cdnUrl + '" style="width:100%;height:100%;object-fit:cover;border-radius:var(--radius,8px)" alt="' + side + '">';
+              if (imgUrl) {
+                if (imgUrl.indexOf('blob:') === 0) _blobUrls.push(imgUrl);
+                var img = document.createElement('img');
+                img.src = imgUrl;
+                img.alt = side;
+                img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:var(--radius,8px)';
+                el.textContent = '';
+                el.appendChild(img);
               }
             }).catch(function() { /* silent fallback to OBV/REV text */ });
           } catch(e) { /* imageCache not available */ }
@@ -1277,6 +1296,15 @@
     for (var d = 0; d < (diff.deleted || []).length; d++) {
       _orphanActions['deleted-' + d] = 'keep';
     }
+    // Reset modified field selections to local (deselect = keep local values)
+    for (var m = 0; m < (diff.modified || []).length; m++) {
+      var mod = (diff.modified || [])[m];
+      if (mod && mod.changes) {
+        for (var c = 0; c < mod.changes.length; c++) {
+          _fieldSelections['conflict-' + m + '-' + mod.changes[c].field] = 'local';
+        }
+      }
+    }
     _render();
   }
 
@@ -1292,7 +1320,15 @@
         _orphanActions['added-' + i] = 'import';
         _checkedItems['added-' + i] = true;
       }
-      for (var j = 0; j < (diff.modified || []).length; j++) _checkedItems['modified-' + j] = true;
+      for (var j = 0; j < (diff.modified || []).length; j++) {
+        _checkedItems['modified-' + j] = true;
+        var mod1 = (diff.modified || [])[j];
+        if (mod1 && mod1.changes) {
+          for (var c1 = 0; c1 < mod1.changes.length; c1++) {
+            _fieldSelections['conflict-' + j + '-' + mod1.changes[c1].field] = 'remote';
+          }
+        }
+      }
       for (var k = 0; k < (diff.deleted || []).length; k++) {
         _orphanActions['deleted-' + k] = 'keep';
         _checkedItems['deleted-' + k] = false;
@@ -1314,6 +1350,15 @@
       }
       for (var d = 0; d < (diff.deleted || []).length; d++) {
         _orphanActions['deleted-' + d] = 'keep';
+      }
+      // Reset field selections to local
+      for (var m3 = 0; m3 < (diff.modified || []).length; m3++) {
+        var mod3 = (diff.modified || [])[m3];
+        if (mod3 && mod3.changes) {
+          for (var c3 = 0; c3 < mod3.changes.length; c3++) {
+            _fieldSelections['conflict-' + m3 + '-' + mod3.changes[c3].field] = 'local';
+          }
+        }
       }
     }
     var toggleBtn = safeGetElement('diffReviewSelectAllToggle');
@@ -1598,6 +1643,11 @@
      * Close the modal programmatically.
      */
     close: function () {
+      // Revoke tracked blob URLs to prevent memory leaks
+      for (var bi = 0; bi < _blobUrls.length; bi++) {
+        try { URL.revokeObjectURL(_blobUrls[bi]); } catch(e) { /* ignore */ }
+      }
+      _blobUrls = [];
       if (typeof closeModalById === 'function') {
         closeModalById(MODAL_ID);
       } else {
