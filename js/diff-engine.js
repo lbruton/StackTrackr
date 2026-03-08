@@ -63,6 +63,27 @@ function _valuesEqual(a, b) {
   return norm(a) === norm(b);
 }
 
+/**
+ * Settings-specific deep equality that handles type mismatches common in
+ * localStorage (string "true" vs boolean true, string "3" vs number 3)
+ * and parsed vs unparsed JSON objects.
+ */
+function _settingsValuesEqual(a, b) {
+  const norm = (v) => (v === undefined ? null : v);
+  a = norm(a); b = norm(b);
+  if (a === b) return true;
+  if (a === null || b === null) return false;
+  // Deep compare for objects/arrays (parsed JSON vs parsed JSON)
+  if (typeof a === 'object' && typeof b === 'object') {
+    return JSON.stringify(a) === JSON.stringify(b);
+  }
+  // Type coercion: "true"/true, "3"/3, etc.
+  if (typeof a !== typeof b) {
+    return String(a) === String(b);
+  }
+  return false;
+}
+
 // ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
@@ -234,7 +255,7 @@ const DiffEngine = {
       const localVal = local[key] !== undefined ? local[key] : null;
       const remoteVal = remote[key] !== undefined ? remote[key] : null;
 
-      if (!_valuesEqual(localVal, remoteVal)) {
+      if (!_settingsValuesEqual(localVal, remoteVal)) {
         changed.push({ key, localVal, remoteVal });
       } else {
         unchanged.push({ key, val: localVal });
