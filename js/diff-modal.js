@@ -1788,6 +1788,113 @@
 
   // ── Apply / Cancel ──
 
+  /**
+   * Reconstruct a merged setting value from per-element _fieldSelections.
+   * Returns merged value, or null on type mismatch (caller falls back to whole-setting).
+   */
+  function _mergeSettingElements(type, key, localVal, remoteVal) {
+    var prefix = 'setting-' + key + '-';
+
+    if (type === 'chip-strip') {
+      // Array of {id, label, enabled, ...} — merge by id
+      if (!Array.isArray(localVal) && !Array.isArray(remoteVal)) return null;
+      var lArr = Array.isArray(localVal) ? localVal : [];
+      var rArr = Array.isArray(remoteVal) ? remoteVal : [];
+      var lById = {};
+      var rById = {};
+      var i, id;
+      for (i = 0; i < lArr.length; i++) {
+        id = lArr[i].id || lArr[i].label || i;
+        lById[id] = lArr[i];
+      }
+      for (i = 0; i < rArr.length; i++) {
+        id = rArr[i].id || rArr[i].label || i;
+        rById[id] = rArr[i];
+      }
+      // Start with remote as base (default), apply local picks
+      var merged = [];
+      var seen = {};
+      // Process all ids from both sides
+      var allIds = {};
+      for (id in lById) allIds[id] = true;
+      for (id in rById) allIds[id] = true;
+      for (id in allIds) {
+        var sel = _fieldSelections[prefix + id];
+        if (sel === 'local' && lById[id]) {
+          merged.push(lById[id]);
+        } else if (sel === 'remote' && rById[id]) {
+          merged.push(rById[id]);
+        } else if (rById[id]) {
+          merged.push(rById[id]); // default: remote wins
+        } else if (lById[id]) {
+          merged.push(lById[id]); // only in local, no selection
+        }
+      }
+      return merged;
+    }
+
+    if (type === 'toggle-map' || type === 'kv-pills') {
+      // Object merge — key by key
+      if ((typeof localVal !== 'object' || localVal === null) &&
+          (typeof remoteVal !== 'object' || remoteVal === null)) return null;
+      var lObj = (typeof localVal === 'object' && localVal !== null) ? localVal : {};
+      var rObj = (typeof remoteVal === 'object' && remoteVal !== null) ? remoteVal : {};
+      var result = {};
+      var allKeys = {};
+      var k;
+      for (k in lObj) allKeys[k] = true;
+      for (k in rObj) allKeys[k] = true;
+      for (k in allKeys) {
+        var kSel = _fieldSelections[prefix + k];
+        if (kSel === 'local' && lObj.hasOwnProperty(k)) {
+          result[k] = lObj[k];
+        } else if (kSel === 'remote' && rObj.hasOwnProperty(k)) {
+          result[k] = rObj[k];
+        } else if (rObj.hasOwnProperty(k)) {
+          result[k] = rObj[k]; // default: remote
+        } else if (lObj.hasOwnProperty(k)) {
+          result[k] = lObj[k]; // only in local
+        }
+      }
+      return result;
+    }
+
+    if (type === 'slug-chips') {
+      // String array — set merge
+      if (!Array.isArray(localVal) && !Array.isArray(remoteVal)) return null;
+      var lSet = {};
+      var rSet = {};
+      var lList = Array.isArray(localVal) ? localVal : [];
+      var rList = Array.isArray(remoteVal) ? remoteVal : [];
+      for (i = 0; i < lList.length; i++) lSet[lList[i]] = true;
+      for (i = 0; i < rList.length; i++) rSet[rList[i]] = true;
+      var mergedArr = [];
+      // Common items always included
+      var allSlugs = {};
+      for (i = 0; i < lList.length; i++) allSlugs[lList[i]] = true;
+      for (i = 0; i < rList.length; i++) allSlugs[rList[i]] = true;
+      for (var slug in allSlugs) {
+        var inL = !!lSet[slug];
+        var inR = !!rSet[slug];
+        if (inL && inR) {
+          mergedArr.push(slug); // common — always include
+        } else {
+          var slugSel = _fieldSelections[prefix + slug];
+          if (inL && slugSel === 'local') {
+            mergedArr.push(slug); // local-only, user picked local
+          } else if (inR && (slugSel === 'remote' || !slugSel)) {
+            mergedArr.push(slug); // remote-only, user picked remote or default
+          }
+          // else: local-only with no selection or remote pick → exclude
+          // or: remote-only with local pick → exclude
+        }
+      }
+      return mergedArr;
+    }
+
+    return null; // unknown type — fallback
+  }
+
   function _buildSelectedChanges() {
     var diff = _options.diff || {};
     var result = [];
@@ -1863,11 +1970,34 @@
       });
     }
 
-    // Settings changes
+    // Settings changes — per-element merge for rich renderer types, whole-setting for others
     var settingsDiff = _options.settingsDiff || {};
     var changedSettings = settingsDiff.changed || [];
     for (var s = 0; s < changedSettings.length; s++) {
       var setting = changedSettings[s];
+      var sType = SETTINGS_VALUE_TYPE[setting.key];
+      var sPrefix = 'setting-' + setting.key + '-';
+
+      // Check for per-element selections (skip count-summary — whole-setting only)
+      var hasElementPicks = false;
+      if (sType && sType !== 'count-summary') {
+        for (var fk in _fieldSelections) {
+          if (_fieldSelections.hasOwnProperty(fk) && fk.indexOf(sPrefix) === 0) {
+            hasElementPicks = true;
+            break;
+          }
+        }
+      }
+
+      if (hasElementPicks) {
+        var mergedVal = _mergeSettingElements(sType, setting.key, setting.localVal, setting.remoteVal);
+        if (mergedVal !== null) {
+          result.push({ type: 'setting', key: setting.key, value: mergedVal });
+          continue;
+        }
+      }
+
+      // Fallback: whole-setting pick via _conflictResolutions (default remote)
       var resolution = _conflictResolutions['setting-' + setting.key];
       var value = (resolution === 'local') ? setting.localVal : setting.remoteVal;
       result.push({ type: 'setting', key: setting.key, value: value });
