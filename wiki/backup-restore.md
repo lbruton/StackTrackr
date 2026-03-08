@@ -2,11 +2,12 @@
 title: Backup & Restore
 category: frontend
 owner: staktrakr
-lastUpdated: v3.33.59
-date: 2026-03-07
+lastUpdated: v3.33.60
+date: 2026-03-08
 sourceFiles:
   - js/cloud-storage.js
   - js/cloud-sync.js
+  - js/inventory.js
   - js/utils.js
   - js/vault.js
 relatedPages:
@@ -15,8 +16,8 @@ relatedPages:
 ---
 # Backup & Restore
 
-> **Last updated:** v3.33.58 — 2026-03-07
-> **Source files:** `js/cloud-storage.js`, `js/cloud-sync.js`, `js/utils.js`, `js/vault.js`
+> **Last updated:** v3.33.60 — 2026-03-08
+> **Source files:** `js/cloud-storage.js`, `js/cloud-sync.js`, `js/inventory.js`, `js/utils.js`, `js/vault.js`
 
 ## Overview
 
@@ -267,15 +268,36 @@ The backup/export panel shows a `<small class="format-desc">` beneath each optio
 
 ### ZIP Restore (`restoreBackupZip`)
 
-> **Destructive restore:** ZIP restore replaces all data — all localStorage keys are overwritten with backup values, and all IDB image stores (`userImages`, `patternImages`, `coinMetadata`) are replaced. There is no merge option. If cloud sync is active when you initiate a ZIP restore, the restore will be blocked until sync completes (STAK-427).
+> **DiffModal-routed restore (STAK-457, v3.33.60):** ZIP restore now routes through DiffModal for item and settings review, matching the behavior of JSON import, CSV import, and vault restore. If cloud sync is active when you initiate a ZIP restore, the restore will be blocked until sync completes (STAK-427).
 
-1. Unzip all files
-2. Restore localStorage keys from `inventory_data.json`, `settings.json`, `spot_price_history.json`, etc.
-3. Restore `userImages` IDB from `user_images/` using `user_image_manifest.json`; falls back to filename parsing for old ZIPs pre-STAK-226
-4. Restore `patternImages` IDB from `pattern_images/`
-5. Restore `coinMetadata` IDB from `image_metadata.json`
-6. Explicitly skip `coinImages/` folder (logs: `"skipping legacy coinImages folder (store deprecated)"`)
-7. Post-restore sequence: `loadInventory()` → `renderTable()` → `renderActiveFilters()` → `loadSpotHistory()`
+**Phase 1 — Parse (no writes):**
+
+1. Unzip all files and parse contents into memory without writing to localStorage or IDB
+2. Parse inventory items from `inventory_data.json`
+3. Parse settings from `settings.json` and map ZIP field names to localStorage keys (e.g., `theme` → `appTheme`, `itemsPerPage` → `settingsItemsPerPage`)
+4. Parse item tags from `item_tags.json` into `pendingTagsByUuid` map
+5. Pre-parse ancillary data: spot history, item price history, retail prices, retail history
+
+**Phase 2 — Build settings diff:**
+
+1. Build `remoteSettings` flat map from ZIP settings using `SYNC_SCOPE_KEYS`-compatible keys
+2. Compare against current localStorage values via `DiffEngine.compareSettings()`
+3. Spot prices (per-metal keys not in `SYNC_SCOPE_KEYS`) are applied directly in the ancillary step
+
+**Phase 3 — DiffModal review:**
+
+1. Call `showImportDiffReview()` with parsed items, settings diff, and pending tags
+2. DiffModal shows item-level and settings-level diffs for user review
+3. User selects which changes to apply via the standard DiffModal UI
+
+**Phase 4 — Apply (on user accept):**
+
+1. `showImportDiffReview` applies selected item and settings changes
+2. `onComplete` callback applies ancillary data: spot prices, catalog mappings, spot history, item price history (merged via `mergeItemPriceHistory`), retail prices/history
+3. Restore IDB stores: `userImages` from `user_images/` using `user_image_manifest.json` (falls back to filename parsing for old ZIPs pre-STAK-226), `patternImages` from `pattern_images/`, `coinMetadata` from `image_metadata.json`
+4. Explicitly skip `coinImages/` folder (logs: `"skipping legacy coinImages folder (store deprecated)"`)
+
+**Fallback:** If `DiffEngine` or `DiffModal` are unavailable, `showImportDiffReview` falls back to a concat-all merge (same fallback path as JSON/CSV imports).
 
 ### Vault Restore (`vaultDecryptAndRestore`)
 
@@ -401,12 +423,12 @@ The backup count badge on the restore button shows the count of **manual backups
 
 ### Merge strategy during import
 
-All JSON/CSV/vault imports use a **merge strategy** (not replace-all):
+All JSON/CSV/vault/ZIP imports use a **merge strategy** (not replace-all):
 
 - Items in the import are merged into the existing inventory using `DiffEngine`
 - DiffModal shows added / modified / removed diffs; user selects which to apply
 - The apply callback calls `saveData` with the merged result
-- Post-apply summary banner shows final counts
+- Post-apply toast shows final counts
 
 ---
 
@@ -455,8 +477,10 @@ All JSON/CSV/vault imports use a **merge strategy** (not replace-all):
 
 1. Settings → "Backup All Data" produces the ZIP
 2. Settings → Restore → select the `.zip` file → `restoreBackupZip(file)`
-3. Restores: localStorage keys + `userImages` + `patternImages` + `coinMetadata`
-4. Verify inventory loads and photos appear
+3. DiffModal opens showing item and settings diffs for review (STAK-457, v3.33.60)
+4. User selects which changes to apply; ancillary data (spot history, images, retail) applied automatically on accept
+5. Restores: selected inventory items + settings via DiffModal, plus `userImages` + `patternImages` + `coinMetadata` IDB stores
+6. Verify inventory loads and photos appear
 
 ### Scenario B: Full restore from vault + image vault
 

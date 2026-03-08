@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.60] - 2026-03-08
+
+### Fixed — STAK-457: ZIP Backup Restore Routes Through DiffModal
+
+- **Fixed**: ZIP backup restore now routes through DiffModal for item and settings review instead of directly overwriting localStorage (STAK-457)
+
+---
+
 ## [3.33.59] - 2026-03-07
 
 ### Added — STAK-455: DiffModal Settings Cards Rich Renderers
