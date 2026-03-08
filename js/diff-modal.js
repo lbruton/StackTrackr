@@ -1813,7 +1813,6 @@
       }
       // Start with remote as base (default), apply local picks
       var merged = [];
-      var seen = {};
       // Process all ids from both sides
       var allIds = {};
       for (id in lById) allIds[id] = true;
