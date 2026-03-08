@@ -2263,7 +2263,7 @@ async function _deferredVaultRestore(token, password, remoteMeta, selectedChange
             var _dvLocalSettings = {};
             var _dvRemoteSettings = {};
             for (var _dvs = 0; _dvs < SYNC_SCOPE_KEYS.length; _dvs++) {
-              if (SYNC_SCOPE_KEYS[_dvs] === 'metalInventory') continue;
+              if (SYNC_SCOPE_KEYS[_dvs] === 'metalInventory' || SYNC_SCOPE_KEYS[_dvs] === 'itemTags') continue;
               var _dvlv = typeof localStorage !== 'undefined' ? localStorage.getItem(SYNC_SCOPE_KEYS[_dvs]) : null;
               if (_dvlv !== null) _dvLocalSettings[SYNC_SCOPE_KEYS[_dvs]] = _dvlv;
               if (payload.data[SYNC_SCOPE_KEYS[_dvs]] !== undefined) {
@@ -2396,7 +2396,7 @@ async function pullWithPreview(remoteMeta) {
             var _mLocalSettings = {};
             if (typeof SYNC_SCOPE_KEYS !== 'undefined' && typeof localStorage !== 'undefined') {
               for (var ms = 0; ms < SYNC_SCOPE_KEYS.length; ms++) {
-                if (SYNC_SCOPE_KEYS[ms] === 'metalInventory') continue;
+                if (SYNC_SCOPE_KEYS[ms] === 'metalInventory' || SYNC_SCOPE_KEYS[ms] === 'itemTags') continue;
                 var msv = localStorage.getItem(SYNC_SCOPE_KEYS[ms]);
                 if (msv !== null) _mLocalSettings[SYNC_SCOPE_KEYS[ms]] = msv;
               }

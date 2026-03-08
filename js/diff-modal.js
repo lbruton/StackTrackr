@@ -308,6 +308,7 @@
     var localHtml = '';
     var remoteHtml = '';
     var totalChips = 0;
+    var matchedOverflowCount = 0;
     var overflowLocal = '';
     var overflowRemote = '';
     var overflowMatched = '';
@@ -328,6 +329,7 @@
           matchedHtml += mChip;
         } else {
           overflowMatched += mChip;
+          matchedOverflowCount++;
         }
       } else {
         var fieldKey = 'setting-' + key + '-' + slug;
@@ -357,7 +359,7 @@
     if (matchedHtml || overflowMatched) {
       html += '<div class="dm-setting-expanded">' + matchedHtml;
       if (overflowMatched) {
-        html += '<span class="dm-show-more" data-expand="' + _esc(key) + '-matched">Show ' + (totalChips - 15) + ' more\u2026</span>';
+        html += '<span class="dm-show-more" data-expand="' + _esc(key) + '-matched">Show ' + matchedOverflowCount + ' more\u2026</span>';
         html += '<div class="dm-expandable" id="expand-' + _esc(key) + '-matched">' + overflowMatched + '</div>';
       }
       html += '</div>';
@@ -996,7 +998,7 @@
       var showMore = e.target.closest('.dm-show-more');
       if (showMore) {
         var expandKey = showMore.getAttribute('data-expand');
-        var expandEl = document.getElementById('expand-' + expandKey);
+        var expandEl = safeGetElement('expand-' + expandKey);
         if (expandEl) {
           expandEl.classList.add('expanded');
           showMore.style.display = 'none';
@@ -1811,22 +1813,29 @@
         id = rArr[i].id || rArr[i].label || i;
         rById[id] = rArr[i];
       }
-      // Start with remote as base (default), apply local picks
+      // Preserve original array order — use remote array as base order (default wins),
+      // then append any local-only items at the end
       var merged = [];
-      // Process all ids from both sides
-      var allIds = {};
-      for (id in lById) allIds[id] = true;
-      for (id in rById) allIds[id] = true;
-      for (id in allIds) {
+      var seen = {};
+      // First pass: iterate remote array in order
+      for (i = 0; i < rArr.length; i++) {
+        id = rArr[i].id || rArr[i].label || i;
         var sel = _fieldSelections[prefix + id];
         if (sel === 'local' && lById[id]) {
           merged.push(lById[id]);
-        } else if (sel === 'remote' && rById[id]) {
-          merged.push(rById[id]);
-        } else if (rById[id]) {
-          merged.push(rById[id]); // default: remote wins
-        } else if (lById[id]) {
-          merged.push(lById[id]); // only in local, no selection
+        } else {
+          merged.push(rArr[i]); // default: remote wins
+        }
+        seen[id] = true;
+      }
+      // Second pass: append local-only items (preserving local order)
+      for (i = 0; i < lArr.length; i++) {
+        id = lArr[i].id || lArr[i].label || i;
+        if (!seen[id]) {
+          var lSel = _fieldSelections[prefix + id];
+          if (lSel === 'local' || !lSel) {
+            merged.push(lArr[i]); // local-only, user picked local or no selection
+          }
         }
       }
       return merged;
@@ -1859,7 +1868,7 @@
     }
 
     if (type === 'slug-chips') {
-      // String array — set merge
+      // String array — order-preserving set merge
       if (!Array.isArray(localVal) && !Array.isArray(remoteVal)) return null;
       var lSet = {};
       var rSet = {};
@@ -1868,24 +1877,28 @@
       for (i = 0; i < lList.length; i++) lSet[lList[i]] = true;
       for (i = 0; i < rList.length; i++) rSet[rList[i]] = true;
       var mergedArr = [];
-      // Common items always included
-      var allSlugs = {};
-      for (i = 0; i < lList.length; i++) allSlugs[lList[i]] = true;
-      for (i = 0; i < rList.length; i++) allSlugs[rList[i]] = true;
-      for (var slug in allSlugs) {
-        var inL = !!lSet[slug];
-        var inR = !!rSet[slug];
-        if (inL && inR) {
-          mergedArr.push(slug); // common — always include
+      var slugSeen = {};
+      // First pass: iterate remote array in order (default wins)
+      for (i = 0; i < rList.length; i++) {
+        var rSlug = rList[i];
+        slugSeen[rSlug] = true;
+        if (lSet[rSlug]) {
+          mergedArr.push(rSlug); // common — always include
         } else {
-          var slugSel = _fieldSelections[prefix + slug];
-          if (inL && slugSel === 'local') {
-            mergedArr.push(slug); // local-only, user picked local
-          } else if (inR && (slugSel === 'remote' || !slugSel)) {
-            mergedArr.push(slug); // remote-only, user picked remote or default
+          var rSlugSel = _fieldSelections[prefix + rSlug];
+          if (rSlugSel === 'remote' || !rSlugSel) {
+            mergedArr.push(rSlug); // remote-only, user picked remote or default
           }
-          // else: local-only with no selection or remote pick → exclude
-          // or: remote-only with local pick → exclude
+        }
+      }
+      // Second pass: append local-only items (preserving local order)
+      for (i = 0; i < lList.length; i++) {
+        var lSlug = lList[i];
+        if (!slugSeen[lSlug]) {
+          var lSlugSel = _fieldSelections[prefix + lSlug];
+          if (lSlugSel === 'local') {
+            mergedArr.push(lSlug); // local-only, user picked local
+          }
         }
       }
       return mergedArr;
