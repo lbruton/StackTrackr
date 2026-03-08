@@ -102,13 +102,15 @@
   };
 
   var SETTINGS_VALUE_TYPE = {
+    layoutSectionConfig: 'chip-strip',
     inlineChipConfig: 'chip-strip',
     filterChipCategoryConfig: 'chip-strip',
     viewModalSectionConfig: 'chip-strip',
-    chipCustomGroups: 'chip-strip',
+    chipCustomGroups: 'count-summary',
     numistaViewFields: 'toggle-map',
     enabledSeedRules: 'slug-chips',
     headerBtnOrder: 'slug-chips',
+    apiProviderOrder: 'slug-chips',
     chipBlacklist: 'slug-chips',
     tagBlacklist: 'slug-chips',
     providerPriority: 'kv-pills',
@@ -148,8 +150,18 @@
     'vaultBtn': 'Vault',
     'trendBtn': 'Trend',
     'restoreBtn': 'Restore',
-    'currencyBtn': 'Currency'
+    'currencyBtn': 'Currency',
+    // Provider slugs
+    'STAKTRAKR': 'StakTrakr',
+    'METALS_DEV': 'Metals.dev',
+    'GOLDAPI': 'GoldAPI'
   };
+
+  // ── JSON parse helper — cloud-sync vault passes settings as raw JSON strings ──
+  function _parseSetting(val) {
+    if (typeof val !== 'string') return val;
+    try { return JSON.parse(val); } catch (e) { return val; }
+  }
 
   // ── Settings sub-renderers (STAK-455) ──
 
@@ -473,6 +485,9 @@
   function _renderSettingRow(key, localVal, remoteVal) {
     var type = SETTINGS_VALUE_TYPE[key];
     if (!type) return null;
+    // Cloud-sync vault passes settings as JSON strings — parse before rendering
+    localVal = _parseSetting(localVal);
+    remoteVal = _parseSetting(remoteVal);
     if (type === 'chip-strip' && !Array.isArray(localVal) && !Array.isArray(remoteVal)) return null;
     if (type === 'toggle-map' && (typeof localVal !== 'object' || localVal === null) && (typeof remoteVal !== 'object' || remoteVal === null)) return null;
     if (type === 'slug-chips' && !Array.isArray(localVal) && !Array.isArray(remoteVal)) return null;
@@ -490,9 +505,19 @@
   function _groupByItem(conflictsArray) {
     var grouped = {};
     if (!conflictsArray || !conflictsArray.length) return grouped;
+    // Build UUID → name lookup from inventory for human-readable headers
+    var nameByKey = {};
+    if (typeof inventory !== 'undefined' && Array.isArray(inventory)) {
+      for (var inv = 0; inv < inventory.length; inv++) {
+        var invItem = inventory[inv];
+        var invKey = (typeof DiffEngine !== 'undefined' && DiffEngine.computeItemKey) ? DiffEngine.computeItemKey(invItem) : (invItem.uuid || invItem.id || '');
+        if (invKey && invItem.name) nameByKey[invKey] = invItem.name;
+      }
+    }
     for (var i = 0; i < conflictsArray.length; i++) {
       var c = conflictsArray[i];
-      var name = c.itemName || c.itemKey || '';
+      var key = c.itemKey || '';
+      var name = c.itemName || nameByKey[key] || key;
       if (!grouped[name]) grouped[name] = [];
       grouped[name].push({ field: c.field, localVal: c.localVal, remoteVal: c.remoteVal, idx: i });
     }
@@ -501,6 +526,7 @@
 
   function _formatSettingValue(key, value) {
     if (key === 'metalApiConfig') return value ? '\u2022\u2022\u2022 configured' : 'not set';
+    value = _parseSetting(value);
     if (value === null || value === undefined) return '\u2014';
     if (typeof value === 'boolean') return value ? 'On' : 'Off';
     if (Array.isArray(value)) {
@@ -882,21 +908,40 @@
       matchedByCat[mCat].push(matched[i]);
     }
 
-    // Collect all categories that have entries
-    var allCats = {};
-    var catKey;
-    for (catKey in changedByCat) {
-      if (changedByCat.hasOwnProperty(catKey)) allCats[catKey] = true;
+    // Collect all categories that have entries (ordered by SETTINGS_CATEGORIES, then Other)
+    var orderedCats = [];
+    for (var cn = 0; cn < catNames.length; cn++) {
+      if (changedByCat[catNames[cn]] || matchedByCat[catNames[cn]]) orderedCats.push(catNames[cn]);
     }
-    for (catKey in matchedByCat) {
-      if (matchedByCat.hasOwnProperty(catKey)) allCats[catKey] = true;
-    }
+    if (changedByCat['Other'] || matchedByCat['Other']) orderedCats.push('Other');
 
-    var html = '';
+    // Count total changed settings for the section header
+    var totalChanged = changed.length;
+
+    // Section wrapper (matches item card section structure)
+    var collapsed = _collapsedCategories.settings;
+    var html = '<div class="dm-section-wrapper" data-section="settings" style="margin-top:1rem">';
+
+    // Section header with collapse toggle + bulk actions
+    html += '<div class="dm-section-header">';
+    html += '<div class="dm-section-title">';
+    html += '<span class="dm-collapse-toggle' + (collapsed ? ' collapsed' : '') + '" data-cat-toggle="settings">' + (collapsed ? '&#9654;' : '&#9660;') + '</span>';
+    html += '<span>\u2699\uFE0F</span> Settings';
+    html += '<span class="dm-chip">' + totalChanged + ' diff' + (totalChanged !== 1 ? 's' : '') + '</span>';
+    html += '</div>';
+    html += '<div class="dm-section-actions">';
+    html += '<button class="dm-btn dm-btn-sm dm-btn-secondary" data-settings-bulk="local">Keep All Local</button>';
+    html += '<button class="dm-btn dm-btn-sm dm-btn-secondary" data-settings-bulk="remote">Keep All Remote</button>';
+    html += '</div>';
+    html += '</div>';
+
+    // Section body (collapsible)
+    html += '<div class="dm-section-body' + (collapsed ? ' collapsed' : '') + '">';
+
     var renderedCount = 0;
 
-    for (catKey in allCats) {
-      if (!allCats.hasOwnProperty(catKey)) continue;
+    for (var oci = 0; oci < orderedCats.length; oci++) {
+      var catKey = orderedCats[oci];
       var catChanged = changedByCat[catKey] || [];
       var catMatched = matchedByCat[catKey] || [];
       if (catChanged.length === 0 && catMatched.length === 0) continue;
@@ -904,13 +949,23 @@
       var catDef = SETTINGS_CATEGORIES[catKey];
       var catIcon = catDef ? catDef.icon : '\u2699\uFE0F';
 
-      html += '<div style="border-radius:8px;border:1px solid var(--border-color,#ddd);padding:0.75rem;margin-bottom:0.75rem">';
+      // Category card (bordered, matches dm-card style)
+      html += '<div class="dm-card" style="margin-bottom:0.75rem;padding:0.75rem">';
 
-      // Card header
-      html += '<div style="display:flex;align-items:center">';
+      // Card header with category name + diff badge
+      html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem">';
+      html += '<div style="display:flex;align-items:center;gap:0.4rem">';
       html += '<span style="font-weight:600;font-size:0.85rem">' + catIcon + ' ' + _esc(catKey) + '</span>';
       if (catChanged.length > 0) {
-        html += '<span style="display:inline-block;background:rgba(217,119,6,0.1);color:#d97706;border-radius:12px;padding:0.1rem 0.5rem;font-size:0.7rem;margin-left:0.5rem">' + catChanged.length + ' diff' + (catChanged.length !== 1 ? 's' : '') + '</span>';
+        html += '<span class="dm-pill dm-pill-warning">' + catChanged.length + ' diff' + (catChanged.length !== 1 ? 's' : '') + '</span>';
+      }
+      html += '</div>';
+      // Per-category bulk actions
+      if (catChanged.length > 0) {
+        html += '<div style="display:flex;gap:0.3rem">';
+        html += '<button class="dm-btn dm-btn-sm dm-btn-secondary" data-cat-bulk="' + _esc(catKey) + '" data-side="local" style="font-size:0.68rem;padding:0.15rem 0.4rem">Keep Local</button>';
+        html += '<button class="dm-btn dm-btn-sm dm-btn-secondary" data-cat-bulk="' + _esc(catKey) + '" data-side="remote" style="font-size:0.68rem;padding:0.15rem 0.4rem">Use Remote</button>';
+        html += '</div>';
       }
       html += '</div>';
 
@@ -922,67 +977,59 @@
         // Try rich renderer first
         var expandedHtml = _renderSettingRow(entry.key, entry.localVal, entry.remoteVal);
         if (expandedHtml !== null) {
-          html += '<div style="padding:0.3rem 0">';
-          html += '<div style="font-size:0.78rem;opacity:0.6;margin-bottom:0.3rem">' + _esc(label) + '</div>';
+          html += '<div style="padding:0.4rem 0;border-top:1px solid var(--border-color,rgba(255,255,255,0.05))">';
+          html += '<div style="font-size:0.78rem;font-weight:500;margin-bottom:0.3rem">' + _esc(label) + '</div>';
           html += expandedHtml;
           html += '</div>';
           continue;
         }
 
-        // Fallback: simple inline buttons
+        // Fallback: inline click-to-pick buttons (uses dm-field-diff grid like item cards)
         var resKey = 'setting-' + entry.key;
         var selected = _conflictResolutions[resKey] || '';
-        var localBtnStyle = 'padding:0.25rem 0.6rem;border-radius:4px;cursor:pointer;font-size:0.8rem;';
-        var remoteBtnStyle = 'padding:0.25rem 0.6rem;border-radius:4px;cursor:pointer;font-size:0.8rem;';
+        var localSel = selected === 'local' ? ' selected' : '';
+        var remoteSel = selected === 'remote' ? ' selected' : '';
 
-        if (selected === 'local') {
-          localBtnStyle += 'border:1px solid #22c55e;background:rgba(34,197,94,0.08)';
-          remoteBtnStyle += 'border:1px solid transparent';
-        } else if (selected === 'remote') {
-          localBtnStyle += 'border:1px solid transparent';
-          remoteBtnStyle += 'border:1px solid #22c55e;background:rgba(34,197,94,0.08)';
-        } else {
-          localBtnStyle += 'border:1px solid transparent';
-          remoteBtnStyle += 'border:1px solid transparent';
-        }
-
-        html += '<div style="display:flex;align-items:center;gap:0.4rem;padding:0.3rem 0">';
-        html += '<span style="min-width:120px;font-size:0.78rem;opacity:0.6">' + _esc(label) + '</span>';
-        html += '<span data-setting-resolution="' + _esc(resKey) + '" data-side="local" style="' + localBtnStyle + '">' + _formatSettingValue(entry.key, entry.localVal) + '</span>';
-        html += '<span style="opacity:0.3;font-size:0.7rem">\u21C4</span>';
-        html += '<span data-setting-resolution="' + _esc(resKey) + '" data-side="remote" style="' + remoteBtnStyle + '">' + _formatSettingValue(entry.key, entry.remoteVal) + '</span>';
+        html += '<div class="dm-field-diff" style="border-top:1px solid var(--border-color,rgba(255,255,255,0.05));padding:0.4rem 0">';
+        html += '<div class="dm-field-label">' + _esc(label) + '</div>';
+        html += '<div class="dm-field-value local' + localSel + '" data-setting-resolution="' + _esc(resKey) + '" data-side="local" style="cursor:pointer" title="' + _esc(_formatSettingValue(entry.key, entry.localVal)) + '">' + _formatSettingValue(entry.key, entry.localVal) + '</div>';
+        html += '<div class="dm-field-arrow">&#10231;</div>';
+        html += '<div class="dm-field-value remote' + remoteSel + '" data-setting-resolution="' + _esc(resKey) + '" data-side="remote" style="cursor:pointer" title="' + _esc(_formatSettingValue(entry.key, entry.remoteVal)) + '">' + _formatSettingValue(entry.key, entry.remoteVal) + '</div>';
         html += '</div>';
       }
 
       // Matched settings section (collapsed by default)
       if (catMatched.length > 0) {
         var isExpanded = _expandedSettingsCategories[catKey] || false;
-        html += '<div data-toggle-matched="' + _esc(catKey) + '" style="font-size:0.73rem;cursor:pointer;color:var(--primary,#3b82f6);margin-top:0.3rem">';
-        html += (isExpanded ? 'Hide' : 'Show') + ' ' + catMatched.length + ' matched';
+        html += '<div data-toggle-matched="' + _esc(catKey) + '" style="font-size:0.73rem;cursor:pointer;color:var(--primary,#3b82f6);margin-top:0.4rem;padding-top:0.3rem;border-top:1px solid var(--border-color,rgba(255,255,255,0.05))">';
+        html += (isExpanded ? '\u25BC Hide' : '\u25B6 Show') + ' ' + catMatched.length + ' matched setting' + (catMatched.length !== 1 ? 's' : '');
         html += '</div>';
 
         if (isExpanded) {
           for (var mi = 0; mi < catMatched.length; mi++) {
             var mEntry = catMatched[mi];
             var mLabel = SETTINGS_LABELS[mEntry.key] || _titleCase(mEntry.key);
-            html += '<div style="display:flex;align-items:center;gap:0.4rem;padding:0.2rem 0;opacity:0.6">';
-            html += '<span style="font-size:0.78rem">\u2713</span>';
-            html += '<span style="min-width:120px;font-size:0.78rem">' + _esc(mLabel) + '</span>';
-            html += '<span style="font-size:0.78rem">both: ' + _formatSettingValue(mEntry.key, mEntry.localVal) + '</span>';
+            html += '<div style="display:flex;align-items:center;gap:0.4rem;padding:0.2rem 0;opacity:0.45;font-size:0.78rem">';
+            html += '<span>\u2713</span>';
+            html += '<span style="min-width:120px">' + _esc(mLabel) + '</span>';
+            html += '<span>' + _formatSettingValue(mEntry.key, mEntry.localVal) + '</span>';
             html += '</div>';
           }
         }
       }
 
-      html += '</div>';
+      html += '</div>'; // .dm-card
       renderedCount++;
     }
+
+    html += '</div></div>'; // .dm-section-body, .dm-section-wrapper
 
     container.innerHTML = html;
     container.style.display = renderedCount > 0 ? '' : 'none';
 
     // Event delegation
     container.onclick = function(e) {
+      // Per-element chip/pill clicks
       var fieldBtn = e.target.closest('[data-field]');
       if (fieldBtn) {
         var field = fieldBtn.getAttribute('data-field');
@@ -995,6 +1042,7 @@
         _renderSettingsCards(container, settingsDiff);
         return;
       }
+      // Show-more expander
       var showMore = e.target.closest('.dm-show-more');
       if (showMore) {
         var expandKey = showMore.getAttribute('data-expand');
@@ -1005,6 +1053,7 @@
         }
         return;
       }
+      // Inline setting resolution (click-to-pick local/remote)
       var btn = e.target.closest('[data-setting-resolution]');
       if (btn) {
         var key = btn.getAttribute('data-setting-resolution');
@@ -1013,11 +1062,42 @@
         _renderSettingsCards(container, settingsDiff);
         return;
       }
+      // Matched toggle
       var toggle = e.target.closest('[data-toggle-matched]');
       if (toggle) {
         var cat = toggle.getAttribute('data-toggle-matched');
         _expandedSettingsCategories[cat] = !_expandedSettingsCategories[cat];
         _renderSettingsCards(container, settingsDiff);
+        return;
+      }
+      // Section collapse toggle
+      var catToggle = e.target.closest('[data-cat-toggle="settings"]');
+      if (catToggle) {
+        _collapsedCategories.settings = !_collapsedCategories.settings;
+        _renderSettingsCards(container, settingsDiff);
+        return;
+      }
+      // Settings bulk "Keep All Local" / "Keep All Remote"
+      var bulkBtn = e.target.closest('[data-settings-bulk]');
+      if (bulkBtn) {
+        var bulkSide = bulkBtn.getAttribute('data-settings-bulk');
+        for (var bi = 0; bi < changed.length; bi++) {
+          _conflictResolutions['setting-' + changed[bi].key] = bulkSide;
+        }
+        _renderSettingsCards(container, settingsDiff);
+        return;
+      }
+      // Per-category bulk
+      var catBulk = e.target.closest('[data-cat-bulk]');
+      if (catBulk) {
+        var bulkCat = catBulk.getAttribute('data-cat-bulk');
+        var bulkCatSide = catBulk.getAttribute('data-side');
+        var catEntries = changedByCat[bulkCat] || [];
+        for (var cbi = 0; cbi < catEntries.length; cbi++) {
+          _conflictResolutions['setting-' + catEntries[cbi].key] = bulkCatSide;
+        }
+        _renderSettingsCards(container, settingsDiff);
+        return;
       }
     };
   }
@@ -1329,11 +1409,12 @@
     // Summary dashboard (replaces old summary chips)
     _renderSummaryDashboard(safeGetElement('diffSummaryDashboard'), diff, conflicts);
 
-    // Progress tracker (sync only)
-    _renderProgressTracker(safeGetElement('diffProgressTracker'), conflicts, source);
-
-    // Conflict cards (replaces old inline conflict rendering)
-    _renderConflictCards(safeGetElement('diffSectionConflicts'), conflicts);
+    // Legacy progress tracker and conflict cards — suppressed.
+    // The card-based Modified section has its own progress bar and click-to-pick UX.
+    var progressEl = safeGetElement('diffProgressTracker');
+    if (progressEl) progressEl.style.display = 'none';
+    var conflictEl = safeGetElement('diffSectionConflicts');
+    if (conflictEl) conflictEl.style.display = 'none';
 
     // Orphan cards (Added + Deleted) — render into #diffSectionOrphans
     var orphanEl = safeGetElement('diffSectionOrphans');
@@ -2002,7 +2083,7 @@
       }
 
       if (hasElementPicks) {
-        var mergedVal = _mergeSettingElements(sType, setting.key, setting.localVal, setting.remoteVal);
+        var mergedVal = _mergeSettingElements(sType, setting.key, _parseSetting(setting.localVal), _parseSetting(setting.remoteVal));
         if (mergedVal !== null) {
           result.push({ type: 'setting', key: setting.key, value: mergedVal });
           continue;
@@ -2011,7 +2092,7 @@
 
       // Fallback: whole-setting pick via _conflictResolutions (default remote)
       var resolution = _conflictResolutions['setting-' + setting.key];
-      var value = (resolution === 'local') ? setting.localVal : setting.remoteVal;
+      var value = (resolution === 'local') ? _parseSetting(setting.localVal) : _parseSetting(setting.remoteVal);
       result.push({ type: 'setting', key: setting.key, value: value });
     }
 
