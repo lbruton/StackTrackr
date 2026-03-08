@@ -1563,6 +1563,7 @@ async function decryptManifest(encryptedData, password) {
 
 window.openVaultModal = openVaultModal;
 window.closeVaultModal = closeVaultModal;
+window.handleVaultAction = handleVaultAction;
 window.vaultEncryptToBytes = vaultEncryptToBytes;
 window.vaultEncryptToBytesScoped = vaultEncryptToBytesScoped;
 window.vaultDecryptAndRestore = vaultDecryptAndRestore;

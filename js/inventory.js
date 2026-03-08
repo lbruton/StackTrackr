@@ -64,7 +64,7 @@ window.addEventListener('beforeunload', () => {
 const createBackupZip = async () => {
   try {
     // Show loading indicator
-    const backupBtn = document.getElementById('backupAllBtn');
+    const backupBtn = document.getElementById('exportZipBtn');
     const originalText = backupBtn ? backupBtn.textContent : '';
     if (backupBtn) {
       backupBtn.textContent = 'Creating Backup...';
@@ -340,9 +340,9 @@ const createBackupZip = async () => {
     appAlert('Backup creation failed: ' + error.message);
     
     // Restore button state on error
-    const backupBtn = document.getElementById('backupAllBtn');
+    const backupBtn = document.getElementById('exportZipBtn');
     if (backupBtn) {
-      backupBtn.textContent = 'Backup All Data';
+      backupBtn.textContent = 'Export ZIP';
       backupBtn.disabled = false;
     }
   }
@@ -623,6 +623,7 @@ const restoreBackupZip = async (file) => {
   }
 };
 
+window.createBackupZip = createBackupZip;
 window.restoreBackupZip = restoreBackupZip;
 
 /**
