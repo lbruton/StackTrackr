@@ -403,15 +403,15 @@ const restoreBackupZip = async (file) => {
       if (settingsObj.goldbackPriceHistory != null) remoteSettings[GOLDBACK_PRICE_HISTORY_KEY] = settingsObj.goldbackPriceHistory;
     }
 
-    // 1c. Parse item tags for pendingTagsByUuid
-    const pendingTagsByUuid = {};
+    // 1c. Parse item tags for pendingTagsByUuid (must be a Map — showImportDiffReview uses .get())
+    const pendingTagsByUuid = new Map();
     const itemTagsStr = await zip.file("item_tags.json")?.async("string");
     if (itemTagsStr) {
       try {
         const itemTagsObj = JSON.parse(itemTagsStr);
         if (itemTagsObj.tags && typeof itemTagsObj.tags === 'object' && !Array.isArray(itemTagsObj.tags)) {
           for (const [uuid, tags] of Object.entries(itemTagsObj.tags)) {
-            if (Array.isArray(tags) && tags.length > 0) pendingTagsByUuid[uuid] = tags;
+            if (Array.isArray(tags) && tags.length > 0) pendingTagsByUuid.set(uuid, tags);
           }
         }
       } catch (e) {
@@ -597,16 +597,14 @@ const restoreBackupZip = async (file) => {
         appVersion: settingsObj.version || null,
         exportTimestamp: settingsObj.exportDate || null
       } : null,
-    }, async function(summary) {
+    }, function(summary) {
       debugLog('restoreBackupZip DiffModal complete', summary.added, 'added', summary.modified, 'modified', summary.deleted, 'deleted');
-      try {
-        await applyAncillaryData();
-      } catch (ancillaryErr) {
+      applyAncillaryData().then(function() {
+        showToast('ZIP backup restored successfully');
+      }).catch(function(ancillaryErr) {
         debugWarn('restoreBackupZip: ancillary data restore partial failure', ancillaryErr);
         showToast('ZIP restored with warnings — some ancillary data may not have been applied', 'warning');
-        return;
-      }
-      showToast('ZIP backup restored successfully');
+      });
     });
 
   } catch (err) {

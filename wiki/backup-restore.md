@@ -17,7 +17,7 @@ relatedPages:
 # Backup & Restore
 
 > **Last updated:** v3.33.60 — 2026-03-08
-> **Source files:** `js/cloud-storage.js`, `js/cloud-sync.js`, `js/utils.js`, `js/vault.js`
+> **Source files:** `js/cloud-storage.js`, `js/cloud-sync.js`, `js/inventory.js`, `js/utils.js`, `js/vault.js`
 
 ## Overview
 
