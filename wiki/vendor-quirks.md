@@ -172,6 +172,82 @@ If a goldback slug appears in the manifest that does not match this pattern, `ge
 
 ---
 
+## Poller-Side: Vendor API Structures
+
+This section documents how each vendor's website is structured for scraping purposes — tech stack, available APIs, authentication requirements, and known bot-detection characteristics. This is research captured here because the poller code lives in this worktree; for production runbooks see `StakTrakrApi` repo's `vendor-quirks.md`.
+
+### SD Bullion
+
+- **Stack:** Magento 2 (traditional SSR)
+- **Pricing API:** Unauthenticated REST endpoint at `/rest/V1/nfusions/cache/pricing` — returns the full catalog (~6,003 SKUs) with tiered pricing, cash/bitcoin/credit-card price breakdowns. Powered by nFusion Solutions pricing engine.
+- **No bot detection on this endpoint.** Direct HTTP request works without cookies or session.
+- **Note:** SD Bullion product pages redirect to `monumentmetals.com` (merger/acquisition — the two brands share a catalog).
+
+### Bullion Exchanges
+
+- **Stack:** Magento 2 PWA
+- **Pricing API:** Full GraphQL API at `/graphql` with tiered wire/crypto/PayPal price breakdowns.
+  - `route(url: "slug")` → returns product ID
+  - `LivePrices(ids: [ID])` → returns tier pricing
+- **Bot detection:** Cloudflare-gated. CF challenge blocks Docker headless Chromium. The block is **fingerprinting-based, not IP-based** — the same residential IP works from a Mac browser but fails from Docker. FlareSolverr or `curl_cffi` with exported `cf_clearance` cookies is required (see CF Bypass section below).
+
+### Monument Metals
+
+- **Stack:** Magento 2 + ScandiPWA (React PWA)
+- **Pricing API:** GraphQL at `/graphql`, but **session-gated** — returns HTTP 403 without valid cookies from a prior page load.
+  - `metalPrices` query → spot prices
+  - `getProductDetailForProductPage` query → product pricing with tier breakdown
+- **Fallback:** JSON-LD structured data (`schema.org/Product`) is present in SSR HTML with price and availability. Useful as a scrape-only fallback when the GraphQL session cannot be established.
+- **Relationship with SD Bullion:** Monument Metals and SD Bullion share a catalog; SD Bullion product URLs redirect here.
+
+### JM Bullion
+
+- **Stack:** Next.js App Router with RSC streaming
+- **Spot API:** `contentapi-managed.jmbullion.com/api/spot/summary` — unauthenticated, returns current spot prices.
+- **Product pricing:** No dedicated product price API. Prices must be extracted from HTML scraping only.
+
+### APMEX
+
+- **Stack:** Traditional SSR
+- **Pricing API:** No dedicated product price API endpoint.
+- **Structured data:** JSON-LD (`schema.org/Product`) is embedded in product page HTML with `price` and `availability` fields. This is the primary extraction path.
+
+### Hero Bullion
+
+- **Stack:** WooCommerce
+- **Pricing API:** WooCommerce REST API exists at `/wp-json/wc/v3/products` but returns **HTTP 401** (authentication required). No unauthenticated access.
+- **Scraping approach:** HTML scraping or WooCommerce public storefront endpoints required.
+
+---
+
+## Cloudflare Bypass Strategy
+
+Several vendors (primarily Bullion Exchanges, potentially others) sit behind Cloudflare's bot management. The following strategy applies when direct HTTP or headless Chrome is blocked.
+
+### Primary Tool: FlareSolverr nodriver fork
+
+- **Image:** `21hsmw/flaresolverr:nodriver`
+- **Interface:** HTTP API on port `8191`
+- **Usage:** Send a POST request to `/v1` with `{"cmd": "request.get", "url": "..."}` — FlareSolverr solves the CF challenge and returns response body + cookies.
+- **Cookie export:** The `cf_clearance` cookie can be extracted from the response and reused for subsequent requests to the same domain without triggering another challenge.
+- **Deployment:** Runs as a Docker container on the home poller VM alongside the retail poller.
+
+### Fallback: Byparr
+
+- Drop-in replacement for FlareSolverr with the same HTTP API.
+- Firefox-based (different browser fingerprint — useful if Chromium-based fingerprinting is specifically targeted).
+
+### cf_clearance Cookie Binding
+
+`cf_clearance` cookies are bound to a **triple: IP address + User-Agent string + TLS fingerprint**. All three must match between the FlareSolverr session that solved the challenge and the subsequent requests reusing the cookie. Mismatches result in an immediate new CF challenge.
+
+- Use `curl_cffi` (not Python `requests` or `httpx`) for HTTP calls that reuse `cf_clearance` cookies. `curl_cffi` uses `curl`'s TLS stack, which produces a browser-compatible TLS fingerprint. Standard Python HTTP libraries use a Python-native TLS stack that does not match browser fingerprints and will fail CF re-validation.
+- Rotate cookies proactively — `cf_clearance` has a finite TTL and will eventually expire, requiring a new FlareSolverr solve pass.
+
+> **Warning:** `cf_clearance` cookies solved from the home VM's residential IP will not work if requests are subsequently routed through a different IP (VPN, proxy, Fly.io container). The solve and the requests must come from the same egress IP.
+
+---
+
 ## Related Pages
 
 - [retail-modal.md](retail-modal.md) — Retail view modal UI behavior and tab structure

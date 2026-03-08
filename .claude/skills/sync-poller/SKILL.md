@@ -1,198 +1,163 @@
 ---
 name: sync-poller
 description: >
-  Sync home poller files from the VM to StakTrakrApi repo via PR. Use whenever you've edited
-  files on the home poller (dashboard.js, provider-db.js, metrics-exporter.js, check-flyio.sh,
-  run-home.sh, etc.) and need to preserve those changes in version control. Also use when the
-  user says "sync poller", "push poller changes", "commit dashboard changes", "sync homepoller
-  to repo", or after any session that modified files in /opt/poller/ via SSH. This skill ensures
-  no work is lost — every VM edit gets a PR to the shared repo.
+  Deploy poller code changes to the home VM via Portainer API. Use when you've committed changes
+  to devops/pollers/ (shared/, home-poller/, or compose files) and need to redeploy the running
+  container. Also use when the user says "sync poller", "deploy poller", "redeploy home poller",
+  "push poller changes", or after any session that modified files in devops/pollers/.
 ---
 
-# Sync Poller — Home VM to StakTrakrApi
+# Sync Poller — Git to Docker via Portainer
 
-The home poller runs on an Ubuntu VM (`homepoller` / 192.168.1.81) at `/opt/poller/`. These files
-are shared with the Fly.io container via the `StakTrakrApi` repo. After editing files on the VM,
-this skill copies them to the local repo clone and creates (or updates) a PR to main.
+Poller code lives in `StakTrakr/devops/pollers/`. Changes deploy to the home VM via Portainer's
+git-based stack redeploy. No SSH file copying, no curl-update — Portainer pulls from the branch
+and rebuilds the container.
 
-## Why this matters
+## Architecture Change (2026-03)
 
-Files edited directly on the VM via SSH are not version-controlled. If the VM dies, or someone
-pulls fresh from main, those changes are gone. This skill is the bridge — it copies live files
-from the VM into the repo and opens a PR so the changes are reviewed and preserved.
+**Before:** Code lived in `StakTrakrApi`, was curl-downloaded onto the VM at `/opt/poller/`.
+Edits on the VM required manual sync back to the repo.
 
-## File mapping
+**Now:** Code lives in `StakTrakr/devops/pollers/`. Portainer pulls from git, builds the Docker
+image, and deploys. The VM has no source files outside containers.
 
-Home poller files map to two directories in `StakTrakrApi`:
+## File Layout
 
-| VM path (`/opt/poller/`) | Repo path | Notes |
-|---|---|---|
-| `dashboard.js` | `devops/home-scraper/dashboard.js` | Home-only (not on Fly) |
-| `metrics-exporter.js` | `devops/home-scraper/metrics-exporter.js` | Home-only |
-| `check-flyio.sh` | `devops/home-scraper/check-flyio.sh` | Home-only |
-| `run-home.sh` | `devops/home-scraper/run-home.sh` | Home-only entry point |
-| `setup-lxc.sh` | `devops/home-scraper/setup-lxc.sh` | Provisioning script |
-| `provider-db.js` | `devops/fly-poller/provider-db.js` AND `devops/home-scraper/provider-db.js` | Shared — copy to both |
-| `db.js` | `devops/fly-poller/db.js` | Shared with Fly |
-| `turso-client.js` | `devops/fly-poller/turso-client.js` | Shared with Fly |
-| `price-extract.js` | `devops/fly-poller/price-extract.js` | Shared with Fly |
-| `capture.js` | `devops/fly-poller/capture.js` | Shared with Fly |
-| `spot-extract.js` | `devops/fly-poller/spot-extract.js` | Shared with Fly |
-| `goldback-scraper.js` | `devops/fly-poller/goldback-scraper.js` | Shared with Fly |
-
-**Rule of thumb:** If a file exists in `devops/fly-poller/`, it's shared — copy there. If it's
-home-specific (dashboard, metrics, check-flyio), it goes in `devops/home-scraper/` only. Files
-like `provider-db.js` that appear in both get copied to both locations.
-
-## Workflow
-
-### Step 1 — Identify changed files
-
-Ask the user which files were modified, or detect from the current session's SSH commands.
-Common sets:
-
-- **Dashboard work:** `dashboard.js`, `provider-db.js`
-- **Poller logic:** `price-extract.js`, `capture.js`, `db.js`
-- **Spot pipeline:** `spot-extract.js`, `provider-db.js`
-- **Infrastructure:** `run-home.sh`, `setup-lxc.sh`, `check-flyio.sh`
-
-### Step 2 — Copy files from VM to local
-
-```bash
-# Create a temp staging area
-mkdir -p /tmp/homepoller-snapshot
-
-# Copy each changed file (adjust list as needed)
-scp homepoller:/opt/poller/dashboard.js /tmp/homepoller-snapshot/
-scp homepoller:/opt/poller/provider-db.js /tmp/homepoller-snapshot/
+```
+devops/pollers/
+  shared/                  # Shared scraper core (both pollers use this)
+    package.json
+    price-extract.js
+    capture.js
+    db.js
+    turso-client.js
+    provider-db.js
+    merge-prices.js
+    api-export.js
+    serve.js
+    vision-patch.js
+    extract-vision.js
+    goldback-scraper.js
+    spot-extract.js
+    export-providers-json.js
+    spot-poller/poller.py   # Python spot price fetcher
+  home-poller/             # Home-specific files
+    Dockerfile
+    dashboard.js
+    metrics-exporter.js
+    run-home.sh
+    run-fbp.sh
+    check-flyio.sh
+    supervisord.conf
+    docker-entrypoint.sh
+  remote-poller/           # Fly.io container (future)
+    Dockerfile
+    fly.toml
+    ...
+  docker-compose.home.yml
+  docker-compose.tailscale.yml
+  docker-compose.tinyproxy.yml
 ```
 
-### Step 3 — Check for existing sync PR
+## Deploy Workflow
+
+### Step 1 — Commit and push changes
+
+Work in the feature branch or `dev`. Push to origin:
 
 ```bash
-cd /Volumes/DATA/GitHub/StakTrakrApi
-gh pr list --state open --head sync/home-poller-files --json number,title
+cd /Volumes/DATA/GitHub/StakTrakr/.worktrees/feat-pollers  # or current worktree
+git add devops/pollers/
+git commit -m "fix: <description> (DEV-XX)"
+git push origin <branch>
 ```
 
-- **If PR exists:** Use it (reuse the branch).
-- **If no PR:** Create branch `sync/home-poller-files` from main.
+### Step 2 — Redeploy via Portainer API
 
-### Step 4 — Create or checkout worktree
+The home-poller stack requires env vars on every redeploy. Fetch secrets from Infisical first
+(use `secrets` skill), then:
 
 ```bash
-cd /Volumes/DATA/GitHub/StakTrakrApi
+PORTAINER_URL="https://192.168.1.81:9443"
+PORTAINER_TOKEN="<from-infisical:PORTAINER_TOKEN>"
+STACK_ID=7
+ENDPOINT_ID=3
 
-# If worktree already exists, reuse it
-git worktree list | grep sync-home && echo "Worktree exists" || \
-  git worktree add .worktrees/sync-home sync/home-poller-files
+ssh -T homepoller "curl -sk -X PUT \
+  '${PORTAINER_URL}/api/stacks/${STACK_ID}/git/redeploy?endpointId=${ENDPOINT_ID}' \
+  -H 'X-API-Key: ${PORTAINER_TOKEN}' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    \"pullImage\": true,
+    \"prune\": true,
+    \"env\": [
+      {\"name\": \"TURSO_DATABASE_URL\", \"value\": \"<from-infisical>\"},
+      {\"name\": \"TURSO_AUTH_TOKEN\", \"value\": \"<from-infisical>\"},
+      {\"name\": \"METAL_PRICE_API_KEY\", \"value\": \"<from-infisical>\"},
+      {\"name\": \"GEMINI_API_KEY\", \"value\": \"<from-infisical>\"},
+      {\"name\": \"FIRECRAWL_BASE_URL\", \"value\": \"http://firecrawl-api:3002\"},
+      {\"name\": \"FLYIO_TAILSCALE_IP\", \"value\": \"100.90.171.110\"},
+      {\"name\": \"FLYIO_HTTP_URL\", \"value\": \"https://api2.staktrakr.com/data/retail/providers.json\"}
+    ]
+  }'"
 ```
 
-If the branch doesn't exist yet:
+For stacks without env vars (tailscale, tinyproxy):
 
 ```bash
-git fetch origin
-git worktree add .worktrees/sync-home -b sync/home-poller-files origin/main
+ssh -T homepoller "curl -sk -X PUT \
+  '${PORTAINER_URL}/api/stacks/<STACK_ID>/git/redeploy?endpointId=${ENDPOINT_ID}' \
+  -H 'X-API-Key: ${PORTAINER_TOKEN}' \
+  -H 'Content-Type: application/json' \
+  -d '{\"pullImage\": true, \"prune\": true}'"
 ```
 
-### Step 5 — Copy files into worktree
-
-Use the file mapping table above. For shared files, copy to both locations:
+### Step 3 — Verify deployment
 
 ```bash
-WT=/Volumes/DATA/GitHub/StakTrakrApi/.worktrees/sync-home
+# Check container is running
+ssh -T homepoller 'docker ps --filter name=staktrakr-home-poller --format "{{.Status}}"'
 
-# Home-only files
-cp /tmp/homepoller-snapshot/dashboard.js    "$WT/devops/home-scraper/dashboard.js"
+# Check logs for startup
+ssh -T homepoller 'docker logs --tail 20 staktrakr-home-poller'
 
-# Shared files — copy to BOTH directories
-cp /tmp/homepoller-snapshot/provider-db.js  "$WT/devops/fly-poller/provider-db.js"
-cp /tmp/homepoller-snapshot/provider-db.js  "$WT/devops/home-scraper/provider-db.js"
+# Verify dashboard responds
+ssh -T homepoller 'curl -sf http://localhost:3010/ | head -c 100'
+
+# Check Turso connectivity
+ssh -T homepoller 'docker exec staktrakr-home-poller node -e "
+  const {createClient}=require(\"@libsql/client\");
+  const c=createClient({url:process.env.TURSO_DATABASE_URL,authToken:process.env.TURSO_AUTH_TOKEN});
+  c.execute(\"SELECT 1\").then(()=>console.log(\"Turso OK\")).catch(e=>console.error(e.message));
+"'
 ```
 
-Create the `devops/home-scraper/` directory if files don't exist there yet:
-
-```bash
-mkdir -p "$WT/devops/home-scraper"
-```
-
-### Step 6 — Commit and push
-
-```bash
-cd "$WT"
-git add devops/home-scraper/ devops/fly-poller/
-git diff --cached --stat  # Show what's changing
-
-git commit -m "$(cat <<'EOF'
-chore: sync home poller files — <brief description>
-
-Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
-EOF
-)"
-
-git push origin sync/home-poller-files
-```
-
-Write a meaningful commit message describing what changed (not just "sync files").
-
-### Step 7 — Create PR if needed
-
-Only if no PR exists yet:
-
-```bash
-cd /Volumes/DATA/GitHub/StakTrakrApi
-gh pr create \
-  --head sync/home-poller-files \
-  --base main \
-  --title "chore: sync home poller files to repo" \
-  --body "$(cat <<'EOF'
-## Summary
-- Syncs modified files from home poller VM to version control
-- Files: <list changed files>
-
-## Context
-<Brief description of what was changed and why>
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-EOF
-)"
-```
-
-### Step 8 — Clean up worktree
-
-```bash
-cd /Volumes/DATA/GitHub/StakTrakrApi
-git worktree remove .worktrees/sync-home
-```
-
-### Step 9 — Report
+### Step 4 — Report
 
 Tell the user:
-- Which files were synced
-- PR number and URL
-- Reminder to merge when ready
+- Which files changed
+- Redeploy result (success/failure)
+- Container status and dashboard reachable
 
-## Common mistakes
+## Stack IDs
 
-**Forgetting shared files need two copies.** `provider-db.js` must go to both `devops/fly-poller/`
-and `devops/home-scraper/`. If you only copy to one, the other location goes stale.
+| Stack | ID | Compose file |
+|-------|-----|-------------|
+| firecrawl | 4 | `devops/firecrawl-docker/docker-compose.yml` |
+| tinyproxy | 5 | `devops/pollers/docker-compose.tinyproxy.yml` |
+| home-poller | 7 | `devops/pollers/docker-compose.home.yml` |
+| tailscale | 8 | `devops/pollers/docker-compose.tailscale.yml` |
 
-**Committing from the wrong directory.** Always `cd` into the worktree before committing. If your
-cwd is the main repo, you'll commit to the wrong branch.
+## Common Mistakes
 
-**Force-pushing.** Never force-push `sync/home-poller-files`. The branch accumulates commits across
-sessions — each sync adds a commit. The PR body can be updated when merging.
+**Forgetting env vars on redeploy.** Portainer git-based stacks lose env vars on redeploy. If
+Turso queries fail after deploy, this is the cause. Always pass the full `env` array.
 
-**Not verifying syntax first.** Before copying files, run `node --check` on the VM:
-```bash
-ssh -T homepoller 'node --check /opt/poller/dashboard.js && echo OK'
-```
+**Deploying from wrong branch.** Portainer pulls from the branch configured in the stack. After
+merging a feature PR, the stack should be pointed at `dev`. Check the Portainer UI if in doubt.
 
-## Merging the PR
+**Not waiting for build.** Portainer rebuilds the Docker image on redeploy. This takes 1-2 minutes
+(Playwright install is the slowest step). Check `docker logs` for the entrypoint message.
 
-The sync PR stays open as a running collection of changes. Merge it when:
-- A batch of related changes is complete
-- Before a release that depends on the poller changes
-- The user explicitly asks to merge
-
-After merging, the home poller's "Updating Poller Code" flow (in the `homepoller-ssh` skill)
-can pull from main to verify round-trip integrity.
+**Editing container files via docker exec.** Changes inside the container are lost on next redeploy.
+Always edit in the repo, push, and redeploy.
