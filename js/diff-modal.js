@@ -959,22 +959,21 @@
     html += '</div>';
     html += '</div>';
 
-    // Settings progress bubble (like item conflict tracker)
+    // Settings summary bubble — count how many go to local vs remote
     if (totalChanged > 0) {
-      var pctResolved = Math.round((resolvedCount / totalChanged) * 100);
-      var remainingCount = totalChanged - resolvedCount;
-      var progressColor = resolvedCount === totalChanged ? 'var(--success,#22c55e)' : 'var(--warning,#d97706)';
-      html += '<div style="background:var(--bg-secondary,#1e293b);border-radius:8px;padding:0.5rem 0.75rem;margin:0.4rem 0">';
-      html += '<div style="display:flex;justify-content:space-between;align-items:center;font-size:0.78rem;margin-bottom:0.3rem">';
-      html += '<span>Resolved <strong>' + resolvedCount + '</strong> of <strong>' + totalChanged + '</strong> settings</span>';
-      if (remainingCount > 0) {
-        html += '<span style="color:' + progressColor + ';font-weight:600">' + remainingCount + ' remaining</span>';
-      } else {
-        html += '<span style="color:var(--success,#22c55e);font-weight:600">\u2713 All resolved</span>';
+      var localCount = 0;
+      var remoteCount = 0;
+      for (i = 0; i < changed.length; i++) {
+        var res = _conflictResolutions['setting-' + changed[i].key];
+        if (res === 'local') localCount++;
+        else remoteCount++;
       }
-      html += '</div>';
-      html += '<div style="height:4px;border-radius:2px;background:var(--bg-tertiary,rgba(255,255,255,0.1));overflow:hidden">';
-      html += '<div style="height:100%;width:' + pctResolved + '%;background:' + progressColor + ';border-radius:2px;transition:width 0.3s"></div>';
+      html += '<div style="background:var(--bg-secondary,#1e293b);border-radius:8px;padding:0.5rem 0.75rem;margin:0.4rem 0">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;font-size:0.78rem">';
+      html += '<span>Using <strong>remote</strong> for <strong>' + remoteCount + '</strong>';
+      if (localCount > 0) html += ', <strong>local</strong> for <strong>' + localCount + '</strong>';
+      html += ' of ' + totalChanged + ' settings</span>';
+      html += '<span style="font-size:0.7rem;color:var(--text-muted,#888)">Click values to switch</span>';
       html += '</div>';
       html += '</div>';
     }
