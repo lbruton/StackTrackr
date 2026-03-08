@@ -923,10 +923,54 @@ const filterInventoryAdvanced = () => {
   let query = searchQuery.toLowerCase().trim();
 
   const terms = query.split(',').map(t => t.trim()).filter(t => t);
+  if (!terms.length) return result;
+
+  // Pre-calculate search terms and hoist Regex compilation out of the filter loop.
+  // This prevents O(N*M) recompilation overhead during large inventory renders.
+  const parsedTerms = terms.map(q => {
+    const words = q.split(/\s+/).filter(w => w.length > 0);
+    const exactPhrase = q;
+    let expandedPhrase = exactPhrase;
+    let compiledWordRegexes = [];
+    let compiledFieldRegexes = [];
+
+    if (words.length >= 2) {
+      const abbrevs = typeof METAL_ABBREVIATIONS !== 'undefined' ? METAL_ABBREVIATIONS : {};
+      const expandedWords = words.map(w => abbrevs[w.toLowerCase()] || w);
+      expandedPhrase = expandedWords.join(' ').toLowerCase();
+
+      // Compile regexes for strict word boundary checking
+      compiledWordRegexes = words.map(word => {
+        // nosemgrep: javascript.dos.rule-non-literal-regexp
+        return new RegExp(`\\b${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+      });
+    }
+
+    // Always compile field matching regexes with abbreviation expansion
+    const abbrevs = typeof METAL_ABBREVIATIONS !== 'undefined' ? METAL_ABBREVIATIONS : {};
+    compiledFieldRegexes = words.map(word => {
+      const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const patterns = [escaped];
+      const expansion = abbrevs[word.toLowerCase()];
+      if (expansion) {
+        patterns.push(expansion.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+      }
+      const combined = patterns.join('|');
+      // nosemgrep: javascript.dos.rule-non-literal-regexp
+      return new RegExp(`\\b(?:${combined})`, 'i');
+    });
+
+    return {
+      q,
+      words,
+      exactPhrase,
+      expandedPhrase,
+      compiledWordRegexes,
+      compiledFieldRegexes
+    };
+  });
 
   return result.filter(item => {
-    if (!terms.length) return true;
-
     // Retrieve or compute cached search data
     let cached = searchCache.get(item);
 
@@ -960,23 +1004,13 @@ const filterInventoryAdvanced = () => {
     const { text: itemText, formattedDate } = cached;
 
     // Handle comma-separated terms (OR logic between comma terms)
-    return terms.some(q => {
-      // Split each comma term into individual words for AND logic
-      const words = q.split(/\s+/).filter(w => w.length > 0);
+    return parsedTerms.some(termData => {
+      const { q, words, exactPhrase, expandedPhrase, compiledWordRegexes, compiledFieldRegexes } = termData;
 
       // Special handling for multi-word searches to prevent partial matches
       // If searching for "American Eagle", it should only match items that have both words
       // but NOT match "American Gold Eagle" (which has an extra word in between)
       if (words.length >= 2) {
-        // STACK-62: Expand abbreviations in the query words for multi-word searches
-        const abbrevs = typeof METAL_ABBREVIATIONS !== 'undefined' ? METAL_ABBREVIATIONS : {};
-        const expandedWords = words.map(w => abbrevs[w.toLowerCase()] || w);
-        const expandedPhrase = expandedWords.join(' ').toLowerCase();
-
-        // For multi-word searches, check if the exact phrase exists or
-        // if all words exist as separate word boundaries without conflicting words
-        const exactPhrase = q.toLowerCase();
-
         // Check for exact phrase match first
         if (itemText.includes(exactPhrase)) {
           return true;
@@ -994,12 +1028,8 @@ const filterInventoryAdvanced = () => {
         }
 
         // For phrase searches like "American Eagle", be more restrictive
-        // Check that all words are present as word boundaries
-        const allWordsPresent = words.every(word => {
-          // nosemgrep: javascript.dos.rule-non-literal-regexp
-          const wordRegex = new RegExp(`\\b${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
-          return wordRegex.test(itemText);
-        });
+        // Check that all words are present as word boundaries using pre-compiled regexes
+        const allWordsPresent = compiledWordRegexes.every(regex => regex.test(itemText));
 
         if (!allWordsPresent) {
           return false;
@@ -1050,19 +1080,9 @@ const filterInventoryAdvanced = () => {
         return true;
       }
       
-      // For single words, use word boundary matching with abbreviation expansion
-      const fieldMatch = words.every(word => {
-        // STACK-62: Build regex with original word + abbreviation expansion
-        const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const patterns = [escaped];
-        const abbrevs = typeof METAL_ABBREVIATIONS !== 'undefined' ? METAL_ABBREVIATIONS : {};
-        const expansion = abbrevs[word.toLowerCase()];
-        if (expansion) {
-          patterns.push(expansion.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-        }
-        const combined = patterns.join('|');
-        // nosemgrep: javascript.dos.rule-non-literal-regexp
-        const wordRegex = new RegExp(`\\b(?:${combined})`, 'i');
+      // For single words, use word boundary matching with pre-compiled regexes
+      const fieldMatch = compiledFieldRegexes.every((wordRegex, index) => {
+        const word = words[index];
 
         return (
           wordRegex.test(item.metal) ||
