@@ -1409,11 +1409,12 @@
     // Summary dashboard (replaces old summary chips)
     _renderSummaryDashboard(safeGetElement('diffSummaryDashboard'), diff, conflicts);
 
-    // Progress tracker (sync only)
-    _renderProgressTracker(safeGetElement('diffProgressTracker'), conflicts, source);
-
-    // Conflict cards (replaces old inline conflict rendering)
-    _renderConflictCards(safeGetElement('diffSectionConflicts'), conflicts);
+    // Legacy progress tracker and conflict cards — suppressed.
+    // The card-based Modified section has its own progress bar and click-to-pick UX.
+    var progressEl = safeGetElement('diffProgressTracker');
+    if (progressEl) progressEl.style.display = 'none';
+    var conflictEl = safeGetElement('diffSectionConflicts');
+    if (conflictEl) conflictEl.style.display = 'none';
 
     // Orphan cards (Added + Deleted) — render into #diffSectionOrphans
     var orphanEl = safeGetElement('diffSectionOrphans');
