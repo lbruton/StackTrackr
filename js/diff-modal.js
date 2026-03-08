@@ -723,7 +723,7 @@
       { count: localOnly, label: 'Local Only', target: 'diffSectionOrphans', color: '', style: '' }
     ];
 
-    var cardStyle = 'flex:1;min-width:120px;border-radius:8px;padding:0.6rem;background:var(--bg-tertiary,#262a3a);cursor:pointer;text-align:center';
+    var cardStyle = 'flex:1;min-width:120px;border-radius:8px;padding:0.6rem;background:var(--bg-tertiary,transparent);cursor:pointer;text-align:center';
     var html = '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin:0.75rem 0">';
     for (var i = 0; i < cards.length; i++) {
       var card = cards[i];
