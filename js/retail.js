@@ -449,9 +449,12 @@ const syncRetailPrices = async ({ ui = true } = {}) => {
             ? manifest.slugs
             : null;
       _manifestCoinMeta = manifest.coins_meta || null;
-      // Persist slug list so it survives page reload
+      // Persist slug list and coin metadata so they survive page reload
       if (_manifestSlugs) {
         try { localStorage.setItem(RETAIL_MANIFEST_SLUGS_KEY, JSON.stringify(_manifestSlugs)); } catch { /* ignore */ }
+      }
+      if (_manifestCoinMeta) {
+        try { localStorage.setItem(RETAIL_MANIFEST_COIN_META_KEY, JSON.stringify(_manifestCoinMeta)); } catch { /* ignore */ }
       }
     } else {
       debugLog("[retail] All endpoints unreachable, using fallback slug list", "warn");
@@ -468,9 +471,10 @@ const syncRetailPrices = async ({ ui = true } = {}) => {
       if (providersResp.ok) {
         retailProviders = await providersResp.json();
         saveRetailProviders();
-        // Extract vendor display metadata if present
+        // Extract vendor display metadata if present and persist for page reload
         if (retailProviders && retailProviders._vendor_meta) {
           _manifestVendorMeta = retailProviders._vendor_meta;
+          try { localStorage.setItem(RETAIL_MANIFEST_VENDOR_META_KEY, JSON.stringify(_manifestVendorMeta)); } catch { /* ignore */ }
         }
         debugLog(`[retail] Loaded ${Object.keys(retailProviders || {}).length} coin provider mappings`, "info");
       } else {
@@ -1825,6 +1829,30 @@ const initRetailPrices = () => {
   } catch {
     _manifestSlugs = null;
     try { localStorage.removeItem(RETAIL_MANIFEST_SLUGS_KEY); } catch { /* ignore */ }
+  }
+  // Restore manifest coin metadata (canonical names, weights, metals)
+  try {
+    const cachedMeta = localStorage.getItem(RETAIL_MANIFEST_COIN_META_KEY);
+    if (cachedMeta) {
+      const parsed = JSON.parse(cachedMeta);
+      _manifestCoinMeta = (parsed && typeof parsed === "object" && !Array.isArray(parsed)) ? parsed : null;
+      if (!_manifestCoinMeta) localStorage.removeItem(RETAIL_MANIFEST_COIN_META_KEY);
+    }
+  } catch {
+    _manifestCoinMeta = null;
+    try { localStorage.removeItem(RETAIL_MANIFEST_COIN_META_KEY); } catch { /* ignore */ }
+  }
+  // Restore vendor display metadata
+  try {
+    const cachedVendor = localStorage.getItem(RETAIL_MANIFEST_VENDOR_META_KEY);
+    if (cachedVendor) {
+      const parsed = JSON.parse(cachedVendor);
+      _manifestVendorMeta = (parsed && typeof parsed === "object" && !Array.isArray(parsed)) ? parsed : null;
+      if (!_manifestVendorMeta) localStorage.removeItem(RETAIL_MANIFEST_VENDOR_META_KEY);
+    }
+  } catch {
+    _manifestVendorMeta = null;
+    try { localStorage.removeItem(RETAIL_MANIFEST_VENDOR_META_KEY); } catch { /* ignore */ }
   }
   loadRetailPrices();
   loadRetailPriceHistory();
