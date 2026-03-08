@@ -15,10 +15,10 @@
 ############################################################
 
 # ── Stage 1: Firecrawl app (API + workers) ──────────────
-FROM ghcr.io/firecrawl/firecrawl:latest AS firecrawl
+FROM ghcr.io/firecrawl/firecrawl:latest@sha256:aef55fe8e15ed56eaac35e0ea3580c265134a89ac6f55cc1fe15bc49caa147c9 AS firecrawl
 
 # ── Stage 2: Playwright service ─────────────────────────
-FROM ghcr.io/firecrawl/playwright-service:latest AS playwright-svc
+FROM ghcr.io/firecrawl/playwright-service:latest@sha256:8e51d9b7880d6efc43f3a8adf7761bca1528fcafd9b6859150251182fd553f75 AS playwright-svc
 
 # ── Stage 3: Final all-in-one image ─────────────────────
 FROM node:20-slim
@@ -189,6 +189,7 @@ RUN mv /tmp/tracker-blocklist.txt /app/tracker-blocklist.txt
 
 # ── Shared poller code (single source of truth) ──────────
 COPY shared/package.json ./
+ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 RUN npm install --omit=dev
 
 # Spot-poller Python deps

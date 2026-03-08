@@ -79,7 +79,7 @@ The home-poller stack requires env vars on every redeploy. Fetch secrets from In
 
 ```bash
 PORTAINER_URL="https://localhost:9443"
-PORTAINER_TOKEN="REDACTED_SEE_INFISICAL"
+PORTAINER_TOKEN="<from-infisical:PORTAINER_TOKEN>"
 STACK_ID=7
 ENDPOINT_ID=3
 

@@ -6,7 +6,7 @@
 
 import { createServer } from "http";
 import { readFile, stat } from "fs/promises";
-import { join, extname } from "path";
+import { join, resolve, extname } from "path";
 
 const PORT = process.env.PORT || 8080;
 const DATA_DIR = process.env.API_EXPORT_DIR || "/tmp/staktrakr-api-export";
@@ -39,15 +39,13 @@ const server = createServer(async (req, res) => {
   // Remove query string and decode URI
   const url = decodeURIComponent(req.url.split("?")[0]);
 
-  // Security: prevent directory traversal
-  if (url.includes("..")) {
+  // Security: prevent directory traversal and absolute path escape
+  const filePath = resolve(DATA_DIR, url.replace(/^\/+/, ""));
+  if (!filePath.startsWith(DATA_DIR)) {
     res.writeHead(400);
     res.end("Bad Request");
     return;
   }
-
-  // Map URL to file path
-  const filePath = join(DATA_DIR, url);
 
   try {
     const stats = await stat(filePath);
