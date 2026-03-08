@@ -115,6 +115,8 @@ fly logs --app staktrakr | grep -E 'spot|run-spot' | tail -5
 
 **TDD enforcement:** Write runbook test blocks BEFORE implementing code. Run `/bb-test sections=NN` after implementation to verify. Use `/browserbase-test-maintenance` to add test blocks after shipping a spec.
 
+**Ralph Loop oracle:** `/bb-test sections=NN` is the natural completion oracle for iterative bug fixes via `/ralph-loop` — set `--completion-promise` to the expected pass output so the loop exits automatically when tests go green.
+
 **Test API keys** are stored in Infisical for tests requiring authentication (Numista, PCGS, etc.). Use the `secrets` skill to fetch them before running tests. Inject keys into localStorage via Stagehand after navigating to the app.
 
 **Cloud sync and OAuth flows cannot be tested via Browserbase** — Cloudflare preview deployments use a different origin, which breaks Dropbox OAuth (the registered redirect URI only matches `beta.staktrakr.com`). Cloud sync fixes must be merged to `dev` first and tested manually by the user at `beta.staktrakr.com`.
@@ -129,6 +131,8 @@ Team: `f876864d-ff80-4231-ae6c-a8e5cb69aca4`
 
 ## Project Skills
 
-In `.claude/skills/`: `api-infrastructure`, `bb-test`, `brainstorming`, `browserbase-test-maintenance`, `bug-report`, `coding-standards`, `devops-dashboard`, `finishing-a-development-branch`, `homepoller-ssh`, `markdown-standards`, `prime`, `release`, `repo-boundaries`, `retail-poller`, `retail-provider-fix`, `scan-mentions`, `seed-sync`, `ship`, `sync-poller`, `ui-mockup`, `wiki-audit`, `wiki-search`, `wiki-sweep`, `wiki-update`.
+In `.claude/skills/`: `api-infrastructure`, `bb-test`, `brainstorming`, `browserbase-test-maintenance`, `bug-report`, `coding-standards`, `devops-dashboard`, `finishing-a-development-branch`, `gsd`, `homepoller-ssh`, `markdown-standards`, `release`, `repo-boundaries`, `retail-poller`, `retail-provider-fix`, `scan-mentions`, `seed-sync`, `ship`, `sync-poller`, `ui-mockup`, `wiki-audit`, `wiki-search`, `wiki-sweep`, `wiki-update`.
+
+Note: `/prime` is now a user-level skill (`~/.claude/skills/prime/`) that works across all projects.
 
 Use `/sync-instructions` after significant codebase changes.
