@@ -7,8 +7,8 @@
  * @see STAK-348 — Migrate providers.json to Turso DB
  */
 
-import { writeFileSync, renameSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { writeFileSync, renameSync, mkdirSync } from "node:fs";
+import { join, dirname, resolve } from "node:path";
 import { createTursoClient } from "./turso-client.js";
 import { initProviderSchema, exportProvidersJson } from "./provider-db.js";
 
@@ -17,6 +17,7 @@ const outPath = join(DATA_DIR, "retail", "providers.json");
 const tmpPath = outPath + ".tmp";
 
 try {
+  mkdirSync(dirname(outPath), { recursive: true });
   const client = createTursoClient();
   await initProviderSchema(client);
   const json = await exportProvidersJson(client);

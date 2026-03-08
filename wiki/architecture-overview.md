@@ -2,7 +2,7 @@
 title: Architecture Overview
 category: infrastructure
 owner: staktrakr, staktrakr-api
-lastUpdated: v3.33.57
+lastUpdated: v3.33.58
 date: 2026-03-07
 sourceFiles:
   - devops/pollers/docker-compose.home.yml
@@ -89,6 +89,8 @@ relatedPages:
 
 > **Pipeline divergence (API-3, 2026-03-02):** The two pollers now use different scrape strategies. Fly.io uses **Playwright direct first** (fast, ~16 min, no proxy for most targets) with Firecrawl as fallback. Home poller uses **Firecrawl first** (residential IP, ~45-60 min) with Playwright fallback. Both write to the same Turso DB and produce equivalent results. See [Poller Parity](poller-parity.md) for details.
 
+> **providers.json sync:** Both pollers run `export-providers-json.js` every 5 minutes to sync `providers.json` from Turso to the local volume (`/data/retail/`). The entrypoint creates `/data/retail/` with `mkdir -p` at container startup — the directory must exist before the first export runs.
+
 ---
 
 ## Repo Boundaries
@@ -151,6 +153,7 @@ GitHub Pages is configured to serve the **`api` branch**. The `Merge Poller Bran
 | New Fly.io secret | `fly secrets set KEY=value --app staktrakr` |
 | Home poller env var change | Pass updated `env` array on next Portainer redeploy |
 | GHA workflow change | Push to `main` branch of StakTrakrApi — GHA reads from main |
+| Fly.io deploy during retail run | Deploys kill in-progress cron jobs — the retail run at :00 can be silently lost if a deploy lands between :00 and :30 |
 
 ---
 

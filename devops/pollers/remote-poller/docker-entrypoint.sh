@@ -69,7 +69,7 @@ echo "[entrypoint] Writing cron schedule: ${CRON_SCHEDULE}"
 chmod 0644 /etc/cron.d/retail-poller
 
 # ── 5.6. Tailscale state directory (on persistent /data volume) ───────
-mkdir -p /data/tailscale /var/run/tailscale
+mkdir -p /data/tailscale /var/run/tailscale /data/retail
 
 # ── 6. Create log files ───────────────────────────────────────────────
 touch /var/log/retail-poller.log /var/log/http-server.log \
