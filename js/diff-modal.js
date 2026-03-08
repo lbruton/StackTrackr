@@ -101,6 +101,56 @@
     'metalApiConfig': 'API Keys'
   };
 
+  var SETTINGS_VALUE_TYPE = {
+    inlineChipConfig: 'chip-strip',
+    filterChipCategoryConfig: 'chip-strip',
+    viewModalSectionConfig: 'chip-strip',
+    chipCustomGroups: 'chip-strip',
+    numistaViewFields: 'toggle-map',
+    enabledSeedRules: 'slug-chips',
+    headerBtnOrder: 'slug-chips',
+    chipBlacklist: 'slug-chips',
+    tagBlacklist: 'slug-chips',
+    providerPriority: 'kv-pills',
+    numistaLookupRules: 'count-summary',
+    metalOrderConfig: 'count-summary'
+  };
+
+  var SLUG_LABELS = {
+    // Seed rule coin slugs — from RETAIL_COIN_META keys
+    'ase': 'American Silver Eagle',
+    'maple-silver': 'Silver Maple Leaf',
+    'britannia-silver': 'Silver Britannia',
+    'krugerrand-silver': 'Silver Krugerrand',
+    'kangaroo-silver': 'Silver Kangaroo',
+    'koala-silver': 'Silver Koala',
+    'kookaburra-silver': 'Silver Kookaburra',
+    'generic-silver-round': 'Generic Silver Round',
+    'generic-silver-bar-10oz': 'Generic 10oz Silver Bar',
+    'age': 'American Gold Eagle',
+    'buffalo': 'American Gold Buffalo',
+    'maple-gold': 'Gold Maple Leaf',
+    'krugerrand-gold': 'Gold Krugerrand',
+    'ape': 'American Platinum Eagle',
+    'goldback-oklahoma-g1': 'G1 Oklahoma Goldback',
+    // Header button slugs
+    'themeBtn': 'Theme',
+    'cloudSyncBtn': 'Cloud Sync',
+    'settingsBtn': 'Settings',
+    'aboutBtn': 'About',
+    'backupBtn': 'Backup',
+    'importBtn': 'Import',
+    'addItemBtn': 'Add Item',
+    'sortBtn': 'Sort',
+    'filterBtn': 'Filter',
+    'searchBtn': 'Search',
+    'marketBtn': 'Market',
+    'vaultBtn': 'Vault',
+    'trendBtn': 'Trend',
+    'restoreBtn': 'Restore',
+    'currencyBtn': 'Currency'
+  };
+
   function _groupByItem(conflictsArray) {
     var grouped = {};
     if (!conflictsArray || !conflictsArray.length) return grouped;
