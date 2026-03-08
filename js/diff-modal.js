@@ -25,25 +25,25 @@
 
   // ── Settings categories for grouped display ──
   var SETTINGS_CATEGORIES = {
-    'Display & Appearance': {
+    'Appearance': {
       icon: '\uD83C\uDFA8',
-      keys: ['displayCurrency','appTheme','cardViewStyle','desktopCardView','defaultSortColumn','defaultSortDir','showRealizedGainLoss','metalOrderConfig','settingsItemsPerPage','appTimeZone']
-    },
-    'Chips & Filters': {
-      icon: '\uD83C\uDFF7\uFE0F',
-      keys: ['inlineChipConfig','filterChipCategoryConfig','viewModalSectionConfig','chipMinCount','chipMaxCount','chipCustomGroups','chipBlacklist','chipSortOrder']
-    },
-    'Layout': {
-      icon: '\uD83D\uDCD0',
-      keys: ['layoutSectionConfig','tableImagesEnabled','tableImageSides']
-    },
-    'Tags': {
-      icon: '\uD83D\uDD16',
-      keys: ['tagBlacklist']
+      keys: ['appTheme','cardViewStyle','desktopCardView','defaultSortColumn','defaultSortDir','settingsItemsPerPage','appTimeZone','showRealizedGainLoss','layoutSectionConfig','viewModalSectionConfig']
     },
     'Header Buttons': {
       icon: '\uD83D\uDD18',
       keys: ['headerThemeBtnVisible','headerCurrencyBtnVisible','headerTrendBtnVisible','headerSyncBtnVisible','headerMarketBtnVisible','headerVaultBtnVisible','headerRestoreBtnVisible','headerCloudSyncBtnVisible','headerBtnShowText','headerBtnOrder','headerAboutBtnVisible']
+    },
+    'Filters & Chips': {
+      icon: '\uD83C\uDFF7\uFE0F',
+      keys: ['metalOrderConfig','inlineChipConfig','filterChipCategoryConfig','chipMinCount','chipMaxCount','chipCustomGroups','chipBlacklist','chipSortOrder','tagBlacklist']
+    },
+    'Images': {
+      icon: '\uD83D\uDDBC\uFE0F',
+      keys: ['tableImagesEnabled','tableImageSides']
+    },
+    'Currency': {
+      icon: '\uD83D\uDCB1',
+      keys: ['displayCurrency']
     },
     'Goldback & Providers': {
       icon: '\uD83E\uDE99',
@@ -115,7 +115,7 @@
     tagBlacklist: 'slug-chips',
     providerPriority: 'kv-pills',
     numistaLookupRules: 'count-summary',
-    metalOrderConfig: 'count-summary'
+    metalOrderConfig: 'chip-strip'
   };
 
   var SLUG_LABELS = {
@@ -570,7 +570,7 @@
   var _conflictResolutions = {}; // { 'c0': 'local'|'remote', ... }
   var _collapsedCategories = {}; // { added: true, ... }
   var _expandedModified = {};    // { 0: true, 1: false, ... }
-  var _expandedSettingsCategories = {}; // { 'Display & Appearance': true, ... }
+  var _expandedSettingsCategories = {}; // { 'Appearance': true, ... }
   var _selectAllState = 0;  // 0=none, 1=added+modified, 2=all
 
   // Card-based state (STAK-454)
@@ -718,12 +718,12 @@
 
     var cards = [
       { count: matched, label: 'Matched', target: 'diffSectionModified', color: '', style: 'opacity:0.5' },
-      { count: conflictCount, label: 'Conflicts', target: syncConflicts > 0 ? 'diffSectionConflicts' : 'diffSectionModified', color: conflictCount > 0 ? 'color:#d97706' : '', style: '' },
+      { count: conflictCount, label: 'Conflicts', target: 'diffSectionModified', color: conflictCount > 0 ? 'color:#d97706' : '', style: '' },
       { count: remoteOnly, label: 'Remote Only', target: 'diffSectionOrphans', color: '', style: '' },
       { count: localOnly, label: 'Local Only', target: 'diffSectionOrphans', color: '', style: '' }
     ];
 
-    var cardStyle = 'flex:1;min-width:120px;border-radius:8px;padding:0.6rem;border:1px solid var(--border-color,#ddd);cursor:pointer;text-align:center';
+    var cardStyle = 'flex:1;min-width:120px;border-radius:8px;padding:0.6rem;background:var(--bg-tertiary,#262a3a);cursor:pointer;text-align:center';
     var html = '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin:0.75rem 0">';
     for (var i = 0; i < cards.length; i++) {
       var card = cards[i];
