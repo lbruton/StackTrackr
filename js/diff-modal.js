@@ -73,7 +73,7 @@
     'chipMaxCount': 'Chip Max Count',
     'chipCustomGroups': 'Custom Chip Groups',
     'chipBlacklist': 'Hidden Chips',
-    'chipSortOrder': 'Chip Sort Order',
+    'chipSortOrder': 'Filter Sort (alpha/count)',
     'layoutSectionConfig': 'Section Layout',
     'tableImagesEnabled': 'Table Images',
     'tableImageSides': 'Table Image Sides',
@@ -92,9 +92,9 @@
     'goldback-enabled': 'Goldback Enabled',
     'goldback-estimate-enabled': 'Goldback Estimates',
     'goldback-estimate-modifier': 'Estimate Modifier',
-    'enabledSeedRules': 'Seed Rules',
+    'enabledSeedRules': 'Market Lookup Rules',
     'apiProviderOrder': 'Provider Order',
-    'providerPriority': 'Provider Priority',
+    'providerPriority': 'Provider Ranking',
     'numista_tags_auto': 'Auto-Tag on Lookup',
     'numistaLookupRules': 'Lookup Rules',
     'numistaViewFields': 'View Fields',
@@ -158,14 +158,21 @@
   };
 
   // ── JSON parse helper — cloud-sync vault passes settings as raw JSON strings ──
+  // Also handles CMP1-compressed localStorage values (loadDataSync decompresses,
+  // but raw localStorage.getItem() and vault payloads may not).
   function _parseSetting(val) {
     if (typeof val !== 'string') return val;
+    if (typeof __decompressIfNeeded === 'function') val = __decompressIfNeeded(val);
     try { return JSON.parse(val); } catch (e) { return val; }
   }
 
   // ── Settings sub-renderers (STAK-455) ──
 
   function _renderChipStrip(key, localArr, remoteArr) {
+    // Guard: if either side is still a string after parsing, bail to inline renderer
+    if (!Array.isArray(localArr) && !Array.isArray(remoteArr)) return null;
+    if (!Array.isArray(localArr)) localArr = [];
+    if (!Array.isArray(remoteArr)) remoteArr = [];
     var localById = {};
     var remoteById = {};
     var i, id;
@@ -243,6 +250,9 @@
   }
 
   function _renderToggleMap(key, localObj, remoteObj) {
+    if ((typeof localObj !== 'object' || localObj === null) && (typeof remoteObj !== 'object' || remoteObj === null)) return null;
+    if (typeof localObj !== 'object' || localObj === null) localObj = {};
+    if (typeof remoteObj !== 'object' || remoteObj === null) remoteObj = {};
     var allKeys = {};
     var k;
     for (k in localObj) allKeys[k] = true;
@@ -310,6 +320,9 @@
   }
 
   function _renderSlugChips(key, localArr, remoteArr) {
+    if (!Array.isArray(localArr) && !Array.isArray(remoteArr)) return null;
+    if (!Array.isArray(localArr)) localArr = [];
+    if (!Array.isArray(remoteArr)) remoteArr = [];
     var localSet = {};
     var remoteSet = {};
     var i;
@@ -395,6 +408,9 @@
   }
 
   function _renderKvPills(key, localObj, remoteObj) {
+    if ((typeof localObj !== 'object' || localObj === null) && (typeof remoteObj !== 'object' || remoteObj === null)) return null;
+    if (typeof localObj !== 'object' || localObj === null) localObj = {};
+    if (typeof remoteObj !== 'object' || remoteObj === null) remoteObj = {};
     var allKeys = {};
     var k;
     for (k in localObj) allKeys[k] = true;
@@ -488,15 +504,12 @@
     // Cloud-sync vault passes settings as JSON strings — parse before rendering
     localVal = _parseSetting(localVal);
     remoteVal = _parseSetting(remoteVal);
-    if (type === 'chip-strip' && !Array.isArray(localVal) && !Array.isArray(remoteVal)) return null;
-    if (type === 'toggle-map' && (typeof localVal !== 'object' || localVal === null) && (typeof remoteVal !== 'object' || remoteVal === null)) return null;
-    if (type === 'slug-chips' && !Array.isArray(localVal) && !Array.isArray(remoteVal)) return null;
-    if (type === 'kv-pills' && (typeof localVal !== 'object' || localVal === null) && (typeof remoteVal !== 'object' || remoteVal === null)) return null;
+    // Each renderer has its own type guards and returns null if inputs are wrong
     switch (type) {
-      case 'chip-strip': return _renderChipStrip(key, localVal || [], remoteVal || []);
-      case 'toggle-map': return _renderToggleMap(key, localVal || {}, remoteVal || {});
-      case 'slug-chips': return _renderSlugChips(key, localVal || [], remoteVal || []);
-      case 'kv-pills': return _renderKvPills(key, localVal || {}, remoteVal || {});
+      case 'chip-strip': return _renderChipStrip(key, localVal, remoteVal);
+      case 'toggle-map': return _renderToggleMap(key, localVal, remoteVal);
+      case 'slug-chips': return _renderSlugChips(key, localVal, remoteVal);
+      case 'kv-pills': return _renderKvPills(key, localVal, remoteVal);
       case 'count-summary': return _renderCountSummary(key, localVal, remoteVal);
       default: return null;
     }
@@ -529,6 +542,8 @@
     value = _parseSetting(value);
     if (value === null || value === undefined) return '\u2014';
     if (typeof value === 'boolean') return value ? 'On' : 'Off';
+    if (value === 'true') return 'On';
+    if (value === 'false') return 'Off';
     if (Array.isArray(value)) {
       var label = value.length + ' items';
       if (value.length > 0 && typeof value[0] === 'string') {
@@ -908,19 +923,28 @@
       matchedByCat[mCat].push(matched[i]);
     }
 
-    // Collect all categories that have entries (ordered by SETTINGS_CATEGORIES, then Other)
+    // Collect only categories that have actual diffs (skip matched-only categories)
     var orderedCats = [];
     for (var cn = 0; cn < catNames.length; cn++) {
-      if (changedByCat[catNames[cn]] || matchedByCat[catNames[cn]]) orderedCats.push(catNames[cn]);
+      if (changedByCat[catNames[cn]] && changedByCat[catNames[cn]].length > 0) orderedCats.push(catNames[cn]);
     }
-    if (changedByCat['Other'] || matchedByCat['Other']) orderedCats.push('Other');
+    if (changedByCat['Other'] && changedByCat['Other'].length > 0) orderedCats.push('Other');
 
-    // Count total changed settings for the section header
+    // Count total changed settings and how many are resolved
     var totalChanged = changed.length;
+    var resolvedCount = 0;
+    for (i = 0; i < changed.length; i++) {
+      if (_conflictResolutions['setting-' + changed[i].key]) resolvedCount++;
+    }
+
+    // Visual separator between Items and Settings sections
+    var collapsed = _collapsedCategories.settings;
+    var html = '<div style="margin:1.2rem 0 0.8rem;border-top:2px solid var(--border-color,rgba(255,255,255,0.1));padding-top:0.6rem">';
+    html += '<div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted,#888);margin-bottom:0.4rem">User Configuration</div>';
+    html += '</div>';
 
     // Section wrapper (matches item card section structure)
-    var collapsed = _collapsedCategories.settings;
-    var html = '<div class="dm-section-wrapper" data-section="settings" style="margin-top:1rem">';
+    html += '<div class="dm-section-wrapper" data-section="settings">';
 
     // Section header with collapse toggle + bulk actions
     html += '<div class="dm-section-header">';
@@ -935,6 +959,25 @@
     html += '</div>';
     html += '</div>';
 
+    // Settings summary bubble — count how many go to local vs remote
+    if (totalChanged > 0) {
+      var localCount = 0;
+      var remoteCount = 0;
+      for (i = 0; i < changed.length; i++) {
+        var res = _conflictResolutions['setting-' + changed[i].key];
+        if (res === 'local') localCount++;
+        else remoteCount++;
+      }
+      html += '<div style="background:var(--bg-secondary,#1e293b);border-radius:8px;padding:0.5rem 0.75rem;margin:0.4rem 0">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;font-size:0.78rem">';
+      html += '<span>Using <strong>remote</strong> for <strong>' + remoteCount + '</strong>';
+      if (localCount > 0) html += ', <strong>local</strong> for <strong>' + localCount + '</strong>';
+      html += ' of ' + totalChanged + ' settings</span>';
+      html += '<span style="font-size:0.7rem;color:var(--text-muted,#888)">Click values to switch</span>';
+      html += '</div>';
+      html += '</div>';
+    }
+
     // Section body (collapsible)
     html += '<div class="dm-section-body' + (collapsed ? ' collapsed' : '') + '">';
 
@@ -944,7 +987,7 @@
       var catKey = orderedCats[oci];
       var catChanged = changedByCat[catKey] || [];
       var catMatched = matchedByCat[catKey] || [];
-      if (catChanged.length === 0 && catMatched.length === 0) continue;
+      if (catChanged.length === 0) continue;
 
       var catDef = SETTINGS_CATEGORIES[catKey];
       var catIcon = catDef ? catDef.icon : '\u2699\uFE0F';
@@ -2220,7 +2263,7 @@
       // Reset internal state
       _checkedItems = {};
       _conflictResolutions = {};
-      _collapsedCategories = {};
+      _collapsedCategories = { settings: true };
       _expandedModified = {};
       _expandedSettingsCategories = {};
       _selectAllState = 0;
