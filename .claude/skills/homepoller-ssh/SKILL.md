@@ -121,7 +121,7 @@ The home-poller stack requires env vars on every redeploy (Portainer does not pe
 # Get secrets from Infisical first (use secrets skill)
 # Then redeploy via Portainer API:
 
-PORTAINER_URL="https://localhost:9443"
+PORTAINER_URL="https://192.168.1.81:9443"
 PORTAINER_TOKEN="<from-infisical:PORTAINER_TOKEN>"
 STACK_ID=7
 ENDPOINT_ID=3
@@ -197,4 +197,4 @@ ssh -T homepoller "curl -sk -X PUT \
 
 **Editing files on the VM directly**: Code is deployed from git via Portainer. Edit in the StakTrakr repo (`devops/pollers/`), push, then redeploy the stack. Do not `docker exec` to edit files — changes are lost on next redeploy.
 
-**Wrong Portainer URL**: Portainer is HTTPS on port 9443, not HTTP on 9000. Use `https://localhost:9443` from the VM.
+**Wrong Portainer URL**: Portainer is HTTPS on port 9443, not HTTP on 9000. Use `https://192.168.1.81:9443` from the VM.
