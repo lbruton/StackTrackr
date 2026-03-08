@@ -49,9 +49,9 @@
       icon: '\uD83E\uDE99',
       keys: ['goldback-enabled','goldback-estimate-enabled','goldback-estimate-modifier','enabledSeedRules','apiProviderOrder','providerPriority']
     },
-    'Numista': {
+    'API & Numista': {
       icon: '\uD83D\uDCDA',
-      keys: ['numista_tags_auto','numistaLookupRules','numistaViewFields']
+      keys: ['metalApiConfig','numista_tags_auto','numistaLookupRules','numistaViewFields']
     }
   };
 
