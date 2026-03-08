@@ -1,0 +1,21 @@
+# StakTrakr Tinyproxy — Residential IP proxy for Fly.io scraper traffic
+# ──────────────────────────────────────────────────────────────────────
+# Fly.io container routes Chromium traffic through this proxy via Tailscale
+# to get a residential IP that dealer sites accept.
+#
+# Deploy: Portainer API stack from git repo
+# Depends on: tailscale-staktrakr sidecar container (deploy that stack first)
+
+services:
+  tinyproxy:
+    build:
+      context: tinyproxy
+    container_name: staktrakr-tinyproxy
+    restart: unless-stopped
+    network_mode: container:tailscale-staktrakr
+    depends_on: []
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"

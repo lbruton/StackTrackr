@@ -63,36 +63,38 @@ When you change a file, update every wiki page listed in its row.
 
 ## API Infrastructure
 
-> **Separation of duties:** `StakTrakr` = frontend only. All API backend poller code, Fly.io devops, and GHA data workflows live in `lbruton/StakTrakrApi`. Do not add poller scripts, Fly.io config, or data-pipeline workflows to this repo.
+> **Poller code ownership:** All poller scripts live in `StakTrakr/devops/pollers/` (shared core + home-poller + remote-poller). Home VM deploys via Portainer API from git. Fly.io container still deploys from `StakTrakrApi/devops/fly-poller/` (transitioning). See `repo-boundaries` skill for full ownership map.
 
-**Runbook:** See wiki/ for current runbooks: [`health.md`](wiki/health.md), [`fly-container.md`](wiki/fly-container.md), [`spot-pipeline.md`](wiki/spot-pipeline.md). (`docs/devops/api-infrastructure-runbook.md` is deprecated.)
+**Runbook:** See wiki/ for current runbooks: [`health.md`](wiki/health.md), [`fly-container.md`](wiki/fly-container.md), [`spot-pipeline.md`](wiki/spot-pipeline.md).
 
 Three feeds served from `lbruton/StakTrakrApi` **api branch** via GitHub Pages at `api.staktrakr.com`:
 
-| Feed | File | Poller | Stale threshold | Healthy check |
-|---|---|---|---|---|
-| Market prices | `data/api/manifest.json` | Fly.io retail cron (StakTrakrApi) | 30 min | `generated_at` within 30 min |
-| Spot prices | `data/hourly/YYYY/MM/DD/HH.json` | Fly.io `run-spot.sh` cron (StakTrakrApi) | 75 min | Last hourly file within 75 min |
-| Goldback | `data/api/goldback-spot.json` | Fly.io `run-goldback.sh` hourly :01 (StakTrakrApi) | 25h | `scraped_at` within 25h |
+| Feed | File | Poller | Stale threshold |
+|---|---|---|---|
+| Market prices | `data/api/manifest.json` | Fly.io retail cron | 30 min |
+| Spot prices | `data/hourly/YYYY/MM/DD/HH.json` | Fly.io `run-spot.sh` cron | 75 min |
+| Goldback | `data/api/goldback-spot.json` | Fly.io `run-goldback.sh` hourly :01 | 25h |
 
-**Critical:** `spot-history-YYYY.json` is a **seed file** (noon UTC daily), NOT live data. `api-health.js` currently checks it for spot freshness — always shows ~10h stale even when poller is healthy. Open bug (STAK-265 follow-up).
+**Critical:** `spot-history-YYYY.json` is a **seed file** (noon UTC daily), NOT live data.
 
-**NEVER start a local Docker spot-poller container.** `devops/spot-poller/` is a ghost directory — no live code, no container, no docker-compose.yml. Spot polling is Fly.io container cron only (`run-spot.sh` at `5,20,35,50 * * * *`).
-
-**No active failures as of 2026-02-22.** `sync-api-repos.yml` and `retail-price-poller.yml` deleted — both are gone.
+**Home poller:** Runs as Docker containers on home VM (192.168.1.81), managed by Portainer. Four stacks: home-poller, firecrawl, tinyproxy, tailscale-sidecar. Deploy via `sync-poller` skill (Portainer API). Dashboard at `http://192.168.1.81:3010` (HTTP) / `:3011` (HTTPS).
 
 **Home poller SSH:** `ssh -T homepoller '<cmd>'` (LAN) or `ssh -T homepoller-ts '<cmd>'` (Tailscale). Full reference in `homepoller-ssh` skill. User `stakpoller` has NOPASSWD sudo.
 
 **Quick health check:**
 
 ```bash
-# One-liner — paste into terminal
+# API feed freshness
 curl -s https://api.staktrakr.com/data/api/manifest.json | python3 -c "
 import sys,json; from datetime import datetime,timezone; d=json.load(sys.stdin)
 age=(datetime.now(timezone.utc)-datetime.fromisoformat(d['generated_at'].replace('Z','+00:00'))).total_seconds()/60
-print(f'Market: {age:.0f}m ago  {\"✅\" if age<=30 else \"⚠️\"}')"
+print(f'Market: {age:.0f}m ago  {\"OK\" if age<=30 else \"STALE\"}')"
+
+# Home poller containers
+ssh -T homepoller 'docker ps --filter network=staktrakr-net --format "table {{.Names}}\t{{.Status}}"'
+
+# Fly.io logs
 fly logs --app staktrakr | grep -E 'spot|run-spot' | tail -5
-gh run list --repo lbruton/StakTrakrApi --workflow "Merge Poller Branches" --limit 3
 ```
 
 **mem0 recall:** `/remember api infrastructure` or `/remember active poller failures`
@@ -113,6 +115,8 @@ gh run list --repo lbruton/StakTrakrApi --workflow "Merge Poller Branches" --lim
 
 **TDD enforcement:** Write runbook test blocks BEFORE implementing code. Run `/bb-test sections=NN` after implementation to verify. Use `/browserbase-test-maintenance` to add test blocks after shipping a spec.
 
+**Ralph Loop oracle:** `/bb-test sections=NN` is the natural completion oracle for iterative bug fixes via `/ralph-loop` — set `--completion-promise` to the expected pass output so the loop exits automatically when tests go green.
+
 **Test API keys** are stored in Infisical for tests requiring authentication (Numista, PCGS, etc.). Use the `secrets` skill to fetch them before running tests. Inject keys into localStorage via Stagehand after navigating to the app.
 
 **Cloud sync and OAuth flows cannot be tested via Browserbase** — Cloudflare preview deployments use a different origin, which breaks Dropbox OAuth (the registered redirect URI only matches `beta.staktrakr.com`). Cloud sync fixes must be merged to `dev` first and tested manually by the user at `beta.staktrakr.com`.
@@ -127,6 +131,8 @@ Team: `f876864d-ff80-4231-ae6c-a8e5cb69aca4`
 
 ## Project Skills
 
-In `.claude/skills/`: `api-infrastructure`, `bb-test`, `brainstorming`, `browserbase-test-maintenance`, `bug-report`, `coding-standards`, `devops-dashboard`, `finishing-a-development-branch`, `homepoller-ssh`, `markdown-standards`, `prime`, `release`, `repo-boundaries`, `retail-poller`, `retail-provider-fix`, `scan-mentions`, `seed-sync`, `ship`, `sync-poller`, `ui-mockup`, `wiki-audit`, `wiki-search`, `wiki-sweep`, `wiki-update`.
+In `.claude/skills/`: `api-infrastructure`, `bb-test`, `brainstorming`, `browserbase-test-maintenance`, `bug-report`, `coding-standards`, `devops-dashboard`, `finishing-a-development-branch`, `gsd`, `homepoller-ssh`, `markdown-standards`, `release`, `repo-boundaries`, `retail-poller`, `retail-provider-fix`, `scan-mentions`, `seed-sync`, `ship`, `sync-poller`, `ui-mockup`, `wiki-audit`, `wiki-search`, `wiki-sweep`, `wiki-update`.
+
+Note: `/prime` is now a user-level skill (`~/.claude/skills/prime/`) that works across all projects.
 
 Use `/sync-instructions` after significant codebase changes.

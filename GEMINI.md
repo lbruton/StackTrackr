@@ -78,6 +78,25 @@ This file provides foundational mandates and project-specific context for Gemini
 - `devops/`: Build scripts, hooks, Docker poller, mockups.
 - `.agents/skills/`: Specialized agent instructions (Codex).
 
+## API Infrastructure
+
+### Vendor API Landscape
+
+Six vendors scraped for retail prices. Three run Magento 2 with structured APIs:
+
+| Vendor | Platform | API | Auth | Status |
+|---|---|---|---|---|
+| SD Bullion | Magento 2 | REST `/rest/V1/nfusions/cache/pricing` | None | Open — full catalog, tiered pricing |
+| Bullion Exchanges | Magento 2 PWA | GraphQL `/graphql` | CF-gated | Needs cf_clearance cookie |
+| Monument Metals | Magento 2 + ScandiPWA | GraphQL `/graphql` | Session-gated | Returns 403 without cookies |
+| APMEX | Traditional SSR | JSON-LD in HTML | None | Structured data in page source |
+| JM Bullion | Next.js App Router | None (spot only) | N/A | HTML scraping only |
+| Hero Bullion | WooCommerce | REST API | 401 | Auth required, HTML scraping |
+
+Note: SD Bullion product pages now redirect to monumentmetals.com (merger/acquisition). Both sites run Magento 2 but with different frontends.
+
+CF bypass strategy: FlareSolverr nodriver fork (`21hsmw/flaresolverr:nodriver`) for cookie harvesting, Byparr as fallback. Cookies are IP+UA+TLS bound.
+
 ## MCP Server Usage
 
 Gemini has access to the following MCP servers. Use them as described.
