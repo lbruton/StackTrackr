@@ -1065,7 +1065,7 @@ function openVaultModal(mode, fileOrOpts) {
     _vaultPendingFile = null;
 
     // STAK-427: "Include photos" checkbox for manual cloud backup
-    var existingPhotoRow = safeGetElement("vaultIncludePhotosRow");
+    var existingPhotoRow = document.getElementById("vaultIncludePhotosRow");
     if (existingPhotoRow) existingPhotoRow.remove();
     if (_cloudContext && _cloudContext.isManualBackup) {
       // Async check for user photos — inject checkbox if any exist
