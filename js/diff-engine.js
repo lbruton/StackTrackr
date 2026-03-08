@@ -73,13 +73,20 @@ function _settingsValuesEqual(a, b) {
   a = norm(a); b = norm(b);
   if (a === b) return true;
   if (a === null || b === null) return false;
-  // Deep compare for objects/arrays (parsed JSON vs parsed JSON)
+  // Deep compare for objects/arrays — sorted-key stringify for key-order independence
   if (typeof a === 'object' && typeof b === 'object') {
-    return JSON.stringify(a) === JSON.stringify(b);
+    const sortedStringify = (v) => JSON.stringify(v, Object.keys(v).sort());
+    return sortedStringify(a) === sortedStringify(b);
   }
-  // Type coercion: "true"/true, "3"/3, etc.
+  // Type coercion for primitive mismatches only: "true"/true, "3"/3
   if (typeof a !== typeof b) {
-    return String(a) === String(b);
+    const aType = typeof a;
+    const bType = typeof b;
+    if ((aType === 'string' || aType === 'number' || aType === 'boolean') &&
+        (bType === 'string' || bType === 'number' || bType === 'boolean')) {
+      return String(a) === String(b);
+    }
+    return false;
   }
   return false;
 }
