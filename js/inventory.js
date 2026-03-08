@@ -470,7 +470,7 @@ const restoreBackupZip = async (file) => {
       }
 
       // Catalog mappings
-      if (settingsObj && settingsObj.catalogMappings) {
+      if (settingsObj && settingsObj.catalogMappings && typeof catalogManager !== 'undefined') {
         catalogManager.importMappings(settingsObj.catalogMappings, false);
       }
 
@@ -485,13 +485,6 @@ const restoreBackupZip = async (file) => {
         mergeItemPriceHistory(ancillary.itemPriceHistory);
       } else if (typeof loadItemPriceHistory === 'function') {
         loadItemPriceHistory();
-      }
-
-      // Item tags not handled by pendingTagsByUuid (items that weren't in the diff)
-      if (Object.keys(pendingTagsByUuid).length > 0 && typeof addItemTag === 'function') {
-        for (const [uuid, tags] of Object.entries(pendingTagsByUuid)) {
-          for (const tag of tags) addItemTag(uuid, tag);
-        }
       }
 
       // Retail prices
@@ -606,7 +599,13 @@ const restoreBackupZip = async (file) => {
       } : null,
     }, async function(summary) {
       debugLog('restoreBackupZip DiffModal complete', summary.added, 'added', summary.modified, 'modified', summary.deleted, 'deleted');
-      await applyAncillaryData();
+      try {
+        await applyAncillaryData();
+      } catch (ancillaryErr) {
+        debugWarn('restoreBackupZip: ancillary data restore partial failure', ancillaryErr);
+        showToast('ZIP restored with warnings — some ancillary data may not have been applied', 'warning');
+        return;
+      }
       showToast('ZIP backup restored successfully');
     });
 

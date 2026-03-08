@@ -280,22 +280,22 @@ The backup/export panel shows a `<small class="format-desc">` beneath each optio
 
 **Phase 2 — Build settings diff:**
 
-6. Build `remoteSettings` flat map from ZIP settings using `SYNC_SCOPE_KEYS`-compatible keys
-7. Compare against current localStorage values via `DiffEngine.compareSettings()`
-8. Spot prices (per-metal keys not in `SYNC_SCOPE_KEYS`) are applied directly in the ancillary step
+1. Build `remoteSettings` flat map from ZIP settings using `SYNC_SCOPE_KEYS`-compatible keys
+2. Compare against current localStorage values via `DiffEngine.compareSettings()`
+3. Spot prices (per-metal keys not in `SYNC_SCOPE_KEYS`) are applied directly in the ancillary step
 
 **Phase 3 — DiffModal review:**
 
-9. Call `showImportDiffReview()` with parsed items, settings diff, and pending tags
-10. DiffModal shows item-level and settings-level diffs for user review
-11. User selects which changes to apply via the standard DiffModal UI
+1. Call `showImportDiffReview()` with parsed items, settings diff, and pending tags
+2. DiffModal shows item-level and settings-level diffs for user review
+3. User selects which changes to apply via the standard DiffModal UI
 
 **Phase 4 — Apply (on user accept):**
 
-12. `showImportDiffReview` applies selected item and settings changes
-13. `onComplete` callback applies ancillary data: spot prices, catalog mappings, spot history, item price history (merged via `mergeItemPriceHistory`), item tags, retail prices/history
-14. Restore IDB stores: `userImages` from `user_images/` using `user_image_manifest.json` (falls back to filename parsing for old ZIPs pre-STAK-226), `patternImages` from `pattern_images/`, `coinMetadata` from `image_metadata.json`
-15. Explicitly skip `coinImages/` folder (logs: `"skipping legacy coinImages folder (store deprecated)"`)
+1. `showImportDiffReview` applies selected item and settings changes
+2. `onComplete` callback applies ancillary data: spot prices, catalog mappings, spot history, item price history (merged via `mergeItemPriceHistory`), retail prices/history
+3. Restore IDB stores: `userImages` from `user_images/` using `user_image_manifest.json` (falls back to filename parsing for old ZIPs pre-STAK-226), `patternImages` from `pattern_images/`, `coinMetadata` from `image_metadata.json`
+4. Explicitly skip `coinImages/` folder (logs: `"skipping legacy coinImages folder (store deprecated)"`)
 
 **Fallback:** If `DiffEngine` or `DiffModal` are unavailable, `showImportDiffReview` falls back to a concat-all merge (same fallback path as JSON/CSV imports).
 
