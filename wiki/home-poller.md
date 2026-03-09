@@ -36,23 +36,25 @@ Code lives in `StakTrakr/devops/pollers/` and deploys via Portainer API from git
 
 ---
 
-## SSH Remote Management
+## Remote Management (Portainer API)
 
-| Alias | Network | Host | Latency |
-|-------|---------|------|---------|
-| `homepoller` | LAN | 192.168.1.81 | ~0.5ms |
-| `homepoller-ts` | Tailscale | 100.112.198.50 | ~36ms |
+All container management goes through the **Portainer REST API** at `https://192.168.1.81:9443/api` or the **Portainer web UI** at `https://192.168.1.81:9443`. No SSH, no docker CLI.
 
-**User:** `stakpoller` — has `NOPASSWD: ALL` sudo via `/etc/sudoers.d/stakpoller`.
-
-**Usage:** Always use `-T` flag. All poller commands run inside the container via `docker exec`:
+**API key:** `PORTAINER_TOKEN` from Infisical (all projects, dev environment). Endpoint ID: `3`.
 
 ```bash
-ssh -T homepoller 'docker ps --filter network=staktrakr-net --format "table {{.Names}}\t{{.Status}}"'
-ssh -T homepoller 'docker exec staktrakr-home-poller tail -50 /data/logs/retail-poller.log'
+# List containers
+curl -sk -H "X-API-Key: $PORTAINER_TOKEN" \
+  "https://192.168.1.81:9443/api/endpoints/3/docker/containers/json?all=true"
+
+# Container logs (replace <id> with container ID)
+curl -sk -H "X-API-Key: $PORTAINER_TOKEN" \
+  "https://192.168.1.81:9443/api/endpoints/3/docker/containers/<id>/logs?stdout=true&stderr=true&tail=50"
 ```
 
-See `homepoller-ssh` skill for full diagnostic commands and common tasks.
+For interactive commands inside containers (e.g., `supervisorctl status`, running scripts), use the **Portainer web UI Console**: Containers > select container > Console.
+
+See `portainer` skill for full API reference.
 
 ---
 
@@ -223,15 +225,19 @@ Code deploys via Portainer's git-based stack redeploy. See `sync-poller` skill f
 # 1. Push code changes to git
 git push origin <branch>
 
-# 2. Redeploy via Portainer API (from Mac, via SSH to VM)
-ssh -T homepoller "curl -sk -X PUT \
-  'https://localhost:9443/api/stacks/7/git/redeploy?endpointId=3' \
-  -H 'X-API-Key: <token>' \
-  -H 'Content-Type: application/json' \
-  -d '{\"pullImage\": true, \"prune\": true, \"env\": [...]}'"
+# 2. Redeploy via Portainer API (direct from Mac)
+curl -sk -X PUT \
+  "https://192.168.1.81:9443/api/stacks/7/git/redeploy?endpointId=3" \
+  -H "X-API-Key: $PORTAINER_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"pullImage": true, "prune": true, "env": [...]}'
 
-# 3. Verify
-ssh -T homepoller 'docker ps --filter name=staktrakr-home-poller'
+# 3. Verify via Portainer API or web UI
+curl -sk -H "X-API-Key: $PORTAINER_TOKEN" \
+  "https://192.168.1.81:9443/api/endpoints/3/docker/containers/json" | python3 -c "
+import sys,json
+for c in json.load(sys.stdin):
+  if 'home-poller' in c['Names'][0]: print(c['Names'][0], c['State'])"
 ```
 
 **Critical:** Always pass env vars on redeploy. Portainer does not persist them across git-based redeployments.
@@ -243,33 +249,46 @@ ssh -T homepoller 'docker ps --filter name=staktrakr-home-poller'
 ### Check container health
 
 ```bash
-ssh -T homepoller 'docker ps --filter network=staktrakr-net --format "table {{.Names}}\t{{.Status}}"'
-ssh -T homepoller 'docker exec staktrakr-home-poller supervisorctl status'
+# List all StakTrakr containers via Portainer API
+curl -sk -H "X-API-Key: $PORTAINER_TOKEN" \
+  "https://192.168.1.81:9443/api/endpoints/3/docker/containers/json?all=true" | \
+  python3 -c "import sys,json; [print(c['Names'][0], c['State'], c['Status']) for c in json.load(sys.stdin)]"
 ```
+
+For `supervisorctl status` and other interactive commands, use the Portainer web UI Console.
 
 ### Test a single coin
 
+Use the Portainer web UI Console on the `staktrakr-home-poller` container:
+
 ```bash
-ssh -T homepoller 'docker exec -e COINS=ase staktrakr-home-poller bash /app/run-home.sh'
+COINS=ase bash /app/run-home.sh
 ```
 
 ### View recent logs
 
 ```bash
-ssh -T homepoller 'docker exec staktrakr-home-poller tail -100 /data/logs/retail-poller.log'
-ssh -T homepoller 'docker exec staktrakr-home-poller tail -50 /data/logs/spot-poller.log'
+# Via Portainer API (replace <id> with container ID)
+curl -sk -H "X-API-Key: $PORTAINER_TOKEN" \
+  "https://192.168.1.81:9443/api/endpoints/3/docker/containers/<id>/logs?stdout=true&stderr=true&tail=100"
 ```
+
+Or use the Portainer web UI: Containers > staktrakr-home-poller > Logs.
 
 ### Restart container
 
 ```bash
-ssh -T homepoller 'docker restart staktrakr-home-poller'
+# Via Portainer API (replace <id> with container ID)
+curl -sk -X POST -H "X-API-Key: $PORTAINER_TOKEN" \
+  "https://192.168.1.81:9443/api/endpoints/3/docker/containers/<id>/restart"
 ```
 
 ### Clear stuck lockfile
 
+Use the Portainer web UI Console on the `staktrakr-home-poller` container:
+
 ```bash
-ssh -T homepoller 'docker exec staktrakr-home-poller rm -f /tmp/retail-poller.lock'
+rm -f /tmp/retail-poller.lock
 ```
 
 ---

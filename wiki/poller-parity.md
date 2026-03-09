@@ -480,13 +480,15 @@ For each enabled coin/vendor target:
    # Repo
    md5 -q devops/fly-poller/{provider-db,db,turso-client,merge-prices,api-export,extract-vision}.js
    # Home poller
-   ssh -T homepoller 'md5sum /opt/poller/{provider-db,db,turso-client,merge-prices,api-export,extract-vision}.js'
+   # Use Portainer web UI Console on staktrakr-home-poller:
+   #   md5sum /app/{provider-db,db,turso-client,merge-prices,api-export,extract-vision}.js
    ```
 
 ### After `fly deploy` bumps Playwright version
 
 ```bash
-ssh -T homepoller 'cd /opt/poller && sudo npm install playwright && sudo npx playwright install --with-deps chromium'
+# Use Portainer web UI Console on staktrakr-home-poller:
+#   cd /app && npm install playwright && npx playwright install --with-deps chromium
 ```
 
 ### Provider changes (URLs, enabled flags)
@@ -504,18 +506,20 @@ Run this after any deploy to verify shared files are in sync (post API-3, `price
 REPO=devops/fly-poller
 for f in provider-db.js db.js turso-client.js merge-prices.js api-export.js extract-vision.js run-home.sh; do
   LOCAL=$(md5 -q "$REPO/$f" 2>/dev/null)
-  REMOTE=$(ssh -T homepoller "md5sum /opt/poller/$f 2>/dev/null" | awk '{print $1}')
+  # Get REMOTE hash via Portainer web UI Console on staktrakr-home-poller:
+  #   md5sum /app/$f
+  REMOTE="<from-portainer-console>"
   STATUS=$([[ "$LOCAL" == "$REMOTE" ]] && echo "OK" || echo "DRIFT")
   echo "$STATUS  $f  local=$LOCAL  remote=$REMOTE"
 done
 
 # 2. Both can reach Turso
-ssh -T homepoller 'cd /opt/poller && set -a && source .env && set +a && node -e "
-import { createTursoClient } from \"./turso-client.js\";
-const c = createTursoClient();
-const r = await c.execute(\"SELECT COUNT(*) as n FROM provider_vendors WHERE enabled = 1\");
-console.log(\"Home poller: \" + r.rows[0].n + \" enabled vendors\");
-"'
+# Home poller — use Portainer web UI Console on staktrakr-home-poller:
+#   cd /app && node -e "
+#   import { createTursoClient } from './turso-client.js';
+#   const c = createTursoClient();
+#   const r = await c.execute('SELECT COUNT(*) as n FROM provider_vendors WHERE enabled = 1');
+#   console.log('Home poller: ' + r.rows[0].n + ' enabled vendors');"
 fly ssh console --app staktrakr -C "cd /app && node -e \"
 import { createTursoClient } from './turso-client.js';
 const c = createTursoClient();
@@ -524,6 +528,7 @@ console.log('Fly.io: ' + r.rows[0].n + ' enabled vendors');
 \""
 
 # 3. Playwright version match
-ssh -T homepoller 'node -e "import(\"playwright\").then(p=>console.log(\"Home:\",p.chromium.name()))"'
+# Home poller — use Portainer web UI Console on staktrakr-home-poller:
+#   node -e "import('playwright').then(p=>console.log('Home:',p.chromium.name()))"
 fly ssh console --app staktrakr -C "node -e \"import('playwright-core').then(p=>console.log('Fly:',p.chromium.name()))\""
 ```

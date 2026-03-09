@@ -1,37 +1,17 @@
-# StakTrakr Tailscale Sidecar — Network identity for StakTrakr services
+# DEPRECATED — Tailscale is now part of docker-compose.tinyproxy.yml
 # ──────────────────────────────────────────────────────────────────────
-# Provides the Tailscale interface (100.112.198.50) that tinyproxy
-# binds to. Other containers join via network_mode: container:tailscale-staktrakr
+# This file is kept for reference only. The tailscale service has been
+# merged into docker-compose.tinyproxy.yml so that both services share
+# the same Docker Compose lifecycle (depends_on + healthcheck).
 #
-# First deploy: migrate host state into the volume first:
-#   docker volume create tailscale-staktrakr-state
-#   sudo cp -a /var/lib/tailscale/. /var/lib/docker/volumes/tailscale-staktrakr-state/_data/
+# Separate stacks caused tinyproxy crashes (exit 128) whenever tailscale
+# restarted — the shared network namespace died and Docker couldn't
+# coordinate the restart across independent stacks.
 #
-# Deploy: Portainer API stack from git repo
-
-services:
-  tailscale:
-    image: tailscale/tailscale:latest
-    container_name: tailscale-staktrakr
-    hostname: stacktrckr-home
-    restart: unless-stopped
-    cap_add:
-      - NET_ADMIN
-      - NET_RAW
-      - SYS_MODULE
-    volumes:
-      - tailscale-state:/var/lib/tailscale
-      - /dev/net/tun:/dev/net/tun
-    environment:
-      - TS_STATE_DIR=/var/lib/tailscale
-      - TS_USERSPACE=false
-      - TS_EXTRA_ARGS=--accept-dns=false --advertise-exit-node --reset
-    logging:
-      driver: json-file
-      options:
-        max-size: "5m"
-        max-file: "2"
-
-volumes:
-  tailscale-state:
-    name: tailscale-staktrakr-state
+# Migration steps on Portainer:
+#   1. Stop and remove the old "tailscale-staktrakr" stack (ID 8)
+#   2. Stop and remove the old "tinyproxy" stack (ID 5)
+#   3. Deploy the combined stack from docker-compose.tinyproxy.yml
+#   4. The tailscale-staktrakr-state volume is preserved (named volume)
+#
+# See docker-compose.tinyproxy.yml for the combined configuration.

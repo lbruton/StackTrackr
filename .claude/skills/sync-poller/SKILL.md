@@ -124,9 +124,8 @@ curl -sk -X PUT \
 | Stack | ID | Compose file |
 |-------|-----|-------------|
 | firecrawl | 4 | `devops/firecrawl-docker/docker-compose.yml` |
-| tinyproxy | 5 | `devops/pollers/docker-compose.tinyproxy.yml` |
+| tinyproxy+tailscale | 5 | `devops/pollers/docker-compose.tinyproxy.yml` |
 | home-poller | 7 | `devops/pollers/docker-compose.home.yml` |
-| tailscale | 8 | `devops/pollers/docker-compose.tailscale.yml` |
 
 ## Common Mistakes
 

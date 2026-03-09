@@ -1,21 +1,60 @@
-# StakTrakr Tinyproxy — Residential IP proxy for Fly.io scraper traffic
+# StakTrakr Tinyproxy + Tailscale Sidecar — Residential IP proxy for Fly.io
 # ──────────────────────────────────────────────────────────────────────
-# Fly.io container routes Chromium traffic through this proxy via Tailscale
+# Fly.io container routes Chromium traffic through tinyproxy via Tailscale
 # to get a residential IP that dealer sites accept.
 #
-# Deploy: Portainer API stack from git repo
-# Depends on: tailscale-staktrakr sidecar container (deploy that stack first)
+# IMPORTANT: Both services MUST be in the same compose file because
+# tinyproxy uses network_mode: container:tailscale-staktrakr. If they
+# are in separate stacks, a tailscale restart kills tinyproxy's network
+# namespace (exit code 128) and Docker cannot coordinate the restart.
+#
+# Deploy: Single Portainer stack from git repo
+# Replaces: old separate tailscale + tinyproxy stacks
 
 services:
+  tailscale:
+    image: tailscale/tailscale:latest
+    container_name: tailscale-staktrakr
+    hostname: stacktrckr-home
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+      - SYS_MODULE
+    volumes:
+      - tailscale-state:/var/lib/tailscale
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      - TS_STATE_DIR=/var/lib/tailscale
+      - TS_USERSPACE=false
+      - TS_EXTRA_ARGS=--accept-dns=false --advertise-exit-node --reset
+    healthcheck:
+      test: ["CMD-SHELL", "tailscale status --peers=false 2>/dev/null | grep -q '100\\.'"]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 60s
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
+
   tinyproxy:
     build:
       context: tinyproxy
     container_name: staktrakr-tinyproxy
     restart: unless-stopped
     network_mode: container:tailscale-staktrakr
-    depends_on: []
+    depends_on:
+      tailscale:
+        condition: service_healthy
     logging:
       driver: json-file
       options:
         max-size: "5m"
         max-file: "2"
+
+volumes:
+  tailscale-state:
+    name: tailscale-staktrakr-state

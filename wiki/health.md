@@ -151,8 +151,8 @@ fly ssh console --app staktrakr -C "/app/run-spot.sh"
 # Force a goldback scrape (Fly.io)
 fly ssh console --app staktrakr -C "/app/run-goldback.sh"
 
-# Home poller (Docker container via SSH)
-ssh -T homepoller 'docker exec staktrakr-home-poller bash /app/run-home.sh'
+# Home poller — use Portainer web UI Console on staktrakr-home-poller container:
+#   bash /app/run-home.sh
 ```
 
 ---
@@ -165,8 +165,8 @@ If a script was killed mid-run, its lockfile may remain:
 # Fly.io
 fly ssh console --app staktrakr -C "rm -f /tmp/retail-poller.lock /tmp/retail-publish.lock /tmp/goldback-poller.lock"
 
-# Home poller (Docker container)
-ssh -T homepoller 'docker exec staktrakr-home-poller rm -f /tmp/retail-poller.lock'
+# Home poller — use Portainer web UI Console on staktrakr-home-poller container:
+#   rm -f /tmp/retail-poller.lock
 ```
 
 ---

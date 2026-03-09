@@ -85,8 +85,8 @@ fly ssh console --app staktrakr -C "cat /etc/cron.d/retail-poller"
 # Check CRON_SCHEDULE env var (production value: 0)
 fly ssh console --app staktrakr -C "grep CRON_SCHEDULE /etc/environment"
 
-# Home LXC — retail and spot cron files
-ssh -T homepoller 'cat /etc/cron.d/retail-poller /etc/cron.d/spot-poller'
+# Home poller — use Portainer web UI Console on staktrakr-home-poller container:
+#   cat /etc/cron.d/home-poller
 ```
 
 **Known issue (2026-02-25 incident):** If `CRON_SCHEDULE` is set to `*/15`, the Fly.io poller fires at `:00/:15/:30/:45` — colliding with the home poller at `:30`. See [health.md](health.md) incident log. Production value is `0` (once per hour).
