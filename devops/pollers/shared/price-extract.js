@@ -526,8 +526,8 @@ async function scrapeViaProxy(url, waitFor = 15000, timeout = 40000) {
     }
     // Convert HTML to plain text (strip tags) for extractPrice()
     const html = json.content || "";
-    const text = html.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
-                     .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
+    const text = html.replace(/<script[^>]*>[\s\S]*?<\/script\s*>/gi, "")
+                     .replace(/<style[^>]*>[\s\S]*?<\/style\s*>/gi, "")
                      .replace(/<[^>]+>/g, " ")
                      .replace(/\s+/g, " ")
                      .trim();

@@ -79,7 +79,7 @@ const server = createServer(async (req, res) => {
       res.writeHead(404);
       res.end("Not Found");
     } else {
-      console.error(`Error serving ${url}:`, err);
+      console.error("Error serving", url, err);
       res.writeHead(500);
       res.end("Internal Server Error");
     }
