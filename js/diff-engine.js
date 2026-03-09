@@ -74,8 +74,11 @@ function _settingsValuesEqual(a, b) {
   if (a === b) return true;
   if (a === null || b === null) return false;
   // Deep compare for objects/arrays — sorted-key stringify for key-order independence
+  // Arrays are order-sensitive (e.g. headerBtnOrder), so preserve their element order.
+  // Only sort keys for plain objects to normalize key insertion order differences.
   if (typeof a === 'object' && typeof b === 'object') {
-    const sortedStringify = (v) => JSON.stringify(v, Object.keys(v).sort());
+    const sortedStringify = (v) =>
+      Array.isArray(v) ? JSON.stringify(v) : JSON.stringify(v, Object.keys(v).sort());
     return sortedStringify(a) === sortedStringify(b);
   }
   // Type coercion for primitive mismatches only: "true"/true, "3"/3
