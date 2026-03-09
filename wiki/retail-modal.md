@@ -2,8 +2,8 @@
 title: Retail Modal
 category: frontend
 owner: staktrakr
-lastUpdated: v3.33.57
-date: 2026-03-06
+lastUpdated: v3.33.60
+date: 2026-03-09
 sourceFiles:
   - js/retail-view-modal.js
   - js/retail.js
@@ -13,7 +13,7 @@ relatedPages:
 ---
 # Retail Modal
 
-> **Last updated:** v3.33.57 — 2026-03-06
+> **Last updated:** v3.33.60 — 2026-03-09
 > **Source files:** `js/retail-view-modal.js`, `js/retail.js`
 
 ## Overview
@@ -106,8 +106,8 @@ Declared in `retail.js`. All three maps must be updated together when adding a n
 | `retailPriceHistory` | Per-slug daily history array: `{ [slug]: Array }` |
 | `retailProviders` | Per-slug per-vendor deep-link URLs (overrides `RETAIL_VENDOR_URLS` when present) |
 | `retailAvailability` | Per-slug per-vendor OOS flags: `{ [slug]: { [vendorId]: false } }` |
-| `retailLastKnownPrices` | Last-seen price per vendor per slug — used for OOS legend display |
-| `retailLastAvailableDates` | ISO date of last availability per vendor per slug |
+| `retailLastKnownPrices` | Last-seen price per vendor per slug — used by market grid/list OOS rendering in `retail.js`, not by the modal legend |
+| `retailLastAvailableDates` | ISO date of last availability per vendor per slug — used by market grid/list OOS metadata in `retail.js` |
 | `RETAIL_VENDOR_NAMES` | `{ [vendorId]: displayName }` — canonical vendor list and display order |
 | `RETAIL_VENDOR_COLORS` | `{ [vendorId]: hexColor }` — brand colors for chart lines and legend swatches |
 | `RETAIL_VENDOR_URLS` | `{ [vendorId]: url }` — fallback homepage URLs |
@@ -230,11 +230,12 @@ Renders the colored vendor legend (swatch + clickable name + current price) into
 - Clears the container on every call.
 - Reads current prices from `retailPrices.prices[slug].vendors`.
 - Reads OOS state from `retailAvailability[slug]`.
-- Renders only vendors that have either a non-null `price` or an OOS flag. Returns early if no vendors qualify.
+- Uses a top-level `hasAny` guard that considers either a non-null `price` or an OOS flag, so the section can stay visible when availability data exists.
 - Iterates `RETAIL_VENDOR_NAMES` keys in declaration order.
 - Per-vendor URL resolution: checks `retailProviders[slug][vendorId]` first, then `RETAIL_VENDOR_URLS[vendorId]`.
 - In-stock vendors with a URL: rendered as `<a>` elements. Click opens vendor URL in a named popup window (`retail_vendor_{vendorId}`, 1250x800); falls back to `_blank` if popup is blocked.
-- OOS vendors: out-of-stock vendors are omitted from the legend entirely when price is null (`_buildVendorLegend` returns early at the `if (price == null) return` guard on line 94).
+- Per-vendor row guard: only vendors with a non-null current `price` render a legend row.
+- OOS vendors: out-of-stock vendors with `price == null` are omitted from the legend entirely (`_buildVendorLegend` returns early at the `if (price == null) return` guard on line 94).
 
 ### `_bucketWindows(windows)`
 
@@ -310,8 +311,8 @@ Trend glyphs compare each row to the row immediately below it (the next-older wi
 Sourced from `retailPrices.prices[slug].vendors[vendorId].price` — the latest single-poll snapshot stored during the most recent full sync or background refresh.
 
 - In-stock: `$XX.XX`
-- OOS with last-known price: `~~$XX.XX~~ OOS` (strikethrough + badge)
-- OOS with no known price: `— OOS`
+- OOS-only vendors with `price == null` are not rendered in the modal legend.
+- Last-known OOS pricing is surfaced in the market grid/list views in `retail.js`, not in this modal legend.
 
 ### Historical (Price History Tab)
 
@@ -419,7 +420,7 @@ Both `_retailViewModalChart` and `_retailViewIntradayChart` must be explicitly d
 
 ### OOS vendors disappearing from the legend after a price refresh
 
-`_buildVendorLegend` reads the `hasAny` guard from two sources: live prices AND availability flags. If a vendor is OOS (`retailAvailability[slug][v] === false`) it is always included in the legend even if its `price` in `retailPrices` is `null`. Do not restructure the guard to only check `price != null`.
+`_buildVendorLegend` uses availability flags only in the top-level `hasAny` guard. Individual legend rows still return early on `if (price == null) return`, so OOS-only vendors are omitted when their current price is null. If future UX adds explicit OOS legend rows, update both the `hasAny` guard and the per-vendor row guard together.
 
 ### Opening the modal for a slug not in `RETAIL_COIN_META`
 

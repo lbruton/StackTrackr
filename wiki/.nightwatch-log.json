@@ -43,7 +43,9 @@
       "track": "frontend",
       "status": "inaccuracy_found",
       "finding": "Wiki claims OOS vendors render with opacity, <del>, and tooltips, but _buildVendorLegend in js/retail-view-modal.js explicitly skips vendors if price is null and lacks any OOS UI rendering code.",
-      "verified": []
+      "verified": [
+        "patch/3.33.61"
+      ]
     }
   ]
 }
