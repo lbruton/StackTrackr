@@ -76,7 +76,7 @@ index.html  (single-page app — all UI panels, modals, and sections)
 Branch  Release  Patch
 ```
 
-Current version: **3.33.56**
+Current version: **3.33.60**
 
 Optional state suffixes: `a` = alpha, `b` = beta, `rc` = release candidate.
 
