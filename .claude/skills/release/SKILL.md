@@ -105,21 +105,37 @@ Use the `version` from your claim as the target for all subsequent steps — do 
 **4. Create the worktree + branch immediately:**
 
 ```bash
-git worktree add .claude/worktrees/patch-VERSION -b patch/VERSION
+git worktree add .worktrees/patch-VERSION -b patch/VERSION
 ```
 
-Example: `git worktree add .claude/worktrees/patch-3.32.29 -b patch/3.32.29`
+Example: `git worktree add .worktrees/patch-3.32.29 -b patch/3.32.29`
+
+**5. Write a session lock file** to prevent other sessions from using this worktree concurrently:
+
+```bash
+cat > .worktrees/patch-VERSION/.worktree.lock <<LOCK
+{
+  "session_id": "$(date +%s)-$$",
+  "claimed_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "branch": "patch/VERSION",
+  "task": "STAK-XXX brief description"
+}
+LOCK
+```
+
+Before entering any existing worktree, check for a lock file. If `.worktree.lock` exists and `claimed_at` is less than 2 hours old, **STOP** — another session may be active. Ask the user before proceeding.
 
 **All subsequent work (file edits, version bumps, commits) happens inside the worktree directory.**
 If you are running as an interactive Claude Code session, inform the user:
 
 ```
-Worktree created at: .claude/worktrees/patch-VERSION/
+Worktree created at: .worktrees/patch-VERSION/
 Branch: patch/VERSION
 
 All work for this release will happen in that worktree.
 After merging to dev, run cleanup:
-  git worktree remove .claude/worktrees/patch-VERSION --force
+  rm -f .worktrees/patch-VERSION/.worktree.lock
+  git worktree remove .worktrees/patch-VERSION --force
   git branch -d patch/VERSION
   Remove your claim entry from devops/version.lock (leave other active claims intact)
 ```
@@ -312,13 +328,22 @@ Commit message format: `vNEW_VERSION — TITLE`
 
 If there are other uncommitted changes beyond the 5 version files, ask the user whether to include them in this commit or leave them staged separately.
 
-**After a successful commit, dispatch a background wiki update:**
+**After a successful commit, run wiki update (BLOCKING — must complete before PR):**
 
-Invoke the `wiki-update` skill (Skill tool) as a background Task agent. It identifies
-which wiki pages were affected by this patch and updates in-repo `wiki/`.
-Do not wait for it — proceed to Phase 4 immediately.
+Invoke the `wiki-update` skill (Skill tool). It identifies which wiki pages were
+affected by this patch and updates in-repo `wiki/`. **This is a blocking step.**
+Wiki changes MUST be committed to the patch branch BEFORE proceeding to Phase 4.
+Do NOT push or create a PR until wiki updates are committed.
 
-**After a successful commit, push the patch branch and open a PR to dev** (Phase 4 covers this).
+If wiki-update produces changes, commit them on the same patch branch:
+```bash
+git add wiki/
+git commit -m "docs: update wiki pages for vVERSION"
+```
+
+If wiki-update finds no affected pages, it exits with a no-op message — proceed to Phase 4.
+
+**After wiki is committed, push the patch branch and open a PR to dev** (Phase 4 covers this).
 **After the PR is merged to dev — tag the patch commit on dev and run worktree cleanup:**
 
 ```bash
@@ -328,7 +353,8 @@ git tag vNEW_VERSION origin/dev
 git push origin vNEW_VERSION
 
 # Remove the worktree
-git worktree remove .claude/worktrees/patch-VERSION --force
+rm -f .worktrees/patch-VERSION/.worktree.lock
+git worktree remove .worktrees/patch-VERSION --force
 
 # Delete the local branch
 git branch -d patch/VERSION
@@ -346,6 +372,22 @@ git push origin --delete patch/VERSION
 ## Phase 4: Push & Draft PR
 
 > **⚠️ PR target reminder:** `patch/VERSION` → **`dev`** (QA preview). `dev` → `main` only via Phase 4.5, only when user says ready. Never create a patch PR targeting main.
+
+### Pre-flight check (HARD GATE)
+
+Before pushing, verify the branch is complete:
+
+```bash
+# 1. Wiki must be committed — no orphaned wiki changes
+git diff --name-only wiki/ | grep -c . && echo "FAIL: uncommitted wiki changes" || echo "OK: wiki clean"
+
+# 2. All version files present in commit history
+git log --oneline --name-only HEAD~3..HEAD | grep -E '(wiki/|js/constants|CHANGELOG)' || echo "WARNING: check commit contents"
+```
+
+If uncommitted wiki changes exist, commit them before pushing. **Do NOT create a PR with pending wiki updates.**
+
+### Step 1: Push and create PR
 
 1. Push the patch branch:
    ```bash
@@ -373,6 +415,20 @@ git push origin --delete patch/VERSION
    ```
 
 3. (Optional — requires Linear MCP) If Linear issues are referenced, update status to **In Progress** (not Done — that happens at merge time).
+
+### Step 2: PR Resolution & Scan Monitoring (MANDATORY)
+
+After the PR is created, **do not walk away**. Complete these steps:
+
+1. **Wait for CI/Codacy scans** to start (usually 30-60 seconds after push)
+2. **Run `/pr-resolve`** to monitor and resolve review threads as they appear
+3. **Check scan results**: `gh pr checks <PR_NUMBER>` — wait for all checks to complete
+4. **Address any Codacy/Copilot findings** — fix issues, push follow-up commits, re-run `/pr-resolve`
+5. **Confirm the PR is clean** — all checks passing, no unresolved threads
+
+The PR should be ready for the user to merge with a single click. Do not leave unresolved threads or failing checks for the user to clean up.
+
+> **The PR is not "done" until it's clean.** A draft PR with failing scans and unresolved threads is incomplete work.
 
 > **No `dev → main` PR here.** The patch branch PRs to `dev` only. The `dev → main` PR is created at Phase 4.5, using version tags on `dev` as the changelog source. Do not create or touch any PR targeting `main` during Phase 4.
 
@@ -434,6 +490,21 @@ gh pr create --base main --head dev --label "codacy-review" \
 EOF
 )"
 ```
+
+### Step 3.5: Audit announcements & about.js (MANDATORY before creating PR)
+
+Over a long release cycle, `docs/announcements.md` and `js/about.js` accumulate
+stale per-patch entries. Before creating the ship PR, rewrite both to reflect
+the **full release**:
+
+1. Rewrite `## What's New` in `docs/announcements.md` with **3–5 entries**
+   covering the most significant changes (grouped by theme, not per-patch)
+2. Update `## Development Roadmap` — remove completed items, keep 3–4 forward
+3. Mirror the same entries in `js/about.js` `getEmbeddedWhatsNew()` and
+   `getEmbeddedRoadmap()` (these are the `file://` fallback)
+4. Commit and push to dev before creating the ship PR
+
+See the `/ship` skill Step 3.5 for full format details.
 
 ### Step 4: Mark ready and resolve
 

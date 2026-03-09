@@ -1,6 +1,6 @@
 ---
 name: repo-boundaries
-description: Use when doing any cross-repo work, deploying, or when unsure which repo owns a piece of code. Maps exactly which code belongs in which repo and what each agent is allowed to do. Also use when the words fly deploy, StakTrakrApi, stakscrapr, or home poller appear in context.
+description: Use when doing any cross-repo work, deploying, or when unsure which repo owns a piece of code. Maps exactly which code belongs in which repo and what each agent is allowed to do. Also use when the words fly deploy, StakTrakrApi, home poller, Portainer, or Docker stack appear in context.
 ---
 
 # Repo Boundaries
@@ -9,10 +9,25 @@ description: Use when doing any cross-repo work, deploying, or when unsure which
 
 | Repo | Owns | Does NOT own |
 |------|------|--------------|
-| `lbruton/StakTrakr` | Frontend HTML/JS/CSS, `.claude/` skills, CLAUDE.md, smoke tests | Poller scripts, fly.toml, Dockerfile, devops crons |
-| `lbruton/StakTrakrApi` | ALL backend devops: fly.toml, Dockerfile, all run-*.sh, price-extract.js, api-export.js, spot-poller, providers.json | Frontend code |
-| `lbruton/stakscrapr` | Home VM config repo: CLAUDE.md, env templates, home-only additions (dashboard.js, tinyproxy config). **Managed via SSH from this Mac** — see `homepoller-ssh` skill | fly.toml authority (StakTrakrApi owns it), `fly deploy` |
-| `StakTrakr/wiki/` (in-repo) | **Single source of truth** for all project documentation — architecture, patterns, operations, runbooks. Lookup: `mcp__claude-context__search_code` with `path: /Volumes/DATA/GitHub/StakTrakr/wiki`. Migrated from external wiki repo (STAK-390, 2026-03-01). | Code, config, scripts |
+| `lbruton/StakTrakr` | Frontend HTML/JS/CSS, `.claude/` skills, CLAUDE.md, smoke tests, **ALL poller code** (`devops/pollers/`), home-poller Docker configs, tinyproxy/tailscale compose files | Fly.io fly.toml (transitioning), GHA data workflows |
+| `lbruton/StakTrakrApi` | Fly.io fly.toml (legacy, transitioning to StakTrakr), `api` branch data publishing, GHA workflows | Frontend code, poller scripts (migrated to StakTrakr) |
+| `StakTrakr/wiki/` (in-repo) | **Single source of truth** for all project documentation — architecture, patterns, operations, runbooks. Lookup: `mcp__claude-context__search_code` with `path: /Volumes/DATA/GitHub/StakTrakr/wiki` | Code, config, scripts |
+
+> **`stakscrapr` is retired.** Home VM config was previously in a separate repo. All poller code now lives in `StakTrakr/devops/pollers/`.
+
+---
+
+## StakTrakr devops/pollers/ Folder Map
+
+| Folder | Contains |
+|--------|---------|
+| `devops/pollers/shared/` | Shared scraper core (both pollers): price-extract.js, capture.js, db.js, turso-client.js, provider-db.js, merge-prices.js, api-export.js, spot-extract.js, goldback-scraper.js, export-providers-json.js, package.json, spot-poller/poller.py |
+| `devops/pollers/home-poller/` | Home container: Dockerfile, dashboard.js, metrics-exporter.js, run-home.sh, run-fbp.sh, check-flyio.sh, supervisord.conf, docker-entrypoint.sh |
+| `devops/pollers/remote-poller/` | Fly.io container (future migration): Dockerfile, fly.toml, supervisord.conf, docker-entrypoint.sh |
+| `devops/pollers/docker-compose.home.yml` | Home poller stack (Portainer) |
+| `devops/pollers/docker-compose.tailscale.yml` | Tailscale sidecar stack (Portainer) |
+| `devops/pollers/docker-compose.tinyproxy.yml` | Tinyproxy stack (Portainer) |
+| `devops/firecrawl-docker/` | Self-hosted Firecrawl stack (Portainer) |
 
 ---
 
@@ -20,67 +35,43 @@ description: Use when doing any cross-repo work, deploying, or when unsure which
 
 | Action | Allowed from | Forbidden from |
 |--------|-------------|----------------|
-| `fly deploy` | `StakTrakrApi/devops/fly-poller/` on this Mac only | StakTrakr repo, stakscrapr repo, home VM, anywhere else |
+| Home poller redeploy | Portainer API (`PUT /api/stacks/7/git/redeploy?endpointId=3`) | Direct file editing on VM, SSH, docker CLI on VM |
+| Tailscale/tinyproxy redeploy | Portainer API (stacks 8/5) | Direct docker run on VM, SSH |
+| Firecrawl redeploy | Portainer API (stack 4) | Direct docker run on VM, SSH |
+| `fly deploy` (Fly.io container) | `StakTrakrApi/devops/fly-poller/` on this Mac only | StakTrakr repo, home VM, anywhere else |
 | `git push` to `api` branch (data files) | Fly.io container `run-publish.sh` only — via force-push | Local Mac, home VM, any GHA, manually |
-| PR to `StakTrakrApi` main | StakTrakr Mac Claude (via SSH or local) | Direct push to main |
 | `providers.json` URL fix | Direct push to `api` branch in `StakTrakrApi` | Any other method |
 
-> **⛔ NEVER run `fly deploy` from the StakTrakr repo or the stakscrapr repo.**
-> The only valid `fly deploy` path: `cd /path/to/StakTrakrApi/devops/fly-poller && fly deploy`
+> **NEVER edit files directly on the home VM.** All code deploys from git via Portainer. Changes made via `docker exec` are lost on next redeploy.
+> **NEVER run `fly deploy` from the StakTrakr repo.** The only valid `fly deploy` path: `cd /path/to/StakTrakrApi/devops/fly-poller && fly deploy`
 
 ---
 
-## Fly.io Container — Authoritative fly.toml Location
+## Home VM (192.168.1.81) — Docker/Portainer Architecture
 
-**`StakTrakrApi/devops/fly-poller/fly.toml`** is the authoritative fly.toml.
+> **Access:** Portainer REST API — see `home-infrastructure` skill for full reference (IP, API key, endpoints).
+
+Four Docker stacks on the `staktrakr-net` bridge network, managed by Portainer:
+
+| Stack | Container | Purpose | Ports |
+|-------|-----------|---------|-------|
+| home-poller (ID 7) | `staktrakr-home-poller` | Retail/spot/goldback pollers, dashboard, metrics | 3010, 3011, 9100 |
+| firecrawl (ID 4) | `firecrawl-api` + workers | Web scraping engine | 3002 |
+| tinyproxy (ID 5) | `tinyproxy-staktrakr` | HTTP proxy for Fly.io residential IP routing | 8888 |
+| tailscale (ID 8) | `tailscale-staktrakr` | Tailscale network namespace (tinyproxy shares it) | — |
+
+**Portainer UI:** `https://192.168.1.81:9443` (HTTPS only)
+**Docker:** snap-installed. Volume mountpoint: `/var/snap/docker/common/var-lib-docker/volumes/`
+
+---
+
+## Fly.io Container — Current State
+
+**`StakTrakrApi/devops/fly-poller/fly.toml`** is the authoritative fly.toml (transitioning to `StakTrakr/devops/pollers/remote-poller/`).
 
 - 4096MB RAM, 4 shared CPUs, region dfw
 - Supervisord runs: redis, rabbitmq, postgres, playwright-service, firecrawl-api, firecrawl-worker, firecrawl-extract-worker, cron, http-server
-- **`stakscrapr/fly.toml` is STALE (2048MB)** — do not use it, do not deploy from it
-
----
-
-## Home VM (192.168.1.81) — SSH-Managed
-
-> **Access:** `ssh -T homepoller '<cmd>'` (LAN) or `ssh -T homepoller-ts '<cmd>'` (Tailscale). See `homepoller-ssh` skill for full reference.
-
-The home VM runs the **identical scraper core** (same price-extract.js, api-export.js as Fly.io) PLUS home-only additions:
-
-| Component | Purpose |
-|-----------|---------|
-| `dashboard.js` (port 3010) | Monitors both pollers via Turso `poller_runs` table + `/tmp/flyio-health.json` |
-| `check-flyio.sh` | Polls Fly.io health, writes `/tmp/flyio-health.json` for dashboard |
-| tinyproxy (port 8888) | HTTP proxy — routes Fly.io scraper traffic through residential IP |
-| Tailscale (`100.112.198.50`) | Fly.io container traffic exits through home residential IP for bot evasion |
-
-**Rule:** NEVER run `fly deploy` on the home VM. Open a PR to `lbruton/StakTrakrApi` instead.
-
----
-
-## StakTrakrApi devops/ Folder Map
-
-| Folder | Contains |
-|--------|---------|
-| `devops/scraper/` | Shared engine (both pollers): price-extract.js, api-export.js, capture.js, extract-vision.js, spot-poller/poller.py, package.json |
-| `devops/fly-poller/` | Fly.io deploy wrapper: fly.toml, Dockerfile, run-local.sh, run-publish.sh, run-spot.sh, run-retry.sh, run-fbp.sh, docker-entrypoint.sh, supervisord.conf |
-| `devops/home-scraper/` | Home VM additions: run-home.sh, dashboard.js, check-flyio.sh, supervisord.conf (11 services), .env.example |
-| `devops/home-vm/` | Infrastructure: tinyproxy-cox.conf, cox-auth.sh/service/timer, update-cox-proxy-ip.sh |
-
----
-
-## Change Gate: Home VM Change → Fly.io
-
-When a code change on the home VM needs to reach Fly.io:
-
-```
-1. Edit devops/scraper/ file in StakTrakrApi repo (on this Mac)
-2. Open PR to StakTrakrApi main
-3. Review + merge
-4. cd StakTrakrApi/devops/fly-poller && fly deploy
-5. Update home VM via SSH: ssh -T homepoller 'curl -sf https://raw.githubusercontent.com/.../devops/retail-poller/<file> -o /opt/poller/<file>'
-```
-
-**providers.json URL changes** skip steps 3–5 entirely — push directly to `api` branch (auto-synced every run).
+- Publishes data to `api` branch via `run-publish.sh`
 
 ---
 
@@ -90,7 +81,31 @@ Both pollers write to the same Turso DB (`price_snapshots` table). Only Fly.io p
 
 | Poller | POLLER_ID | Writes to | Publishes to Git |
 |--------|-----------|-----------|-----------------|
-| Fly.io container | `api` | Turso | ✅ Yes — `run-publish.sh` force-pushes to `api` branch |
-| Home VM (192.168.1.81) | `home` | Turso | ❌ No — never touches git |
+| Fly.io container | `api` | Turso | Yes — `run-publish.sh` force-pushes to `api` branch |
+| Home container | `home` | Turso | No — never touches git |
 
 `readLatestPerVendor(db, coinSlug, lookbackHours=2)` — most recent row per vendor within 2h wins at publish time.
+
+---
+
+## Change Gate: Home Poller Change
+
+```
+1. Edit files in StakTrakr/devops/pollers/ (shared/ or home-poller/)
+2. Commit and push to branch
+3. Redeploy via Portainer API (see sync-poller skill)
+4. Verify container health via SSH
+```
+
+## Change Gate: Fly.io Container Change
+
+```
+1. Edit shared files in StakTrakr/devops/pollers/shared/
+   (or Fly-specific files in StakTrakrApi/devops/fly-poller/ until migration complete)
+2. For shared files: copy to StakTrakrApi/devops/fly-poller/ (temporary — until remote-poller migration)
+3. Open PR to StakTrakrApi main
+4. Review + merge
+5. cd StakTrakrApi/devops/fly-poller && fly deploy
+```
+
+**providers.json URL changes** skip steps 2-5 entirely — push directly to `api` branch.

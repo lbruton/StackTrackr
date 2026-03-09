@@ -128,17 +128,19 @@ Shared module at `StakTrakrApi/devops/fly-poller/provider-db.js`. Most functions
 
 `provider-db.js` is shared between Fly.io (`StakTrakrApi/devops/fly-poller/`) and the home poller (`/opt/poller/`). Both copies should stay in sync. The home poller copy may contain extra dashboard-specific functions that have not yet been committed to StakTrakrApi.
 
-**Safe sync procedure:**
+**Sync procedure:**
 
-1. Edit `provider-db.js` in `StakTrakrApi/devops/fly-poller/` (source of truth)
-2. Diff before overwriting: `ssh homepoller 'cat /opt/poller/provider-db.js' | diff - devops/fly-poller/provider-db.js`
-3. SCP: `scp devops/fly-poller/provider-db.js homepoller:/opt/poller/provider-db.js`
-4. Restart dashboard: `ssh homepoller 'sudo pkill -f "node.*dashboard"; sudo bash -c "cd /opt/poller && nohup node dashboard.js >> dashboard.log 2>&1 &"'`
-5. Verify: `ssh homepoller 'curl -sf http://localhost:3010/ > /dev/null && echo OK'`
+Code deploys via Portainer's GitOps stack redeploy — push to the tracked git branch and Portainer auto-deploys within 5 minutes. For immediate deploys, use the Portainer REST API:
 
-**Never blindly overwrite** the home poller's copy — always diff first to avoid breaking dashboard imports.
+```bash
+curl -sk -X PUT \
+  "https://192.168.1.81:9443/api/stacks/7/git/redeploy?endpointId=3" \
+  -H "X-API-Key: $PORTAINER_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"pullImage": true, "prune": true, "env": [...]}'
+```
 
-The canonical sync tool is `devops/home-scraper/sync-from-fly.sh --apply` which handles all shared files.
+See `sync-poller` skill for the full workflow including required env vars.
 
 ---
 

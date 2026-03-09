@@ -1171,60 +1171,6 @@ const buildImportValidationResult = (items, skippedNonPM) => {
 };
 
 /**
- * Renders a persistent, dismissible import summary banner above the inventory table.
- * Falls back to showToast() if the DOM target is not found.
- * @param {{ added: number, modified: number, deleted: number, skipped: number, skippedReasons: string[] }} result
- */
-const showImportSummaryBanner = (result) => {
-  const added = result.added || 0;
-  const modified = result.modified || 0;
-  const deleted = result.deleted || 0;
-  const skipped = result.skipped || 0;
-  const skippedReasons = result.skippedReasons || [];
-
-  // Remove any existing banner
-  const existing = document.getElementById('import-summary-banner');
-  if (existing) { existing.parentNode.removeChild(existing); }
-
-  const hasSkipped = skipped > 0;
-  const iconClass = hasSkipped ? 'banner-warn' : 'banner-success';
-  const iconChar = hasSkipped ? '\u26A0' : '\u2713';
-
-  let reasonsHtml = '';
-  if (hasSkipped && skippedReasons.length > 0) {
-    const items = skippedReasons.slice(0, 5).map((r) => {
-      return '<li>' + sanitizeHtml(String(r)) + '</li>';
-    }).join('');
-    reasonsHtml = '<details class="banner-details"><summary>Why were items skipped?</summary><ul>' + items + '</ul></details>';
-  }
-
-  const skippedText = hasSkipped ? ('  \u2717 ' + skipped + ' skipped') : '';
-  const bannerHtml = '<div id="import-summary-banner" class="import-summary-banner">' +
-    '<span class="' + iconClass + '">' + iconChar + '</span> ' +
-    '+ ' + added + ' added&nbsp;&nbsp;~' + modified + ' updated&nbsp;&nbsp;&minus;' + deleted + ' removed' +
-    skippedText +
-    reasonsHtml +
-    '<button class="banner-dismiss" aria-label="Dismiss" onclick="(function(el){el.parentNode.removeChild(el);})(this.parentNode)">\u00D7</button>' +
-    '</div>';
-
-  // Try to insert before the inventory table container
-  const target = document.getElementById('inventory-container') ||
-                 document.getElementById('inventoryTable') ||
-                 document.getElementById('tableContainer');
-  if (target) {
-    const div = document.createElement('div');
-    div.innerHTML = bannerHtml;
-    target.parentNode.insertBefore(div.firstChild, target);
-    return;
-  }
-
-  // Fallback to toast
-  let summary = '+' + added + ' added, ~' + modified + ' updated, -' + deleted + ' removed';
-  if (hasSkipped) { summary += ', ' + skipped + ' skipped'; }
-  if (typeof showToast === 'function') { showToast('Import complete: ' + summary); }
-};
-
-/**
  * Sanitizes imported inventory data, coercing invalid fields to safe defaults.
  *
  * String fields default to an empty string and numeric fields become null when

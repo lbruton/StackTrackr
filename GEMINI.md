@@ -27,10 +27,10 @@ This file provides foundational mandates and project-specific context for Gemini
   - Or use a simple HTTP server: `python3 -m http.server 8000`.
 - **Linting:**
   - `npm run lint` (runs `eslint js/*.js sw.js`).
-- **Testing:**
-  - Manual smoke testing is mandatory for UI changes.
-  - **NL E2E tests** (`/bb-test` skill): `tests/runbook/*.md` — 75+ tests across 8 section files, executed via Stagehand/Browserbase against PR preview URLs.
-  - **Scripted tests** (`/smoke-test` skill): `tests/*.spec.js` — Playwright + self-hosted browserless Docker. Run with `npm test`.
+- **Testing (single model — runbook NL tests):**
+  - `tests/runbook/*.md` — 84 NL E2E tests across 8 sections, run via `/bb-test` (Browserbase/Stagehand) against PR preview URLs. No Playwright, no browserless, no scripted specs.
+  - TDD: write runbook test blocks BEFORE implementing code, verify with `/bb-test sections=NN`.
+  - Cloud sync/OAuth cannot be tested via Browserbase — test manually at `beta.staktrakr.com`.
 
 ### Deployment
 
@@ -77,6 +77,25 @@ This file provides foundational mandates and project-specific context for Gemini
 - `data/`: Bundled historical spot price data.
 - `devops/`: Build scripts, hooks, Docker poller, mockups.
 - `.agents/skills/`: Specialized agent instructions (Codex).
+
+## API Infrastructure
+
+### Vendor API Landscape
+
+Six vendors scraped for retail prices. Three run Magento 2 with structured APIs:
+
+| Vendor | Platform | API | Auth | Status |
+|---|---|---|---|---|
+| SD Bullion | Magento 2 | REST `/rest/V1/nfusions/cache/pricing` | None | Open — full catalog, tiered pricing |
+| Bullion Exchanges | Magento 2 PWA | GraphQL `/graphql` | CF-gated | Needs cf_clearance cookie |
+| Monument Metals | Magento 2 + ScandiPWA | GraphQL `/graphql` | Session-gated | Returns 403 without cookies |
+| APMEX | Traditional SSR | JSON-LD in HTML | None | Structured data in page source |
+| JM Bullion | Next.js App Router | None (spot only) | N/A | HTML scraping only |
+| Hero Bullion | WooCommerce | REST API | 401 | Auth required, HTML scraping |
+
+Note: SD Bullion product pages now redirect to monumentmetals.com (merger/acquisition). Both sites run Magento 2 but with different frontends.
+
+CF bypass strategy: FlareSolverr nodriver fork (`21hsmw/flaresolverr:nodriver`) for cookie harvesting, Byparr as fallback. Cookies are IP+UA+TLS bound.
 
 ## MCP Server Usage
 
@@ -231,7 +250,7 @@ Cloud-based browser infrastructure used for high-fidelity web scraping and autom
 - **Cost:** Real-world cost applies. **Requires explicit user approval** before initiating new sessions.
 - **Backend:** Switched via `BROWSER_MODE=browserbase`.
 - **Requirements:** `BROWSERBASE_API_KEY` and `BROWSERBASE_PROJECT_ID` environment variables.
-- **Integration:** Integrated with Playwright (see `playwright.config.js`) and custom scrapers.
+- **Integration:** Used via Stagehand NL automation for `tests/runbook/*.md` test suite.
 
 ### Context7 (Library Documentation)
 
@@ -258,13 +277,11 @@ any PR ready to merge.
 
 ### Playwright (Browser Automation)
 
-Playwright MCP for scripted browser control. Used with the self-hosted **Browserless** Docker
-container (`devops/browserless/`) for free local test runs.
+Playwright MCP for browser automation. **Note:** Playwright scripted specs have been retired in
+favor of `tests/runbook/*.md` NL tests via Browserbase/Stagehand. The Playwright MCP is still
+available for ad-hoc browser automation but is no longer used for the test suite.
 
-**When to use:** Writing or running Playwright specs, smoke tests, regression checks.
-
-**Start Browserless:** `cd devops/browserless && docker compose up -d`
-**Run tests:** `BROWSER_BACKEND=browserless TEST_URL=http://localhost:8765 npm test`
+**When to use:** Ad-hoc browser automation tasks, not testing (use `/bb-test` for tests).
 
 ### Code Graph Context (Structural Code Analysis)
 

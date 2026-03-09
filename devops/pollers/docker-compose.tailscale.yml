@@ -1,0 +1,17 @@
+# DEPRECATED — Tailscale is now part of docker-compose.tinyproxy.yml
+# ──────────────────────────────────────────────────────────────────────
+# This file is kept for reference only. The tailscale service has been
+# merged into docker-compose.tinyproxy.yml so that both services share
+# the same Docker Compose lifecycle (depends_on + healthcheck).
+#
+# Separate stacks caused tinyproxy crashes (exit 128) whenever tailscale
+# restarted — the shared network namespace died and Docker couldn't
+# coordinate the restart across independent stacks.
+#
+# Migration steps on Portainer:
+#   1. Stop and remove the old "tailscale-staktrakr" stack (ID 8)
+#   2. Stop and remove the old "tinyproxy" stack (ID 5)
+#   3. Deploy the combined stack from docker-compose.tinyproxy.yml
+#   4. The tailscale-staktrakr-state volume is preserved (named volume)
+#
+# See docker-compose.tinyproxy.yml for the combined configuration.

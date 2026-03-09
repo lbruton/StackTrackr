@@ -283,11 +283,11 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
-    <li><strong>v3.33.51 &ndash; Pre-ship Security Hardening</strong>: XSS fix in settings pattern rules. OAuth CSRF protection on relay path. Sync flag leak fix. Console output sanitized to remove cryptographic metadata. Dead sync modal code removed (~206 lines). All confirmations use appConfirm (STAK-430)</li>
-    <li><strong>v3.33.50 &ndash; Spot Health Dot UX, 7-Day Trend, Timezone Formatting</strong>: Spot dot shows orange (syncing) instead of red on fresh installs. Dot respects cache TTL for green status. 7-day trend sorts by date for correct direction. Sync log timestamps respect timezone preference (STAK-429, STAK-408, STAK-384, STAK-399, STAK-281)</li>
-    <li><strong>v3.33.49 &ndash; Import/Restore Completeness &amp; Cloud Backup Photos</strong>: Manual cloud backup now has an optional &ldquo;Include photos&rdquo; checkbox. ZIP and vault restore blocked during active sync. Wiki updated with snapshot terminology and restore warnings (STAK-427)</li>
-    <li><strong>v3.33.48 &ndash; DiffModal Settings Fix &amp; Empty-Diff Silent Pull</strong>: DiffModal Apply button now correctly detects pending settings changes. Settings are included in selectedChanges instead of being silently dropped. Manifest-first pull returns silently when no changes detected (STAK-387, STAK-401, STAK-415, STAK-417)</li>
-    <li><strong>v3.33.47 &ndash; Sync Scope &amp; Serialization</strong>: Cloud sync now syncs 44 keys across devices (up from 8) &mdash; all preferences, header buttons, feature toggles, and API credentials. Manifest-first pulls now compare and apply settings changes. Photos sync on all pull paths. Deleting all photos propagates deletion to remote (STAK-426)</li>
+    <li><strong>v3.33.60 &ndash; DiffModal Complete Overhaul</strong>: Full card-based cloud sync review &mdash; summary dashboard, per-item conflict cards with click-to-pick field resolution, 7 settings categories with rich chip renderers, and ZIP backup restore now routes through DiffModal instead of silently overwriting (STAK-451, STAK-454, STAK-455, STAK-457)</li>
+    <li><strong>v3.33.55 &ndash; Dropbox Multi-Account UX</strong>: Connected Dropbox account email and display name shown in Cloud settings. New Switch Account button forces re-authentication to prevent auto-connecting the wrong account (STAK-449)</li>
+    <li><strong>v3.33.57 &ndash; Market View Improvements</strong>: Mobile search bar and controls layout fixed; metal filter pills (All / Silver / Gold / Goldback / Platinum / Palladium) added; Australian coins (Kangaroo, Koala, Kookaburra) now display correctly (STAK-433, STAK-434, STAK-452)</li>
+    <li><strong>v3.33.53 &ndash; Numista N# Search Fixes</strong>: Image URLs and metal types now auto-populated when adding items via Numista N# search &mdash; no more manual re-download workaround needed (STAK-431)</li>
+    <li><strong>v3.33.54 &ndash; Date Sort Fix</strong>: Items without a purchase date now sort as oldest rather than always appearing at the bottom regardless of sort direction (STAK-448)</li>
   `;
 };
 

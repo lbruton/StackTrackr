@@ -2,8 +2,8 @@
 title: Storage Patterns
 category: frontend
 owner: staktrakr
-lastUpdated: v3.33.46
-date: 2026-03-04
+lastUpdated: v3.33.59
+date: 2026-03-07
 sourceFiles:
   - js/utils.js
   - js/constants.js
@@ -13,7 +13,7 @@ relatedPages:
 ---
 # Storage Patterns
 
-> **Last updated:** v3.33.46 — 2026-03-04
+> **Last updated:** v3.33.59 — 2026-03-07
 > **Source files:** `js/utils.js`, `js/constants.js`
 
 ## Overview
@@ -279,6 +279,8 @@ All permitted keys are defined in `ALLOWED_STORAGE_KEYS` in `js/constants.js`. A
 | `"cloud_sync_cursor"` | string | Dropbox rev string for change detection |
 | `"cloud_sync_override_backup"` | JSON | Pre-pull local snapshot |
 | `"cloud_dropbox_account_id"` | string | Dropbox account_id for key derivation |
+| `"cloud_dropbox_email"` | string | Dropbox account email for multi-account UX (STAK-449) |
+| `"cloud_dropbox_display_name"` | string | Dropbox display name for multi-account UX (STAK-449) |
 | `"cloud_vault_password"` | string | Vault password for persistent unlock |
 | `CLOUD_VAULT_IDLE_TIMEOUT_KEY` | number string | Vault idle lock timeout in minutes |
 | `"cloud_backup_history_depth"` | string | Max cloud backups to retain |
@@ -376,7 +378,7 @@ See [sync-cloud.md](sync-cloud.md) for the full cloud sync architecture.
 
 ### Vault Export Exclusions (STAK-425, v3.33.46)
 
-`VAULT_EXCLUDE_KEYS` in `js/constants.js` lists 14 keys that are stripped from portable full-vault exports (`collectVaultData('full')` in `js/vault.js`). These keys remain in `ALLOWED_STORAGE_KEYS` (so `cleanupStorage` does not delete them) but are excluded from `.stvault` exports to prevent shipping live OAuth tokens, vault passwords, and device-specific sync state:
+`VAULT_EXCLUDE_KEYS` in `js/constants.js` lists 16 keys that are stripped from portable full-vault exports (`collectVaultData('full')` in `js/vault.js`). These keys remain in `ALLOWED_STORAGE_KEYS` (so `cleanupStorage` does not delete them) but are excluded from `.stvault` exports to prevent shipping live OAuth tokens, vault passwords, and device-specific sync state:
 
 ```js
 const VAULT_EXCLUDE_KEYS = [
@@ -384,6 +386,8 @@ const VAULT_EXCLUDE_KEYS = [
   'cloud_token_pcloud',
   'cloud_token_box',
   'cloud_dropbox_account_id',
+  'cloud_dropbox_email',
+  'cloud_dropbox_display_name',
   'cloud_vault_password',
   'cloud_sync_device_id',
   'cloud_sync_cursor',

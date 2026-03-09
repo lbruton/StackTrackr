@@ -2,10 +2,12 @@
 title: "Health & Diagnostics"
 category: infrastructure
 owner: staktrakr-api
-lastUpdated: v3.33.25
-date: 2026-03-02
+lastUpdated: v3.33.57
+date: 2026-03-07
 sourceFiles: []
-relatedPages: []
+relatedPages:
+  - home-poller
+  - fly-container
 ---
 
 # Health & Diagnostics
@@ -137,20 +139,20 @@ Expected: rows from both `api` (Fly.io) and `home` (LXC) pollers within the last
 ## Manual Triggers
 
 ```bash
-# Force a retail scrape cycle
+# Force a retail scrape cycle (Fly.io)
 fly ssh console --app staktrakr -C "/app/run-local.sh"
 
-# Force a publish cycle
+# Force a publish cycle (Fly.io)
 fly ssh console --app staktrakr -C "/app/run-publish.sh"
 
-# Force a spot poll
+# Force a spot poll (Fly.io)
 fly ssh console --app staktrakr -C "/app/run-spot.sh"
 
-# Force a goldback scrape
+# Force a goldback scrape (Fly.io)
 fly ssh console --app staktrakr -C "/app/run-goldback.sh"
 
-# Home poller (SSH to LXC)
-ssh stakpoller@192.168.1.81 "bash /opt/poller/run-home.sh"
+# Home poller — use Portainer web UI Console on staktrakr-home-poller container:
+#   bash /app/run-home.sh
 ```
 
 ---
@@ -163,8 +165,8 @@ If a script was killed mid-run, its lockfile may remain:
 # Fly.io
 fly ssh console --app staktrakr -C "rm -f /tmp/retail-poller.lock /tmp/retail-publish.lock /tmp/goldback-poller.lock"
 
-# Home LXC
-ssh stakpoller@192.168.1.81 "rm -f /tmp/retail-poller.lock"
+# Home poller — use Portainer web UI Console on staktrakr-home-poller container:
+#   rm -f /tmp/retail-poller.lock
 ```
 
 ---

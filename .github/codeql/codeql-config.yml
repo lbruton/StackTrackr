@@ -1,0 +1,6 @@
+paths-ignore:
+  - devops/**
+  - tests/**
+  - vendor/**
+  - wiki/**
+  - playground/**

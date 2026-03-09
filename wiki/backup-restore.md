@@ -2,11 +2,12 @@
 title: Backup & Restore
 category: frontend
 owner: staktrakr
-lastUpdated: v3.33.51
-date: 2026-03-04
+lastUpdated: v3.33.60
+date: 2026-03-08
 sourceFiles:
   - js/cloud-storage.js
   - js/cloud-sync.js
+  - js/inventory.js
   - js/utils.js
   - js/vault.js
 relatedPages:
@@ -15,8 +16,8 @@ relatedPages:
 ---
 # Backup & Restore
 
-> **Last updated:** v3.33.51 — 2026-03-05
-> **Source files:** `js/cloud-storage.js`, `js/cloud-sync.js`, `js/utils.js`, `js/vault.js`
+> **Last updated:** v3.33.60 — 2026-03-08
+> **Source files:** `js/cloud-storage.js`, `js/cloud-sync.js`, `js/inventory.js`, `js/utils.js`, `js/vault.js`
 
 ## Overview
 
@@ -59,7 +60,7 @@ There is no dedicated `backup.js` or `restore.js`. All backup and restore logic 
 - **All imports go through `buildImportValidationResult()` before DiffModal opens.** Items that fail validation are surfaced as a pre-validation warning toast and excluded from the DiffModal. If all items are invalid, the import is aborted with an error toast.
 - **All exports embed `exportOrigin` (`window.location.origin`).** On import, if the file's `exportOrigin` differs from the current domain, a cross-domain warning toast is shown before the DiffModal opens. This is informational only and never blocks the import.
 - **DiffModal shows a live count header** (Backup / Current / After import) and a warning when the projected count is less than the backup count.
-- **A summary banner appears after every import** (`showImportSummaryBanner()`) showing added / updated / removed / skipped counts, with collapsible skip reasons when items were rejected.
+- **A toast notification appears after every import** showing added / updated / removed / skipped counts. The former persistent `showImportSummaryBanner()` was removed in v3.33.58 — all post-import feedback now uses the standard toast system.
 
 ---
 
@@ -129,7 +130,7 @@ All remote changes (both sync updates and conflicts) flow directly into `handleR
 `js/utils.js` provides the import validation pipeline shared across all import paths:
 
 - `buildImportValidationResult(items, skippedNonPM)` — batch validation before DiffModal
-- `showImportSummaryBanner(result)` — persistent dismissible banner after import completes
+
 - `saveData(key, value)` / `loadData(key)` — all localStorage reads/writes go through these (never direct `localStorage.setItem`)
 - `sanitizeImportedItem(item)` — sanitizes raw imported item before validation
 
@@ -263,19 +264,40 @@ The backup/export panel shows a `<small class="format-desc">` beneath each optio
 5. If all invalid: abort with error toast
 6. If some invalid: show warning toast, proceed with valid items only
 7. Open `DiffModal` with `backupCount` and `localCount` for live count header
-8. On apply: merge items, call post-restore sequence, show `showImportSummaryBanner(result)`
+8. On apply: merge items, call post-restore sequence, show import summary toast
 
 ### ZIP Restore (`restoreBackupZip`)
 
-> **Destructive restore:** ZIP restore replaces all data — all localStorage keys are overwritten with backup values, and all IDB image stores (`userImages`, `patternImages`, `coinMetadata`) are replaced. There is no merge option. If cloud sync is active when you initiate a ZIP restore, the restore will be blocked until sync completes (STAK-427).
+> **DiffModal-routed restore (STAK-457, v3.33.60):** ZIP restore now routes through DiffModal for item and settings review, matching the behavior of JSON import, CSV import, and vault restore. If cloud sync is active when you initiate a ZIP restore, the restore will be blocked until sync completes (STAK-427).
 
-1. Unzip all files
-2. Restore localStorage keys from `inventory_data.json`, `settings.json`, `spot_price_history.json`, etc.
-3. Restore `userImages` IDB from `user_images/` using `user_image_manifest.json`; falls back to filename parsing for old ZIPs pre-STAK-226
-4. Restore `patternImages` IDB from `pattern_images/`
-5. Restore `coinMetadata` IDB from `image_metadata.json`
-6. Explicitly skip `coinImages/` folder (logs: `"skipping legacy coinImages folder (store deprecated)"`)
-7. Post-restore sequence: `loadInventory()` → `renderTable()` → `renderActiveFilters()` → `loadSpotHistory()`
+**Phase 1 — Parse (no writes):**
+
+1. Unzip all files and parse contents into memory without writing to localStorage or IDB
+2. Parse inventory items from `inventory_data.json`
+3. Parse settings from `settings.json` and map ZIP field names to localStorage keys (e.g., `theme` → `appTheme`, `itemsPerPage` → `settingsItemsPerPage`)
+4. Parse item tags from `item_tags.json` into `pendingTagsByUuid` map
+5. Pre-parse ancillary data: spot history, item price history, retail prices, retail history
+
+**Phase 2 — Build settings diff:**
+
+1. Build `remoteSettings` flat map from ZIP settings using `SYNC_SCOPE_KEYS`-compatible keys
+2. Compare against current localStorage values via `DiffEngine.compareSettings()`
+3. Spot prices (per-metal keys not in `SYNC_SCOPE_KEYS`) are applied directly in the ancillary step
+
+**Phase 3 — DiffModal review:**
+
+1. Call `showImportDiffReview()` with parsed items, settings diff, and pending tags
+2. DiffModal shows item-level and settings-level diffs for user review
+3. User selects which changes to apply via the standard DiffModal UI
+
+**Phase 4 — Apply (on user accept):**
+
+1. `showImportDiffReview` applies selected item and settings changes
+2. `onComplete` callback applies ancillary data: spot prices, catalog mappings, spot history, item price history (merged via `mergeItemPriceHistory`), retail prices/history
+3. Restore IDB stores: `userImages` from `user_images/` using `user_image_manifest.json` (falls back to filename parsing for old ZIPs pre-STAK-226), `patternImages` from `pattern_images/`, `coinMetadata` from `image_metadata.json`
+4. Explicitly skip `coinImages/` folder (logs: `"skipping legacy coinImages folder (store deprecated)"`)
+
+**Fallback:** If `DiffEngine` or `DiffModal` are unavailable, `showImportDiffReview` falls back to a concat-all merge (same fallback path as JSON/CSV imports).
 
 ### Vault Restore (`vaultDecryptAndRestore`)
 
@@ -369,7 +391,6 @@ Image blobs are NOT restored via vault — requires a separate ZIP or image vaul
 | Function | Signature | Purpose |
 |----------|-----------|---------|
 | `buildImportValidationResult` | `(items, skippedNonPM)` → `object` | Batch-validate sanitized items; returns `{ valid, invalid, skippedNonPM, skippedCount }` |
-| `showImportSummaryBanner` | `(result)` | Render dismissible summary banner above inventory table after import |
 | `saveData` | `(key, value)` | Write to localStorage via allowed-key guard |
 | `loadData` | `(key, defaultValue)` | Read from localStorage with JSON parse |
 
@@ -402,12 +423,12 @@ The backup count badge on the restore button shows the count of **manual backups
 
 ### Merge strategy during import
 
-All JSON/CSV/vault imports use a **merge strategy** (not replace-all):
+All JSON/CSV/vault/ZIP imports use a **merge strategy** (not replace-all):
 
 - Items in the import are merged into the existing inventory using `DiffEngine`
 - DiffModal shows added / modified / removed diffs; user selects which to apply
 - The apply callback calls `saveData` with the merged result
-- Post-apply summary banner shows final counts
+- Post-apply toast shows final counts
 
 ---
 
@@ -456,8 +477,10 @@ All JSON/CSV/vault imports use a **merge strategy** (not replace-all):
 
 1. Settings → "Backup All Data" produces the ZIP
 2. Settings → Restore → select the `.zip` file → `restoreBackupZip(file)`
-3. Restores: localStorage keys + `userImages` + `patternImages` + `coinMetadata`
-4. Verify inventory loads and photos appear
+3. DiffModal opens showing item and settings diffs for review (STAK-457, v3.33.60)
+4. User selects which changes to apply; ancillary data (spot history, images, retail) applied automatically on accept
+5. Restores: selected inventory items + settings via DiffModal, plus `userImages` + `patternImages` + `coinMetadata` IDB stores
+6. Verify inventory loads and photos appear
 
 ### Scenario B: Full restore from vault + image vault
 
@@ -486,10 +509,10 @@ All JSON/CSV/vault imports use a **merge strategy** (not replace-all):
 | "Numista images came back immediately after vault restore" | Expected behavior. Numista CDN URLs (`obverseImageUrl`, `reverseImageUrl`) are stored on the inventory items in localStorage, so they survive any vault restore without touching IDB. | No action needed — this is correct. |
 | "Image vault upload failed during cloud push" | Image vault upload is non-fatal — the inventory vault still succeeds. | Check Dropbox token validity. The next successful push will retry the image vault if the hash changed. |
 | "Conflict prompt appeared after cloud pull" | Both local and remote have diverged — last push is more recent than last pull, meaning both sides have independent changes. | Review the DiffModal and choose which version to keep. |
-| "DiffModal shows fewer items than I expected" | Pre-validation in `buildImportValidationResult()` filters out invalid items before DiffModal opens. The count header shows backup count (including skipped) vs. projected count. | Check the pre-validation warning toast for the number of skipped items and their reasons. The post-import summary banner also lists skip reasons. |
+| "DiffModal shows fewer items than I expected" | Pre-validation in `buildImportValidationResult()` filters out invalid items before DiffModal opens. The count header shows backup count (including skipped) vs. projected count. | Check the pre-validation warning toast for the number of skipped items and their reasons. |
 | "I see a yellow cross-domain warning on import" | The file's `exportOrigin` (e.g., `https://beta.staktrakr.com`) differs from the current domain. | The warning is informational only. Proceed if you intentionally want to merge across environments. |
 | "The JSON file I exported doesn't look like a plain array anymore" | `exportJson()` now wraps items in an object with `items` and `exportMeta` fields. | Both the wrapped format and the legacy plain-array format are supported on import. Old files still import correctly. |
-| "Import shows a banner but also a toast" | If `safeGetElement()` cannot find the inventory table container, `showImportSummaryBanner()` falls back to `showToast()`. | Verify the inventory container element id is present in the DOM at import time. |
+| "Import only shows a toast, not the old banner" | The persistent `showImportSummaryBanner()` was removed in v3.33.58. All post-import feedback now uses standard toast notifications. | This is expected behavior. The toast shows added/updated/removed counts. |
 | "Push was blocked with 'Empty vault — pull first'" | Empty-vault guard in `pushSyncVault()` detected remote has items but local is empty. | Pull from cloud first to restore local inventory, then push will proceed normally. |
 | "OAuth relay rejected with 'state mismatch'" | `cloudCheckOAuthRelay` validates the `state` parameter from the localStorage relay against `cloud_oauth_state` in `sessionStorage`. A mismatch means the relay entry is stale or from a different OAuth session. | Re-initiate the OAuth flow from Settings → Cloud → Connect. |
 

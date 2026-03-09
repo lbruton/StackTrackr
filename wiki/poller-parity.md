@@ -45,6 +45,7 @@ Both pollers should produce **equivalent scrape results** for the same coin/vend
 | **Vision pipeline** | Soft-disabled by default (`VISION_ENABLED=0`); enable via `fly secrets set VISION_ENABLED=1` | Yes (if GEMINI_API_KEY set in .env) |
 | **Expected run time** | ~16 min (no vision) / ~28 min (with vision) | ~45-60 min (Firecrawl-first is slower) |
 | **Run script** | `run-local.sh` | `run-home.sh` |
+| **Provider sync** | `export-providers-json.js` every 5 min (`/var/log/provider-export.log`) | `export-providers-json.js` every 5 min (`/data/logs/provider-export.log`) |
 | **Git push** | Yes (`run-publish.sh` at `:08/:23/:38/:53`) | No (Turso only) |
 | **Tailscale** | Client (connects to home exit node) | Server (advertises exit node) |
 | **Dashboard** | None | Port 3010 |
@@ -101,7 +102,7 @@ Both pollers read from the **same Turso database** — provider configuration, U
 | `api-export.js` | Y | Y | **Identical** |
 | `capture.js` | Y | Y | **DIVERGED** (API-3: Fly.io has `captureCoinDirectFirst()` + dual browser + proxy probe) |
 | `db.js` | Y | Y | **Identical** |
-| `export-providers-json.js` | Y | Y | **Identical** |
+| `export-providers-json.js` | Y | Y | **Identical** — called by both pollers' `*/5` cron; includes `mkdirSync` safety net |
 | `extract-vision.js` | Y | Y | **Identical** |
 | `goldback-scraper.js` | Y | Y | **Identical** |
 | `import-from-log.js` | Y | Y | **Identical** |
@@ -147,9 +148,39 @@ The **home poller copy** has diverged from the repo. Key differences:
 |------|---------------|-------------|
 | Lockfile guard | Yes (`/tmp/retail-publish.lock`) | No |
 | Runs `api-export.js` | Yes (exports Turso → JSON) | No |
-| Runs `export-providers-json.js` | Yes (Turso → providers.json) | No |
+| Runs `export-providers-json.js` | Yes (Turso → providers.json, before git-add) | No (home poller runs `export-providers-json.js` on its own 5-minute cron instead) |
 
 > **Impact:** `run-publish.sh` is Fly.io only (pushes to Git). The home poller copy is stale — it should not be called from any home poller cron.
+
+---
+
+## Provider Sync — export-providers-json.js
+
+Both pollers run `export-providers-json.js` on a dedicated `*/5 * * * *` cron (every 5 minutes) to keep `providers.json` current from Turso. This is independent of the retail scrape schedule.
+
+### Cron entry comparison
+
+| Poller | Cron | Log |
+|--------|------|-----|
+| Home poller | `*/5 * * * * root . /etc/environment; cd /app && node export-providers-json.js >> /data/logs/provider-export.log 2>&1` | `/data/logs/provider-export.log` (on persistent volume) |
+| Fly.io (remote-poller) | `*/5 * * * * root . /etc/environment; cd /app && node export-providers-json.js >> /var/log/provider-export.log 2>&1` | `/var/log/provider-export.log` (ephemeral container log) |
+
+### Script behavior
+
+`export-providers-json.js` reads all provider configuration from Turso and writes `$DATA_DIR/retail/providers.json` via an atomic rename (write to `.tmp`, then `renameSync`). Key properties:
+
+- **Non-fatal:** if Turso is unreachable, the existing `providers.json` on disk is preserved and a warning is logged
+- **`mkdirSync` safety net:** the script calls `mkdirSync(dirname(outPath), { recursive: true })` before writing, so it creates `/data/retail/` if it does not exist
+- **Output path:** `$DATA_DIR/retail/providers.json` (`DATA_DIR` defaults to `../../data` relative to the script)
+
+### Directory creation — `/data/retail/`
+
+| Poller | Where `/data/retail/` is created | Notes |
+|--------|----------------------------------|-------|
+| Home poller | `docker-entrypoint.sh` step 2: `mkdir -p /data/retail /data/api /data/hourly /data/logs` | `/data/` is a pre-existing persistent volume on the home VM — directory has always existed |
+| Fly.io (remote-poller) | `docker-entrypoint.sh` step 5.6: `mkdir -p /data/tailscale /var/run/tailscale /data/retail` | Fix added because Fly.io volumes do not pre-create subdirectories; `export-providers-json.js` would fail without it |
+
+The `mkdirSync` call inside `export-providers-json.js` provides a second layer of protection — if the entrypoint `mkdir -p` is ever skipped or a new volume is mounted, the script creates the directory itself before writing.
 
 ---
 
@@ -449,13 +480,15 @@ For each enabled coin/vendor target:
    # Repo
    md5 -q devops/fly-poller/{provider-db,db,turso-client,merge-prices,api-export,extract-vision}.js
    # Home poller
-   ssh -T homepoller 'md5sum /opt/poller/{provider-db,db,turso-client,merge-prices,api-export,extract-vision}.js'
+   # Use Portainer web UI Console on staktrakr-home-poller:
+   #   md5sum /app/{provider-db,db,turso-client,merge-prices,api-export,extract-vision}.js
    ```
 
 ### After `fly deploy` bumps Playwright version
 
 ```bash
-ssh -T homepoller 'cd /opt/poller && sudo npm install playwright && sudo npx playwright install --with-deps chromium'
+# Use Portainer web UI Console on staktrakr-home-poller:
+#   cd /app && npm install playwright && npx playwright install --with-deps chromium
 ```
 
 ### Provider changes (URLs, enabled flags)
@@ -473,18 +506,20 @@ Run this after any deploy to verify shared files are in sync (post API-3, `price
 REPO=devops/fly-poller
 for f in provider-db.js db.js turso-client.js merge-prices.js api-export.js extract-vision.js run-home.sh; do
   LOCAL=$(md5 -q "$REPO/$f" 2>/dev/null)
-  REMOTE=$(ssh -T homepoller "md5sum /opt/poller/$f 2>/dev/null" | awk '{print $1}')
+  # Get REMOTE hash via Portainer web UI Console on staktrakr-home-poller:
+  #   md5sum /app/$f
+  REMOTE="<from-portainer-console>"
   STATUS=$([[ "$LOCAL" == "$REMOTE" ]] && echo "OK" || echo "DRIFT")
   echo "$STATUS  $f  local=$LOCAL  remote=$REMOTE"
 done
 
 # 2. Both can reach Turso
-ssh -T homepoller 'cd /opt/poller && set -a && source .env && set +a && node -e "
-import { createTursoClient } from \"./turso-client.js\";
-const c = createTursoClient();
-const r = await c.execute(\"SELECT COUNT(*) as n FROM provider_vendors WHERE enabled = 1\");
-console.log(\"Home poller: \" + r.rows[0].n + \" enabled vendors\");
-"'
+# Home poller — use Portainer web UI Console on staktrakr-home-poller:
+#   cd /app && node -e "
+#   import { createTursoClient } from './turso-client.js';
+#   const c = createTursoClient();
+#   const r = await c.execute('SELECT COUNT(*) as n FROM provider_vendors WHERE enabled = 1');
+#   console.log('Home poller: ' + r.rows[0].n + ' enabled vendors');"
 fly ssh console --app staktrakr -C "cd /app && node -e \"
 import { createTursoClient } from './turso-client.js';
 const c = createTursoClient();
@@ -493,6 +528,7 @@ console.log('Fly.io: ' + r.rows[0].n + ' enabled vendors');
 \""
 
 # 3. Playwright version match
-ssh -T homepoller 'node -e "import(\"playwright\").then(p=>console.log(\"Home:\",p.chromium.name()))"'
+# Home poller — use Portainer web UI Console on staktrakr-home-poller:
+#   node -e "import('playwright').then(p=>console.log('Home:',p.chromium.name()))"
 fly ssh console --app staktrakr -C "node -e \"import('playwright-core').then(p=>console.log('Fly:',p.chromium.name()))\""
 ```

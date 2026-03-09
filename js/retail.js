@@ -4,6 +4,7 @@
 /** All tracked coin slugs, display order */
 const RETAIL_SLUGS = [
   "ase", "maple-silver", "britannia-silver", "krugerrand-silver",
+  "kangaroo-silver", "koala-silver", "kookaburra-silver",
   "generic-silver-round", "generic-silver-bar-10oz",
   "age", "buffalo", "maple-gold", "krugerrand-gold", "ape",
   "goldback-oklahoma-g1",
@@ -15,6 +16,9 @@ const RETAIL_COIN_META = {
   "maple-silver":            { name: "Silver Maple Leaf",        weight: 1.0,  metal: "silver"   },
   "britannia-silver":        { name: "Silver Britannia",         weight: 1.0,  metal: "silver"   },
   "krugerrand-silver":       { name: "Silver Krugerrand",        weight: 1.0,  metal: "silver"   },
+  "kangaroo-silver":         { name: "Silver Kangaroo",          weight: 1.0,  metal: "silver"   },
+  "koala-silver":            { name: "Silver Koala",             weight: 1.0,  metal: "silver"   },
+  "kookaburra-silver":       { name: "Silver Kookaburra",        weight: 1.0,  metal: "silver"   },
   "generic-silver-round":    { name: "Generic Silver Round",     weight: 1.0,  metal: "silver"   },
   "generic-silver-bar-10oz": { name: "Generic 10oz Silver Bar",  weight: 10.0, metal: "silver"   },
   "age":                     { name: "American Gold Eagle",      weight: 1.0,  metal: "gold"     },
@@ -445,9 +449,12 @@ const syncRetailPrices = async ({ ui = true } = {}) => {
             ? manifest.slugs
             : null;
       _manifestCoinMeta = manifest.coins_meta || null;
-      // Persist slug list so it survives page reload
+      // Persist slug list and coin metadata so they survive page reload
       if (_manifestSlugs) {
         try { localStorage.setItem(RETAIL_MANIFEST_SLUGS_KEY, JSON.stringify(_manifestSlugs)); } catch { /* ignore */ }
+      }
+      if (_manifestCoinMeta) {
+        try { localStorage.setItem(RETAIL_MANIFEST_COIN_META_KEY, JSON.stringify(_manifestCoinMeta)); } catch { /* ignore */ }
       }
     } else {
       debugLog("[retail] All endpoints unreachable, using fallback slug list", "warn");
@@ -464,9 +471,10 @@ const syncRetailPrices = async ({ ui = true } = {}) => {
       if (providersResp.ok) {
         retailProviders = await providersResp.json();
         saveRetailProviders();
-        // Extract vendor display metadata if present
+        // Extract vendor display metadata if present and persist for page reload
         if (retailProviders && retailProviders._vendor_meta) {
           _manifestVendorMeta = retailProviders._vendor_meta;
+          try { localStorage.setItem(RETAIL_MANIFEST_VENDOR_META_KEY, JSON.stringify(_manifestVendorMeta)); } catch { /* ignore */ }
         }
         debugLog(`[retail] Loaded ${Object.keys(retailProviders || {}).length} coin provider mappings`, "info");
       } else {
@@ -938,6 +946,7 @@ const _marketChartInstances = new Map();
 
 /** Search debounce timer */
 let _marketSearchTimer = null;
+let _marketMetalFilter = "all";
 
 /**
  * Builds a compact vendor link element for the market list card.
@@ -1444,6 +1453,12 @@ const _initMarketCardChart = (slug, detailsEl) => {
  */
 const _getFilteredSortedSlugs = (query, sortKey) => {
   let slugs = [...getActiveRetailSlugs()];
+  if (_marketMetalFilter !== "all") {
+    slugs = slugs.filter((slug) => {
+      const meta = getRetailCoinMeta(slug);
+      return meta.metal === _marketMetalFilter;
+    });
+  }
   if (query && query.trim()) {
     const q = query.trim().toLowerCase();
     slugs = slugs.filter((slug) => {
@@ -1525,6 +1540,10 @@ const _renderMarketListView = () => {
 
   // Hide inline disclaimer in list view — disclaimer text lives in the footer instead
   disclaimer.style.display = "none";
+
+  // Reset expand button before any early-return path
+  const expandBtn = safeGetElement("marketExpandAllBtn");
+  if (expandBtn) expandBtn.textContent = "Expand All";
 
   if (_retailSyncInProgress) {
     emptyState.style.display = "none";
@@ -1624,6 +1643,22 @@ const _initMarketListViewListeners = () => {
     });
     expandBtn.textContent = allOpen ? "Expand All" : "Collapse All";
   });
+
+  const pillContainer = safeGetElement("marketFilterPills");
+  if (pillContainer) {
+    pillContainer.addEventListener("click", (e) => {
+      const pill = e.target.closest(".market-filter-pill");
+      if (!pill) return;
+      _marketMetalFilter = pill.dataset.metal;
+      pillContainer.querySelectorAll(".market-filter-pill").forEach((p) => {
+        p.classList.remove("active");
+        p.setAttribute("aria-pressed", "false");
+      });
+      pill.classList.add("active");
+      pill.setAttribute("aria-pressed", "true");
+      _renderMarketListView();
+    });
+  }
 };
 
 // ---------------------------------------------------------------------------
@@ -1794,6 +1829,30 @@ const initRetailPrices = () => {
   } catch {
     _manifestSlugs = null;
     try { localStorage.removeItem(RETAIL_MANIFEST_SLUGS_KEY); } catch { /* ignore */ }
+  }
+  // Restore manifest coin metadata (canonical names, weights, metals)
+  try {
+    const cachedMeta = localStorage.getItem(RETAIL_MANIFEST_COIN_META_KEY);
+    if (cachedMeta) {
+      const parsed = JSON.parse(cachedMeta);
+      _manifestCoinMeta = (parsed && typeof parsed === "object" && !Array.isArray(parsed)) ? parsed : null;
+      if (!_manifestCoinMeta) localStorage.removeItem(RETAIL_MANIFEST_COIN_META_KEY);
+    }
+  } catch {
+    _manifestCoinMeta = null;
+    try { localStorage.removeItem(RETAIL_MANIFEST_COIN_META_KEY); } catch { /* ignore */ }
+  }
+  // Restore vendor display metadata
+  try {
+    const cachedVendor = localStorage.getItem(RETAIL_MANIFEST_VENDOR_META_KEY);
+    if (cachedVendor) {
+      const parsed = JSON.parse(cachedVendor);
+      _manifestVendorMeta = (parsed && typeof parsed === "object" && !Array.isArray(parsed)) ? parsed : null;
+      if (!_manifestVendorMeta) localStorage.removeItem(RETAIL_MANIFEST_VENDOR_META_KEY);
+    }
+  } catch {
+    _manifestVendorMeta = null;
+    try { localStorage.removeItem(RETAIL_MANIFEST_VENDOR_META_KEY); } catch { /* ignore */ }
   }
   loadRetailPrices();
   loadRetailPriceHistory();

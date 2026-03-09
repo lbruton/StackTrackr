@@ -9,6 +9,95 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.60] - 2026-03-08
+
+### Fixed — STAK-457: ZIP Backup Restore Routes Through DiffModal
+
+- **Fixed**: ZIP backup restore now routes through DiffModal for item and settings review instead of directly overwriting localStorage (STAK-457)
+
+---
+
+## [3.33.59] - 2026-03-07
+
+### Added — STAK-455: DiffModal Settings Cards Rich Renderers
+
+- **Added**: Five type-dispatch renderers (chip-strip, toggle-map, slug-chips, kv-pills, count-summary) replace opaque "N items" text with interactive chip strips for complex settings in DiffModal (STAK-455)
+- **Added**: Per-element click-to-pick merge selection for settings arrays and objects — users can cherry-pick individual chip config, seed rules, and provider priorities (STAK-455)
+- **Fixed**: `itemTags` UUID-to-tag mappings no longer leak into settings diff via cloud-sync, eliminating the massive "Other" category blob (STAK-455)
+
+---
+
+## [3.33.58] - 2026-03-07
+
+### Added — STAK-454: DiffModal Item Cards
+
+- **Added**: Item cards with bordered card layout, metal-colored image placeholders, and async image loading replace flat checkbox rows in DiffModal (STAK-454)
+- **Added**: Click-to-pick field selection on modified items enabling granular merge control with visual local/remote highlighting (STAK-454)
+- **Added**: "N fields changed" pill badge on modified item cards with expand/collapse toggle (STAK-454)
+- **Changed**: Apply button count now reflects individual field selections, not just item-level selections (STAK-454)
+
+---
+
+## [3.33.57] - 2026-03-06
+
+### Fixed — STAK-452: Australian Coin Slug Names in Market View
+
+- **Fixed**: Kangaroo, Koala, and Kookaburra silver coins now display proper names instead of raw slug strings in Market view (STAK-452)
+
+---
+
+## [3.33.56] - 2026-03-06
+
+### Added — STAK-451: DiffModal UX Overhaul
+
+- **Added**: Summary dashboard with 4 clickable stat cards (Matched, Conflicts, Remote Only, Local Only) with scroll-to-section navigation (STAK-451)
+- **Added**: Progress tracker bar for sync conflict resolution showing resolved/total count (STAK-451)
+- **Added**: Per-item conflict cards with grouped field rows and click-to-pick local/remote resolution (STAK-451)
+- **Added**: Settings category cards grouping 42 settings into 7 meaningful categories with human-readable labels and per-setting click-to-pick resolution (STAK-451)
+- **Changed**: DiffModal widened from 640px to 860px desktop, full-screen on mobile/tablet (STAK-451)
+- **Changed**: API keys masked in settings diff display — never shown in plain text (STAK-451)
+
+---
+
+## [3.33.55] - 2026-03-06
+
+### Added — STAK-449: Dropbox Multi-Account UX
+
+- **Added**: Connected Dropbox account email and display name now shown in the Cloud settings card below the status indicator (STAK-449)
+- **Added**: "Switch Account" button disconnects the current Dropbox account and re-triggers OAuth with forced re-authentication so users can pick a different account (STAK-449)
+- **Added**: "Sign out of Dropbox" helper link opens the Dropbox logout page in a new tab for clearing browser sessions (STAK-449)
+
+---
+
+## [3.33.54] - 2026-03-05
+
+### Fixed — STAK-448: Dateless Items Sort as Oldest
+
+- **Fixed**: Dateless items (blank/unknown purchase date) now sort as "infinitely old" — top when oldest-first, bottom when newest-first, instead of always pinned to bottom regardless of direction (STAK-448)
+
+---
+
+## [3.33.53] - 2026-03-05
+
+### Fixed — STAK-431: Numista N# Search Image URL + Metal Auto-Population
+
+- **Fixed**: Numista N# search now auto-populates obverse and reverse image URLs into inventory items — images appear immediately in table and card views without manual re-download (STAK-431)
+- **Fixed**: Metal type is now auto-detected from Numista composition data and pre-selected in the form dropdown for gold, silver, platinum, and palladium items (STAK-431)
+- **Added**: Field picker now shows Obverse Image, Reverse Image, and Metal checkboxes — users can opt out of any field before filling (STAK-431)
+
+---
+
+## [3.33.52] - 2026-03-05
+
+### Fixed/Added — STAK-433/STAK-434: Market Controls Mobile Fix + Metal Filter Buttons
+
+- **Fixed**: Mobile market view search bar crushed to 2 characters — added `flex-wrap` to controls row at mobile breakpoint (STAK-433)
+- **Fixed**: Expand/Collapse button text flipped when typing in search — now resets to "Expand All" on every re-render (STAK-433)
+- **Added**: Metal filter pill buttons (All/Silver/Gold/Goldback/Platinum/Palladium) in market list view header — filter by metal type with color-coded pills matching existing badge palette (STAK-434)
+- **Added**: Mobile responsive pill layout with wrapping and touch-friendly sizing (STAK-434)
+
+---
+
 ## [3.33.51] - 2026-03-05
 
 ### Fixed — STAK-430: Pre-ship Security Hardening

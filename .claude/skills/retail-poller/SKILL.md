@@ -23,7 +23,7 @@ extract-vision.js  (Gemini Vision → per-coin vision JSON)
 api-export.js  (Turso + vision JSON → data/api/ REST endpoints → api branch)
 ```
 
-> **Repo:** All scripts listed in this skill live in `lbruton/StakTrakrApi` — NOT in the StakTrakr repo. Deploy: `cd StakTrakrApi/devops/fly-poller && fly deploy`.
+> **Repo:** All poller scripts now live in `StakTrakr/devops/pollers/` — shared core in `shared/`, Fly.io config in `remote-poller/`, home VM config in `home-poller/`. Deploy: `cd devops/pollers && fly deploy --config remote-poller/fly.toml`. The old `StakTrakrApi/devops/fly-poller/` location is deprecated.
 
 **Fly.io container is the sole scraping pipeline — no GHA cloud fallback:**
 
@@ -31,7 +31,7 @@ api-export.js  (Turso + vision JSON → data/api/ REST endpoints → api branch)
 |----------|---------|------|---------|
 | **Fly.io** (`run-local.sh`) | Playwright (self-hosted, `localhost:3002`) | **Primary + only** | Every 15 min via container cron |
 
-**No GHA cloud failsafe for retail.** `retail-price-poller.yml` was deleted 2026-02-22 (was sending requests to public Firecrawl cloud API, burning paid credits — STAK-268). All retail scraping now runs exclusively in the Fly.io container via self-hosted Firecrawl + the home VM secondary poller. **Home VM is SSH-accessible** — see `homepoller-ssh` skill for diagnostics.
+**No GHA cloud failsafe for retail.** `retail-price-poller.yml` was deleted 2026-02-22 (was sending requests to public Firecrawl cloud API, burning paid credits — STAK-268). All retail scraping now runs exclusively in the Fly.io container via self-hosted Firecrawl + the Portainer VM secondary poller. Manage containers via Portainer REST API — see `home-infrastructure` skill.
 
 **Key constraint:** `providers.json` lives on the **`api` branch**, not `main` or `dev`.
 Path on disk: `$DATA_REPO_PATH/data/retail/providers.json`
@@ -44,15 +44,64 @@ Path on disk: `$DATA_REPO_PATH/data/retail/providers.json`
 
 | File | Purpose |
 |------|---------|
-| `devops/fly-poller/price-extract.js` | Primary scraper — Firecrawl + Playwright fallback → Turso |
-| `devops/fly-poller/capture.js` | Screenshot capture — `BROWSER_MODE=browserless` (browserless Docker via `connectOverCDP`), `browserbase` (cloud CDP), or `local` (local Chromium). `ARTIFACT_DIR` sets output dir; writes `manifest.json`. |
-| `devops/fly-poller/extract-vision.js` | Gemini Vision price extraction from screenshots → per-coin JSON files (not Turso). Reads `MANIFEST_PATH`. |
-| `devops/fly-poller/api-export.js` | Turso + vision JSON → `data/api/` static JSON endpoints with confidence scoring |
-| `devops/fly-poller/vision-patch.js` | Standalone utility — patches `data/api/{slug}/latest.json` confidence scores using vision JSON, without Turso. For manual one-off runs. |
-| `devops/fly-poller/merge-prices.js` | **Legacy** — not called in either pipeline. Reads flat `{date}.json` files that no longer exist in Turso arch. |
-| `devops/fly-poller/db.js` | Turso helper — schema, read/write functions |
-| `devops/fly-poller/run-local.sh` | Full local run: extract → capture → vision → export → push |
-| `devops/fly-poller/run-fbp.sh` | Gap-fill run: failed vendors → FindBullionPrices scrape |
+| `devops/pollers/shared/price-extract.js` | Primary scraper — Firecrawl + Playwright fallback → Turso |
+| `devops/pollers/shared/capture.js` | Screenshot capture — `BROWSER_MODE=browserless` / `browserbase` / `local` |
+| `devops/pollers/shared/extract-vision.js` | Gemini Vision price extraction from screenshots → per-coin JSON files |
+| `devops/pollers/shared/api-export.js` | Turso + vision JSON → `data/api/` static JSON endpoints with confidence scoring |
+| `devops/pollers/shared/export-providers-json.js` | Turso → `/data/retail/providers.json` (runs every 5 min via cron) |
+| `devops/pollers/shared/turso-client.js` | Turso client factory |
+| `devops/pollers/shared/provider-db.js` | Provider CRUD + export from Turso |
+| `devops/pollers/remote-poller/run-local.sh` | Full Fly.io run: extract → capture → vision → export → push |
+| `devops/pollers/remote-poller/run-publish.sh` | API export + git push to api branch |
+| `devops/pollers/remote-poller/docker-entrypoint.sh` | Container startup (creates `/data/retail/`, writes crontab, exports env) |
+| `devops/pollers/remote-poller/Dockerfile` | Fly.io all-in-one container image |
+| `devops/pollers/home-poller/run-home.sh` | Home VM retail scrape run |
+| `devops/pollers/home-poller/docker-entrypoint.sh` | Home container startup |
+
+---
+
+## Vendor API Endpoints (Structured Data)
+
+### Direct API Access (No Scraping Needed)
+
+| Vendor | Platform | API | Auth | Notes |
+|---|---|---|---|---|
+| **SD Bullion** | Magento 2 | REST `/rest/V1/nfusions/cache/pricing` | None | Full catalog (6,003 SKUs), tiered pricing, cash/BTC/CC |
+| **APMEX** | Traditional SSR | JSON-LD in HTML | None | `schema.org/Product` with price + availability |
+
+### Cloudflare-Gated APIs (Need CF Cookie)
+
+| Vendor | Platform | API | Notes |
+|---|---|---|---|
+| **Bullion Exchanges** | Magento 2 PWA | GraphQL `/graphql` | `route()` → product ID, `LivePrices(ids:[ID])` → tier pricing |
+| **Monument Metals** | Magento 2 + ScandiPWA | GraphQL `/graphql` | `getProductDetailForProductPage` → tiers, `metalPrices` → spot |
+
+### HTML Scraping Only
+
+| Vendor | Platform | Notes |
+|---|---|---|
+| **JM Bullion** | Next.js App Router | Spot API only at `contentapi-managed.jmbullion.com/api/spot/summary` |
+| **Hero Bullion** | WooCommerce | REST API exists but returns 401 |
+
+### CF Bypass Stack
+
+- Primary: FlareSolverr nodriver fork (`21hsmw/flaresolverr:nodriver`) — Docker, HTTP API port 8191
+- Fallback: Byparr (drop-in replacement, Firefox/Camoufox-based, same API)
+- `cf_clearance` cookies bound to IP + User-Agent + TLS fingerprint
+- Use `curl_cffi` (not Python `requests`) for cookie reuse — matches browser TLS fingerprint
+
+---
+
+## Provider Sync (export-providers-json.js)
+
+Both pollers run `export-providers-json.js` every 5 minutes via cron to sync `providers.json` from Turso to local volume.
+
+| Poller | Cron | Log Path | Volume Path |
+|---|---|---|---|
+| Fly.io | `*/5 * * * *` | `/var/log/provider-export.log` | `/data/retail/providers.json` |
+| Home VM | `*/5 * * * *` | `/data/logs/provider-export.log` | `/data/retail/providers.json` |
+
+The `/data/retail/` directory must exist before the script runs. The Fly.io entrypoint creates it via `mkdir -p /data/retail` at startup. The script also does `mkdirSync(dirname(outPath), { recursive: true })` as a safety net. Non-fatal — if Turso is down, the existing file is kept as-is.
 
 ---
 
@@ -141,7 +190,7 @@ After primary scrapes, any coin with failures scrapes `fbp_url` (FindBullionPric
 
 **Provider:** Turso cloud (libSQL) — NOT local SQLite. Credentials in Infisical + Fly secrets (`TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`).
 
-**Dual-poller write-through:** Both Fly.io (`POLLER_ID=api`) and home VM at 192.168.1.81 (`POLLER_ID=home`) write to the same Turso DB. `api-export.js` uses `readLatestPerVendor()` to merge — most recent row per vendor within last 2h wins. To check home poller logs: `ssh -T homepoller 'tail -50 /var/log/retail-poller.log'`.
+**Dual-poller write-through:** Both Fly.io (`POLLER_ID=api`) and Portainer VM (`POLLER_ID=home`) write to the same Turso DB. `api-export.js` uses `readLatestPerVendor()` to merge — most recent row per vendor within last 2h wins. Check home poller logs via Portainer API — see `home-infrastructure` skill.
 
 **Table:** `price_snapshots`
 
@@ -236,7 +285,7 @@ The StakTrakr app fetches `data/api/{slug}/latest.json` in `retail-view-modal.js
 ## Running Locally
 
 ```bash
-cd devops/fly-poller
+cd devops/pollers
 
 # Full run against self-hosted Firecrawl (port 3002)
 DATA_REPO_PATH=/path/to/api-branch-checkout \

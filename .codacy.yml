@@ -15,3 +15,5 @@ exclude_paths:
   - "about/**"
   - "tests/**"
   - "vendor/**"
+  - "wiki/**"
+  - "playground/**"

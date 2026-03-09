@@ -2,8 +2,8 @@
 title: Retail Modal
 category: frontend
 owner: staktrakr
-lastUpdated: v3.33.50
-date: 2026-03-04
+lastUpdated: v3.33.57
+date: 2026-03-06
 sourceFiles:
   - js/retail-view-modal.js
   - js/retail.js
@@ -13,7 +13,7 @@ relatedPages:
 ---
 # Retail Modal
 
-> **Last updated:** v3.33.50 — 2026-03-04
+> **Last updated:** v3.33.57 — 2026-03-06
 > **Source files:** `js/retail-view-modal.js`, `js/retail.js`
 
 ## Overview
@@ -54,6 +54,8 @@ On open, the modal displays cached data from localStorage immediately, then fire
 - Manifest-driven slug/metadata resolution: `getActiveRetailSlugs`, `getRetailCoinMeta`, `getVendorDisplay`.
 - The sync log, sync-in-progress flags, and error state. The sync log Time column uses timezone-aware formatting via `TIMEZONE_KEY` from localStorage, matching the `_fmtIntradayTime` pattern in `retail-view-modal.js`. Falls back gracefully if the stored timezone is invalid.
 - Rendering of all card/list views (grid view, market list view, sparklines).
+- Metal filter pill state (`_marketMetalFilter`) and filtering logic in `_getFilteredSortedSlugs()` — filters slugs by `getRetailCoinMeta(slug).metal` when a pill other than "All" is active.
+- Expand/Collapse button text reset — `_renderMarketListView()` resets `marketExpandAllBtn` to "Expand All" on every re-render (search, filter change), since newly rendered cards are always collapsed.
 - Card-level trend indicators via `_computeRetailTrend(slug)`, which sorts history by date descending before comparing the two most recent entries to determine trend direction.
 
 **`retail-view-modal.js`** owns:
@@ -79,6 +81,13 @@ Declared in `retail.js`. All three maps must be updated together when adding a n
 | `bullionexchanges` | BullionX | `#f472b6` bright pink |
 | `summitmetals` | Summit | `#22d3ee` bright cyan |
 | `goldback` | Goldback | `#d4a017` deep gold |
+
+### Module-Level State (retail.js — market list view)
+
+| Variable | Type | Purpose |
+|---|---|---|
+| `_marketMetalFilter` | `string` | Active metal filter pill value: `"all"`, `"silver"`, `"gold"`, `"goldback"`, `"platinum"`, or `"palladium"` |
+| `_marketSearchTimer` | `number \| null` | Search input debounce timer |
 
 ### Module-Level State (retail-view-modal.js)
 
@@ -225,7 +234,7 @@ Renders the colored vendor legend (swatch + clickable name + current price) into
 - Iterates `RETAIL_VENDOR_NAMES` keys in declaration order.
 - Per-vendor URL resolution: checks `retailProviders[slug][vendorId]` first, then `RETAIL_VENDOR_URLS[vendorId]`.
 - In-stock vendors with a URL: rendered as `<a>` elements. Click opens vendor URL in a named popup window (`retail_vendor_{vendorId}`, 1250x800); falls back to `_blank` if popup is blocked.
-- OOS vendors: rendered at `opacity: 0.5`, price wrapped in `<del>`, "OOS" badge appended in `text-danger`. Tooltip shows last known price and date from `retailLastKnownPrices` / `retailLastAvailableDates`.
+- OOS vendors: out-of-stock vendors are omitted from the legend entirely when price is null (`_buildVendorLegend` returns early at the `if (price == null) return` guard on line 94).
 
 ### `_bucketWindows(windows)`
 
@@ -415,6 +424,8 @@ Both `_retailViewModalChart` and `_retailViewIntradayChart` must be explicitly d
 ### Opening the modal for a slug not in `RETAIL_COIN_META`
 
 `openRetailViewModal` reads `RETAIL_COIN_META[slug]` and returns early if not found. Dynamic slugs (Goldbacks, manifest-added coins) are resolved via `getRetailCoinMeta(slug)` in `retail.js`, but the modal uses the raw `RETAIL_COIN_META` constant directly. If a new slug from the manifest is not in that constant and has no Goldback pattern match, the modal will silently refuse to open.
+
+As of v3.33.57, `RETAIL_COIN_META` includes 15 hardcoded entries covering all standard coins plus the three Australian silver coins (Kangaroo, Koala, Kookaburra). The manifest's `coins_meta` field provides runtime metadata but is not persisted to localStorage — on page reload before the manifest re-fetches, only the hardcoded entries are available.
 
 ---
 

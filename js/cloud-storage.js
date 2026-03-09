@@ -331,7 +331,7 @@ async function cloudGetToken(provider) {
 // OAuth popup flow
 // ---------------------------------------------------------------------------
 
-function cloudAuthStart(provider) {
+function cloudAuthStart(provider, options) {
   var config = CLOUD_PROVIDERS[provider];
   if (!config) return;
 
@@ -345,6 +345,11 @@ function cloudAuthStart(provider) {
     state: state,
     token_access_type: 'offline',
   });
+
+  // STAK-449: Force Dropbox to show account picker for multi-account switching
+  if (options && options.forceReauth && provider === 'dropbox') {
+    params.set('force_reauthentication', 'true');
+  }
 
   // Open popup synchronously (in click handler context) to avoid popup blockers,
   // then navigate it after the async PKCE challenge is computed.
@@ -478,34 +483,45 @@ async function cloudExchangeCode(code, state) {
     };
     cloudStoreToken(provider, tokenData);
 
-    // Store Dropbox account ID for key derivation.
+    // Store Dropbox account ID for key derivation and profile info for multi-account UX (STAK-449).
     // The token exchange response includes account_id — grab it directly (synchronous, no race).
-    // Fall back to get_current_account API only if the token response didn't include it.
+    // Always call get_current_account to fetch email + display_name (not in token response).
     if (provider === 'dropbox') {
       if (data.account_id) {
         localStorage.setItem('cloud_dropbox_account_id', data.account_id);
         // STAK-398 diagnostic: MUST use console.warn (not debugWarn) so it's always visible
         console.warn('[CloudStorage] Stored Dropbox account_id from token exchange: present');
-      } else {
-        // Fallback: fetch account ID from API — awaited so syncCloudUI runs after account_id is stored
-        console.warn('[CloudStorage] Token exchange did NOT include account_id — fetching from API');
-        try {
-          var acctResp = await fetch('https://api.dropboxapi.com/2/users/get_current_account', {
-            method: 'POST',
-            headers: {
-              Authorization: 'Bearer ' + tokenData.access_token,
-              'Content-Type': 'application/json',
-            },
-            body: 'null',
-          });
-          var info = acctResp.ok ? await acctResp.json() : null;
-          if (info && info.account_id) {
+      }
+
+      // Always fetch full profile — email and display_name are only available via this API
+      try {
+        let acctResp = await fetch('https://api.dropboxapi.com/2/users/get_current_account', {
+          method: 'POST',
+          headers: {
+            Authorization: 'Bearer ' + tokenData.access_token,
+            'Content-Type': 'application/json',
+          },
+          body: 'null',
+        });
+        let info = acctResp.ok ? await acctResp.json() : null;
+        if (info) {
+          if (info.account_id) {
             localStorage.setItem('cloud_dropbox_account_id', info.account_id);
-            console.warn('[CloudStorage] Stored Dropbox account_id from API fallback: present');
-          } else {
-            console.warn('[CloudStorage] API fallback FAILED to get account_id');
+            console.warn('[CloudStorage] Stored Dropbox account_id from API: present');
           }
-        } catch (e) { console.warn('[CloudStorage] Failed to fetch Dropbox account ID.'); }
+          if (info.email) {
+            localStorage.setItem('cloud_dropbox_email', info.email);
+            console.warn('[CloudStorage] Stored Dropbox email: present');
+          }
+          if (info.name && info.name.display_name) {
+            localStorage.setItem('cloud_dropbox_display_name', info.name.display_name);
+            console.warn('[CloudStorage] Stored Dropbox display_name: present');
+          }
+        } else {
+          console.warn('[CloudStorage] get_current_account returned no data');
+        }
+      } catch (e) {
+        console.warn('[CloudStorage] Failed to fetch Dropbox profile — connection still works.');
       }
     }
     sessionStorage.removeItem('cloud_oauth_state');
@@ -573,6 +589,8 @@ function cloudDisconnect(provider) {
   var keysToRemove = [
     'cloud_last_backup',
     'cloud_dropbox_account_id',
+    'cloud_dropbox_email',
+    'cloud_dropbox_display_name',
     'cloud_vault_password',
     'cloud_sync_enabled',
     'cloud_sync_device_id',
@@ -1138,6 +1156,36 @@ function syncCloudUI() {
       indicator.dataset.state = connected ? 'connected' : 'disconnected';
       var textEl = indicator.querySelector('.cloud-status-text');
       if (textEl) textEl.textContent = connected ? 'Connected' : 'Not connected';
+    }
+
+    // STAK-449: Display connected Dropbox account identity
+    if (key === 'dropbox') {
+      const acctInfoRow = safeGetElement('cloudDropboxAccountInfo');
+      const acctText = safeGetElement('cloudDropboxAccountText');
+      const switchBtn = safeGetElement('cloudSwitchAccountBtn_dropbox');
+      const signoutDiv = safeGetElement('cloudDropboxSignoutLink');
+
+      if (connected) {
+        const email = localStorage.getItem('cloud_dropbox_email');
+        const displayName = localStorage.getItem('cloud_dropbox_display_name');
+        let label = 'Unknown account';
+        if (displayName && email) {
+          label = displayName + ' (' + email + ')';
+        } else if (email) {
+          label = email;
+        } else if (displayName) {
+          label = displayName;
+        }
+        if (acctInfoRow) acctInfoRow.style.display = '';
+        if (acctText) acctText.textContent = label;
+        if (switchBtn) switchBtn.style.display = '';
+        if (signoutDiv) signoutDiv.style.display = '';
+      } else {
+        if (acctInfoRow) acctInfoRow.style.display = 'none';
+        if (acctText) acctText.textContent = '';
+        if (switchBtn) switchBtn.style.display = 'none';
+        if (signoutDiv) signoutDiv.style.display = 'none';
+      }
     }
 
     // Update sync & item count rows

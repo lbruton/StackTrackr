@@ -867,12 +867,6 @@ const attachAutocomplete = (inputEl, sourceType) => {
     return escapeHtml(text).replace(regex, '<mark>$1</mark>');
   };
 
-  const escapeHtml = (str) => {
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-  };
-
   const onInput = () => {
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {

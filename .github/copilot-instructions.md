@@ -326,6 +326,40 @@ After any commit that changes behavior, update the relevant wiki page directly.
 
 ---
 
+## Known False Positives — Do Not Flag
+
+These patterns fire regularly on this codebase but are false positives given StakTrakr's architecture. Before flagging any of these, re-read the reasoning. If the reasoning no longer applies (e.g., server-side code has been added), escalate.
+
+### CodeQL: `js/clear-text-storage-of-sensitive-data`
+
+**Pattern:** CodeQL flags any `localStorage.setItem()` call that writes an object containing field names like `apiKey`, `access_token`, or `refresh_token`.
+
+**Why it's a false positive here:** StakTrakr is a single-user personal finance app. There are no server secrets. The credentials flagged (Numista API key, Dropbox OAuth token) are entered by the user for their own use and stored on their own device in their own browser. The Numista API key is additionally base64-encoded before storage. The threat model is XSS reading localStorage — not server-side secret leakage. Do not flag unless server-side credential handling is introduced.
+
+### GitHub Advanced Security / CodeQL: `js/incomplete-multi-character-sanitization`
+
+**Pattern:** Flags sanitization regexes as insufficient (e.g., `/<script>/gi`).
+
+**Check first:** If the regex already uses the full safe form — `/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi` — the finding is stale/resolved. Verify the actual pattern before flagging.
+
+### GitHub Advanced Security: Format string injection in `console.log`/`console.error`
+
+**Pattern:** Flags `console.error(templateLiteral, err)` as a "format string depends on user-provided value."
+
+**Why it's a false positive here:** Node.js `console.error` does not perform `%s`/`%d` printf-style substitution when the first argument is a string. Template literals that interpolate user values produce a plain string argument — there is no injection surface. Only flag if user input is passed as the *first positional argument to a function that does perform format substitution* (e.g., `sprintf`, `util.format`).
+
+### Copilot: `document.getElementById` in `about.js` and `init.js`
+
+**Pattern:** Flags raw `document.getElementById()` calls as violating the `safeGetElement()` convention.
+
+**Why it's acceptable:** Startup code in `about.js` and `init.js` runs once before the app is fully initialized and operates on elements guaranteed to exist at DOM-ready. The `safeGetElement()` convention applies to all other files. See Section 1 above.
+
+### Copilot: "undefined variable" in any JS file
+
+Already covered in Section 3. Do not re-flag here.
+
+---
+
 ## Review Focus Areas
 
 - **Error handling in async code**: Promise chains should have `.catch()` handlers, especially in service worker code and API calls

@@ -23,13 +23,576 @@
   // ── Constants ──
   var MODAL_ID = 'diffReviewModal';
 
+  // ── Settings categories for grouped display ──
+  var SETTINGS_CATEGORIES = {
+    'Appearance': {
+      icon: '\uD83C\uDFA8',
+      keys: ['appTheme','cardViewStyle','desktopCardView','defaultSortColumn','defaultSortDir','settingsItemsPerPage','appTimeZone','showRealizedGainLoss','layoutSectionConfig','viewModalSectionConfig']
+    },
+    'Header Buttons': {
+      icon: '\uD83D\uDD18',
+      keys: ['headerThemeBtnVisible','headerCurrencyBtnVisible','headerTrendBtnVisible','headerSyncBtnVisible','headerMarketBtnVisible','headerVaultBtnVisible','headerRestoreBtnVisible','headerCloudSyncBtnVisible','headerBtnShowText','headerBtnOrder','headerAboutBtnVisible']
+    },
+    'Filters & Chips': {
+      icon: '\uD83C\uDFF7\uFE0F',
+      keys: ['metalOrderConfig','inlineChipConfig','filterChipCategoryConfig','chipMinCount','chipMaxCount','chipCustomGroups','chipBlacklist','chipSortOrder','tagBlacklist']
+    },
+    'Images': {
+      icon: '\uD83D\uDDBC\uFE0F',
+      keys: ['tableImagesEnabled','tableImageSides']
+    },
+    'Currency': {
+      icon: '\uD83D\uDCB1',
+      keys: ['displayCurrency']
+    },
+    'Goldback & Providers': {
+      icon: '\uD83E\uDE99',
+      keys: ['goldback-enabled','goldback-estimate-enabled','goldback-estimate-modifier','enabledSeedRules','apiProviderOrder','providerPriority']
+    },
+    'API & Numista': {
+      icon: '\uD83D\uDCDA',
+      keys: ['metalApiConfig','numista_tags_auto','numistaLookupRules','numistaViewFields']
+    }
+  };
+
+  var SETTINGS_LABELS = {
+    'displayCurrency': 'Display Currency',
+    'appTheme': 'Theme',
+    'cardViewStyle': 'Card View Style',
+    'desktopCardView': 'Desktop Card View',
+    'defaultSortColumn': 'Default Sort Column',
+    'defaultSortDir': 'Default Sort Direction',
+    'showRealizedGainLoss': 'Show Realized Gain/Loss',
+    'metalOrderConfig': 'Metal Order',
+    'settingsItemsPerPage': 'Items Per Page',
+    'appTimeZone': 'Time Zone',
+    'inlineChipConfig': 'Inline Chips',
+    'filterChipCategoryConfig': 'Filter Chip Categories',
+    'viewModalSectionConfig': 'View Modal Sections',
+    'chipMinCount': 'Chip Min Count',
+    'chipMaxCount': 'Chip Max Count',
+    'chipCustomGroups': 'Custom Chip Groups',
+    'chipBlacklist': 'Hidden Chips',
+    'chipSortOrder': 'Filter Sort (alpha/count)',
+    'layoutSectionConfig': 'Section Layout',
+    'tableImagesEnabled': 'Table Images',
+    'tableImageSides': 'Table Image Sides',
+    'tagBlacklist': 'Hidden Tags',
+    'headerThemeBtnVisible': 'Theme Button',
+    'headerCurrencyBtnVisible': 'Currency Button',
+    'headerTrendBtnVisible': 'Trend Button',
+    'headerSyncBtnVisible': 'Sync Button',
+    'headerMarketBtnVisible': 'Market Button',
+    'headerVaultBtnVisible': 'Vault Button',
+    'headerRestoreBtnVisible': 'Restore Button',
+    'headerCloudSyncBtnVisible': 'Cloud Sync Button',
+    'headerBtnShowText': 'Button Labels',
+    'headerBtnOrder': 'Button Order',
+    'headerAboutBtnVisible': 'About Button',
+    'goldback-enabled': 'Goldback Enabled',
+    'goldback-estimate-enabled': 'Goldback Estimates',
+    'goldback-estimate-modifier': 'Estimate Modifier',
+    'enabledSeedRules': 'Market Lookup Rules',
+    'apiProviderOrder': 'Provider Order',
+    'providerPriority': 'Provider Ranking',
+    'numista_tags_auto': 'Auto-Tag on Lookup',
+    'numistaLookupRules': 'Lookup Rules',
+    'numistaViewFields': 'View Fields',
+    'metalApiConfig': 'API Keys'
+  };
+
+  var SETTINGS_VALUE_TYPE = {
+    layoutSectionConfig: 'chip-strip',
+    inlineChipConfig: 'chip-strip',
+    filterChipCategoryConfig: 'chip-strip',
+    viewModalSectionConfig: 'chip-strip',
+    chipCustomGroups: 'count-summary',
+    numistaViewFields: 'toggle-map',
+    enabledSeedRules: 'slug-chips',
+    headerBtnOrder: 'slug-chips',
+    apiProviderOrder: 'slug-chips',
+    chipBlacklist: 'slug-chips',
+    tagBlacklist: 'slug-chips',
+    providerPriority: 'kv-pills',
+    numistaLookupRules: 'count-summary',
+    metalOrderConfig: 'chip-strip'
+  };
+
+  var SLUG_LABELS = {
+    // Seed rule coin slugs — from RETAIL_COIN_META keys
+    'ase': 'American Silver Eagle',
+    'maple-silver': 'Silver Maple Leaf',
+    'britannia-silver': 'Silver Britannia',
+    'krugerrand-silver': 'Silver Krugerrand',
+    'kangaroo-silver': 'Silver Kangaroo',
+    'koala-silver': 'Silver Koala',
+    'kookaburra-silver': 'Silver Kookaburra',
+    'generic-silver-round': 'Generic Silver Round',
+    'generic-silver-bar-10oz': 'Generic 10oz Silver Bar',
+    'age': 'American Gold Eagle',
+    'buffalo': 'American Gold Buffalo',
+    'maple-gold': 'Gold Maple Leaf',
+    'krugerrand-gold': 'Gold Krugerrand',
+    'ape': 'American Platinum Eagle',
+    'goldback-oklahoma-g1': 'G1 Oklahoma Goldback',
+    // Header button slugs
+    'themeBtn': 'Theme',
+    'cloudSyncBtn': 'Cloud Sync',
+    'settingsBtn': 'Settings',
+    'aboutBtn': 'About',
+    'backupBtn': 'Backup',
+    'importBtn': 'Import',
+    'addItemBtn': 'Add Item',
+    'sortBtn': 'Sort',
+    'filterBtn': 'Filter',
+    'searchBtn': 'Search',
+    'marketBtn': 'Market',
+    'vaultBtn': 'Vault',
+    'trendBtn': 'Trend',
+    'restoreBtn': 'Restore',
+    'currencyBtn': 'Currency',
+    // Provider slugs
+    'STAKTRAKR': 'StakTrakr',
+    'METALS_DEV': 'Metals.dev',
+    'GOLDAPI': 'GoldAPI'
+  };
+
+  // ── JSON parse helper — cloud-sync vault passes settings as raw JSON strings ──
+  // Also handles CMP1-compressed localStorage values (loadDataSync decompresses,
+  // but raw localStorage.getItem() and vault payloads may not).
+  function _parseSetting(val) {
+    if (typeof val !== 'string') return val;
+    if (typeof __decompressIfNeeded === 'function') val = __decompressIfNeeded(val);
+    try { return JSON.parse(val); } catch (e) { return val; }
+  }
+
+  // ── Settings sub-renderers (STAK-455) ──
+
+  function _renderChipStrip(key, localArr, remoteArr) {
+    // Guard: if either side is still a string after parsing, bail to inline renderer
+    if (!Array.isArray(localArr) && !Array.isArray(remoteArr)) return null;
+    if (!Array.isArray(localArr)) localArr = [];
+    if (!Array.isArray(remoteArr)) remoteArr = [];
+    var localById = {};
+    var remoteById = {};
+    var i, id;
+    for (i = 0; i < localArr.length; i++) {
+      id = localArr[i].id || localArr[i].label || i;
+      localById[id] = localArr[i];
+    }
+    for (i = 0; i < remoteArr.length; i++) {
+      id = remoteArr[i].id || remoteArr[i].label || i;
+      remoteById[id] = remoteArr[i];
+    }
+    var allIds = {};
+    for (id in localById) allIds[id] = true;
+    for (id in remoteById) allIds[id] = true;
+
+    var matchedHtml = '';
+    var localHtml = '';
+    var remoteHtml = '';
+    var diffCount = 0;
+    var overflowLocal = '';
+    var overflowRemote = '';
+
+    for (id in allIds) {
+      var loc = localById[id];
+      var rem = remoteById[id];
+      var chipLabel = (loc ? (loc.label || id) : (rem ? (rem.label || id) : id));
+      var fieldKey = 'setting-' + key + '-' + id;
+      var selSide = _fieldSelections[fieldKey] || '';
+
+      if (loc && rem && loc.enabled === rem.enabled) {
+        var icon = loc.enabled ? '\u2713' : '\u2717';
+        matchedHtml += '<span class="dm-chip-matched">' + icon + ' ' + _esc(String(chipLabel)) + '</span> ';
+      } else {
+        diffCount++;
+        var localChip = '';
+        var remoteChip = '';
+        if (loc) {
+          var lIcon = loc.enabled ? '\u2713' : '\u2717';
+          var lCls = 'dm-chip-local ' + (loc.enabled ? 'dm-chip-enabled' : 'dm-chip-disabled') + (selSide === 'local' ? ' dm-selected' : '');
+          localChip = '<span class="' + lCls + '" data-field="' + _esc(fieldKey) + '" data-side="local">' + lIcon + ' ' + _esc(String(chipLabel)) + '</span> ';
+        }
+        if (rem) {
+          var rIcon = rem.enabled ? '\u2713' : '\u2717';
+          var rCls = 'dm-chip-remote ' + (rem.enabled ? 'dm-chip-enabled' : 'dm-chip-disabled') + (selSide === 'remote' ? ' dm-selected' : '');
+          remoteChip = '<span class="' + rCls + '" data-field="' + _esc(fieldKey) + '" data-side="remote">' + rIcon + ' ' + _esc(String(chipLabel)) + '</span> ';
+        }
+        if (diffCount <= 15) {
+          localHtml += localChip;
+          remoteHtml += remoteChip;
+        } else {
+          overflowLocal += localChip;
+          overflowRemote += remoteChip;
+        }
+      }
+    }
+
+    var html = '';
+    if (matchedHtml) html += '<div class="dm-setting-expanded">' + matchedHtml + '</div>';
+    html += '<div class="dm-setting-sides">';
+    html += '<div class="dm-setting-side"><div class="dm-setting-side-label" style="color:var(--primary,#6366f1)">Local</div><div class="dm-setting-expanded">' + localHtml;
+    if (overflowLocal) {
+      html += '<span class="dm-show-more" data-expand="' + _esc(key) + '-local">Show ' + (diffCount - 15) + ' more\u2026</span>';
+      html += '<div class="dm-expandable" id="expand-' + _esc(key) + '-local">' + overflowLocal + '</div>';
+    }
+    html += '</div></div>';
+    html += '<div class="dm-setting-arrow">\u2192</div>';
+    html += '<div class="dm-setting-side"><div class="dm-setting-side-label" style="color:var(--info,#3b82f6)">Remote</div><div class="dm-setting-expanded">' + remoteHtml;
+    if (overflowRemote) {
+      html += '<span class="dm-show-more" data-expand="' + _esc(key) + '-remote">Show ' + (diffCount - 15) + ' more\u2026</span>';
+      html += '<div class="dm-expandable" id="expand-' + _esc(key) + '-remote">' + overflowRemote + '</div>';
+    }
+    html += '</div></div>';
+    html += '</div>';
+    return html;
+  }
+
+  function _renderToggleMap(key, localObj, remoteObj) {
+    if ((typeof localObj !== 'object' || localObj === null) && (typeof remoteObj !== 'object' || remoteObj === null)) return null;
+    if (typeof localObj !== 'object' || localObj === null) localObj = {};
+    if (typeof remoteObj !== 'object' || remoteObj === null) remoteObj = {};
+    var allKeys = {};
+    var k;
+    for (k in localObj) allKeys[k] = true;
+    for (k in remoteObj) allKeys[k] = true;
+
+    var matchedHtml = '';
+    var localHtml = '';
+    var remoteHtml = '';
+    var diffCount = 0;
+    var overflowLocal = '';
+    var overflowRemote = '';
+
+    for (k in allKeys) {
+      var lv = localObj.hasOwnProperty(k) ? localObj[k] : undefined;
+      var rv = remoteObj.hasOwnProperty(k) ? remoteObj[k] : undefined;
+      var fieldKey = 'setting-' + key + '-' + k;
+      var selSide = _fieldSelections[fieldKey] || '';
+      var humanLabel = _titleCase(k);
+
+      if (lv !== undefined && rv !== undefined && lv === rv) {
+        var mIcon = lv ? '\u2713' : '\u2717';
+        matchedHtml += '<span class="dm-chip-matched">' + mIcon + ' ' + _esc(humanLabel) + '</span> ';
+      } else {
+        diffCount++;
+        var localChip = '';
+        var remoteChip = '';
+        if (lv !== undefined) {
+          var lIcon = lv ? '\u2713' : '\u2717';
+          var lCls = 'dm-chip-local ' + (lv ? 'dm-chip-enabled' : 'dm-chip-disabled') + (selSide === 'local' ? ' dm-selected' : '');
+          localChip = '<span class="' + lCls + '" data-field="' + _esc(fieldKey) + '" data-side="local">' + lIcon + ' ' + _esc(humanLabel) + '</span> ';
+        }
+        if (rv !== undefined) {
+          var rIcon = rv ? '\u2713' : '\u2717';
+          var rCls = 'dm-chip-remote ' + (rv ? 'dm-chip-enabled' : 'dm-chip-disabled') + (selSide === 'remote' ? ' dm-selected' : '');
+          remoteChip = '<span class="' + rCls + '" data-field="' + _esc(fieldKey) + '" data-side="remote">' + rIcon + ' ' + _esc(humanLabel) + '</span> ';
+        }
+        if (diffCount <= 15) {
+          localHtml += localChip;
+          remoteHtml += remoteChip;
+        } else {
+          overflowLocal += localChip;
+          overflowRemote += remoteChip;
+        }
+      }
+    }
+
+    var html = '';
+    if (matchedHtml) html += '<div class="dm-setting-expanded">' + matchedHtml + '</div>';
+    html += '<div class="dm-setting-sides">';
+    html += '<div class="dm-setting-side"><div class="dm-setting-side-label" style="color:var(--primary,#6366f1)">Local</div><div class="dm-setting-expanded">' + localHtml;
+    if (overflowLocal) {
+      html += '<span class="dm-show-more" data-expand="' + _esc(key) + '-local">Show ' + (diffCount - 15) + ' more\u2026</span>';
+      html += '<div class="dm-expandable" id="expand-' + _esc(key) + '-local">' + overflowLocal + '</div>';
+    }
+    html += '</div></div>';
+    html += '<div class="dm-setting-arrow">\u2192</div>';
+    html += '<div class="dm-setting-side"><div class="dm-setting-side-label" style="color:var(--info,#3b82f6)">Remote</div><div class="dm-setting-expanded">' + remoteHtml;
+    if (overflowRemote) {
+      html += '<span class="dm-show-more" data-expand="' + _esc(key) + '-remote">Show ' + (diffCount - 15) + ' more\u2026</span>';
+      html += '<div class="dm-expandable" id="expand-' + _esc(key) + '-remote">' + overflowRemote + '</div>';
+    }
+    html += '</div></div>';
+    html += '</div>';
+    return html;
+  }
+
+  function _renderSlugChips(key, localArr, remoteArr) {
+    if (!Array.isArray(localArr) && !Array.isArray(remoteArr)) return null;
+    if (!Array.isArray(localArr)) localArr = [];
+    if (!Array.isArray(remoteArr)) remoteArr = [];
+    var localSet = {};
+    var remoteSet = {};
+    var i;
+    for (i = 0; i < localArr.length; i++) localSet[localArr[i]] = true;
+    for (i = 0; i < remoteArr.length; i++) remoteSet[remoteArr[i]] = true;
+
+    var matchedHtml = '';
+    var localHtml = '';
+    var remoteHtml = '';
+    var totalChips = 0;
+    var matchedOverflowCount = 0;
+    var overflowLocal = '';
+    var overflowRemote = '';
+    var overflowMatched = '';
+
+    var allSlugs = {};
+    for (i = 0; i < localArr.length; i++) allSlugs[localArr[i]] = true;
+    for (i = 0; i < remoteArr.length; i++) allSlugs[remoteArr[i]] = true;
+
+    for (var slug in allSlugs) {
+      var inLocal = localSet[slug];
+      var inRemote = remoteSet[slug];
+      var humanLabel = SLUG_LABELS[slug] || _titleCase(slug);
+      totalChips++;
+
+      if (inLocal && inRemote) {
+        var mChip = '<span class="dm-chip-matched">' + _esc(humanLabel) + '</span> ';
+        if (totalChips <= 15) {
+          matchedHtml += mChip;
+        } else {
+          overflowMatched += mChip;
+          matchedOverflowCount++;
+        }
+      } else {
+        var fieldKey = 'setting-' + key + '-' + slug;
+        var selSide = _fieldSelections[fieldKey] || '';
+        if (inLocal) {
+          var lCls = 'dm-chip-local dm-chip-enabled' + (selSide === 'local' ? ' dm-selected' : '');
+          var lChip = '<span class="' + lCls + '" data-field="' + _esc(fieldKey) + '" data-side="local">' + _esc(humanLabel) + '</span> ';
+          if (totalChips <= 15) {
+            localHtml += lChip;
+          } else {
+            overflowLocal += lChip;
+          }
+        }
+        if (inRemote) {
+          var rCls = 'dm-chip-remote dm-chip-enabled' + (selSide === 'remote' ? ' dm-selected' : '');
+          var rChip = '<span class="' + rCls + '" data-field="' + _esc(fieldKey) + '" data-side="remote">' + _esc(humanLabel) + '</span> ';
+          if (totalChips <= 15) {
+            remoteHtml += rChip;
+          } else {
+            overflowRemote += rChip;
+          }
+        }
+      }
+    }
+
+    var html = '';
+    if (matchedHtml || overflowMatched) {
+      html += '<div class="dm-setting-expanded">' + matchedHtml;
+      if (overflowMatched) {
+        html += '<span class="dm-show-more" data-expand="' + _esc(key) + '-matched">Show ' + matchedOverflowCount + ' more\u2026</span>';
+        html += '<div class="dm-expandable" id="expand-' + _esc(key) + '-matched">' + overflowMatched + '</div>';
+      }
+      html += '</div>';
+    }
+    html += '<div class="dm-setting-sides">';
+    html += '<div class="dm-setting-side"><div class="dm-setting-side-label" style="color:var(--primary,#6366f1)">Local</div><div class="dm-setting-expanded">' + localHtml;
+    if (overflowLocal) {
+      html += '<span class="dm-show-more" data-expand="' + _esc(key) + '-local">Show more\u2026</span>';
+      html += '<div class="dm-expandable" id="expand-' + _esc(key) + '-local">' + overflowLocal + '</div>';
+    }
+    html += '</div></div>';
+    html += '<div class="dm-setting-arrow">\u2192</div>';
+    html += '<div class="dm-setting-side"><div class="dm-setting-side-label" style="color:var(--info,#3b82f6)">Remote</div><div class="dm-setting-expanded">' + remoteHtml;
+    if (overflowRemote) {
+      html += '<span class="dm-show-more" data-expand="' + _esc(key) + '-remote">Show more\u2026</span>';
+      html += '<div class="dm-expandable" id="expand-' + _esc(key) + '-remote">' + overflowRemote + '</div>';
+    }
+    html += '</div></div>';
+    html += '</div>';
+    return html;
+  }
+
+  function _renderKvPills(key, localObj, remoteObj) {
+    if ((typeof localObj !== 'object' || localObj === null) && (typeof remoteObj !== 'object' || remoteObj === null)) return null;
+    if (typeof localObj !== 'object' || localObj === null) localObj = {};
+    if (typeof remoteObj !== 'object' || remoteObj === null) remoteObj = {};
+    var allKeys = {};
+    var k;
+    for (k in localObj) allKeys[k] = true;
+    for (k in remoteObj) allKeys[k] = true;
+
+    var matchedHtml = '';
+    var localHtml = '';
+    var remoteHtml = '';
+    var diffCount = 0;
+    var overflowLocal = '';
+    var overflowRemote = '';
+
+    for (k in allKeys) {
+      var lv = localObj.hasOwnProperty(k) ? localObj[k] : undefined;
+      var rv = remoteObj.hasOwnProperty(k) ? remoteObj[k] : undefined;
+      var fieldKey = 'setting-' + key + '-' + k;
+      var selSide = _fieldSelections[fieldKey] || '';
+      var humanKey = _titleCase(k);
+
+      if (lv !== undefined && rv !== undefined && lv === rv) {
+        matchedHtml += '<span class="dm-kv-pill matched">' + _esc(humanKey) + ': ' + _esc(String(lv)) + '</span> ';
+      } else {
+        diffCount++;
+        var localPill = '';
+        var remotePill = '';
+        if (lv !== undefined) {
+          var lCls = 'dm-kv-pill local' + (selSide === 'local' ? ' dm-selected' : '');
+          localPill = '<span class="' + lCls + '" data-field="' + _esc(fieldKey) + '" data-side="local">' + _esc(humanKey) + ': ' + _esc(String(lv)) + '</span> ';
+        }
+        if (rv !== undefined) {
+          var rCls = 'dm-kv-pill remote' + (selSide === 'remote' ? ' dm-selected' : '');
+          remotePill = '<span class="' + rCls + '" data-field="' + _esc(fieldKey) + '" data-side="remote">' + _esc(humanKey) + ': ' + _esc(String(rv)) + '</span> ';
+        }
+        if (diffCount <= 15) {
+          localHtml += localPill;
+          remoteHtml += remotePill;
+        } else {
+          overflowLocal += localPill;
+          overflowRemote += remotePill;
+        }
+      }
+    }
+
+    var html = '';
+    if (matchedHtml) html += '<div class="dm-setting-expanded">' + matchedHtml + '</div>';
+    html += '<div class="dm-setting-sides">';
+    html += '<div class="dm-setting-side"><div class="dm-setting-side-label" style="color:var(--primary,#6366f1)">Local</div><div class="dm-setting-expanded">' + localHtml;
+    if (overflowLocal) {
+      html += '<span class="dm-show-more" data-expand="' + _esc(key) + '-local">Show ' + (diffCount - 15) + ' more\u2026</span>';
+      html += '<div class="dm-expandable" id="expand-' + _esc(key) + '-local">' + overflowLocal + '</div>';
+    }
+    html += '</div></div>';
+    html += '<div class="dm-setting-arrow">\u2192</div>';
+    html += '<div class="dm-setting-side"><div class="dm-setting-side-label" style="color:var(--info,#3b82f6)">Remote</div><div class="dm-setting-expanded">' + remoteHtml;
+    if (overflowRemote) {
+      html += '<span class="dm-show-more" data-expand="' + _esc(key) + '-remote">Show ' + (diffCount - 15) + ' more\u2026</span>';
+      html += '<div class="dm-expandable" id="expand-' + _esc(key) + '-remote">' + overflowRemote + '</div>';
+    }
+    html += '</div></div>';
+    html += '</div>';
+    return html;
+  }
+
+  function _renderCountSummary(key, localVal, remoteVal) {
+    var resKey = 'setting-' + key;
+    var selected = _conflictResolutions[resKey] || '';
+    var localCount = 0;
+    var remoteCount = 0;
+    if (Array.isArray(localVal)) localCount = localVal.length;
+    else if (localVal && typeof localVal === 'object') localCount = Object.keys(localVal).length;
+    else if (localVal !== null && localVal !== undefined) localCount = 1;
+    if (Array.isArray(remoteVal)) remoteCount = remoteVal.length;
+    else if (remoteVal && typeof remoteVal === 'object') remoteCount = Object.keys(remoteVal).length;
+    else if (remoteVal !== null && remoteVal !== undefined) remoteCount = 1;
+
+    var localBtnCls = 'dm-count-btn' + (selected === 'local' ? ' active' : '');
+    var remoteBtnCls = 'dm-count-btn' + (selected === 'remote' ? ' active' : '');
+
+    var html = '<div class="dm-count-summary">';
+    html += '<span class="dm-count-badge">' + _esc(String(localCount)) + ' local</span>';
+    html += '<span class="dm-count-badge">' + _esc(String(remoteCount)) + ' remote</span>';
+    html += '<span class="' + localBtnCls + '" data-setting-resolution="' + _esc(resKey) + '" data-side="local">Keep Local</span>';
+    html += '<span class="' + remoteBtnCls + '" data-setting-resolution="' + _esc(resKey) + '" data-side="remote">Use Remote</span>';
+    html += '</div>';
+    return html;
+  }
+
+  function _renderSettingRow(key, localVal, remoteVal) {
+    var type = SETTINGS_VALUE_TYPE[key];
+    if (!type) return null;
+    // Cloud-sync vault passes settings as JSON strings — parse before rendering
+    localVal = _parseSetting(localVal);
+    remoteVal = _parseSetting(remoteVal);
+    // Each renderer has its own type guards and returns null if inputs are wrong
+    switch (type) {
+      case 'chip-strip': return _renderChipStrip(key, localVal, remoteVal);
+      case 'toggle-map': return _renderToggleMap(key, localVal, remoteVal);
+      case 'slug-chips': return _renderSlugChips(key, localVal, remoteVal);
+      case 'kv-pills': return _renderKvPills(key, localVal, remoteVal);
+      case 'count-summary': return _renderCountSummary(key, localVal, remoteVal);
+      default: return null;
+    }
+  }
+
+  function _groupByItem(conflictsArray) {
+    var grouped = {};
+    if (!conflictsArray || !conflictsArray.length) return grouped;
+    // Build UUID → name lookup from inventory for human-readable headers
+    var nameByKey = {};
+    if (typeof inventory !== 'undefined' && Array.isArray(inventory)) {
+      for (var inv = 0; inv < inventory.length; inv++) {
+        var invItem = inventory[inv];
+        var invKey = (typeof DiffEngine !== 'undefined' && DiffEngine.computeItemKey) ? DiffEngine.computeItemKey(invItem) : (invItem.uuid || invItem.id || '');
+        if (invKey && invItem.name) nameByKey[invKey] = invItem.name;
+      }
+    }
+    for (var i = 0; i < conflictsArray.length; i++) {
+      var c = conflictsArray[i];
+      var key = c.itemKey || '';
+      var name = c.itemName || nameByKey[key] || key;
+      if (!grouped[name]) grouped[name] = [];
+      grouped[name].push({ field: c.field, localVal: c.localVal, remoteVal: c.remoteVal, idx: i });
+    }
+    return grouped;
+  }
+
+  function _formatSettingValue(key, value) {
+    if (key === 'metalApiConfig') return value ? '\u2022\u2022\u2022 configured' : 'not set';
+    value = _parseSetting(value);
+    if (value === null || value === undefined) return '\u2014';
+    if (typeof value === 'boolean') return value ? 'On' : 'Off';
+    if (value === 'true') return 'On';
+    if (value === 'false') return 'Off';
+    if (Array.isArray(value)) {
+      var label = value.length + ' items';
+      if (value.length > 0 && typeof value[0] === 'string') {
+        var preview = value.slice(0, 2).join(', ');
+        if (value.length > 2) preview += ', \u2026';
+        label += ' (' + _esc(preview) + ')';
+      }
+      return label;
+    }
+    if (typeof value === 'object') return Object.keys(value).length + ' entries';
+    return _esc(String(value));
+  }
+
+  // ── Metal helpers ──
+
+  var _metalRgb = {
+    gold: '255,215,0', silver: '192,192,192',
+    platinum: '229,228,226', palladium: '206,208,206'
+  };
+  var _metalCssVar = {
+    gold: 'var(--gold)', silver: 'var(--silver)',
+    platinum: 'var(--platinum)', palladium: 'var(--palladium)'
+  };
+
+  function _metalColor(metal) {
+    var key = (metal || '').toLowerCase();
+    return _metalCssVar[key] || 'var(--text-muted,#6b7094)';
+  }
+
+  function _metalBgGradient(metal) {
+    var key = (metal || '').toLowerCase();
+    var rgb = _metalRgb[key] || '128,128,128';
+    return 'linear-gradient(135deg, rgba(' + rgb + ',0.15), rgba(' + rgb + ',0.05))';
+  }
+
   // ── Internal state ──
   var _options = null;
   var _checkedItems = {};      // { 'added-0': true, 'modified-2': false, ... }
   var _conflictResolutions = {}; // { 'c0': 'local'|'remote', ... }
   var _collapsedCategories = {}; // { added: true, ... }
   var _expandedModified = {};    // { 0: true, 1: false, ... }
+  var _expandedSettingsCategories = {}; // { 'Appearance': true, ... }
   var _selectAllState = 0;  // 0=none, 1=added+modified, 2=all
+
+  // Card-based state (STAK-454)
+  var _orphanActions = {};       // { 'added-0': 'import'|'skip', 'deleted-1': 'keep'|'remove' }
+  var _fieldSelections = {};     // { 'conflict-0-purchasePrice': 'local'|'remote' }
+  var _resolvedConflicts = {};   // { 0: true, 1: true }
+  var _blobUrls = [];            // Tracked blob URLs for revocation on re-render/close
 
   // ── Helpers ──
 
@@ -42,6 +605,13 @@
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;');
+  }
+
+  function _titleCase(key) {
+    return key
+      .replace(/([a-z])([A-Z])/g, '$1 $2')
+      .replace(/[-_]/g, ' ')
+      .replace(/\b\w/g, function(c) { return c.toUpperCase(); });
   }
 
   /** Derive a display key for an item */
@@ -151,23 +721,703 @@
 
   // ── Rendering ──
 
+  function _renderSummaryDashboard(container, diff, conflicts) {
+    if (!container) return;
+    var matched = (diff.unchanged || []).length;
+    var syncConflicts = (conflicts && conflicts.conflicts || []).length;
+    var modifiedCount = (diff.modified || []).length;
+    // Show whichever is relevant: true sync conflicts, or modified items for imports
+    var conflictCount = syncConflicts > 0 ? syncConflicts : modifiedCount;
+    var remoteOnly = (diff.added || []).length;
+    var localOnly = (diff.deleted || []).length;
+
+    var cards = [
+      { count: matched, label: 'Matched', target: 'diffSectionModified', color: '', style: 'opacity:0.5' },
+      { count: conflictCount, label: 'Conflicts', target: 'diffSectionModified', color: conflictCount > 0 ? 'color:#d97706' : '', style: '' },
+      { count: remoteOnly, label: 'Remote Only', target: 'diffSectionOrphans', color: '', style: '' },
+      { count: localOnly, label: 'Local Only', target: 'diffSectionOrphans', color: '', style: '' }
+    ];
+
+    var cardStyle = 'flex:1;min-width:120px;border-radius:8px;padding:0.6rem;background:var(--bg-tertiary,transparent);cursor:pointer;text-align:center';
+    var html = '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin:0.75rem 0">';
+    for (var i = 0; i < cards.length; i++) {
+      var card = cards[i];
+      var numStyle = 'font-size:1.4rem;font-weight:700';
+      if (card.style) numStyle += ';' + card.style;
+      if (card.color) numStyle += ';' + card.color;
+      html += '<div data-scroll-target="' + _esc(card.target) + '" style="' + cardStyle + '">';
+      html += '<div style="' + numStyle + '">' + card.count + '</div>';
+      html += '<div style="font-size:0.7rem;opacity:0.6">' + _esc(card.label) + '</div>';
+      html += '</div>';
+    }
+    html += '</div>';
+
+    container.innerHTML = html;
+    container.onclick = function(e) {
+      var target = e.target.closest('[data-scroll-target]');
+      if (target) {
+        var el = safeGetElement(target.getAttribute('data-scroll-target'));
+        if (el instanceof HTMLElement) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    };
+  }
+
+  function _renderProgressTracker(container, conflicts, source) {
+    if (!container) return;
+    if (!source || source.type !== 'sync') {
+      container.style.display = 'none';
+      return;
+    }
+
+    var total = 0;
+    var resolved = 0;
+    for (var key in _conflictResolutions) {
+      if (_conflictResolutions.hasOwnProperty(key) && key.charAt(0) === 'c' && key.indexOf('setting-') !== 0) {
+        total++;
+        if (_conflictResolutions[key]) resolved++;
+      }
+    }
+
+    var pct = total > 0 ? Math.round((resolved / total) * 100) : 100;
+    var html = '<div style="height:6px;border-radius:3px;background:var(--border-color,#ddd);margin:0.5rem 0">';
+    html += '<div style="height:100%;border-radius:3px;background:#22c55e;width:' + pct + '%;transition:width 0.3s"></div>';
+    html += '</div>';
+    html += '<div id="diffProgressText" style="font-size:0.75rem;opacity:0.6">' + resolved + ' of ' + total + ' conflicts resolved';
+    if (pct === 100 && total > 0) html += ' &#9989;';
+    html += '</div>';
+
+    container.innerHTML = html;
+    container.style.display = '';
+  }
+
+  function _updateProgress() {
+    var container = safeGetElement('diffProgressTracker');
+    if (!container) return;
+
+    var total = 0;
+    var resolved = 0;
+    for (var key in _conflictResolutions) {
+      if (_conflictResolutions.hasOwnProperty(key) && key.charAt(0) === 'c' && key.indexOf('setting-') !== 0) {
+        total++;
+        if (_conflictResolutions[key]) resolved++;
+      }
+    }
+
+    var pct = total > 0 ? Math.round((resolved / total) * 100) : 100;
+    var bar = container.querySelector('div > div');
+    if (bar) bar.style.width = pct + '%';
+
+    var textDiv = safeGetElement('diffProgressText');
+    if (!(textDiv instanceof HTMLElement)) textDiv = null;
+    if (textDiv) {
+      var txt = resolved + ' of ' + total + ' conflicts resolved';
+      if (pct === 100 && total > 0) txt += ' \u2705';
+      textDiv.textContent = txt;
+    }
+  }
+
+  function _renderConflictCards(container, conflicts) {
+    if (!container) return;
+    if (!conflicts || !conflicts.conflicts || conflicts.conflicts.length === 0) {
+      container.style.display = 'none';
+      return;
+    }
+
+    var grouped = _groupByItem(conflicts.conflicts);
+    var html = '';
+
+    for (var itemName in grouped) {
+      if (!grouped.hasOwnProperty(itemName)) continue;
+      var fields = grouped[itemName];
+
+      html += '<div data-conflict-card="' + _esc(itemName) + '" style="border-radius:8px;border:1px solid var(--border-color,#ddd);padding:0.75rem;margin-bottom:0.75rem">';
+
+      // Card header
+      html += '<div>';
+      html += '<span style="font-weight:600;font-size:0.85rem">' + _esc(itemName) + '</span>';
+      html += '<span style="display:inline-block;background:rgba(217,119,6,0.1);color:#d97706;border-radius:12px;padding:0.1rem 0.5rem;font-size:0.7rem;margin-left:0.5rem">' + fields.length + ' field' + (fields.length !== 1 ? 's' : '') + '</span>';
+      html += '</div>';
+
+      // Field rows
+      for (var f = 0; f < fields.length; f++) {
+        var conflict = fields[f];
+        var resKey = 'c' + conflict.idx + '-' + conflict.field;
+        var selected = _conflictResolutions[resKey] || '';
+        var localStyle = 'padding:0.25rem 0.6rem;border-radius:4px;cursor:pointer;font-size:0.8rem;';
+        var remoteStyle = 'padding:0.25rem 0.6rem;border-radius:4px;cursor:pointer;font-size:0.8rem;';
+
+        if (selected === 'local') {
+          localStyle += 'border:1px solid #22c55e;background:rgba(34,197,94,0.08)';
+          remoteStyle += 'border:1px solid transparent';
+        } else if (selected === 'remote') {
+          localStyle += 'border:1px solid transparent';
+          remoteStyle += 'border:1px solid #22c55e;background:rgba(34,197,94,0.08)';
+        } else {
+          localStyle += 'border:1px solid transparent';
+          remoteStyle += 'border:1px solid transparent';
+        }
+
+        var localDisplay = _esc(String(conflict.localVal != null ? conflict.localVal : '\u2014'));
+        var remoteDisplay = _esc(String(conflict.remoteVal != null ? conflict.remoteVal : '\u2014'));
+
+        html += '<div style="display:flex;align-items:center;gap:0.4rem;padding:0.3rem 0">';
+        html += '<span style="min-width:100px;font-size:0.78rem;opacity:0.6">' + _esc(conflict.field) + '</span>';
+        html += '<span data-resolution="' + _esc(resKey) + '" data-side="local" style="' + localStyle + '">' + localDisplay + '</span>';
+        html += '<span style="opacity:0.3;font-size:0.7rem">\u21C4</span>';
+        html += '<span data-resolution="' + _esc(resKey) + '" data-side="remote" style="' + remoteStyle + '">' + remoteDisplay + '</span>';
+        html += '</div>';
+      }
+
+      html += '</div>';
+    }
+
+    container.innerHTML = html;
+
+    container.onclick = function(e) {
+      var btn = e.target.closest('[data-resolution]');
+      if (!btn) return;
+      var key = btn.getAttribute('data-resolution');
+      var side = btn.getAttribute('data-side');
+      _conflictResolutions[key] = side;
+      _renderConflictCards(container, conflicts);
+      if (typeof _updateProgress === 'function') _updateProgress();
+    };
+
+    container.style.display = '';
+  }
+
+  function _renderSettingsCards(container, settingsDiff) {
+    if (!container) return;
+    var changed = (settingsDiff && settingsDiff.changed) ? settingsDiff.changed : [];
+    var matched = (settingsDiff && (settingsDiff.unchanged || settingsDiff.matched)) ? (settingsDiff.unchanged || settingsDiff.matched) : [];
+    if (changed.length === 0 && matched.length === 0) {
+      container.innerHTML = '';
+      container.style.display = 'none';
+      return;
+    }
+
+    // Build category lookup for each entry
+    var catNames = Object.keys(SETTINGS_CATEGORIES);
+    function _findCategory(key) {
+      for (var ci = 0; ci < catNames.length; ci++) {
+        var cat = SETTINGS_CATEGORIES[catNames[ci]];
+        for (var ki = 0; ki < cat.keys.length; ki++) {
+          if (cat.keys[ki] === key) return catNames[ci];
+        }
+      }
+      return 'Other';
+    }
+
+    // Group changed and matched by category
+    var changedByCat = {};
+    var matchedByCat = {};
+    var i;
+    for (i = 0; i < changed.length; i++) {
+      var cCat = _findCategory(changed[i].key);
+      if (!changedByCat[cCat]) changedByCat[cCat] = [];
+      changedByCat[cCat].push(changed[i]);
+    }
+    for (i = 0; i < matched.length; i++) {
+      var mCat = _findCategory(matched[i].key);
+      if (!matchedByCat[mCat]) matchedByCat[mCat] = [];
+      matchedByCat[mCat].push(matched[i]);
+    }
+
+    // Collect only categories that have actual diffs (skip matched-only categories)
+    var orderedCats = [];
+    for (var cn = 0; cn < catNames.length; cn++) {
+      if (changedByCat[catNames[cn]] && changedByCat[catNames[cn]].length > 0) orderedCats.push(catNames[cn]);
+    }
+    if (changedByCat['Other'] && changedByCat['Other'].length > 0) orderedCats.push('Other');
+
+    // Count total changed settings and how many are resolved
+    var totalChanged = changed.length;
+    var resolvedCount = 0;
+    for (i = 0; i < changed.length; i++) {
+      if (_conflictResolutions['setting-' + changed[i].key]) resolvedCount++;
+    }
+
+    // Visual separator between Items and Settings sections
+    var collapsed = _collapsedCategories.settings;
+    var html = '<div style="margin:1.2rem 0 0.8rem;border-top:2px solid var(--border-color,rgba(255,255,255,0.1));padding-top:0.6rem">';
+    html += '<div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted,#888);margin-bottom:0.4rem">User Configuration</div>';
+    html += '</div>';
+
+    // Section wrapper (matches item card section structure)
+    html += '<div class="dm-section-wrapper" data-section="settings">';
+
+    // Section header with collapse toggle + bulk actions
+    html += '<div class="dm-section-header">';
+    html += '<div class="dm-section-title">';
+    html += '<span class="dm-collapse-toggle' + (collapsed ? ' collapsed' : '') + '" data-cat-toggle="settings">' + (collapsed ? '&#9654;' : '&#9660;') + '</span>';
+    html += '<span>\u2699\uFE0F</span> Settings';
+    html += '<span class="dm-chip">' + totalChanged + ' diff' + (totalChanged !== 1 ? 's' : '') + '</span>';
+    html += '</div>';
+    html += '<div class="dm-section-actions">';
+    html += '<button class="dm-btn dm-btn-sm dm-btn-secondary" data-settings-bulk="local">Keep All Local</button>';
+    html += '<button class="dm-btn dm-btn-sm dm-btn-secondary" data-settings-bulk="remote">Keep All Remote</button>';
+    html += '</div>';
+    html += '</div>';
+
+    // Settings summary bubble — count how many go to local vs remote
+    if (totalChanged > 0) {
+      var localCount = 0;
+      var remoteCount = 0;
+      for (i = 0; i < changed.length; i++) {
+        var res = _conflictResolutions['setting-' + changed[i].key];
+        if (res === 'local') localCount++;
+        else remoteCount++;
+      }
+      html += '<div style="background:var(--bg-secondary,#1e293b);border-radius:8px;padding:0.5rem 0.75rem;margin:0.4rem 0">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;font-size:0.78rem">';
+      html += '<span>Using <strong>remote</strong> for <strong>' + remoteCount + '</strong>';
+      if (localCount > 0) html += ', <strong>local</strong> for <strong>' + localCount + '</strong>';
+      html += ' of ' + totalChanged + ' settings</span>';
+      html += '<span style="font-size:0.7rem;color:var(--text-muted,#888)">Click values to switch</span>';
+      html += '</div>';
+      html += '</div>';
+    }
+
+    // Section body (collapsible)
+    html += '<div class="dm-section-body' + (collapsed ? ' collapsed' : '') + '">';
+
+    var renderedCount = 0;
+
+    for (var oci = 0; oci < orderedCats.length; oci++) {
+      var catKey = orderedCats[oci];
+      var catChanged = changedByCat[catKey] || [];
+      var catMatched = matchedByCat[catKey] || [];
+      if (catChanged.length === 0) continue;
+
+      var catDef = SETTINGS_CATEGORIES[catKey];
+      var catIcon = catDef ? catDef.icon : '\u2699\uFE0F';
+
+      // Category card (bordered, matches dm-card style)
+      html += '<div class="dm-card" style="margin-bottom:0.75rem;padding:0.75rem">';
+
+      // Card header with category name + diff badge
+      html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem">';
+      html += '<div style="display:flex;align-items:center;gap:0.4rem">';
+      html += '<span style="font-weight:600;font-size:0.85rem">' + catIcon + ' ' + _esc(catKey) + '</span>';
+      if (catChanged.length > 0) {
+        html += '<span class="dm-pill dm-pill-warning">' + catChanged.length + ' diff' + (catChanged.length !== 1 ? 's' : '') + '</span>';
+      }
+      html += '</div>';
+      // Per-category bulk actions
+      if (catChanged.length > 0) {
+        html += '<div style="display:flex;gap:0.3rem">';
+        html += '<button class="dm-btn dm-btn-sm dm-btn-secondary" data-cat-bulk="' + _esc(catKey) + '" data-side="local" style="font-size:0.68rem;padding:0.15rem 0.4rem">Keep Local</button>';
+        html += '<button class="dm-btn dm-btn-sm dm-btn-secondary" data-cat-bulk="' + _esc(catKey) + '" data-side="remote" style="font-size:0.68rem;padding:0.15rem 0.4rem">Use Remote</button>';
+        html += '</div>';
+      }
+      html += '</div>';
+
+      // Changed setting rows
+      for (var ci2 = 0; ci2 < catChanged.length; ci2++) {
+        var entry = catChanged[ci2];
+        var label = SETTINGS_LABELS[entry.key] || _titleCase(entry.key);
+
+        // Try rich renderer first
+        var expandedHtml = _renderSettingRow(entry.key, entry.localVal, entry.remoteVal);
+        if (expandedHtml !== null) {
+          html += '<div style="padding:0.4rem 0;border-top:1px solid var(--border-color,rgba(255,255,255,0.05))">';
+          html += '<div style="font-size:0.78rem;font-weight:500;margin-bottom:0.3rem">' + _esc(label) + '</div>';
+          html += expandedHtml;
+          html += '</div>';
+          continue;
+        }
+
+        // Fallback: inline click-to-pick buttons (uses dm-field-diff grid like item cards)
+        var resKey = 'setting-' + entry.key;
+        var selected = _conflictResolutions[resKey] || '';
+        var localSel = selected === 'local' ? ' selected' : '';
+        var remoteSel = selected === 'remote' ? ' selected' : '';
+
+        html += '<div class="dm-field-diff" style="border-top:1px solid var(--border-color,rgba(255,255,255,0.05));padding:0.4rem 0">';
+        html += '<div class="dm-field-label">' + _esc(label) + '</div>';
+        html += '<div class="dm-field-value local' + localSel + '" data-setting-resolution="' + _esc(resKey) + '" data-side="local" style="cursor:pointer" title="' + _esc(_formatSettingValue(entry.key, entry.localVal)) + '">' + _formatSettingValue(entry.key, entry.localVal) + '</div>';
+        html += '<div class="dm-field-arrow">&#10231;</div>';
+        html += '<div class="dm-field-value remote' + remoteSel + '" data-setting-resolution="' + _esc(resKey) + '" data-side="remote" style="cursor:pointer" title="' + _esc(_formatSettingValue(entry.key, entry.remoteVal)) + '">' + _formatSettingValue(entry.key, entry.remoteVal) + '</div>';
+        html += '</div>';
+      }
+
+      // Matched settings section (collapsed by default)
+      if (catMatched.length > 0) {
+        var isExpanded = _expandedSettingsCategories[catKey] || false;
+        html += '<div data-toggle-matched="' + _esc(catKey) + '" style="font-size:0.73rem;cursor:pointer;color:var(--primary,#3b82f6);margin-top:0.4rem;padding-top:0.3rem;border-top:1px solid var(--border-color,rgba(255,255,255,0.05))">';
+        html += (isExpanded ? '\u25BC Hide' : '\u25B6 Show') + ' ' + catMatched.length + ' matched setting' + (catMatched.length !== 1 ? 's' : '');
+        html += '</div>';
+
+        if (isExpanded) {
+          for (var mi = 0; mi < catMatched.length; mi++) {
+            var mEntry = catMatched[mi];
+            var mLabel = SETTINGS_LABELS[mEntry.key] || _titleCase(mEntry.key);
+            html += '<div style="display:flex;align-items:center;gap:0.4rem;padding:0.2rem 0;opacity:0.45;font-size:0.78rem">';
+            html += '<span>\u2713</span>';
+            html += '<span style="min-width:120px">' + _esc(mLabel) + '</span>';
+            html += '<span>' + _formatSettingValue(mEntry.key, mEntry.localVal) + '</span>';
+            html += '</div>';
+          }
+        }
+      }
+
+      html += '</div>'; // .dm-card
+      renderedCount++;
+    }
+
+    html += '</div></div>'; // .dm-section-body, .dm-section-wrapper
+
+    container.innerHTML = html;
+    container.style.display = renderedCount > 0 ? '' : 'none';
+
+    // Event delegation
+    container.onclick = function(e) {
+      // Per-element chip/pill clicks
+      var fieldBtn = e.target.closest('[data-field]');
+      if (fieldBtn) {
+        var field = fieldBtn.getAttribute('data-field');
+        var side = fieldBtn.getAttribute('data-side');
+        if (_fieldSelections[field] === side) {
+          delete _fieldSelections[field];
+        } else {
+          _fieldSelections[field] = side;
+        }
+        _renderSettingsCards(container, settingsDiff);
+        return;
+      }
+      // Show-more expander
+      var showMore = e.target.closest('.dm-show-more');
+      if (showMore) {
+        var expandKey = showMore.getAttribute('data-expand');
+        var expandEl = safeGetElement('expand-' + expandKey);
+        if (expandEl) {
+          expandEl.classList.add('expanded');
+          showMore.style.display = 'none';
+        }
+        return;
+      }
+      // Inline setting resolution (click-to-pick local/remote)
+      var btn = e.target.closest('[data-setting-resolution]');
+      if (btn) {
+        var key = btn.getAttribute('data-setting-resolution');
+        var rSide = btn.getAttribute('data-side');
+        _conflictResolutions[key] = rSide;
+        _renderSettingsCards(container, settingsDiff);
+        return;
+      }
+      // Matched toggle
+      var toggle = e.target.closest('[data-toggle-matched]');
+      if (toggle) {
+        var cat = toggle.getAttribute('data-toggle-matched');
+        _expandedSettingsCategories[cat] = !_expandedSettingsCategories[cat];
+        _renderSettingsCards(container, settingsDiff);
+        return;
+      }
+      // Section collapse toggle
+      var catToggle = e.target.closest('[data-cat-toggle="settings"]');
+      if (catToggle) {
+        _collapsedCategories.settings = !_collapsedCategories.settings;
+        _renderSettingsCards(container, settingsDiff);
+        return;
+      }
+      // Settings bulk "Keep All Local" / "Keep All Remote"
+      var bulkBtn = e.target.closest('[data-settings-bulk]');
+      if (bulkBtn) {
+        var bulkSide = bulkBtn.getAttribute('data-settings-bulk');
+        for (var bi = 0; bi < changed.length; bi++) {
+          _conflictResolutions['setting-' + changed[bi].key] = bulkSide;
+        }
+        _renderSettingsCards(container, settingsDiff);
+        return;
+      }
+      // Per-category bulk
+      var catBulk = e.target.closest('[data-cat-bulk]');
+      if (catBulk) {
+        var bulkCat = catBulk.getAttribute('data-cat-bulk');
+        var bulkCatSide = catBulk.getAttribute('data-side');
+        var catEntries = changedByCat[bulkCat] || [];
+        for (var cbi = 0; cbi < catEntries.length; cbi++) {
+          _conflictResolutions['setting-' + catEntries[cbi].key] = bulkCatSide;
+        }
+        _renderSettingsCards(container, settingsDiff);
+        return;
+      }
+    };
+  }
+
+  // ── Card-based renderers (STAK-454 — matches playground/diffmodal-item-cards.html) ──
+
+  /** Shared card header: dual OBV/REV thumbnails + item identity. Used by orphan and conflict cards. */
+  function _renderCardHeader(item, uuid) {
+    var grad = _metalBgGradient(item.metal);
+    var mColor = _metalColor(item.metal);
+    var html = '';
+    // Dual OBV/REV thumbnails
+    html += '<div class="dm-item-thumb-pair">';
+    html += '<div class="dm-item-thumb" style="background:' + grad + '"' + (uuid ? ' data-uuid="' + _esc(uuid) + '" data-side="obverse"' : '') + '><span style="color:' + mColor + ';font-size:0.55rem">OBV</span></div>';
+    html += '<div class="dm-item-thumb" style="background:' + grad + '"' + (uuid ? ' data-uuid="' + _esc(uuid) + '" data-side="reverse"' : '') + '><span style="color:' + mColor + ';font-size:0.55rem">REV</span></div>';
+    html += '</div>';
+    return html;
+  }
+
+  /** Render Added or Deleted items as orphan cards. Returns HTML string. */
+  function _renderOrphanCards(type, items) {
+    if (!items || items.length === 0) return '';
+    var collapsed = _collapsedCategories[type];
+    var isAdded = (type === 'added');
+    var sectionColor = isAdded ? 'var(--info,#3b82f6)' : 'var(--loss,#ef4444)';
+    var sectionIcon = isAdded ? '&#8595;' : '&#8593;';
+    var sectionLabel = isAdded ? 'Added / Remote Only' : 'Deleted / Local Only';
+
+    var html = '<div class="dm-section-wrapper" data-section="' + type + '" style="margin-top:1rem">';
+
+    // Section header
+    html += '<div class="dm-section-header">';
+    html += '<div class="dm-section-title">';
+    html += '<span class="dm-collapse-toggle' + (collapsed ? ' collapsed' : '') + '" data-cat-toggle="' + type + '">' + (collapsed ? '&#9654;' : '&#9660;') + '</span>';
+    html += '<span style="color:' + sectionColor + '">' + sectionIcon + '</span> ' + sectionLabel;
+    html += '<span class="dm-chip">' + items.length + ' item' + (items.length !== 1 ? 's' : '') + '</span>';
+    html += '</div>';
+    html += '<div class="dm-section-actions">';
+    if (isAdded) {
+      html += '<button class="dm-btn dm-btn-sm dm-btn-primary" data-bulk-action="import" data-bulk-section="added">Import All</button>';
+      html += '<button class="dm-btn dm-btn-sm dm-btn-muted" data-bulk-action="skip" data-bulk-section="added">Skip All</button>';
+    } else {
+      html += '<button class="dm-btn dm-btn-sm dm-btn-gain" data-bulk-action="keep" data-bulk-section="deleted">Keep All</button>';
+      html += '<button class="dm-btn dm-btn-sm dm-btn-muted" data-bulk-action="remove" data-bulk-section="deleted">Remove All</button>';
+    }
+    html += '</div>';
+    html += '</div>';
+
+    // Section body
+    html += '<div class="dm-section-body' + (collapsed ? ' collapsed' : '') + '">';
+    var showAll = _collapsedCategories['_showAll_' + type];
+    var limit = (!showAll && items.length > 30) ? 30 : items.length;
+    for (var i = 0; i < limit; i++) {
+      var item = items[i];
+      var key = type + '-' + i;
+      var action = _orphanActions[key] || (isAdded ? 'import' : 'keep');
+      var isSkipped = (isAdded && action === 'skip') || (!isAdded && action === 'remove');
+      var mColor = _metalColor(item.metal);
+      var uuid = item.uuid || '';
+
+      html += '<div class="dm-card dm-orphan-card' + (isSkipped ? ' skipped' : '') + '" data-action="' + action + '" data-idx="' + i + '" data-type="' + type + '">';
+      html += _renderCardHeader(item, uuid);
+      // Item identity
+      html += '<div class="dm-item-identity">';
+      html += '<div class="dm-item-name" style="color:' + mColor + '">' + _esc(item.name || 'Unnamed item') + '</div>';
+      html += '<div class="dm-item-meta">';
+      html += '<span style="color:' + mColor + '">' + _esc(item.metal || '') + '</span>';
+      if (item.weight != null) html += '<span>&#8226;</span><span>' + _esc(String(item.weight)) + ' ' + _esc(item.weightUnit || 'oz') + '</span>';
+      if (item.qty != null) html += '<span>&#8226;</span><span>Qty: ' + _esc(String(item.qty)) + '</span>';
+      html += '</div></div>';
+      // Action buttons — active action gets prominent color, inactive gets muted
+      html += '<div class="dm-orphan-actions">';
+      if (isAdded) {
+        var importActive = (action === 'import');
+        html += '<button class="dm-btn dm-btn-sm ' + (importActive ? 'dm-btn-primary' : 'dm-btn-muted') + ' dm-action-btn" data-set-action="import" data-idx="' + i + '" data-type="' + type + '">&#8595; Import</button>';
+        html += '<button class="dm-btn dm-btn-sm ' + (!importActive ? 'dm-btn-loss' : 'dm-btn-muted') + ' dm-skip-btn" data-set-action="skip" data-idx="' + i + '" data-type="' + type + '">Skip</button>';
+      } else {
+        var keepActive = (action === 'keep');
+        html += '<button class="dm-btn dm-btn-sm ' + (keepActive ? 'dm-btn-gain' : 'dm-btn-muted') + ' dm-keep-btn" data-set-action="keep" data-idx="' + i + '" data-type="' + type + '">Keep</button>';
+        html += '<button class="dm-btn dm-btn-sm ' + (!keepActive ? 'dm-btn-loss' : 'dm-btn-muted') + ' dm-remove-btn" data-set-action="remove" data-idx="' + i + '" data-type="' + type + '">Remove</button>';
+      }
+      html += '</div>';
+      html += '</div>';
+    }
+    if (!showAll && items.length > 30) {
+      html += '<div class="dm-show-more" data-show-more="' + type + '" style="text-align:center;padding:0.5rem;font-size:0.78rem;cursor:pointer;color:var(--primary,#6366f1)">Show ' + (items.length - 30) + ' more...</div>';
+    }
+    html += '</div></div>';
+    return html;
+  }
+
+  /** Render Modified items as conflict cards with click-to-pick field values. Returns HTML string. */
+  function _renderModifiedSection(modifiedItems) {
+    if (!modifiedItems || modifiedItems.length === 0) return '';
+
+    var collapsed = _collapsedCategories.modified;
+    var html = '<div class="dm-section-wrapper" data-section="modified" style="margin-top:1rem">';
+
+    // Section header
+    html += '<div class="dm-section-header">';
+    html += '<div class="dm-section-title">';
+    html += '<span class="dm-collapse-toggle' + (collapsed ? ' collapsed' : '') + '" data-cat-toggle="modified">' + (collapsed ? '&#9654;' : '&#9660;') + '</span>';
+    html += '<span style="color:var(--warning,#d97706)">&#9888;</span> Modified / Conflicts';
+    html += '<span class="dm-chip">' + modifiedItems.length + ' item' + (modifiedItems.length !== 1 ? 's' : '') + '</span>';
+    html += '</div>';
+    html += '<div class="dm-section-actions">';
+    html += '<button class="dm-btn dm-btn-sm dm-btn-secondary" data-global-action="keep-all-local">Keep All Local</button>';
+    html += '<button class="dm-btn dm-btn-sm dm-btn-secondary" data-global-action="keep-all-remote">Keep All Remote</button>';
+    html += '</div>';
+    html += '</div>';
+
+    // Resolve progress
+    var resolvedCount = 0;
+    for (var rc = 0; rc < modifiedItems.length; rc++) {
+      if (_resolvedConflicts[rc]) resolvedCount++;
+    }
+    var remaining = modifiedItems.length - resolvedCount;
+    var pct = modifiedItems.length > 0 ? Math.round((resolvedCount / modifiedItems.length) * 100) : 0;
+
+    html += '<div class="dm-resolve-status">';
+    html += '<span class="dm-status-text">Resolved <strong>' + resolvedCount + '</strong> of <strong>' + modifiedItems.length + '</strong> conflicts</span>';
+    if (remaining === 0 && modifiedItems.length > 0) {
+      html += '<span class="dm-pill dm-pill-gain">All resolved &#10003;</span>';
+    } else {
+      html += '<span class="dm-pill dm-pill-warning">' + remaining + ' remaining</span>';
+    }
+    html += '</div>';
+    html += '<div class="dm-progress-bar"><div class="dm-progress-fill" style="width:' + pct + '%"></div></div>';
+
+    // Section body
+    html += '<div class="dm-section-body' + (collapsed ? ' collapsed' : '') + '">';
+
+    for (var i = 0; i < modifiedItems.length; i++) {
+      var mod = modifiedItems[i];
+      var item = mod.item;
+      var changes = mod.changes || [];
+      var mColor = _metalColor(item.metal);
+      var uuid = item.uuid || '';
+      var isResolved = _resolvedConflicts[i];
+      var itemKey = _itemKey(item);
+
+      html += '<div class="dm-card dm-conflict-card' + (isResolved ? ' resolved' : '') + '" id="dm-conflict-' + i + '">';
+
+      // Card header
+      html += '<div class="dm-conflict-card-header" data-toggle-conflict="' + i + '" style="cursor:pointer">';
+      html += _renderCardHeader(item, uuid);
+      // Identity
+      html += '<div class="dm-item-identity">';
+      html += '<div class="dm-item-name">' + _esc(item.name || 'Unnamed item') + '</div>';
+      html += '<div class="dm-item-meta">';
+      html += '<span style="color:' + mColor + '">' + _esc(item.metal || '') + '</span>';
+      if (item.weight != null) html += '<span>&#8226;</span><span>' + _esc(String(item.weight)) + ' ' + _esc(item.weightUnit || 'oz') + '</span>';
+      html += '<span>&#8226;</span><span class="dm-chip" style="font-size:0.65rem">ID: ' + _esc(itemKey).substring(0, 16) + '</span>';
+      html += '</div></div>';
+      // Field count pill
+      if (isResolved) {
+        html += '<span class="dm-pill dm-pill-gain">&#10003; Resolved</span>';
+      } else {
+        html += '<span class="dm-pill dm-pill-warning">' + changes.length + ' field' + (changes.length !== 1 ? 's' : '') + ' changed</span>';
+      }
+      html += '</div>';
+
+      // Conflict details (field rows)
+      var detailsCollapsed = isResolved;
+      html += '<div class="dm-conflict-details' + (detailsCollapsed ? ' collapsed' : '') + '" id="dm-conflict-details-' + i + '">';
+      for (var c = 0; c < changes.length; c++) {
+        var ch = changes[c];
+        var fKey = 'conflict-' + i + '-' + ch.field;
+        var sel = _fieldSelections[fKey] || 'remote';
+        var localSelected = sel === 'local' ? ' selected' : '';
+        var remoteSelected = sel === 'remote' ? ' selected' : '';
+
+        html += '<div class="dm-field-diff">';
+        html += '<div class="dm-field-label">' + _esc(ch.field) + '</div>';
+        var localDisplay = (ch.localVal != null && ch.localVal !== '') ? String(ch.localVal) : '\u2014';
+        var remoteDisplay = (ch.remoteVal != null && ch.remoteVal !== '') ? String(ch.remoteVal) : '\u2014';
+        html += '<div class="dm-field-value local' + localSelected + '" data-field="' + _esc(ch.field) + '" data-card="' + i + '" title="' + _esc(localDisplay) + '">' + _esc(localDisplay) + '</div>';
+        html += '<div class="dm-field-arrow">&#10231;</div>';
+        html += '<div class="dm-field-value remote' + remoteSelected + '" data-field="' + _esc(ch.field) + '" data-card="' + i + '" title="' + _esc(remoteDisplay) + '">' + _esc(remoteDisplay) + '</div>';
+        html += '</div>';
+      }
+      // Card actions
+      html += '<div class="dm-card-actions">';
+      html += '<button class="dm-btn dm-btn-sm dm-btn-secondary" data-card-action="keep-local" data-card="' + i + '">Keep All Local</button>';
+      html += '<button class="dm-btn dm-btn-sm dm-btn-secondary" data-card-action="keep-remote" data-card="' + i + '">Keep All Remote</button>';
+      html += '<button class="dm-btn dm-btn-sm dm-btn-primary" data-card-action="resolve" data-card="' + i + '">&#10003; Confirm</button>';
+      html += '</div>';
+      html += '</div>'; // .dm-conflict-details
+
+      html += '</div>'; // .dm-conflict-card
+    }
+
+    html += '</div></div>';
+    return html;
+  }
+
+  /** Load images asynchronously using resolveImageUrlForItem (same as main app) */
+  function _loadItemImages() {
+    try {
+      // Revoke previous blob URLs to prevent memory leaks
+      for (var bi = 0; bi < _blobUrls.length; bi++) {
+        try { URL.revokeObjectURL(_blobUrls[bi]); } catch(e) { /* ignore */ }
+      }
+      _blobUrls = [];
+
+      var modal = safeGetElement(MODAL_ID);
+      if (!modal || typeof imageCache === 'undefined' || !imageCache.resolveImageUrlForItem) return;
+
+      // Build UUID → item lookup from current diff data
+      var itemByUuid = {};
+      var diff = _options ? _options.diff || {} : {};
+      var allItems = (diff.added || []).concat(diff.deleted || []);
+      for (var mi = 0; mi < (diff.modified || []).length; mi++) {
+        allItems.push((diff.modified || [])[mi].item);
+      }
+      for (var ai = 0; ai < allItems.length; ai++) {
+        if (allItems[ai] && allItems[ai].uuid) {
+          itemByUuid[allItems[ai].uuid] = allItems[ai];
+        }
+      }
+
+      var thumbs = modal.querySelectorAll('[data-uuid]');
+      for (var t = 0; t < thumbs.length; t++) {
+        (function(el) {
+          var uuid = el.dataset.uuid;
+          var side = el.dataset.side || 'obverse';
+          if (!uuid) return;
+          var item = itemByUuid[uuid];
+          if (!item) return;
+          try {
+            imageCache.resolveImageUrlForItem(item, side).then(function(url) {
+              var imgUrl = url;
+              if (!imgUrl) {
+                // Fallback: CDN URL from item properties (same as main app tier 2)
+                var urlKey = side === 'reverse' ? 'reverseImageUrl' : 'obverseImageUrl';
+                var cdnUrl = item[urlKey];
+                if (cdnUrl && /^https?:\/\/[^\s"'<>]+$/i.test(cdnUrl)) {
+                  imgUrl = cdnUrl;
+                }
+              }
+              if (imgUrl) {
+                if (imgUrl.indexOf('blob:') === 0) _blobUrls.push(imgUrl);
+                var img = document.createElement('img');
+                img.src = imgUrl;
+                img.alt = side;
+                img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:var(--radius,8px)';
+                el.textContent = '';
+                el.appendChild(img);
+              }
+            }).catch(function() { /* silent fallback to OBV/REV text */ });
+          } catch(e) { /* imageCache not available */ }
+        })(thumbs[t]);
+      }
+    } catch(e) { /* silent */ }
+  }
+
+  function _updateApplyButton() {
+    var applyBtn = safeGetElement('diffReviewApplyBtn');
+    if (!applyBtn) return;
+    var count = _checkedCount();
+    var hasSelectableItems = Object.keys(_checkedItems).length > 0;
+    var hasSettings = _options && _options.settingsDiff && _options.settingsDiff.changed && _options.settingsDiff.changed.length > 0;
+    applyBtn.textContent = count > 0 ? 'Apply (' + count + ')' : 'Apply';
+    applyBtn.disabled = hasSelectableItems && count === 0 && !hasSettings;
+    applyBtn.style.opacity = (hasSelectableItems && count === 0 && !hasSettings) ? '0.4' : '';
+  }
+
   function _render() {
     if (!_options) return;
 
     var titleEl = safeGetElement('diffReviewTitle');
     var sourceEl = safeGetElement('diffReviewSource');
-    var summaryEl = safeGetElement('diffReviewSummary');
-    var conflictsEl = safeGetElement('diffReviewConflicts');
-    var listEl = safeGetElement('diffReviewList');
-    var settingsEl = safeGetElement('diffReviewSettings');
-    var applyBtn = safeGetElement('diffReviewApplyBtn');
 
     var diff = _options.diff || {};
     var added = diff.added || [];
     var modified = diff.modified || [];
     var deleted = diff.deleted || [];
-    var unchanged = diff.unchanged || [];
-    var settingsDiff = _options.settingsDiff;
     var conflicts = _options.conflicts;
     var meta = _options.meta;
     var source = _options.source || {};
@@ -196,105 +1446,52 @@
       sourceEl.innerHTML = sourceHtml;
     }
 
-    // Summary chips
-    if (summaryEl) {
-      var chips = [];
-      if (added.length > 0) chips.push('<span style="display:inline-flex;align-items:center;gap:0.2rem;padding:0.2rem 0.5rem;border-radius:20px;font-size:0.73rem;font-weight:600;background:rgba(5,150,105,0.12);color:var(--success,#059669)">+' + added.length + ' added</span>');
-      if (modified.length > 0) chips.push('<span style="display:inline-flex;align-items:center;gap:0.2rem;padding:0.2rem 0.5rem;border-radius:20px;font-size:0.73rem;font-weight:600;background:rgba(217,119,6,0.12);color:var(--warning,#d97706)">&#9998; ' + modified.length + ' modified</span>');
-      if (deleted.length > 0) chips.push('<span style="display:inline-flex;align-items:center;gap:0.2rem;padding:0.2rem 0.5rem;border-radius:20px;font-size:0.73rem;font-weight:600;background:rgba(220,38,38,0.12);color:var(--danger,#dc2626)">&minus;' + deleted.length + ' deleted</span>');
-      if (unchanged.length > 0) chips.push('<span style="display:inline-flex;align-items:center;gap:0.2rem;padding:0.2rem 0.5rem;border-radius:20px;font-size:0.73rem;font-weight:600;background:rgba(107,114,128,0.1);color:#6b7280">' + unchanged.length + ' unchanged</span>');
-      if (settingsDiff && settingsDiff.changed && settingsDiff.changed.length > 0) {
-        chips.push('<span style="display:inline-flex;align-items:center;gap:0.2rem;padding:0.2rem 0.5rem;border-radius:20px;font-size:0.73rem;font-weight:600;background:rgba(59,130,246,0.1);color:var(--primary,#3b82f6)">' + settingsDiff.changed.length + ' setting' + (settingsDiff.changed.length > 1 ? 's' : '') + '</span>');
-      }
-      summaryEl.innerHTML = chips.length > 0
-        ? '<div style="display:flex;flex-wrap:wrap;gap:0.35rem">' + chips.join('') + '</div>'
-        : 'No changes detected';
-    }
-
-    // Conflicts section
-    if (conflictsEl) {
-      if (conflicts && conflicts.conflicts && conflicts.conflicts.length > 0) {
-        var cHtml = '<div style="border-radius:8px;padding:0.75rem;background:rgba(217,119,6,0.08);border:1px solid rgba(217,119,6,0.2)">';
-        cHtml += '<div style="font-weight:600;font-size:0.85rem;margin-bottom:0.5rem;color:var(--warning,#d97706)">&#9888; ' + conflicts.conflicts.length + ' conflict' + (conflicts.conflicts.length > 1 ? 's' : '') + ' detected</div>';
-        for (var ci = 0; ci < conflicts.conflicts.length; ci++) {
-          var cf = conflicts.conflicts[ci];
-          var res = _conflictResolutions['c' + ci] || 'remote';
-          cHtml += '<div style="padding:0.5rem;border-radius:6px;margin-bottom:0.35rem;font-size:0.8rem;background:rgba(0,0,0,0.06)">';
-          cHtml += '<div style="font-weight:600">' + _esc(cf.itemName || cf.itemKey || 'Item') + '</div>';
-          cHtml += '<div style="font-size:0.73rem;opacity:0.6;margin-bottom:0.35rem">' + _esc(cf.field) + '</div>';
-          cHtml += '<div style="display:flex;gap:0.75rem">';
-          cHtml += '<label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;font-size:0.8rem"><input type="radio" name="diffConflict' + ci + '" value="local" ' + (res === 'local' ? 'checked' : '') + ' data-conflict="' + ci + '" style="width:16px;height:16px;padding:0;border:none;accent-color:var(--primary,#3b82f6)"> Local: <strong>' + _esc(String(cf.localVal != null ? cf.localVal : '\u2014')) + '</strong></label>';
-          cHtml += '<label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;font-size:0.8rem"><input type="radio" name="diffConflict' + ci + '" value="remote" ' + (res === 'remote' ? 'checked' : '') + ' data-conflict="' + ci + '" style="width:16px;height:16px;padding:0;border:none;accent-color:var(--primary,#3b82f6)"> Remote: <strong>' + _esc(String(cf.remoteVal != null ? cf.remoteVal : '\u2014')) + '</strong></label>';
-          cHtml += '</div></div>';
-        }
-        cHtml += '</div>';
-        conflictsEl.innerHTML = cHtml;
-        conflictsEl.style.display = '';
-      } else {
-        conflictsEl.innerHTML = '';
-        conflictsEl.style.display = 'none';
-      }
-    }
-
-    // Change list
-    if (listEl) {
-      var totalChanges = added.length + modified.length + deleted.length;
-      var lHtml = '';
-
-      if (totalChanges === 0) {
-        lHtml = '<div style="padding:2rem;text-align:center;opacity:0.45;font-size:0.85rem">No item changes detected</div>';
-      } else {
-        // Added
-        if (added.length > 0) lHtml += _renderCategory('added', 'Added', '+', added);
-        // Modified
-        if (modified.length > 0) lHtml += _renderCategory('modified', 'Modified', '&#9998;', modified);
-        // Deleted
-        if (deleted.length > 0) lHtml += _renderCategory('deleted', 'Deleted', '&minus;', deleted);
-      }
-
-      listEl.innerHTML = lHtml;
-    }
-
-    // Settings diff
-    if (settingsEl) {
-      if (settingsDiff && settingsDiff.changed && settingsDiff.changed.length > 0) {
-        var sHtml = '<details style="margin-top:0.25rem" open>';
-        sHtml += '<summary style="cursor:pointer;font-weight:600;font-size:0.8rem;padding:0.4rem 0;user-select:none">';
-        sHtml += settingsDiff.changed.length + ' setting change' + (settingsDiff.changed.length > 1 ? 's' : '') + '</summary>';
-        sHtml += '<div style="padding:0.4rem 0 0.25rem 0;font-size:0.8rem">';
-        for (var si = 0; si < settingsDiff.changed.length; si++) {
-          var sc = settingsDiff.changed[si];
-          sHtml += '<div style="padding:0.2rem 0;display:flex;gap:0.3rem;align-items:baseline">';
-          sHtml += '<span style="opacity:0.5;min-width:80px">' + _esc(sc.key) + '</span>';
-          sHtml += '<span style="text-decoration:line-through;opacity:0.45">' + _esc(String(sc.localVal != null ? sc.localVal : '\u2014')) + '</span>';
-          sHtml += '<span style="opacity:0.35;font-size:0.7rem">&rarr;</span>';
-          sHtml += '<span style="font-weight:500;color:var(--warning,#d97706)">' + _esc(String(sc.remoteVal != null ? sc.remoteVal : '\u2014')) + '</span>';
-          sHtml += '</div>';
-        }
-        sHtml += '</div></details>';
-        settingsEl.innerHTML = sHtml;
-        settingsEl.style.display = '';
-      } else {
-        settingsEl.innerHTML = '';
-        settingsEl.style.display = 'none';
-      }
-    }
-
-    // Apply button count
-    // Only disable when there ARE selectable items but none are checked AND
-    // there are no pending settings changes. Settings are always included when
-    // Apply is clicked, so the button should stay enabled for settings-only apply.
-    if (applyBtn) {
-      var count = _checkedCount();
-      var hasSelectableItems = Object.keys(_checkedItems).length > 0;
-      var hasSettings = _options && _options.settingsDiff && _options.settingsDiff.changed && _options.settingsDiff.changed.length > 0;
-      applyBtn.textContent = count > 0 ? 'Apply (' + count + ')' : 'Apply';
-      applyBtn.disabled = hasSelectableItems && count === 0 && !hasSettings;
-      applyBtn.style.opacity = (hasSelectableItems && count === 0 && !hasSettings) ? '0.4' : '';
-    }
-
     // Count row (backup import flow only)
     _updateCountRow();
+
+    // Summary dashboard (replaces old summary chips)
+    _renderSummaryDashboard(safeGetElement('diffSummaryDashboard'), diff, conflicts);
+
+    // Legacy progress tracker and conflict cards — suppressed.
+    // The card-based Modified section has its own progress bar and click-to-pick UX.
+    var progressEl = safeGetElement('diffProgressTracker');
+    if (progressEl) progressEl.style.display = 'none';
+    var conflictEl = safeGetElement('diffSectionConflicts');
+    if (conflictEl) conflictEl.style.display = 'none';
+
+    // Orphan cards (Added + Deleted) — render into #diffSectionOrphans
+    var orphanEl = safeGetElement('diffSectionOrphans');
+    if (orphanEl) {
+      var orphanHtml = '';
+      if (added.length > 0) orphanHtml += _renderOrphanCards('added', added);
+      if (deleted.length > 0) orphanHtml += _renderOrphanCards('deleted', deleted);
+      orphanEl.innerHTML = orphanHtml;
+      orphanEl.style.display = orphanHtml ? '' : 'none';
+    }
+
+    // Modified conflict cards — render into #diffSectionModified
+    var modifiedEl = safeGetElement('diffSectionModified');
+    if (modifiedEl) {
+      var modHtml = '';
+      if (modified.length > 0) {
+        modHtml = _renderModifiedSection(modified);
+      } else {
+        var totalChanges = added.length + deleted.length;
+        if (totalChanges === 0) {
+          modHtml = '<div style="padding:2rem;text-align:center;opacity:0.45;font-size:0.85rem">No item changes detected</div>';
+        }
+      }
+      modifiedEl.innerHTML = modHtml;
+    }
+
+    // Async image loading
+    _loadItemImages();
+
+    // Settings cards (replaces old settings <details>)
+    _renderSettingsCards(safeGetElement('diffReviewSettings'), _options.settingsDiff);
+
+    // Apply button
+    _updateApplyButton();
   }
 
   /** Render a meta cell for the source info row */
@@ -305,92 +1502,93 @@
       + '</div>';
   }
 
-  /** Color configs per category */
-  var _catColors = {
-    added:   { bg: 'rgba(5,150,105,0.12)', color: 'var(--success,#059669)' },
-    modified:{ bg: 'rgba(217,119,6,0.12)',  color: 'var(--warning,#d97706)' },
-    deleted: { bg: 'rgba(220,38,38,0.12)',  color: 'var(--danger,#dc2626)' }
-  };
+  // _renderCategory() has been replaced by _renderOrphanCards() and _renderModifiedSection() (STAK-454)
 
-  /** Render a category group (added/modified/deleted) */
-  function _renderCategory(type, label, icon, items) {
-    var collapsed = _collapsedCategories[type];
-    var cc = _catColors[type];
-    var html = '<div data-cat="' + type + '" style="' + (collapsed ? '' : '') + '">';
+  // ── Event delegation (STAK-454 — card-based interactions) ──
 
-    // Header
-    html += '<div class="diff-cat-header" data-cat-toggle="' + type + '" style="display:flex;align-items:center;gap:0.4rem;padding:0.5rem 0.65rem;cursor:pointer;user-select:none;font-size:0.8rem;font-weight:600">';
-    html += '<span style="font-size:0.6rem;opacity:0.4;transition:transform 0.2s;' + (collapsed ? 'transform:rotate(-90deg)' : '') + '">&#9660;</span>';
-    html += '<span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:4px;font-size:0.7rem;font-weight:700;background:' + cc.bg + ';color:' + cc.color + '">' + icon + '</span>';
-    html += '<span>' + label + '</span>';
-    html += '<span style="font-weight:400;opacity:0.5;font-size:0.73rem">(' + items.length + ')</span>';
-    html += '</div>';
-
-    // Items
-    html += '<div class="diff-cat-items" style="' + (collapsed ? 'display:none' : '') + '">';
-    for (var i = 0; i < items.length; i++) {
-      var key = type + '-' + i;
-      var checked = _checkedItems[key] !== false; // default true
-      var item = type === 'modified' ? items[i].item : items[i];
-      var name = _esc(item.name || 'Unnamed item');
-
-      html += '<div style="display:flex;align-items:flex-start;gap:0.5rem;padding:0.45rem 0.65rem;font-size:0.85rem">';
-      html += '<input type="checkbox" data-check="' + key + '" ' + (checked ? 'checked' : '') + ' style="width:16px;height:16px;min-width:16px;padding:0;border:none;accent-color:var(--primary,#3b82f6);margin-top:2px;flex-shrink:0;cursor:pointer">';
-      html += '<div style="flex-shrink:0;width:20px;height:20px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;margin-top:1px;background:' + cc.bg + ';color:' + cc.color + '">' + icon + '</div>';
-
-      html += '<div style="flex:1;min-width:0">';
-
-      if (type === 'modified') {
-        var mod = items[i];
-        var expanded = _expandedModified[i];
-        html += '<div class="diff-mod-toggle" data-mod-idx="' + i + '" style="cursor:pointer">';
-        html += '<div style="font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + name + ' <span style="font-size:0.65rem;opacity:0.35">' + (expanded ? '&#9650;' : '&#9660;') + '</span></div>';
-        html += '<div style="font-size:0.73rem;opacity:0.5;margin-top:0.1rem">' + mod.changes.length + ' field' + (mod.changes.length > 1 ? 's' : '') + ' changed</div>';
-        if (expanded) {
-          html += '<div style="margin-top:0.35rem;padding-left:0.25rem;font-size:0.78rem">';
-          for (var c = 0; c < mod.changes.length; c++) {
-            var ch = mod.changes[c];
-            html += '<div style="padding:0.15rem 0;display:flex;gap:0.3rem;align-items:baseline">';
-            html += '<span style="opacity:0.5;min-width:80px">' + _esc(ch.field) + '</span>';
-            html += '<span style="text-decoration:line-through;opacity:0.45">' + _esc(String(ch.localVal != null ? ch.localVal : '\u2014')) + '</span>';
-            html += '<span style="opacity:0.35;font-size:0.7rem">&rarr;</span>';
-            html += '<span style="font-weight:500;color:var(--warning,#d97706)">' + _esc(String(ch.remoteVal != null ? ch.remoteVal : '\u2014')) + '</span>';
-            html += '</div>';
-          }
-          html += '</div>';
-        }
-        html += '</div>';
-      } else {
-        html += '<div style="font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + name + '</div>';
-        // Detail line
-        var detail = [];
-        if (item.metal) detail.push(_esc(item.metal));
-        if (item.weight != null) detail.push(item.weight + _esc(item.weightUnit || 'oz'));
-        if (item.qty != null) detail.push('\u00d7 ' + item.qty);
-        if (detail.length > 0) {
-          html += '<div style="font-size:0.73rem;opacity:0.5;margin-top:0.1rem">' + detail.join(' \u00b7 ') + '</div>';
-        }
-      }
-
-      html += '</div></div>';
+  /** Swap a button's style class based on active state and section type */
+  function _swapBtnClass(btn, sectionType, actionName, isActive) {
+    btn.classList.remove('dm-btn-primary', 'dm-btn-gain', 'dm-btn-loss', 'dm-btn-muted', 'dm-btn-secondary');
+    if (!isActive) {
+      btn.classList.add('dm-btn-muted');
+      return;
     }
-    html += '</div></div>';
-    return html;
+    // Active: positive actions get their accent color, negative actions get loss
+    if (actionName === 'import') btn.classList.add('dm-btn-primary');
+    else if (actionName === 'keep') btn.classList.add('dm-btn-gain');
+    else btn.classList.add('dm-btn-loss'); // skip, remove
   }
 
-  // ── Event delegation ──
+  /** Update both action buttons on an orphan card to reflect the current action */
+  function _updateOrphanBtnStyles(card, type, action) {
+    var btns = card.querySelectorAll('[data-set-action]');
+    for (var bi = 0; bi < btns.length; bi++) {
+      var btnAction = btns[bi].dataset.setAction;
+      _swapBtnClass(btns[bi], type, btnAction, btnAction === action);
+    }
+  }
 
-  function _onListClick(e) {
+  /** Handle clicks on orphan cards (Added/Deleted) */
+  function _onOrphanClick(e) {
     var target = e.target;
 
-    // Checkbox toggle
-    if (target.type === 'checkbox' && target.dataset.check) {
-      _checkedItems[target.dataset.check] = target.checked;
+    // Orphan card action button (Import/Skip/Keep/Remove)
+    var actionBtn = target.closest('[data-set-action]');
+    if (actionBtn) {
+      e.stopPropagation();
+      var action = actionBtn.dataset.setAction;
+      var idx = parseInt(actionBtn.dataset.idx, 10);
+      var type = actionBtn.dataset.type;
+      var key = type + '-' + idx;
+      _orphanActions[key] = action;
+      // Also sync _checkedItems for backward compat
+      if (type === 'added') _checkedItems[key] = (action !== 'skip');
+      if (type === 'deleted') _checkedItems[key] = (action === 'remove');
+      // Toggle visual state on card and buttons
+      var card = actionBtn.closest('.dm-orphan-card');
+      if (card) {
+        var isSkipped = (action === 'skip' || action === 'remove');
+        card.classList.toggle('skipped', isSkipped);
+        card.dataset.action = action;
+        _updateOrphanBtnStyles(card, type, action);
+      }
       _updateApplyCount();
       return;
     }
 
-    // Category collapse toggle
+    // Bulk action buttons (Import All, Skip All, Keep All, Remove All)
+    var bulkBtn = target.closest('[data-bulk-action]');
+    if (bulkBtn) {
+      var bulkAction = bulkBtn.dataset.bulkAction;
+      var bulkSection = bulkBtn.dataset.bulkSection;
+      var cards = e.currentTarget.querySelectorAll('.dm-orphan-card[data-type="' + bulkSection + '"]');
+      for (var bi = 0; bi < cards.length; bi++) {
+        var bCard = cards[bi];
+        var bIdx = parseInt(bCard.dataset.idx, 10);
+        var bKey = bulkSection + '-' + bIdx;
+        _orphanActions[bKey] = bulkAction;
+        if (bulkSection === 'added') _checkedItems[bKey] = (bulkAction !== 'skip');
+        if (bulkSection === 'deleted') _checkedItems[bKey] = (bulkAction === 'remove');
+        var bSkipped = (bulkAction === 'skip' || bulkAction === 'remove');
+        bCard.classList.toggle('skipped', bSkipped);
+        bCard.dataset.action = bulkAction;
+        _updateOrphanBtnStyles(bCard, bulkSection, bulkAction);
+      }
+      // Update bulk button styles in section header
+      var sectionWrapper = bulkBtn.closest('.dm-section-wrapper');
+      if (sectionWrapper) {
+        var bulkBtns = sectionWrapper.querySelectorAll('[data-bulk-action]');
+        for (var bbi = 0; bbi < bulkBtns.length; bbi++) {
+          var bb = bulkBtns[bbi];
+          var isActive = (bb.dataset.bulkAction === bulkAction);
+          _swapBtnClass(bb, bulkSection, bb.dataset.bulkAction, isActive);
+        }
+      }
+      _updateApplyCount();
+      return;
+    }
+
+    // Section collapse toggle
     var catToggle = target.closest('[data-cat-toggle]');
     if (catToggle) {
       var cat = catToggle.dataset.catToggle;
@@ -399,32 +1597,206 @@
       return;
     }
 
-    // Modified row expand toggle
-    var modToggle = target.closest('.diff-mod-toggle');
-    if (modToggle) {
-      var idx = parseInt(modToggle.dataset.modIdx, 10);
-      _expandedModified[idx] = !_expandedModified[idx];
+    // Show more button
+    var showMore = target.closest('[data-show-more]');
+    if (showMore) {
+      var smType = showMore.dataset.showMore;
+      // Remove the limit and re-render (set a flag to show all)
+      _collapsedCategories['_showAll_' + smType] = true;
       _render();
       return;
     }
   }
 
-  function _onConflictsChange(e) {
-    if (e.target.type === 'radio' && e.target.dataset.conflict != null) {
-      _conflictResolutions['c' + e.target.dataset.conflict] = e.target.value;
+  /** Handle clicks on modified/conflict cards */
+  function _onModifiedClick(e) {
+    var target = e.target;
+
+    // Field value click (click to pick local or remote)
+    var fieldVal = target.closest('.dm-field-value');
+    if (fieldVal && fieldVal.dataset.field && fieldVal.dataset.card != null) {
+      var field = fieldVal.dataset.field;
+      var cardIdx = parseInt(fieldVal.dataset.card, 10);
+      var fKey = 'conflict-' + cardIdx + '-' + field;
+      var side = fieldVal.classList.contains('local') ? 'local' : 'remote';
+      _fieldSelections[fKey] = side;
+      // Update visual: remove selected from sibling, add to clicked
+      var row = fieldVal.closest('.dm-field-diff');
+      if (row) {
+        var siblings = row.querySelectorAll('.dm-field-value');
+        for (var si = 0; si < siblings.length; si++) siblings[si].classList.remove('selected');
+      }
+      fieldVal.classList.add('selected');
+      _updateApplyCount();
+      return;
     }
+
+    // Per-card action buttons (Keep All Local, Keep All Remote, Confirm)
+    var cardAction = target.closest('[data-card-action]');
+    if (cardAction) {
+      var action = cardAction.dataset.cardAction;
+      var ci = parseInt(cardAction.dataset.card, 10);
+      var card = e.currentTarget.querySelector('#dm-conflict-' + ci);
+      if (!card) return;
+
+      if (action === 'keep-local' || action === 'keep-remote') {
+        var pickSide = action === 'keep-local' ? 'local' : 'remote';
+        var fieldVals = card.querySelectorAll('.dm-field-value.' + pickSide);
+        for (var fvi = 0; fvi < fieldVals.length; fvi++) {
+          var fv = fieldVals[fvi];
+          var fRow = fv.closest('.dm-field-diff');
+          if (fRow) {
+            var fSiblings = fRow.querySelectorAll('.dm-field-value');
+            for (var fsi = 0; fsi < fSiblings.length; fsi++) fSiblings[fsi].classList.remove('selected');
+          }
+          fv.classList.add('selected');
+          if (fv.dataset.field) {
+            _fieldSelections['conflict-' + ci + '-' + fv.dataset.field] = pickSide;
+          }
+        }
+        _updateApplyCount();
+        return;
+      }
+
+      if (action === 'resolve') {
+        // Validate all fields have a selection
+        var fieldDiffs = card.querySelectorAll('.dm-field-diff');
+        var allResolved = true;
+        for (var fd = 0; fd < fieldDiffs.length; fd++) {
+          if (!fieldDiffs[fd].querySelector('.dm-field-value.selected')) {
+            allResolved = false;
+            // Flash unresolved field
+            fieldDiffs[fd].style.background = 'rgba(239,68,68,0.1)';
+            (function(el) {
+              setTimeout(function() { el.style.background = ''; }, 600);
+            })(fieldDiffs[fd]);
+          }
+        }
+        if (!allResolved) return;
+
+        // Mark resolved
+        _resolvedConflicts[ci] = true;
+        card.classList.add('resolved');
+        var pill = card.querySelector('.dm-conflict-card-header .dm-pill');
+        if (pill) {
+          pill.className = 'dm-pill dm-pill-gain';
+          pill.innerHTML = '&#10003; Resolved';
+        }
+        // Collapse the details
+        var details = card.querySelector('.dm-conflict-details');
+        if (details) details.classList.add('collapsed');
+
+        // Update progress
+        _updateModifiedProgress();
+        _updateApplyCount();
+        return;
+      }
+      return;
+    }
+
+    // Global Keep All Local / Keep All Remote
+    var globalAction = target.closest('[data-global-action]');
+    if (globalAction) {
+      var gAction = globalAction.dataset.globalAction;
+      var gSide = gAction === 'keep-all-local' ? 'local' : 'remote';
+      var allFieldVals = e.currentTarget.querySelectorAll('.dm-field-value.' + gSide);
+      for (var gfi = 0; gfi < allFieldVals.length; gfi++) {
+        var gfv = allFieldVals[gfi];
+        var gRow = gfv.closest('.dm-field-diff');
+        if (gRow) {
+          var gSiblings = gRow.querySelectorAll('.dm-field-value');
+          for (var gsi = 0; gsi < gSiblings.length; gsi++) gSiblings[gsi].classList.remove('selected');
+        }
+        gfv.classList.add('selected');
+        if (gfv.dataset.field && gfv.dataset.card != null) {
+          _fieldSelections['conflict-' + gfv.dataset.card + '-' + gfv.dataset.field] = gSide;
+        }
+      }
+      _updateApplyCount();
+      return;
+    }
+
+    // Conflict card header click — toggle expand/collapse
+    var conflictToggle = target.closest('[data-toggle-conflict]');
+    if (conflictToggle) {
+      var tIdx = parseInt(conflictToggle.dataset.toggleConflict, 10);
+      var tDetails = e.currentTarget.querySelector('#dm-conflict-details-' + tIdx);
+      if (tDetails) tDetails.classList.toggle('collapsed');
+      return;
+    }
+
+    // Section collapse toggle
+    var catToggle = target.closest('[data-cat-toggle]');
+    if (catToggle) {
+      var cat = catToggle.dataset.catToggle;
+      _collapsedCategories[cat] = !_collapsedCategories[cat];
+      _render();
+      return;
+    }
+  }
+
+  /** Update the modified section's progress bar and status text */
+  function _updateModifiedProgress() {
+    var diff = _options ? _options.diff || {} : {};
+    var modified = diff.modified || [];
+    if (modified.length === 0) return;
+    var resolved = 0;
+    for (var i = 0; i < modified.length; i++) {
+      if (_resolvedConflicts[i]) resolved++;
+    }
+    var remaining = modified.length - resolved;
+    var pct = Math.round((resolved / modified.length) * 100);
+
+    // Update progress bar
+    var bar = safeGetElement('diffSectionModified');
+    if (bar) {
+      var fill = bar.querySelector('.dm-progress-fill');
+      if (fill) fill.style.width = pct + '%';
+      var statusText = bar.querySelector('.dm-status-text');
+      if (statusText) statusText.innerHTML = 'Resolved <strong>' + resolved + '</strong> of <strong>' + modified.length + '</strong> conflicts';
+      var pillEl = bar.querySelector('.dm-resolve-status .dm-pill');
+      if (pillEl) {
+        if (remaining === 0) {
+          pillEl.className = 'dm-pill dm-pill-gain';
+          pillEl.innerHTML = 'All resolved &#10003;';
+        } else {
+          pillEl.className = 'dm-pill dm-pill-warning';
+          pillEl.textContent = remaining + ' remaining';
+        }
+      }
+    }
+  }
+
+  /** Count selected items for the Apply button (card-based state) */
+  function _cardBasedCount() {
+    var count = 0;
+    var diff = _options ? _options.diff || {} : {};
+    var added = diff.added || [];
+    var modified = diff.modified || [];
+    var deleted = diff.deleted || [];
+
+    for (var a = 0; a < added.length; a++) {
+      if (_orphanActions['added-' + a] !== 'skip') count++;
+    }
+    for (var m = 0; m < modified.length; m++) {
+      count++; // modified items always included (user picks field winners)
+    }
+    for (var d = 0; d < deleted.length; d++) {
+      if (_orphanActions['deleted-' + d] === 'remove') count++;
+    }
+    return count;
   }
 
   /** Update just the Apply button count without full re-render */
   function _updateApplyCount() {
     var applyBtn = safeGetElement('diffReviewApplyBtn');
     if (applyBtn) {
-      var count = _checkedCount();
-      var hasSelectableItems = Object.keys(_checkedItems).length > 0;
+      var hasCardState = Object.keys(_orphanActions).length > 0 || Object.keys(_fieldSelections).length > 0;
+      var count = hasCardState ? _cardBasedCount() : _checkedCount();
       var hasSettings = _options && _options.settingsDiff && _options.settingsDiff.changed && _options.settingsDiff.changed.length > 0;
       applyBtn.textContent = count > 0 ? 'Apply (' + count + ')' : 'Apply';
-      applyBtn.disabled = hasSelectableItems && count === 0 && !hasSettings;
-      applyBtn.style.opacity = (hasSelectableItems && count === 0 && !hasSettings) ? '0.4' : '';
+      applyBtn.disabled = count === 0 && !hasSettings;
+      applyBtn.style.opacity = (count === 0 && !hasSettings) ? '0.4' : '';
     }
     _updateCountRow();
   }
@@ -433,50 +1805,231 @@
 
   function _selectAll() {
     var diff = _options.diff || {};
-    for (var i = 0; i < (diff.added || []).length; i++) _checkedItems['added-' + i] = true;
-    for (var j = 0; j < (diff.modified || []).length; j++) _checkedItems['modified-' + j] = true;
-    for (var k = 0; k < (diff.deleted || []).length; k++) _checkedItems['deleted-' + k] = true;
-    _render(); // _render calls _updateCountRow internally
+    // Card-based: set all orphan actions to include
+    for (var i = 0; i < (diff.added || []).length; i++) {
+      _orphanActions['added-' + i] = 'import';
+      _checkedItems['added-' + i] = true;
+    }
+    for (var j = 0; j < (diff.modified || []).length; j++) {
+      _checkedItems['modified-' + j] = true;
+      // Select all remote for each modified field
+      var mod = (diff.modified || [])[j];
+      if (mod && mod.changes) {
+        for (var c = 0; c < mod.changes.length; c++) {
+          _fieldSelections['conflict-' + j + '-' + mod.changes[c].field] = 'remote';
+        }
+      }
+    }
+    for (var k = 0; k < (diff.deleted || []).length; k++) {
+      _orphanActions['deleted-' + k] = 'remove';
+      _checkedItems['deleted-' + k] = true;
+    }
+    _render();
   }
 
   function _deselectAll() {
-    for (var key in _checkedItems) {
-      if (_checkedItems.hasOwnProperty(key)) _checkedItems[key] = false;
+    var diff = _options.diff || {};
+    for (var i = 0; i < (diff.added || []).length; i++) {
+      _orphanActions['added-' + i] = 'skip';
+      _checkedItems['added-' + i] = false;
     }
-    _render(); // _render calls _updateCountRow internally
+    for (var k in _checkedItems) {
+      if (_checkedItems.hasOwnProperty(k)) _checkedItems[k] = false;
+    }
+    for (var d = 0; d < (diff.deleted || []).length; d++) {
+      _orphanActions['deleted-' + d] = 'keep';
+    }
+    // Reset modified field selections to local (deselect = keep local values)
+    for (var m = 0; m < (diff.modified || []).length; m++) {
+      var mod = (diff.modified || [])[m];
+      if (mod && mod.changes) {
+        for (var c = 0; c < mod.changes.length; c++) {
+          _fieldSelections['conflict-' + m + '-' + mod.changes[c].field] = 'local';
+        }
+      }
+    }
+    _render();
   }
 
   /**
    * Toggle "Select All / Deselect All" for the backup import flow.
-   * First call selects all added + modified; label changes to "Deselect All".
-   * Second call deselects all; label goes back to "Select All".
    */
   function _toggleSelectAll() {
-    const diff = _options ? _options.diff || {} : {};
+    var diff = _options ? _options.diff || {} : {};
     _selectAllState = (_selectAllState + 1) % 3;
     if (_selectAllState === 1) {
-      // First press: select added + modified, keep deleted unchecked
-      for (let i = 0; i < (diff.added || []).length; i++) _checkedItems['added-' + i] = true;
-      for (let j = 0; j < (diff.modified || []).length; j++) _checkedItems['modified-' + j] = true;
-      for (let k = 0; k < (diff.deleted || []).length; k++) _checkedItems['deleted-' + k] = false;
+      // First press: import all added, keep deleted untouched
+      for (var i = 0; i < (diff.added || []).length; i++) {
+        _orphanActions['added-' + i] = 'import';
+        _checkedItems['added-' + i] = true;
+      }
+      for (var j = 0; j < (diff.modified || []).length; j++) {
+        _checkedItems['modified-' + j] = true;
+        var mod1 = (diff.modified || [])[j];
+        if (mod1 && mod1.changes) {
+          for (var c1 = 0; c1 < mod1.changes.length; c1++) {
+            _fieldSelections['conflict-' + j + '-' + mod1.changes[c1].field] = 'remote';
+          }
+        }
+      }
+      for (var k = 0; k < (diff.deleted || []).length; k++) {
+        _orphanActions['deleted-' + k] = 'keep';
+        _checkedItems['deleted-' + k] = false;
+      }
     } else if (_selectAllState === 2) {
-      // Second press: also select deleted rows
-      for (let k = 0; k < (diff.deleted || []).length; k++) _checkedItems['deleted-' + k] = true;
+      // Second press: also mark deleted for removal
+      for (var k2 = 0; k2 < (diff.deleted || []).length; k2++) {
+        _orphanActions['deleted-' + k2] = 'remove';
+        _checkedItems['deleted-' + k2] = true;
+      }
     } else {
       // Third press: deselect all
-      for (const key in _checkedItems) {
+      for (var a = 0; a < (diff.added || []).length; a++) {
+        _orphanActions['added-' + a] = 'skip';
+        _checkedItems['added-' + a] = false;
+      }
+      for (var key in _checkedItems) {
         if (_checkedItems.hasOwnProperty(key)) _checkedItems[key] = false;
       }
+      for (var d = 0; d < (diff.deleted || []).length; d++) {
+        _orphanActions['deleted-' + d] = 'keep';
+      }
+      // Reset field selections to local
+      for (var m3 = 0; m3 < (diff.modified || []).length; m3++) {
+        var mod3 = (diff.modified || [])[m3];
+        if (mod3 && mod3.changes) {
+          for (var c3 = 0; c3 < mod3.changes.length; c3++) {
+            _fieldSelections['conflict-' + m3 + '-' + mod3.changes[c3].field] = 'local';
+          }
+        }
+      }
     }
-    const toggleBtn = safeGetElement('diffReviewSelectAllToggle');
+    var toggleBtn = safeGetElement('diffReviewSelectAllToggle');
     if (toggleBtn) {
-      const labels = ['Select All', 'Add Deleted', 'Deselect All'];
+      var labels = ['Select All', 'Add Deleted', 'Deselect All'];
       toggleBtn.textContent = labels[_selectAllState];
     }
-    _render(); // _render calls _updateCountRow internally
+    _render();
   }
 
   // ── Apply / Cancel ──
+
+  /**
+   * Reconstruct a merged setting value from per-element _fieldSelections.
+   * Returns merged value, or null on type mismatch (caller falls back to whole-setting).
+   */
+  function _mergeSettingElements(type, key, localVal, remoteVal) {
+    var prefix = 'setting-' + key + '-';
+
+    if (type === 'chip-strip') {
+      // Array of {id, label, enabled, ...} — merge by id
+      if (!Array.isArray(localVal) && !Array.isArray(remoteVal)) return null;
+      var lArr = Array.isArray(localVal) ? localVal : [];
+      var rArr = Array.isArray(remoteVal) ? remoteVal : [];
+      var lById = {};
+      var rById = {};
+      var i, id;
+      for (i = 0; i < lArr.length; i++) {
+        id = lArr[i].id || lArr[i].label || i;
+        lById[id] = lArr[i];
+      }
+      for (i = 0; i < rArr.length; i++) {
+        id = rArr[i].id || rArr[i].label || i;
+        rById[id] = rArr[i];
+      }
+      // Preserve original array order — use remote array as base order (default wins),
+      // then append any local-only items at the end
+      var merged = [];
+      var seen = {};
+      // First pass: iterate remote array in order
+      for (i = 0; i < rArr.length; i++) {
+        id = rArr[i].id || rArr[i].label || i;
+        var sel = _fieldSelections[prefix + id];
+        if (sel === 'local' && lById[id]) {
+          merged.push(lById[id]);
+        } else {
+          merged.push(rArr[i]); // default: remote wins
+        }
+        seen[id] = true;
+      }
+      // Second pass: append local-only items (preserving local order)
+      for (i = 0; i < lArr.length; i++) {
+        id = lArr[i].id || lArr[i].label || i;
+        if (!seen[id]) {
+          var lSel = _fieldSelections[prefix + id];
+          if (lSel === 'local' || !lSel) {
+            merged.push(lArr[i]); // local-only, user picked local or no selection
+          }
+        }
+      }
+      return merged;
+    }
+
+    if (type === 'toggle-map' || type === 'kv-pills') {
+      // Object merge — key by key
+      if ((typeof localVal !== 'object' || localVal === null) &&
+          (typeof remoteVal !== 'object' || remoteVal === null)) return null;
+      var lObj = (typeof localVal === 'object' && localVal !== null) ? localVal : {};
+      var rObj = (typeof remoteVal === 'object' && remoteVal !== null) ? remoteVal : {};
+      var result = {};
+      var allKeys = {};
+      var k;
+      for (k in lObj) allKeys[k] = true;
+      for (k in rObj) allKeys[k] = true;
+      for (k in allKeys) {
+        var kSel = _fieldSelections[prefix + k];
+        if (kSel === 'local' && lObj.hasOwnProperty(k)) {
+          result[k] = lObj[k];
+        } else if (kSel === 'remote' && rObj.hasOwnProperty(k)) {
+          result[k] = rObj[k];
+        } else if (rObj.hasOwnProperty(k)) {
+          result[k] = rObj[k]; // default: remote
+        } else if (lObj.hasOwnProperty(k)) {
+          result[k] = lObj[k]; // only in local
+        }
+      }
+      return result;
+    }
+
+    if (type === 'slug-chips') {
+      // String array — order-preserving set merge
+      if (!Array.isArray(localVal) && !Array.isArray(remoteVal)) return null;
+      var lSet = {};
+      var rSet = {};
+      var lList = Array.isArray(localVal) ? localVal : [];
+      var rList = Array.isArray(remoteVal) ? remoteVal : [];
+      for (i = 0; i < lList.length; i++) lSet[lList[i]] = true;
+      for (i = 0; i < rList.length; i++) rSet[rList[i]] = true;
+      var mergedArr = [];
+      var slugSeen = {};
+      // First pass: iterate remote array in order (default wins)
+      for (i = 0; i < rList.length; i++) {
+        var rSlug = rList[i];
+        slugSeen[rSlug] = true;
+        if (lSet[rSlug]) {
+          mergedArr.push(rSlug); // common — always include
+        } else {
+          var rSlugSel = _fieldSelections[prefix + rSlug];
+          if (rSlugSel === 'remote' || !rSlugSel) {
+            mergedArr.push(rSlug); // remote-only, user picked remote or default
+          }
+        }
+      }
+      // Second pass: append local-only items (preserving local order)
+      for (i = 0; i < lList.length; i++) {
+        var lSlug = lList[i];
+        if (!slugSeen[lSlug]) {
+          var lSlugSel = _fieldSelections[prefix + lSlug];
+          if (lSlugSel === 'local') {
+            mergedArr.push(lSlug); // local-only, user picked local
+          }
+        }
+      }
+      return mergedArr;
+    }
+
+    return null; // unknown type — fallback
+  }
 
   function _buildSelectedChanges() {
     var diff = _options.diff || {};
@@ -484,44 +2037,106 @@
     var added = diff.added || [];
     var modified = diff.modified || [];
     var deleted = diff.deleted || [];
+    var hasCardState = Object.keys(_orphanActions).length > 0 || Object.keys(_fieldSelections).length > 0;
 
-    // Added items
+    // Added items — card state or legacy fallback
     for (var a = 0; a < added.length; a++) {
-      if (_checkedItems['added-' + a] !== false) {
+      var includeAdded = hasCardState
+        ? (_orphanActions['added-' + a] !== 'skip')
+        : (_checkedItems['added-' + a] !== false);
+      if (includeAdded) {
         result.push({ type: 'add', item: added[a] });
       }
     }
 
-    // Modified items — one entry per changed field
+    // Modified items — per-field selection via _fieldSelections
     for (var m = 0; m < modified.length; m++) {
-      if (_checkedItems['modified-' + m] !== false) {
-        var mod = modified[m];
-        var key = _itemKey(mod.item);
+      var mod = modified[m];
+      var mKey = _itemKey(mod.item);
+      if (hasCardState) {
+        // Card-based: always emit all fields, user picks local vs remote per field
         for (var c = 0; c < mod.changes.length; c++) {
           var ch = mod.changes[c];
+          var fSel = _fieldSelections['conflict-' + m + '-' + ch.field] || 'remote';
           result.push({
             type: 'modify',
-            itemKey: key,
+            itemKey: mKey,
             field: ch.field,
-            value: ch.remoteVal
+            value: fSel === 'local' ? ch.localVal : ch.remoteVal
           });
+        }
+      } else {
+        // Legacy fallback: emit all fields if item is checked
+        if (_checkedItems['modified-' + m] !== false) {
+          for (var c2 = 0; c2 < mod.changes.length; c2++) {
+            var ch2 = mod.changes[c2];
+            result.push({
+              type: 'modify',
+              itemKey: mKey,
+              field: ch2.field,
+              value: ch2.remoteVal
+            });
+          }
         }
       }
     }
 
-    // Deleted items
+    // Deleted items — card state or legacy fallback
     for (var d = 0; d < deleted.length; d++) {
-      if (_checkedItems['deleted-' + d] !== false) {
+      var includeDeleted = hasCardState
+        ? (_orphanActions['deleted-' + d] === 'remove')
+        : (_checkedItems['deleted-' + d] !== false);
+      if (includeDeleted) {
         result.push({ type: 'delete', itemKey: _itemKey(deleted[d]) });
       }
     }
 
-    // Settings changes — always included (no per-setting checkboxes)
+    // Item conflict resolutions (sync-specific conflicts section — separate from modified cards)
+    var conflictsArr = (_options.conflicts && _options.conflicts.conflicts) || [];
+    for (var ci = 0; ci < conflictsArr.length; ci++) {
+      var conf = conflictsArr[ci];
+      var resKey = 'c' + ci + '-' + conf.field;
+      var side = _conflictResolutions[resKey] || 'remote';
+      var itemKey = conf.itemKey || conf.itemName || '';
+      result.push({
+        type: 'modify',
+        itemKey: itemKey,
+        field: conf.field,
+        value: (side === 'local') ? conf.localVal : conf.remoteVal
+      });
+    }
+
+    // Settings changes — per-element merge for rich renderer types, whole-setting for others
     var settingsDiff = _options.settingsDiff || {};
     var changedSettings = settingsDiff.changed || [];
     for (var s = 0; s < changedSettings.length; s++) {
       var setting = changedSettings[s];
-      result.push({ type: 'setting', key: setting.key, value: setting.remoteVal });
+      var sType = SETTINGS_VALUE_TYPE[setting.key];
+      var sPrefix = 'setting-' + setting.key + '-';
+
+      // Check for per-element selections (skip count-summary — whole-setting only)
+      var hasElementPicks = false;
+      if (sType && sType !== 'count-summary') {
+        for (var fk in _fieldSelections) {
+          if (_fieldSelections.hasOwnProperty(fk) && fk.indexOf(sPrefix) === 0) {
+            hasElementPicks = true;
+            break;
+          }
+        }
+      }
+
+      if (hasElementPicks) {
+        var mergedVal = _mergeSettingElements(sType, setting.key, _parseSetting(setting.localVal), _parseSetting(setting.remoteVal));
+        if (mergedVal !== null) {
+          result.push({ type: 'setting', key: setting.key, value: mergedVal });
+          continue;
+        }
+      }
+
+      // Fallback: whole-setting pick via _conflictResolutions (default remote)
+      var resolution = _conflictResolutions['setting-' + setting.key];
+      var value = (resolution === 'local') ? _parseSetting(setting.localVal) : _parseSetting(setting.remoteVal);
+      result.push({ type: 'setting', key: setting.key, value: value });
     }
 
     return result;
@@ -555,8 +2170,7 @@
   // ── Wire buttons (called once per show) ──
 
   function _wireEvents() {
-    var listEl = safeGetElement('diffReviewList');
-    var conflictsEl = safeGetElement('diffReviewConflicts');
+    var listEl = safeGetElement('diffSectionModified');
     var selectAllBtn = safeGetElement('diffReviewSelectAll');
     var deselectAllBtn = safeGetElement('diffReviewDeselectAll');
     var selectAllToggleBtn = safeGetElement('diffReviewSelectAllToggle');
@@ -567,16 +2181,15 @@
     // Determine whether we're in backup-count mode
     var hasBackupCount = _options && _options.backupCount != null;
 
-    // Event delegation on list
-    if (listEl) {
-      listEl.removeEventListener('click', _onListClick);
-      listEl.addEventListener('click', _onListClick);
+    // Event delegation on card containers
+    var orphanEl = safeGetElement('diffSectionOrphans');
+    if (orphanEl) {
+      orphanEl.removeEventListener('click', _onOrphanClick);
+      orphanEl.addEventListener('click', _onOrphanClick);
     }
-
-    // Conflict radio delegation
-    if (conflictsEl) {
-      conflictsEl.removeEventListener('change', _onConflictsChange);
-      conflictsEl.addEventListener('change', _onConflictsChange);
+    if (listEl) {
+      listEl.removeEventListener('click', _onModifiedClick);
+      listEl.addEventListener('click', _onModifiedClick);
     }
 
     // Pill buttons
@@ -650,20 +2263,47 @@
       // Reset internal state
       _checkedItems = {};
       _conflictResolutions = {};
-      _collapsedCategories = {};
+      _collapsedCategories = { settings: true };
       _expandedModified = {};
+      _expandedSettingsCategories = {};
       _selectAllState = 0;
+      _orphanActions = {};
+      _fieldSelections = {};
+      _resolvedConflicts = {};
 
-      // Default all items to checked
+      // Default all items to checked (legacy compat) + initialize card-based state
       var diff = _options.diff || {};
-      for (var a = 0; a < (diff.added || []).length; a++) _checkedItems['added-' + a] = true;
-      for (var m = 0; m < (diff.modified || []).length; m++) _checkedItems['modified-' + m] = true;
-      for (var d = 0; d < (diff.deleted || []).length; d++) _checkedItems['deleted-' + d] = true;
+      for (var a = 0; a < (diff.added || []).length; a++) {
+        _checkedItems['added-' + a] = true;
+        _orphanActions['added-' + a] = 'import';
+      }
+      for (var m = 0; m < (diff.modified || []).length; m++) {
+        _checkedItems['modified-' + m] = true;
+        // Initialize per-field selections to 'remote' (default: accept incoming)
+        var mod = (diff.modified || [])[m];
+        if (mod && mod.changes) {
+          for (var fc = 0; fc < mod.changes.length; fc++) {
+            _fieldSelections['conflict-' + m + '-' + mod.changes[fc].field] = 'remote';
+          }
+        }
+      }
+      for (var d = 0; d < (diff.deleted || []).length; d++) {
+        _checkedItems['deleted-' + d] = false;
+        _orphanActions['deleted-' + d] = 'keep';
+      }
 
-      // Default conflict resolutions to 'remote'
+      // Default conflict resolutions to 'remote' (per-field keys)
       if (_options.conflicts && _options.conflicts.conflicts) {
         for (var ci = 0; ci < _options.conflicts.conflicts.length; ci++) {
-          _conflictResolutions['c' + ci] = 'remote';
+          var conflict = _options.conflicts.conflicts[ci];
+          _conflictResolutions['c' + ci + '-' + conflict.field] = null;
+        }
+      }
+
+      // Default settings resolutions to 'remote'
+      if (_options.settingsDiff && _options.settingsDiff.changed) {
+        for (var si = 0; si < _options.settingsDiff.changed.length; si++) {
+          _conflictResolutions['setting-' + _options.settingsDiff.changed[si].key] = 'remote';
         }
       }
 
@@ -686,6 +2326,11 @@
      * Close the modal programmatically.
      */
     close: function () {
+      // Revoke tracked blob URLs to prevent memory leaks
+      for (var bi = 0; bi < _blobUrls.length; bi++) {
+        try { URL.revokeObjectURL(_blobUrls[bi]); } catch(e) { /* ignore */ }
+      }
+      _blobUrls = [];
       if (typeof closeModalById === 'function') {
         closeModalById(MODAL_ID);
       } else {

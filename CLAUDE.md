@@ -19,7 +19,7 @@ Works on `file://` and HTTP. Runtime artifact: zero build step, zero install. Se
 
 ## Wiki — Project Technical Documentation
 
-`wiki/` (in-repo) is the **only** technical documentation for this project. There are no other doc sources. **After every code change, update the relevant wiki page(s) in the same PR.** Use `/wiki-update` to auto-detect affected pages via frontmatter `sourceFiles`. For widespread changes, use `/wiki-sweep`.
+`wiki/` (in-repo) is the **only** technical documentation for this project. There are no other doc sources. **Wiki updates MUST be committed to the branch BEFORE pushing or creating a PR.** This is a blocking step — wiki changes after PR creation are orphaned. Use `/wiki-update` (blocking) to auto-detect affected pages via frontmatter `sourceFiles`. For widespread changes, use `/wiki-sweep`.
 
 If a wiki page would become inaccurate after your change, updating it is not optional — treat it as part of the PR diff.
 
@@ -63,36 +63,33 @@ When you change a file, update every wiki page listed in its row.
 
 ## API Infrastructure
 
-> **Separation of duties:** `StakTrakr` = frontend only. All API backend poller code, Fly.io devops, and GHA data workflows live in `lbruton/StakTrakrApi`. Do not add poller scripts, Fly.io config, or data-pipeline workflows to this repo.
+> **Poller code ownership:** All poller scripts live in `StakTrakr/devops/pollers/` (shared core + home-poller + remote-poller). Home VM deploys via Portainer API from git. Fly.io container still deploys from `StakTrakrApi/devops/fly-poller/` (transitioning). See `repo-boundaries` skill for full ownership map.
 
-**Runbook:** See wiki/ for current runbooks: [`health.md`](wiki/health.md), [`fly-container.md`](wiki/fly-container.md), [`spot-pipeline.md`](wiki/spot-pipeline.md). (`docs/devops/api-infrastructure-runbook.md` is deprecated.)
+**Runbook:** See wiki/ for current runbooks: [`health.md`](wiki/health.md), [`fly-container.md`](wiki/fly-container.md), [`spot-pipeline.md`](wiki/spot-pipeline.md).
 
 Three feeds served from `lbruton/StakTrakrApi` **api branch** via GitHub Pages at `api.staktrakr.com`:
 
-| Feed | File | Poller | Stale threshold | Healthy check |
-|---|---|---|---|---|
-| Market prices | `data/api/manifest.json` | Fly.io retail cron (StakTrakrApi) | 30 min | `generated_at` within 30 min |
-| Spot prices | `data/hourly/YYYY/MM/DD/HH.json` | Fly.io `run-spot.sh` cron (StakTrakrApi) | 75 min | Last hourly file within 75 min |
-| Goldback | `data/api/goldback-spot.json` | Fly.io `run-goldback.sh` hourly :01 (StakTrakrApi) | 25h | `scraped_at` within 25h |
+| Feed | File | Poller | Stale threshold |
+|---|---|---|---|
+| Market prices | `data/api/manifest.json` | Fly.io retail cron | 30 min |
+| Spot prices | `data/hourly/YYYY/MM/DD/HH.json` | Fly.io `run-spot.sh` cron | 75 min |
+| Goldback | `data/api/goldback-spot.json` | Fly.io `run-goldback.sh` hourly :01 | 25h |
 
-**Critical:** `spot-history-YYYY.json` is a **seed file** (noon UTC daily), NOT live data. `api-health.js` currently checks it for spot freshness — always shows ~10h stale even when poller is healthy. Open bug (STAK-265 follow-up).
+**Critical:** `spot-history-YYYY.json` is a **seed file** (noon UTC daily), NOT live data.
 
-**NEVER start a local Docker spot-poller container.** `devops/spot-poller/` is a ghost directory — no live code, no container, no docker-compose.yml. Spot polling is Fly.io container cron only (`run-spot.sh` at `5,20,35,50 * * * *`).
-
-**No active failures as of 2026-02-22.** `sync-api-repos.yml` and `retail-price-poller.yml` deleted — both are gone.
-
-**Home poller SSH:** `ssh -T homepoller '<cmd>'` (LAN) or `ssh -T homepoller-ts '<cmd>'` (Tailscale). Full reference in `homepoller-ssh` skill. User `stakpoller` has NOPASSWD sudo.
+**Portainer VM**: Runs all Docker stacks — home-poller, firecrawl, tinyproxy, tailscale-sidecar, plus other projects. Managed exclusively via Portainer REST API or web UI. No SSH, no docker CLI. See `home-infrastructure` skill for IPs, stack registry, and API reference. Dashboard at port 3010 (HTTP) / 3011 (HTTPS).
 
 **Quick health check:**
 
 ```bash
-# One-liner — paste into terminal
+# API feed freshness
 curl -s https://api.staktrakr.com/data/api/manifest.json | python3 -c "
 import sys,json; from datetime import datetime,timezone; d=json.load(sys.stdin)
 age=(datetime.now(timezone.utc)-datetime.fromisoformat(d['generated_at'].replace('Z','+00:00'))).total_seconds()/60
-print(f'Market: {age:.0f}m ago  {\"✅\" if age<=30 else \"⚠️\"}')"
+print(f'Market: {age:.0f}m ago  {\"OK\" if age<=30 else \"STALE\"}')"
+
+# Fly.io logs
 fly logs --app staktrakr | grep -E 'spot|run-spot' | tail -5
-gh run list --repo lbruton/StakTrakrApi --workflow "Merge Poller Branches" --limit 3
 ```
 
 **mem0 recall:** `/remember api infrastructure` or `/remember active poller failures`
@@ -102,20 +99,24 @@ gh run list --repo lbruton/StakTrakrApi --workflow "Merge Poller Branches" --lim
 - **DOM**: `safeGetElement(id)` — never raw `document.getElementById()` (except startup in `about.js` / `init.js`)
 - **Storage**: `saveData()`/`loadData()` from `js/utils.js` — never direct `localStorage`
 - **Storage keys**: must be in `ALLOWED_STORAGE_KEYS` in `js/constants.js`
-- **New JS files**: add to `sw.js` CORE_ASSETS AND script load order in `index.html` (70 script files, strict order)
+- **New JS files**: add to `sw.js` CORE_ASSETS AND script load order in `index.html` (67 script tags: 59 JS + 7 vendor + 1 data bundle)
 - **innerHTML**: always `sanitizeHtml()` on user content
 - **sw.js CACHE_NAME**: auto-stamped by pre-commit hook (`devops/hooks/stamp-sw-cache.sh`)
 - **Duplicate check**: when editing frontend code, check `events.js` AND `api.js` for duplicate function definitions before making changes — edits to the wrong file are a recurring source of lost time
 
 ## Testing
 
-**Primary NL E2E suite** (`/bb-test` skill): `tests/runbook/*.md` — 75+ tests across 8 section files. Run via Stagehand/Browserbase against PR preview URLs. Sections: `01-page-load`, `02-crud`, `03-backup-restore`, `04-import-export`, `05-market`, `06-ui-ux`, `07-activity-log`, `08-spot-prices`.
+**Single test model:** `tests/runbook/*.md` — NL E2E tests run via `/bb-test` through Browserbase/Stagehand MCP against PR preview URLs. 84 tests across 8 section files: `01-page-load`, `02-crud`, `03-backup-restore`, `04-import-export`, `05-market`, `06-ui-ux`, `07-activity-log`, `08-spot-prices`. No Playwright, no browserless, no scripted specs.
 
-**Scripted suite** (`/smoke-test` skill): `tests/*.spec.js` — Playwright specs via self-hosted browserless Docker. Run with `npm test` or `npm run test:smoke`.
+**TDD enforcement:** Write runbook test blocks BEFORE implementing code. Run `/bb-test sections=NN` after implementation to verify. Use `/browserbase-test-maintenance` to add test blocks after shipping a spec.
 
-After shipping a spec, use `/browserbase-test-maintenance` to add runbook test steps for new behavior.
+**Ralph Loop oracle:** `/bb-test sections=NN` is the natural completion oracle for iterative bug fixes via `/ralph-loop` — set `--completion-promise` to the expected pass output so the loop exits automatically when tests go green.
 
-**Cloud sync cannot be tested from PR previews.** Cloudflare preview deployments use a different origin, which breaks Dropbox OAuth (the registered redirect URI only matches `beta.staktrakr.com`). Cloud sync fixes must be merged to `dev` first and tested at `beta.staktrakr.com`.
+**Test API keys** are stored in Infisical for tests requiring authentication (Numista, PCGS, etc.). Use the `secrets` skill to fetch them before running tests. Inject keys into localStorage via Stagehand after navigating to the app.
+
+**Cloud sync and OAuth flows cannot be tested via Browserbase** — Cloudflare preview deployments use a different origin, which breaks Dropbox OAuth (the registered redirect URI only matches `beta.staktrakr.com`). Cloud sync fixes must be merged to `dev` first and tested manually by the user at `beta.staktrakr.com`.
+
+**Deprecated tests:** `tests/depreciated/` contains archived Playwright `.spec.js` files and legacy Browserbase TypeScript tests (`tests/depreciated/browserbase-legacy/`). These are kept as reference only — do not add to or run them.
 
 ## Linear
 
@@ -125,6 +126,10 @@ Team: `f876864d-ff80-4231-ae6c-a8e5cb69aca4`
 
 ## Project Skills
 
-In `.claude/skills/`: `coding-standards`, `homepoller-ssh`, `release`, `repo-boundaries`, `retail-poller`, `retail-provider-fix`, `seed-sync`, `ship`, `wiki-audit`, `wiki-search`, `wiki-update`.
+In `.claude/skills/`: `api-infrastructure`, `bb-test`, `brainstorming`, `browserbase-test-maintenance`, `bug-report`, `coding-standards`, `finishing-a-development-branch`, `firecrawl-infra`, `gsd`, `release`, `repo-boundaries`, `retail-poller`, `retail-provider-fix`, `seed-sync`, `ship`, `start-patch`, `sw-cache`, `sync-instructions`, `wiki-audit`, `wiki-sweep`, `wiki-update`.
+
+User-level infrastructure skills: `home-infrastructure`, `cloud-infrastructure`, `proxmox`, `secrets`.
+
+Note: `/prime` is now a user-level skill (`~/.claude/skills/prime/`) that works across all projects.
 
 Use `/sync-instructions` after significant codebase changes.

@@ -64,7 +64,7 @@ window.addEventListener('beforeunload', () => {
 const createBackupZip = async () => {
   try {
     // Show loading indicator
-    const backupBtn = document.getElementById('backupAllBtn');
+    const backupBtn = document.getElementById('exportZipBtn');
     const originalText = backupBtn ? backupBtn.textContent : '';
     if (backupBtn) {
       backupBtn.textContent = 'Creating Backup...';
@@ -184,11 +184,13 @@ const createBackupZip = async () => {
       zip.file('item_tags.json', JSON.stringify(itemTagsData, null, 2));
     }
 
-    // 4. Generate and add CSV export (portfolio format)
+    // 4. Generate and add CSV export (portfolio format — synced with exportCsv())
     const csvHeaders = [
-      "Date", "Metal", "Type", "Name", "Qty", "Weight(oz)", "Weight Unit", "Purity",
-      "Purchase Price", "Melt Value", "Retail Price", "Gain/Loss",
-      "Purchase Location", "N#", "PCGS #", "Serial Number", "Tags", "Notes"
+      "Date","Metal","Type","Name","Year","Qty","Weight(oz)","Weight Unit","Purity",
+      "Purchase Price","Melt Value","Retail Price","Gain/Loss",
+      "Purchase Location","Storage Location","N#","PCGS #","Grade","Grading Authority","Cert #","Serial Number","Notes","Tags","UUID",
+      "Obverse Image URL","Reverse Image URL",
+      "Disposition Type","Disposition Date","Disposition Amount","Realized Gain/Loss"
     ];
     const sortedInventory = sortInventoryByDateNewestFirst();
     const csvRows = [];
@@ -206,6 +208,7 @@ const createBackupZip = async () => {
         item.metal || 'Silver',
         item.type,
         item.name,
+        item.year || '',
         item.qty,
         parseFloat(item.weight).toFixed(4),
         item.weightUnit || 'oz',
@@ -215,11 +218,22 @@ const createBackupZip = async () => {
         formatCurrency(item.marketValue || 0),
         gainLoss !== null ? formatCurrency(gainLoss) : '—',
         item.purchaseLocation,
+        item.storageLocation || '',
         item.numistaId || '',
         item.pcgsNumber || '',
+        item.grade || '',
+        item.gradingAuthority || '',
+        item.certNumber || '',
         item.serialNumber || '',
+        item.notes || '',
         typeof getItemTags === 'function' ? getItemTags(item.uuid).join('; ') : '',
-        item.notes || ''
+        item.uuid || '',
+        item.obverseImageUrl || '',
+        item.reverseImageUrl || '',
+        item.disposition ? (typeof DISPOSITION_TYPES !== 'undefined' && DISPOSITION_TYPES[item.disposition.type] ? DISPOSITION_TYPES[item.disposition.type].label : item.disposition.type) : '',
+        item.disposition ? (item.disposition.date || '') : '',
+        item.disposition ? (item.disposition.amount || 0) : '',
+        item.disposition ? (item.disposition.realizedGainLoss || 0) : ''
       ]);
     }
     const csvContent = Papa.unparse([csvHeaders, ...csvRows]);
@@ -326,9 +340,9 @@ const createBackupZip = async () => {
     appAlert('Backup creation failed: ' + error.message);
     
     // Restore button state on error
-    const backupBtn = document.getElementById('backupAllBtn');
+    const backupBtn = document.getElementById('exportZipBtn');
     if (backupBtn) {
-      backupBtn.textContent = 'Backup All Data';
+      backupBtn.textContent = 'Export ZIP';
       backupBtn.disabled = false;
     }
   }
@@ -348,225 +362,219 @@ const restoreBackupZip = async (file) => {
   try {
     const zip = await JSZip.loadAsync(file);
 
+    // ── Phase 1: Parse all ZIP contents without writing to storage (STAK-457) ──
+
+    // 1a. Parse inventory items
+    let parsedItems = [];
     const inventoryStr = await zip.file("inventory_data.json")?.async("string");
     if (inventoryStr) {
       const invObj = JSON.parse(inventoryStr);
-      localStorage.setItem(LS_KEY, JSON.stringify(invObj.inventory || []));
+      parsedItems = invObj.inventory || [];
     }
 
+    // 1b. Parse settings and build a flat key→value map for DiffEngine
+    let settingsObj = null;
+    const remoteSettings = {};
     const settingsStr = await zip.file("settings.json")?.async("string");
     if (settingsStr) {
-      const settingsObj = JSON.parse(settingsStr);
-      if (settingsObj.spotPrices) {
-        Object.entries(settingsObj.spotPrices).forEach(([metal, price]) => {
-          const metalConfig = METALS[metal.toUpperCase()];
-          if (metalConfig) {
-            localStorage.setItem(
-              metalConfig.localStorageKey,
-              JSON.stringify(price),
-            );
-          }
-        });
-      }
-      if (settingsObj.theme) {
-        localStorage.setItem(THEME_KEY, settingsObj.theme);
-      }
-      
-      // Handle catalog mappings if present in backup
-      if (settingsObj.catalogMappings) {
-        // Use catalog manager to import mappings
-        catalogManager.importMappings(settingsObj.catalogMappings, false);
-      }
+      settingsObj = JSON.parse(settingsStr);
 
-      // Restore chip grouping settings (v3.16.00+)
-      if (Array.isArray(settingsObj.chipCustomGroups)) {
-        saveDataSync('chipCustomGroups', settingsObj.chipCustomGroups);
-      }
-      if (Array.isArray(settingsObj.chipBlacklist)) {
-        saveDataSync('chipBlacklist', settingsObj.chipBlacklist);
-      }
-      if (settingsObj.chipMinCount != null) {
-        localStorage.setItem('chipMinCount', settingsObj.chipMinCount);
-      }
-      if (settingsObj.chipMaxCount != null) {
-        localStorage.setItem('chipMaxCount', settingsObj.chipMaxCount);
-      }
-      if (settingsObj.featureFlags != null) {
-        localStorage.setItem(FEATURE_FLAGS_KEY, settingsObj.featureFlags);
-      }
-      // Restore inline chip config (v3.17.00+)
-      if (settingsObj.inlineChipConfig != null) {
-        localStorage.setItem('inlineChipConfig', settingsObj.inlineChipConfig);
-      }
-      // Restore Goldback denomination pricing (STACK-45)
-      if (settingsObj.goldbackPrices != null) {
-        saveDataSync(GOLDBACK_PRICES_KEY, settingsObj.goldbackPrices);
-        goldbackPrices = settingsObj.goldbackPrices;
-      }
-      if (settingsObj.goldbackPriceHistory != null) {
-        saveDataSync(GOLDBACK_PRICE_HISTORY_KEY, settingsObj.goldbackPriceHistory);
-        goldbackPriceHistory = settingsObj.goldbackPriceHistory;
-      }
-      if (settingsObj.goldbackEnabled != null) {
-        saveDataSync(GOLDBACK_ENABLED_KEY, settingsObj.goldbackEnabled === true);
-        goldbackEnabled = settingsObj.goldbackEnabled === true;
-      }
-      if (settingsObj.goldbackEstimateEnabled != null) {
-        saveDataSync(GOLDBACK_ESTIMATE_ENABLED_KEY, settingsObj.goldbackEstimateEnabled === true);
-        goldbackEstimateEnabled = settingsObj.goldbackEstimateEnabled === true;
-      }
+      // Map ZIP field names → localStorage keys used by SYNC_SCOPE_KEYS
+      if (settingsObj.theme) remoteSettings['appTheme'] = settingsObj.theme;
+      if (settingsObj.itemsPerPage != null) remoteSettings['settingsItemsPerPage'] = settingsObj.itemsPerPage;
+      if (settingsObj.sortColumn != null) remoteSettings['defaultSortColumn'] = settingsObj.sortColumn;
+      if (settingsObj.sortDirection != null) remoteSettings['defaultSortDir'] = settingsObj.sortDirection;
+      if (settingsObj.tableImageSides != null) remoteSettings['tableImageSides'] = settingsObj.tableImageSides;
+      if (settingsObj.tableImagesEnabled != null) remoteSettings['tableImagesEnabled'] = settingsObj.tableImagesEnabled;
+      if (Array.isArray(settingsObj.chipCustomGroups)) remoteSettings['chipCustomGroups'] = settingsObj.chipCustomGroups;
+      if (Array.isArray(settingsObj.chipBlacklist)) remoteSettings['chipBlacklist'] = settingsObj.chipBlacklist;
+      if (settingsObj.chipMinCount != null) remoteSettings['chipMinCount'] = settingsObj.chipMinCount;
+      if (settingsObj.chipMaxCount != null) remoteSettings['chipMaxCount'] = settingsObj.chipMaxCount;
+      if (settingsObj.featureFlags != null) remoteSettings[FEATURE_FLAGS_KEY] = settingsObj.featureFlags;
+      if (settingsObj.inlineChipConfig != null) remoteSettings['inlineChipConfig'] = settingsObj.inlineChipConfig;
+      // Goldback keys use localStorage key names directly
+      if (settingsObj.goldbackEnabled != null) remoteSettings[GOLDBACK_ENABLED_KEY] = settingsObj.goldbackEnabled === true;
+      if (settingsObj.goldbackEstimateEnabled != null) remoteSettings[GOLDBACK_ESTIMATE_ENABLED_KEY] = settingsObj.goldbackEstimateEnabled === true;
       if (settingsObj.goldbackEstimateModifier != null) {
         const mod = parseFloat(settingsObj.goldbackEstimateModifier);
-        if (!isNaN(mod) && mod > 0) {
-          saveDataSync(GB_ESTIMATE_MODIFIER_KEY, mod);
-          goldbackEstimateModifier = mod;
-        }
+        if (!isNaN(mod) && mod > 0) remoteSettings[GB_ESTIMATE_MODIFIER_KEY] = mod;
       }
-      // Restore display settings (backed up but previously not restored)
-      if (settingsObj.itemsPerPage != null) {
-        const ippRestore = settingsObj.itemsPerPage;
-        localStorage.setItem(ITEMS_PER_PAGE_KEY, String(ippRestore));
-        itemsPerPage = ippRestore === 'all' || ippRestore === Infinity ? Infinity : Number(ippRestore);
-      }
-      if (settingsObj.sortColumn != null) {
-        sortColumn = settingsObj.sortColumn;
-      }
-      if (settingsObj.sortDirection != null) {
-        sortDirection = settingsObj.sortDirection;
-      }
-      if (settingsObj.tableImageSides != null) {
-        localStorage.setItem('tableImageSides', settingsObj.tableImageSides);
-      }
-      if (settingsObj.tableImagesEnabled != null) {
-        localStorage.setItem('tableImagesEnabled', String(settingsObj.tableImagesEnabled));
-      }
+      if (settingsObj.goldbackPrices != null) remoteSettings[GOLDBACK_PRICES_KEY] = settingsObj.goldbackPrices;
+      if (settingsObj.goldbackPriceHistory != null) remoteSettings[GOLDBACK_PRICE_HISTORY_KEY] = settingsObj.goldbackPriceHistory;
     }
 
-    const historyStr = await zip
-      .file("spot_price_history.json")
-      ?.async("string");
-    if (historyStr) {
-      const histObj = JSON.parse(historyStr);
-      localStorage.setItem(
-        SPOT_HISTORY_KEY,
-        JSON.stringify(histObj.history || []),
-      );
-    }
-
-    await loadInventory();
-    renderTable();
-    renderActiveFilters();
-    loadSpotHistory();
-
-    // Restore per-item price history with merge (STACK-43)
-    const itemHistoryStr = await zip.file("item_price_history.json")?.async("string");
-    if (itemHistoryStr) {
-      const itemHistObj = JSON.parse(itemHistoryStr);
-      if (typeof mergeItemPriceHistory === 'function') {
-        mergeItemPriceHistory(itemHistObj.history || {});
-      }
-    } else if (typeof loadItemPriceHistory === 'function') {
-      loadItemPriceHistory();
-    }
-
-    // Restore item tags (STAK-126)
+    // 1c. Parse item tags for pendingTagsByUuid (must be a Map — showImportDiffReview uses .get())
+    const pendingTagsByUuid = new Map();
     const itemTagsStr = await zip.file("item_tags.json")?.async("string");
-    let restoredTags = null;
     if (itemTagsStr) {
       try {
         const itemTagsObj = JSON.parse(itemTagsStr);
         if (itemTagsObj.tags && typeof itemTagsObj.tags === 'object' && !Array.isArray(itemTagsObj.tags)) {
-          restoredTags = itemTagsObj.tags;
+          for (const [uuid, tags] of Object.entries(itemTagsObj.tags)) {
+            if (Array.isArray(tags) && tags.length > 0) pendingTagsByUuid.set(uuid, tags);
+          }
         }
       } catch (e) {
         debugWarn('restoreBackupZip: item_tags.json parse error', e);
       }
     }
-    itemTags = restoredTags || {};
-    if (typeof saveItemTags === 'function') saveItemTags();
 
-    // Restore retail market prices
+    // 1d. Pre-parse ancillary data (applied after user accepts DiffModal)
+    const ancillary = {};
+    const historyStr = await zip.file("spot_price_history.json")?.async("string");
+    if (historyStr) ancillary.spotHistory = JSON.parse(historyStr).history || [];
+
+    const itemHistoryStr = await zip.file("item_price_history.json")?.async("string");
+    if (itemHistoryStr) ancillary.itemPriceHistory = JSON.parse(itemHistoryStr).history || {};
+
     const retailPricesStr = await zip.file("retail_prices.json")?.async("string");
     if (retailPricesStr) {
-      try {
-        const retailPricesRestored = JSON.parse(retailPricesStr);
-        saveDataSync(RETAIL_PRICES_KEY, retailPricesRestored);
-        if (typeof loadRetailPrices === 'function') loadRetailPrices();
-      } catch (e) {
+      try { ancillary.retailPrices = JSON.parse(retailPricesStr); } catch (e) {
         debugWarn('restoreBackupZip: retail_prices.json parse error', e);
       }
     }
     const retailHistoryStr = await zip.file("retail_price_history.json")?.async("string");
     if (retailHistoryStr) {
       try {
-        const retailHistoryRestored = JSON.parse(retailHistoryStr);
-        if (!Array.isArray(retailHistoryRestored) && typeof retailHistoryRestored === 'object') {
-          saveDataSync(RETAIL_PRICE_HISTORY_KEY, retailHistoryRestored);
-          if (typeof loadRetailPriceHistory === 'function') loadRetailPriceHistory();
-        }
+        const rh = JSON.parse(retailHistoryStr);
+        if (!Array.isArray(rh) && typeof rh === 'object') ancillary.retailHistory = rh;
       } catch (e) {
         debugWarn('restoreBackupZip: retail_price_history.json parse error', e);
       }
     }
 
-    // Restore cached coin images (STACK-88)
-    if (window.imageCache?.isAvailable()) {
-      const imgFolder = zip.folder('images');
-      const imgEntries = [];
-      if (imgFolder) {
-        imgFolder.forEach((path, file) => { imgEntries.push({ path, file }); });
+    // ── Phase 2: Build settings diff via DiffEngine (STAK-457) ──
+
+    let settingsDiff = null;
+    if (Object.keys(remoteSettings).length > 0 &&
+        typeof DiffEngine !== 'undefined' && typeof DiffEngine.compareSettings === 'function') {
+      const settingsKeys = Object.keys(remoteSettings);
+      const localSettings = {};
+      for (const key of settingsKeys) {
+        const val = loadDataSync(key, null);
+        if (val !== null) localSettings[key] = val;
+      }
+      settingsDiff = DiffEngine.compareSettings(localSettings, remoteSettings);
+      if (settingsDiff.changed.length === 0) settingsDiff = null;
+    }
+
+    // ── Phase 3: Ancillary data applicator (runs after user accepts DiffModal) ──
+
+    const applyAncillaryData = async () => {
+      // Spot prices from ZIP settings (not in SYNC_SCOPE_KEYS, applied directly)
+      if (settingsObj && settingsObj.spotPrices) {
+        Object.entries(settingsObj.spotPrices).forEach(([metal, price]) => {
+          const metalConfig = METALS[metal.toUpperCase()];
+          if (metalConfig) saveDataSync(metalConfig.localStorageKey, price);
+        });
       }
 
-      if (imgEntries.length > 0) {
-        // Legacy coinImages from old backups are skipped — no longer importing to dead store
-        debugLog('ZIP restore: skipping legacy coinImages folder (store deprecated)');
+      // Catalog mappings
+      if (settingsObj && settingsObj.catalogMappings && typeof catalogManager !== 'undefined') {
+        catalogManager.importMappings(settingsObj.catalogMappings, false);
       }
 
-      // Restore metadata
-      const metaStr = await zip.file('image_metadata.json')?.async('string');
-      if (metaStr) {
-        const metaObj = JSON.parse(metaStr);
-        if (Array.isArray(metaObj.metadata)) {
-          for (const rec of metaObj.metadata) {
-            await imageCache.importMetadataRecord(rec);
+      // Spot price history
+      if (ancillary.spotHistory) {
+        saveDataSync(SPOT_HISTORY_KEY, ancillary.spotHistory);
+        loadSpotHistory();
+      }
+
+      // Per-item price history (merge, not overwrite)
+      if (ancillary.itemPriceHistory && typeof mergeItemPriceHistory === 'function') {
+        mergeItemPriceHistory(ancillary.itemPriceHistory);
+      } else if (typeof loadItemPriceHistory === 'function') {
+        loadItemPriceHistory();
+      }
+
+      // Retail prices
+      if (ancillary.retailPrices) {
+        saveDataSync(RETAIL_PRICES_KEY, ancillary.retailPrices);
+        if (typeof loadRetailPrices === 'function') loadRetailPrices();
+      }
+      if (ancillary.retailHistory) {
+        saveDataSync(RETAIL_PRICE_HISTORY_KEY, ancillary.retailHistory);
+        if (typeof loadRetailPriceHistory === 'function') loadRetailPriceHistory();
+      }
+
+      // Restore cached coin images (STACK-88)
+      if (window.imageCache?.isAvailable()) {
+        const imgFolder = zip.folder('images');
+        const imgEntries = [];
+        if (imgFolder) {
+          imgFolder.forEach((path, zipFile) => { imgEntries.push({ path, file: zipFile }); });
+        }
+        if (imgEntries.length > 0) {
+          debugLog('ZIP restore: skipping legacy coinImages folder (store deprecated)');
+        }
+
+        // Restore metadata
+        const metaStr = await zip.file('image_metadata.json')?.async('string');
+        if (metaStr) {
+          const metaObj = JSON.parse(metaStr);
+          if (Array.isArray(metaObj.metadata)) {
+            for (const rec of metaObj.metadata) {
+              await imageCache.importMetadataRecord(rec);
+            }
           }
         }
-      }
 
-      // Restore user-uploaded photos (STAK-225 / STAK-226)
-      const userImgFolder = zip.folder('user_images');
-      if (userImgFolder) {
-        // STAK-226: use manifest when present for reliable UUID→file mapping
-        const manifestFile = zip.file('user_image_manifest.json');
-        if (manifestFile) {
-          const manifestData = JSON.parse(await manifestFile.async('string'));
-          for (const entry of (manifestData.entries || [])) {
-            const obverseFile = entry.obverseFile ? zip.file(entry.obverseFile) : null;
-            const reverseFile = entry.reverseFile ? zip.file(entry.reverseFile) : null;
-            const obverse = obverseFile ? await obverseFile.async('blob') : null;
-            const reverse = reverseFile ? await reverseFile.async('blob') : null;
-            await imageCache.importUserImageRecord({
-              uuid: entry.uuid,
-              obverse,
-              reverse,
-              cachedAt: entry.cachedAt || Date.now(),
-              size: entry.size || (obverse?.size || 0) + (reverse?.size || 0),
-            });
+        // Restore user-uploaded photos (STAK-225 / STAK-226)
+        const userImgFolder = zip.folder('user_images');
+        if (userImgFolder) {
+          const manifestFile = zip.file('user_image_manifest.json');
+          if (manifestFile) {
+            const manifestData = JSON.parse(await manifestFile.async('string'));
+            for (const entry of (manifestData.entries || [])) {
+              const obverseFile = entry.obverseFile ? zip.file(entry.obverseFile) : null;
+              const reverseFile = entry.reverseFile ? zip.file(entry.reverseFile) : null;
+              const obverse = obverseFile ? await obverseFile.async('blob') : null;
+              const reverse = reverseFile ? await reverseFile.async('blob') : null;
+              await imageCache.importUserImageRecord({
+                uuid: entry.uuid,
+                obverse,
+                reverse,
+                cachedAt: entry.cachedAt || Date.now(),
+                size: entry.size || (obverse?.size || 0) + (reverse?.size || 0),
+              });
+            }
+          } else {
+            const userEntries = [];
+            userImgFolder.forEach((path, zipFile) => userEntries.push({ path, file: zipFile }));
+            const userImageMap = new Map();
+            for (const { path, file: zipFile } of userEntries) {
+              const m = path.match(/^(.+)_(obverse|reverse)\.jpg$/);
+              if (!m) continue;
+              if (!userImageMap.has(m[1])) userImageMap.set(m[1], {});
+              userImageMap.get(m[1])[m[2]] = await zipFile.async('blob');
+            }
+            for (const [uuid, sides] of userImageMap) {
+              await imageCache.importUserImageRecord({
+                uuid,
+                obverse: sides.obverse || null,
+                reverse: sides.reverse || null,
+                cachedAt: Date.now(),
+                size: (sides.obverse?.size || 0) + (sides.reverse?.size || 0),
+              });
+            }
           }
-        } else {
-          // Fallback: filename parsing for ZIPs created before STAK-226
-          const userEntries = [];
-          userImgFolder.forEach((path, file) => userEntries.push({ path, file }));
-          const userImageMap = new Map();
-          for (const { path, file } of userEntries) {
+        }
+
+        // Restore custom pattern rule images (STAK-225)
+        const patternImgFolder = zip.folder('pattern_images');
+        if (patternImgFolder) {
+          const patternEntries = [];
+          patternImgFolder.forEach((path, zipFile) => patternEntries.push({ path, file: zipFile }));
+          const patternImageMap = new Map();
+          for (const { path, file: zipFile } of patternEntries) {
             const m = path.match(/^(.+)_(obverse|reverse)\.jpg$/);
             if (!m) continue;
-            if (!userImageMap.has(m[1])) userImageMap.set(m[1], {});
-            userImageMap.get(m[1])[m[2]] = await file.async('blob');
+            if (!patternImageMap.has(m[1])) patternImageMap.set(m[1], {});
+            patternImageMap.get(m[1])[m[2]] = await zipFile.async('blob');
           }
-          for (const [uuid, sides] of userImageMap) {
-            await imageCache.importUserImageRecord({
-              uuid,
+          for (const [ruleId, sides] of patternImageMap) {
+            await imageCache.importPatternImageRecord({
+              ruleId,
               obverse: sides.obverse || null,
               reverse: sides.reverse || null,
               cachedAt: Date.now(),
@@ -576,39 +584,36 @@ const restoreBackupZip = async (file) => {
         }
       }
 
-      // Restore custom pattern rule images (STAK-225)
-      const patternImgFolder = zip.folder('pattern_images');
-      if (patternImgFolder) {
-        const patternEntries = [];
-        patternImgFolder.forEach((path, file) => patternEntries.push({ path, file }));
-        const patternImageMap = new Map();
-        for (const { path, file } of patternEntries) {
-          const m = path.match(/^(.+)_(obverse|reverse)\.jpg$/);
-          if (!m) continue;
-          if (!patternImageMap.has(m[1])) patternImageMap.set(m[1], {});
-          patternImageMap.get(m[1])[m[2]] = await file.async('blob');
-        }
-        for (const [ruleId, sides] of patternImageMap) {
-          await imageCache.importPatternImageRecord({
-            ruleId,
-            obverse: sides.obverse || null,
-            reverse: sides.reverse || null,
-            cachedAt: Date.now(),
-            size: (sides.obverse?.size || 0) + (sides.reverse?.size || 0),
-          });
-        }
-      }
-    }
+      fetchSpotPrice();
+    };
 
-    fetchSpotPrice();
-    await appAlert("Data imported successfully. The page will now reload.");
-    location.reload();
+    // ── Phase 4: Route through DiffModal (STAK-457) ──
+
+    showImportDiffReview(parsedItems, { type: 'zip', label: file.name }, {
+      settingsDiff: settingsDiff,
+      pendingTagsByUuid: pendingTagsByUuid,
+      exportMeta: settingsObj ? {
+        exportOrigin: settingsObj.exportOrigin || null,
+        appVersion: settingsObj.version || null,
+        exportTimestamp: settingsObj.exportDate || null
+      } : null,
+    }, function(summary) {
+      debugLog('restoreBackupZip DiffModal complete', summary.added, 'added', summary.modified, 'modified', summary.deleted, 'deleted');
+      applyAncillaryData().then(function() {
+        showToast('ZIP backup restored successfully');
+      }).catch(function(ancillaryErr) {
+        debugWarn('restoreBackupZip: ancillary data restore partial failure', ancillaryErr);
+        showToast('ZIP restored with warnings — some ancillary data may not have been applied', 'warning');
+      });
+    });
+
   } catch (err) {
     console.error("Restore failed", err);
     appAlert("Restore failed: " + err.message);
   }
 };
 
+window.createBackupZip = createBackupZip;
 window.restoreBackupZip = restoreBackupZip;
 
 /**
@@ -2789,9 +2794,7 @@ const showImportDiffReview = (parsedItems, sourceInfo, options, onComplete) => {
     debugLog('showImportDiffReview fallback', 'DiffEngine/DiffModal unavailable');
     inventory = inventory.concat(parsedItems);
     _postImportCleanup(parsedItems, options.pendingTagsByUuid);
-    if (typeof showImportSummaryBanner === 'function') {
-      showImportSummaryBanner({ added: parsedItems.length, modified: 0, deleted: 0, skipped: 0, skippedReasons: [] });
-    }
+    if (typeof showToast === 'function') showToast('Import complete: ' + parsedItems.length + ' added');
     if (onComplete) onComplete({ added: parsedItems.length, modified: 0, deleted: 0 });
     return;
   }
@@ -2801,13 +2804,23 @@ const showImportDiffReview = (parsedItems, sourceInfo, options, onComplete) => {
   // Enrich imported items: copy local UUID when serials match, so DiffEngine
   // can match them by the same key tier.
   const localUuidBySerial = new Map();
+  const localUuidByNumista = new Map();
   for (const item of inventory) {
     if (item.serial && item.uuid) localUuidBySerial.set(String(item.serial), item.uuid);
+    // STAK-454: Also index by numistaId+date for CSV imports (which lack serial)
+    if (item.numistaId && item.uuid) {
+      localUuidByNumista.set(item.numistaId + '|' + (item.date || ''), item.uuid);
+    }
   }
   for (const item of parsedItems) {
     if (!item.uuid && item.serial) {
       const localUuid = localUuidBySerial.get(String(item.serial));
       if (localUuid) item.uuid = localUuid;
+    }
+    // STAK-454: Fallback — match by numistaId+date when serial enrichment missed
+    if (!item.uuid && item.numistaId) {
+      const numistaUuid = localUuidByNumista.get(item.numistaId + '|' + (item.date || ''));
+      if (numistaUuid) item.uuid = numistaUuid;
     }
   }
 
@@ -2886,20 +2899,6 @@ const showImportDiffReview = (parsedItems, sourceInfo, options, onComplete) => {
         showToast('Import complete: ' + (parts.length > 0 ? parts.join(', ') : 'no changes applied'));
       }
 
-      // Post-import summary banner (STAK-374)
-      if (typeof showImportSummaryBanner === 'function') {
-        var _skippedReasons = [];
-        if (options.validationResult && options.validationResult.invalid) {
-          _skippedReasons = options.validationResult.invalid.slice(0, 5).map(function(i) { return i.reasons[0]; });
-        }
-        showImportSummaryBanner({
-          added: selectedChanges.filter(function(c) { return c.type === 'add'; }).length,
-          modified: selectedChanges.filter(function(c) { return c.type === 'modify'; }).length,
-          deleted: selectedChanges.filter(function(c) { return c.type === 'delete'; }).length,
-          skipped: options.validationResult ? (options.validationResult.skippedCount || 0) : 0,
-          skippedReasons: _skippedReasons
-        });
-      }
 
       if (onComplete) onComplete({ added: addCount, modified: modCount, deleted: delCount });
 

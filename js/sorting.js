@@ -69,13 +69,13 @@ const sortInventory = (data = inventory) => {
     const valA = aWrapper.val;
     const valB = bWrapper.val;
 
-    // Special handling for date: empty/unknown dates should always sort to the bottom
+    // Special handling for date: empty/unknown dates sort as "infinitely old"
     if (sortColumn === 0) {
       // Simple numeric comparison for pre-calculated timestamps
-      // Handle Infinity (Empty)
+      // Dateless items = oldest: top when asc, bottom when desc
       if (valA === Infinity && valB === Infinity) return 0;
-      if (valA === Infinity) return 1; // Empty always at bottom
-      if (valB === Infinity) return -1; // Empty always at bottom
+      if (valA === Infinity) return sortDirection === 'asc' ? -1 : 1;
+      if (valB === Infinity) return sortDirection === 'asc' ? 1 : -1;
 
       return sortDirection === 'asc' ? valA - valB : valB - valA;
     }

@@ -290,7 +290,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-12 - STACK-38/STACK-31: Responsive card view + mobile layout
  */
 
-const APP_VERSION = "3.33.51";
+const APP_VERSION = "3.33.60";
 
 /**
  * Numista metadata cache TTL: 30 days in milliseconds.
@@ -724,6 +724,12 @@ const RETAIL_MANIFEST_TS_KEY = "retailManifestGeneratedAt";
 /** @constant {string} RETAIL_MANIFEST_SLUGS_KEY - LocalStorage key for cached manifest coin slug list */
 const RETAIL_MANIFEST_SLUGS_KEY = "retailManifestSlugs";
 
+/** @constant {string} RETAIL_MANIFEST_COIN_META_KEY - LocalStorage key for cached manifest coin metadata (canonical names, weights, metals) */
+const RETAIL_MANIFEST_COIN_META_KEY = "retailManifestCoinMeta";
+
+/** @constant {string} RETAIL_MANIFEST_VENDOR_META_KEY - LocalStorage key for cached manifest vendor display metadata */
+const RETAIL_MANIFEST_VENDOR_META_KEY = "retailManifestVendorMeta";
+
 // =============================================================================
 // IMAGE PROCESSOR DEFAULTS (STACK-95)
 // =============================================================================
@@ -930,8 +936,10 @@ const ALLOWED_STORAGE_KEYS = [
   HEADER_RESTORE_BTN_KEY,     // boolean string: "true"/"false" — restore button visibility
   HEADER_CLOUD_SYNC_BTN_KEY,  // boolean string: "true"/"false" — cloud sync button visibility
   HEADER_BTN_SHOW_TEXT_KEY,   // boolean string: "true"/"false" — show text labels under header icons
-  RETAIL_MANIFEST_TS_KEY,     // string ISO timestamp — market manifest generated_at cache
-  RETAIL_MANIFEST_SLUGS_KEY,  // JSON array: cached manifest coin slug list
+  RETAIL_MANIFEST_TS_KEY,          // string ISO timestamp — market manifest generated_at cache
+  RETAIL_MANIFEST_SLUGS_KEY,       // JSON array: cached manifest coin slug list
+  RETAIL_MANIFEST_COIN_META_KEY,   // JSON object: cached manifest coin metadata (canonical names)
+  RETAIL_MANIFEST_VENDOR_META_KEY, // JSON object: cached manifest vendor display metadata
   "layoutVisibility",         // JSON object: { spotPrices, totals, search, table } (STACK-54) — legacy, migrated to layoutSectionConfig
   "layoutSectionConfig",      // JSON array: ordered section config [{ id, label, enabled }] (STACK-54)
   LAST_VERSION_CHECK_KEY,     // timestamp: last remote version check (STACK-67)
@@ -971,6 +979,8 @@ const ALLOWED_STORAGE_KEYS = [
   CLOUD_VAULT_IDLE_TIMEOUT_KEY,                // number string: vault password idle lock timeout in minutes (15|30|60|120|0=never)
   "cloud_sync_mode",                           // DEPRECATED: kept for migration only — will be removed after v3.33
   "cloud_dropbox_account_id",                  // string: Dropbox account_id for Simple mode key derivation
+  "cloud_dropbox_email",                       // string: Dropbox account email for multi-account UX (STAK-449)
+  "cloud_dropbox_display_name",                // string: Dropbox display name for multi-account UX (STAK-449)
   "cloud_vault_password",                      // string: user vault password stored for persistent unlock
   STORAGE_PERSIST_GRANTED_KEY,                         // boolean string: "true"/"false" — storage persistence grant flag
   "headerBtnOrder",                                    // JSON array: header button card order (STAK-320)
@@ -995,6 +1005,8 @@ const VAULT_EXCLUDE_KEYS = [
   'cloud_token_pcloud',
   'cloud_token_box',
   'cloud_dropbox_account_id',
+  'cloud_dropbox_email',
+  'cloud_dropbox_display_name',
   'cloud_vault_password',
   'cloud_sync_device_id',
   'cloud_sync_cursor',
@@ -1890,6 +1902,8 @@ if (typeof window !== "undefined") {
   window.HEADER_BTN_SHOW_TEXT_KEY = HEADER_BTN_SHOW_TEXT_KEY;
   window.RETAIL_MANIFEST_TS_KEY = RETAIL_MANIFEST_TS_KEY;
   window.RETAIL_MANIFEST_SLUGS_KEY = RETAIL_MANIFEST_SLUGS_KEY;
+  window.RETAIL_MANIFEST_COIN_META_KEY = RETAIL_MANIFEST_COIN_META_KEY;
+  window.RETAIL_MANIFEST_VENDOR_META_KEY = RETAIL_MANIFEST_VENDOR_META_KEY;
   window.RETAIL_ANOMALY_THRESHOLD = RETAIL_ANOMALY_THRESHOLD;
   window.RETAIL_SPIKE_NEIGHBOR_TOLERANCE = RETAIL_SPIKE_NEIGHBOR_TOLERANCE;
   // Disposition types for realized gains (STAK-72)
