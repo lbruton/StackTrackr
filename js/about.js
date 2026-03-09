@@ -283,11 +283,11 @@ const setupAckModalEvents = () => {
  */
 const getEmbeddedWhatsNew = () => {
   return `
-    <li><strong>v3.33.60 &ndash; ZIP Restore DiffModal</strong>: ZIP backup restore now routes through DiffModal for item and settings review instead of directly overwriting localStorage (STAK-457)</li>
-    <li><strong>v3.33.59 &ndash; DiffModal Settings Renderers</strong>: Five rich chip-strip renderers replace opaque &ldquo;N items&rdquo; text for complex settings. Per-element click-to-pick merge for chip configs, seed rules, and provider priorities. itemTags leak fixed (STAK-455)</li>
-    <li><strong>v3.33.58 &ndash; DiffModal Item Cards</strong>: Item cards with bordered layout, metal-colored image placeholders, async image loading, and click-to-pick field selection for granular merge control on modified items (STAK-454)</li>
-    <li><strong>v3.33.56 &ndash; DiffModal UX Overhaul</strong>: Card-based diff review with summary dashboard, per-item conflict cards with click-to-pick resolution, 7 settings category groups with human-readable labels, progress tracker for sync conflicts (STAK-451)</li>
-    <li><strong>v3.33.55 &ndash; Dropbox Multi-Account UX</strong>: Connected Dropbox account email and display name now shown in Cloud settings. Switch Account button forces re-authentication (STAK-449)</li>
+    <li><strong>v3.33.60 &ndash; DiffModal Complete Overhaul</strong>: Full card-based cloud sync review &mdash; summary dashboard, per-item conflict cards with click-to-pick field resolution, 7 settings categories with rich chip renderers, and ZIP backup restore now routes through DiffModal instead of silently overwriting (STAK-451, STAK-454, STAK-455, STAK-457)</li>
+    <li><strong>v3.33.55 &ndash; Dropbox Multi-Account UX</strong>: Connected Dropbox account email and display name shown in Cloud settings. New Switch Account button forces re-authentication to prevent auto-connecting the wrong account (STAK-449)</li>
+    <li><strong>v3.33.57 &ndash; Market View Improvements</strong>: Mobile search bar and controls layout fixed; metal filter pills (All / Silver / Gold / Goldback / Platinum / Palladium) added; Australian coins (Kangaroo, Koala, Kookaburra) now display correctly (STAK-433, STAK-434, STAK-452)</li>
+    <li><strong>v3.33.53 &ndash; Numista N# Search Fixes</strong>: Image URLs and metal types now auto-populated when adding items via Numista N# search &mdash; no more manual re-download workaround needed (STAK-431)</li>
+    <li><strong>v3.33.54 &ndash; Date Sort Fix</strong>: Items without a purchase date now sort as oldest rather than always appearing at the bottom regardless of sort direction (STAK-448)</li>
   `;
 };
 

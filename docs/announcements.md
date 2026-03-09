@@ -1,10 +1,10 @@
 ## What's New
 
-- **ZIP Restore DiffModal (v3.33.60)**: ZIP backup restore now routes through DiffModal for item and settings review instead of directly overwriting localStorage (STAK-457).
-- **DiffModal Settings Renderers (v3.33.59)**: Five rich chip-strip renderers replace opaque "N items" text for complex settings. Per-element click-to-pick merge for chip configs, seed rules, and provider priorities. itemTags leak fixed (STAK-455).
-- **DiffModal Item Cards (v3.33.58)**: Item cards with bordered layout, metal-colored image placeholders, async image loading, and click-to-pick field selection for granular merge control on modified items (STAK-454).
-- **DiffModal UX Overhaul (v3.33.56)**: Card-based diff review with summary dashboard, per-item conflict cards with click-to-pick resolution, 7 settings category groups with human-readable labels, progress tracker for sync conflicts (STAK-451).
-- **Dropbox Multi-Account UX (v3.33.55)**: Connected Dropbox account email and display name now shown in Cloud settings. Switch Account button forces re-authentication (STAK-449).
+- **DiffModal Complete Overhaul (v3.33.56&ndash;v3.33.60)**: Full card-based cloud sync review — summary dashboard, per-item conflict cards with click-to-pick field resolution, 7 settings categories with rich chip renderers, and ZIP backup restore now routes through DiffModal instead of silently overwriting (STAK-451, STAK-454, STAK-455, STAK-457).
+- **Dropbox Multi-Account UX (v3.33.55)**: Connected Dropbox account email and display name shown in Cloud settings. New Switch Account button forces re-authentication to prevent auto-connecting the wrong account (STAK-449).
+- **Market View Improvements (v3.33.52, v3.33.57)**: Mobile search bar and controls layout fixed; metal filter pills (All / Silver / Gold / Goldback / Platinum / Palladium) added; Australian coins (Kangaroo, Koala, Kookaburra) now display correctly (STAK-433, STAK-434, STAK-452).
+- **Numista N# Search Fixes (v3.33.53)**: Image URLs and metal types now auto-populated when adding items via Numista N# search — no more manual re-download workaround needed (STAK-431).
+- **Date Sort Fix (v3.33.54)**: Items without a purchase date now sort as oldest rather than always appearing at the bottom regardless of sort direction (STAK-448).
 
 ## Development Roadmap
 
