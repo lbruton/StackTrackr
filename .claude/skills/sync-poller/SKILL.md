@@ -1,25 +1,40 @@
 ---
 name: sync-poller
 description: >
-  Deploy poller code changes to the home VM via Portainer API. Use when you've committed changes
-  to devops/pollers/ (shared/, home-poller/, or compose files) and need to redeploy the running
-  container. Also use when the user says "sync poller", "deploy poller", "redeploy home poller",
-  "push poller changes", or after any session that modified files in devops/pollers/.
+  Deploy poller code changes to the Portainer VM. Portainer GitOps auto-deploys within 5 minutes
+  of any push to the tracked branch. Use this skill for immediate manual deploys when you can't
+  wait, or when the user says "sync poller", "deploy poller", "redeploy home poller".
 ---
 
-# Sync Poller — Git to Docker via Portainer
+# Sync Poller -- Git to Docker via Portainer
 
-Poller code lives in `StakTrakr/devops/pollers/`. Changes deploy to the home VM via Portainer's
-git-based stack redeploy. No SSH file copying, no curl-update — Portainer pulls from the branch
-and rebuilds the container.
+Poller code lives in `StakTrakr/devops/pollers/`. Portainer has **GitOps enabled with a 5-minute
+polling interval** on all stacks. Push to the tracked branch and it auto-deploys. No SSH file
+copying, no curl-update.
 
-## Architecture Change (2026-03)
+## Deployment Model
 
-**Before:** Code lived in `StakTrakrApi`, was curl-downloaded onto the VM at `/opt/poller/`.
-Edits on the VM required manual sync back to the repo.
+**Primary (GitOps auto-deploy):** Commit, push to the tracked branch (usually `dev`). Portainer
+polls every 5 minutes, detects the change, pulls, rebuilds the image, and restarts the container.
+No manual action needed.
 
-**Now:** Code lives in `StakTrakr/devops/pollers/`. Portainer pulls from git, builds the Docker
-image, and deploys. The VM has no source files outside containers.
+**Manual (immediate deploy):** Use the Portainer API to trigger an immediate redeploy when you
+can't wait 5 minutes. See "Manual Redeploy" section below.
+
+## SSH Host
+
+The Portainer VM SSH host is `portainer` (LAN) or `portainer-ts` (Tailscale). User: `portainer`.
+
+```bash
+# Container status
+ssh -T portainer 'docker ps --filter network=staktrakr-net --format "table {{.Names}}\t{{.Status}}"'
+
+# Container logs
+ssh -T portainer 'docker logs --tail 30 staktrakr-home-poller'
+
+# Dashboard check
+ssh -T portainer 'curl -sf http://localhost:3010/ | head -c 100'
+```
 
 ## File Layout
 
@@ -50,7 +65,7 @@ devops/pollers/
     check-flyio.sh
     supervisord.conf
     docker-entrypoint.sh
-  remote-poller/           # Fly.io container (future)
+  remote-poller/           # Fly.io container
     Dockerfile
     fly.toml
     ...
@@ -59,23 +74,17 @@ devops/pollers/
   docker-compose.tinyproxy.yml
 ```
 
-## Deploy Workflow
+## Deploy Workflow (GitOps -- default)
 
-### Step 1 — Commit and push changes
+1. Work in a worktree branch, commit changes
+2. Push to origin (or merge PR to `dev`)
+3. Portainer detects the change within 5 minutes and redeploys
+4. Verify via SSH: `ssh -T portainer 'docker logs --tail 20 staktrakr-home-poller'`
 
-Work in the feature branch or `dev`. Push to origin:
+## Manual Redeploy (immediate)
 
-```bash
-cd /Volumes/DATA/GitHub/StakTrakr/.worktrees/feat-pollers  # or current worktree
-git add devops/pollers/
-git commit -m "fix: <description> (DEV-XX)"
-git push origin <branch>
-```
-
-### Step 2 — Redeploy via Portainer API
-
-The home-poller stack requires env vars on every redeploy. Fetch secrets from Infisical first
-(use `secrets` skill), then:
+Only needed when you can't wait for the 5-minute GitOps poll. The home-poller stack requires
+env vars on every manual redeploy. Fetch secrets from Infisical first (use `secrets` skill):
 
 ```bash
 PORTAINER_URL="https://192.168.1.81:9443"
@@ -83,7 +92,7 @@ PORTAINER_TOKEN="<from-infisical:PORTAINER_TOKEN>"
 STACK_ID=7
 ENDPOINT_ID=3
 
-ssh -T homepoller "curl -sk -X PUT \
+ssh -T portainer "curl -sk -X PUT \
   '${PORTAINER_URL}/api/stacks/${STACK_ID}/git/redeploy?endpointId=${ENDPOINT_ID}' \
   -H 'X-API-Key: ${PORTAINER_TOKEN}' \
   -H 'Content-Type: application/json' \
@@ -105,39 +114,12 @@ ssh -T homepoller "curl -sk -X PUT \
 For stacks without env vars (tailscale, tinyproxy):
 
 ```bash
-ssh -T homepoller "curl -sk -X PUT \
+ssh -T portainer "curl -sk -X PUT \
   '${PORTAINER_URL}/api/stacks/<STACK_ID>/git/redeploy?endpointId=${ENDPOINT_ID}' \
   -H 'X-API-Key: ${PORTAINER_TOKEN}' \
   -H 'Content-Type: application/json' \
   -d '{\"pullImage\": true, \"prune\": true}'"
 ```
-
-### Step 3 — Verify deployment
-
-```bash
-# Check container is running
-ssh -T homepoller 'docker ps --filter name=staktrakr-home-poller --format "{{.Status}}"'
-
-# Check logs for startup
-ssh -T homepoller 'docker logs --tail 20 staktrakr-home-poller'
-
-# Verify dashboard responds
-ssh -T homepoller 'curl -sf http://localhost:3010/ | head -c 100'
-
-# Check Turso connectivity
-ssh -T homepoller 'docker exec staktrakr-home-poller node -e "
-  const {createClient}=require(\"@libsql/client\");
-  const c=createClient({url:process.env.TURSO_DATABASE_URL,authToken:process.env.TURSO_AUTH_TOKEN});
-  c.execute(\"SELECT 1\").then(()=>console.log(\"Turso OK\")).catch(e=>console.error(e.message));
-"'
-```
-
-### Step 4 — Report
-
-Tell the user:
-- Which files changed
-- Redeploy result (success/failure)
-- Container status and dashboard reachable
 
 ## Stack IDs
 
@@ -150,8 +132,9 @@ Tell the user:
 
 ## Common Mistakes
 
-**Forgetting env vars on redeploy.** Portainer git-based stacks lose env vars on redeploy. If
-Turso queries fail after deploy, this is the cause. Always pass the full `env` array.
+**Forgetting env vars on manual redeploy.** Portainer git-based stacks lose env vars on manual
+redeploy. GitOps auto-deploy preserves them. If Turso queries fail after a manual deploy, this
+is the cause. Always pass the full `env` array for manual deploys.
 
 **Deploying from wrong branch.** Portainer pulls from the branch configured in the stack. After
 merging a feature PR, the stack should be pointed at `dev`. Check the Portainer UI if in doubt.

@@ -150,6 +150,24 @@ function getUptime() {
   }
 }
 
+const LOCK_FILES = [
+  { name: "Retail Poller", path: "/tmp/retail-poller.lock" },
+];
+
+function getLockStatus() {
+  return LOCK_FILES.map(({ name, path }) => {
+    if (!existsSync(path)) return { name, path, locked: false, age: null };
+    try {
+      const stat = execSync(`stat -c %Y "${path}" 2>/dev/null || stat -f %m "${path}"`, { timeout: 2000 }).toString().trim();
+      const mtime = parseInt(stat, 10);
+      const ageSec = Math.floor(Date.now() / 1000) - mtime;
+      return { name, path, locked: true, age: ageSec };
+    } catch {
+      return { name, path, locked: true, age: null };
+    }
+  });
+}
+
 function getSupervisordStatus() {
   try {
     const out = execSync("supervisorctl status 2>/dev/null", { timeout: 3000 }).toString();
@@ -684,7 +702,7 @@ function renderFailureTrendChart(trend) {
 }
 
 function renderMainPage(data) {
-  const { net, cpu, uptime, supervisord, systemd, logLines, tursoRuns, tursoError, tursoUp, flyioHealth, runStats, failureCount, coverageStats, spotCoverage, failureTrend, flyRuns, dockerContainers } = data;
+  const { net, cpu, uptime, supervisord, systemd, logLines, tursoRuns, tursoError, tursoUp, flyioHealth, runStats, failureCount, coverageStats, spotCoverage, failureTrend, flyRuns, dockerContainers, lockStatus } = data;
 
   const supRows = supervisord.map((s) => `
     <tr>
@@ -795,6 +813,33 @@ ${renderNav("home", failureCount)}
   <div class="card">
     <h2>Docker Containers</h2>
     <table><tbody>${dockerRows || '<tr><td colspan="3" class="no-data">Docker socket not available</td></tr>'}</tbody></table>
+  </div>
+
+  <div class="card${(lockStatus || []).some(l => l.locked) ? ' card-stale' : ''}">
+    <h2>Poller Locks</h2>
+    ${(lockStatus || []).map(l => {
+      const ageStr = l.age != null ? (l.age >= 3600 ? Math.floor(l.age / 3600) + 'h ' + Math.floor((l.age % 3600) / 60) + 'm' : l.age >= 60 ? Math.floor(l.age / 60) + 'm ' + (l.age % 60) + 's' : l.age + 's') : '?';
+      const stale = l.age != null && l.age > 900;
+      if (l.locked) {
+        return `<div class="stat-row">
+          <span>${escHtml(l.name)}</span>
+          <span>
+            <span class="badge" style="background:${stale ? '#ef4444' : '#f59e0b'}">${stale ? 'STALE' : 'LOCKED'}</span>
+            <span class="detail" style="margin-left:6px">${ageStr} ago</span>
+          </span>
+        </div>
+        <div style="margin-top:8px">
+          <button class="btn-clear-lock" data-path="${escHtml(l.path)}" data-name="${escHtml(l.name)}"
+            style="background:#7f1d1d;color:#fca5a5;padding:5px 12px;border-radius:6px;border:1px solid #991b1b;cursor:pointer;font-size:12px;font-weight:600;width:100%">
+            Clear Lock
+          </button>
+        </div>`;
+      }
+      return `<div class="stat-row">
+        <span>${escHtml(l.name)}</span>
+        <span><span class="badge" style="background:#22c55e">OK</span></span>
+      </div>`;
+    }).join("")}
   </div>
 
   ${renderFlyioCard(flyioHealth, flyRuns, tursoUp)}
@@ -920,6 +965,40 @@ document.querySelectorAll('.btn-browserbase').forEach(btn => {
     } finally {
       btn.disabled = false;
       btn.textContent = '\uD83C\uDF10 Browserbase';
+    }
+  });
+});
+
+// ── Clear lock button ────────────────────────────────────────────────────
+document.querySelectorAll('.btn-clear-lock').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const lockPath = btn.dataset.path;
+    const lockName = btn.dataset.name;
+    if (!confirm('Clear the ' + lockName + ' lock file?\\n\\nThis will allow the next scheduled run to proceed.')) return;
+    btn.disabled = true;
+    btn.textContent = 'Clearing...';
+    try {
+      const r = await fetch('/api/clear-lock', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ path: lockPath })
+      });
+      const j = await r.json();
+      if (j.ok) {
+        btn.textContent = 'Cleared!';
+        btn.style.background = '#14532d';
+        btn.style.color = '#86efac';
+        btn.style.borderColor = '#166534';
+        setTimeout(() => location.reload(), 1500);
+      } else {
+        alert('Failed: ' + (j.message || 'Unknown error'));
+        btn.disabled = false;
+        btn.textContent = 'Clear Lock';
+      }
+    } catch (err) {
+      alert('Request failed: ' + err.message);
+      btn.disabled = false;
+      btn.textContent = 'Clear Lock';
     }
   });
 });
@@ -2303,6 +2382,33 @@ async function handleRequest(req, res) {
     return;
   }
 
+  // ── POST /api/clear-lock — Remove a stale poller lock file ─────────────
+  if (req.method === "POST" && url === "/api/clear-lock") {
+    try {
+      const { path: lockPath } = JSON.parse(await readBody(req));
+      const allowed = LOCK_FILES.map(l => l.path);
+      if (!lockPath || !allowed.includes(lockPath)) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: false, message: "Invalid lock path" }));
+        return;
+      }
+      if (!existsSync(lockPath)) {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true, message: "Lock file does not exist (already cleared)" }));
+        return;
+      }
+      const { unlinkSync } = await import("node:fs");
+      unlinkSync(lockPath);
+      console.log(`[dashboard] Lock cleared: ${lockPath}`);
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ ok: true, message: `Cleared ${lockPath}` }));
+    } catch (err) {
+      res.writeHead(500, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ ok: false, message: err.message }));
+    }
+    return;
+  }
+
   // ── GET / (main dashboard) ─────────────────────────────────────────────
   if (req.method !== "GET" || (url !== "/" && url !== "/dashboard" && url !== "")) {
     res.writeHead(404);
@@ -2311,7 +2417,7 @@ async function handleRequest(req, res) {
   }
 
   const client = getTursoClient();
-  const [tursoResult, runStats, failureCount, net, cpu, uptime, supervisord, systemd, logLines, flyioHealth, coverageStats, spotCoverage, failureTrend, flyRuns, dockerContainers] = await Promise.all([
+  const [tursoResult, runStats, failureCount, net, cpu, uptime, supervisord, systemd, logLines, flyioHealth, coverageStats, spotCoverage, failureTrend, flyRuns, dockerContainers, lockStatus] = await Promise.all([
     fetchRunsFromTurso().then(rows => ({ rows, error: null })).catch(err => ({ rows: null, error: err.message })),
     client ? getRunStats(client).catch(() => null) : Promise.resolve(null),
     client ? getFailureCount(client) : Promise.resolve(0),
@@ -2327,6 +2433,7 @@ async function handleRequest(req, res) {
     client ? getFailureTrend(client).catch(() => []) : Promise.resolve([]),
     client ? fetchFlyioRuns(client).catch(() => null) : Promise.resolve(null),
     Promise.resolve(getDockerContainers()),
+    Promise.resolve(getLockStatus()),
   ]);
 
   const html = renderMainPage({
@@ -2341,6 +2448,7 @@ async function handleRequest(req, res) {
     failureTrend,
     flyRuns,
     dockerContainers,
+    lockStatus,
   });
 
   res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
