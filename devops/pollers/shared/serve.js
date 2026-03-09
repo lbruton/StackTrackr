@@ -9,7 +9,7 @@ import { readFile, stat } from "fs/promises";
 import { join, resolve, extname } from "path";
 
 const PORT = process.env.PORT || 8080;
-const DATA_DIR = process.env.API_EXPORT_DIR || "/tmp/staktrakr-api-export";
+const DATA_DIR = resolve(process.env.API_EXPORT_DIR || "/tmp/staktrakr-api-export");
 
 const MIME_TYPES = {
   ".json": "application/json",
@@ -37,7 +37,14 @@ const server = createServer(async (req, res) => {
   }
 
   // Remove query string and decode URI
-  const url = decodeURIComponent(req.url.split("?")[0]);
+  let url;
+  try {
+    url = decodeURIComponent(req.url.split("?")[0]);
+  } catch {
+    res.writeHead(400);
+    res.end("Bad Request");
+    return;
+  }
 
   // Security: prevent directory traversal and absolute path escape
   const filePath = resolve(DATA_DIR, url.replace(/^\/+/, ""));

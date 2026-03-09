@@ -11,6 +11,7 @@ fi
 
 # ── 1. Export env vars for cron jobs (cron doesn't inherit Docker env) ──
 printenv | grep -v '^_=' > /etc/environment
+chmod 600 /etc/environment
 
 # ── 2. Create data directories ──────────────────────────────────────────
 mkdir -p /data/retail /data/api /data/hourly /data/logs

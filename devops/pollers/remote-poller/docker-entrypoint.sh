@@ -12,6 +12,7 @@ fi
 
 # ── 1. Export env vars for cron jobs (cron doesn't inherit Docker env) ──
 printenv | grep -v '^_=' > /etc/environment
+chmod 600 /etc/environment
 
 # ── 2. Configure git credentials ───────────────────────────────────────
 _GIT_TOKEN="${GITHUB_TOKEN:-${GH_TOKEN:-}}"
