@@ -1341,14 +1341,14 @@ const renderNumistaFieldCheckboxes = (result) => {
 
   // Map field keys to current form values for "Current:" hints
   const currentFormValues = {
-    name: (elements.itemName || document.getElementById('itemName'))?.value?.trim() || '',
-    catalog: (elements.itemCatalog || document.getElementById('itemCatalog'))?.value?.trim() || '',
-    year: (elements.itemYear || document.getElementById('itemYear'))?.value?.trim() || '',
-    type: (elements.itemType || document.getElementById('itemType'))?.value || '',
-    weight: (elements.itemWeight || document.getElementById('itemWeight'))?.value?.trim() || '',
-    obverseImage: (elements.itemObverseImageUrl || document.getElementById('itemObverseImageUrl'))?.value?.trim() || '',
-    reverseImage: (elements.itemReverseImageUrl || document.getElementById('itemReverseImageUrl'))?.value?.trim() || '',
-    metal: (elements.itemMetal || document.getElementById('itemMetal'))?.value || '',
+    name: (elements.itemName || safeGetElement('itemName'))?.value?.trim() || '',
+    catalog: (elements.itemCatalog || safeGetElement('itemCatalog'))?.value?.trim() || '',
+    year: (elements.itemYear || safeGetElement('itemYear'))?.value?.trim() || '',
+    type: (elements.itemType || safeGetElement('itemType'))?.value || '',
+    weight: (elements.itemWeight || safeGetElement('itemWeight'))?.value?.trim() || '',
+    obverseImage: (elements.itemObverseImageUrl || safeGetElement('itemObverseImageUrl'))?.value?.trim() || '',
+    reverseImage: (elements.itemReverseImageUrl || safeGetElement('itemReverseImageUrl'))?.value?.trim() || '',
+    metal: (elements.itemMetal || safeGetElement('itemMetal'))?.value || '',
   };
 
   fields.forEach(f => {
@@ -1610,17 +1610,17 @@ const fillFormFromNumistaResult = () => {
 
     switch (cb.value) {
       case 'name': {
-        const el = elements.itemName || document.getElementById('itemName');
+        const el = elements.itemName || safeGetElement('itemName');
         if (el) el.value = val;
         break;
       }
       case 'year': {
-        const el = elements.itemYear || document.getElementById('itemYear');
+        const el = elements.itemYear || safeGetElement('itemYear');
         if (el) el.value = val;
         break;
       }
       case 'type': {
-        const el = elements.itemType || document.getElementById('itemType');
+        const el = elements.itemType || safeGetElement('itemType');
         if (el) {
           const valid = Array.from(el.options).map(o => o.value);
           if (valid.includes(val)) el.value = val;
@@ -1628,8 +1628,8 @@ const fillFormFromNumistaResult = () => {
         break;
       }
       case 'weight': {
-        const el = elements.itemWeight || document.getElementById('itemWeight');
-        const unitEl = document.getElementById('itemWeightUnit');
+        const el = elements.itemWeight || safeGetElement('itemWeight');
+        const unitEl = safeGetElement('itemWeightUnit');
         const num = parseFloat(val);
         if (el && !isNaN(num) && num > 0) {
           el.value = num;
@@ -1638,22 +1638,22 @@ const fillFormFromNumistaResult = () => {
         break;
       }
       case 'catalog': {
-        const el = elements.itemCatalog || document.getElementById('itemCatalog');
+        const el = elements.itemCatalog || safeGetElement('itemCatalog');
         if (el) el.value = val;
         break;
       }
       case 'obverseImage': {
-        const el = elements.itemObverseImageUrl || document.getElementById('itemObverseImageUrl');
+        const el = elements.itemObverseImageUrl || safeGetElement('itemObverseImageUrl');
         if (el && !el.value.trim()) el.value = val;
         break;
       }
       case 'reverseImage': {
-        const el = elements.itemReverseImageUrl || document.getElementById('itemReverseImageUrl');
+        const el = elements.itemReverseImageUrl || safeGetElement('itemReverseImageUrl');
         if (el && !el.value.trim()) el.value = val;
         break;
       }
       case 'metal': {
-        const el = elements.itemMetal || document.getElementById('itemMetal');
+        const el = elements.itemMetal || safeGetElement('itemMetal');
         if (el) {
           const valid = Array.from(el.options).map(o => o.value);
           if (valid.includes(val)) el.value = val;

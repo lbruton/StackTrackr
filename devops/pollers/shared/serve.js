@@ -41,7 +41,7 @@ const server = createServer(async (req, res) => {
 
   // Security: prevent directory traversal and absolute path escape
   const filePath = resolve(DATA_DIR, url.replace(/^\/+/, ""));
-  if (!filePath.startsWith(DATA_DIR)) {
+  if (!filePath.startsWith(DATA_DIR + '/') && filePath !== DATA_DIR) {
     res.writeHead(400);
     res.end("Bad Request");
     return;

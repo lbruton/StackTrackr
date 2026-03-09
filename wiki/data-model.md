@@ -14,7 +14,7 @@ relatedPages:
 ---
 # Data Model
 
-> **Last updated:** v3.33.55 — 2026-03-06
+> **Last updated:** v3.33.59 — 2026-03-07
 > **Source files:** `js/constants.js`, `js/utils.js`, `js/types.js`
 
 ## Overview

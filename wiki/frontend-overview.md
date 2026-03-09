@@ -17,7 +17,7 @@ relatedPages:
 ---
 # Frontend Overview
 
-> **Last updated:** v3.33.58 — 2026-03-07
+> **Last updated:** v3.33.59 — 2026-03-07
 > **Source files:** `index.html`, `js/constants.js`, `sw.js`, `js/file-protocol-fix.js`
 
 ## Overview

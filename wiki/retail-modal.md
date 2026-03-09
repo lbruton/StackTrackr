@@ -13,7 +13,7 @@ relatedPages:
 ---
 # Retail Modal
 
-> **Last updated:** v3.33.52 — 2026-03-05
+> **Last updated:** v3.33.57 — 2026-03-06
 > **Source files:** `js/retail-view-modal.js`, `js/retail.js`
 
 ## Overview
@@ -234,7 +234,7 @@ Renders the colored vendor legend (swatch + clickable name + current price) into
 - Iterates `RETAIL_VENDOR_NAMES` keys in declaration order.
 - Per-vendor URL resolution: checks `retailProviders[slug][vendorId]` first, then `RETAIL_VENDOR_URLS[vendorId]`.
 - In-stock vendors with a URL: rendered as `<a>` elements. Click opens vendor URL in a named popup window (`retail_vendor_{vendorId}`, 1250x800); falls back to `_blank` if popup is blocked.
-- OOS vendors: rendered at `opacity: 0.5`, price wrapped in `<del>`, "OOS" badge appended in `text-danger`. Tooltip shows last known price and date from `retailLastKnownPrices` / `retailLastAvailableDates`.
+- OOS vendors: out-of-stock vendors are omitted from the legend entirely when price is null (`_buildVendorLegend` returns early at the `if (price == null) return` guard on line 94).
 
 ### `_bucketWindows(windows)`
 

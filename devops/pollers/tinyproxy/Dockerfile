@@ -6,6 +6,7 @@ RUN apk add --no-cache tinyproxy iproute2 \
 
 COPY tinyproxy.conf /etc/tinyproxy/tinyproxy.conf
 COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 EXPOSE 8888
 
