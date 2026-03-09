@@ -21,19 +21,17 @@ No manual action needed.
 **Manual (immediate deploy):** Use the Portainer API to trigger an immediate redeploy when you
 can't wait 5 minutes. See "Manual Redeploy" section below.
 
-## SSH Host
+## Portainer VM Access
 
-The Portainer VM SSH host is `portainer` (LAN) or `portainer-ts` (Tailscale). User: `portainer`.
+All container management goes through the Portainer REST API at `https://192.168.1.81:9443/api`. See `portainer` skill for full API reference.
 
 ```bash
-# Container status
-ssh -T portainer 'docker ps --filter network=staktrakr-net --format "table {{.Names}}\t{{.Status}}"'
+# Container/stack status — use Portainer API or web UI
+curl -sk -H "X-API-Key: $PORTAINER_TOKEN" https://192.168.1.81:9443/api/stacks
 
-# Container logs
-ssh -T portainer 'docker logs --tail 30 staktrakr-home-poller'
-
-# Dashboard check
-ssh -T portainer 'curl -sf http://localhost:3010/ | head -c 100'
+# Container logs — use Portainer API
+curl -sk -H "X-API-Key: $PORTAINER_TOKEN" \
+  "https://192.168.1.81:9443/api/endpoints/3/docker/containers/<id>/logs?stdout=true&tail=30"
 ```
 
 ## File Layout
@@ -79,7 +77,7 @@ devops/pollers/
 1. Work in a worktree branch, commit changes
 2. Push to origin (or merge PR to `dev`)
 3. Portainer detects the change within 5 minutes and redeploys
-4. Verify via SSH: `ssh -T portainer 'docker logs --tail 20 staktrakr-home-poller'`
+4. Verify via Portainer API or web UI that the container restarted successfully
 
 ## Manual Redeploy (immediate)
 
@@ -92,33 +90,33 @@ PORTAINER_TOKEN="<from-infisical:PORTAINER_TOKEN>"
 STACK_ID=7
 ENDPOINT_ID=3
 
-ssh -T portainer "curl -sk -X PUT \
-  '${PORTAINER_URL}/api/stacks/${STACK_ID}/git/redeploy?endpointId=${ENDPOINT_ID}' \
-  -H 'X-API-Key: ${PORTAINER_TOKEN}' \
-  -H 'Content-Type: application/json' \
+curl -sk -X PUT \
+  "${PORTAINER_URL}/api/stacks/${STACK_ID}/git/redeploy?endpointId=${ENDPOINT_ID}" \
+  -H "X-API-Key: ${PORTAINER_TOKEN}" \
+  -H "Content-Type: application/json" \
   -d '{
-    \"pullImage\": true,
-    \"prune\": true,
-    \"env\": [
-      {\"name\": \"TURSO_DATABASE_URL\", \"value\": \"<from-infisical>\"},
-      {\"name\": \"TURSO_AUTH_TOKEN\", \"value\": \"<from-infisical>\"},
-      {\"name\": \"METAL_PRICE_API_KEY\", \"value\": \"<from-infisical>\"},
-      {\"name\": \"GEMINI_API_KEY\", \"value\": \"<from-infisical>\"},
-      {\"name\": \"FIRECRAWL_BASE_URL\", \"value\": \"http://firecrawl-api:3002\"},
-      {\"name\": \"FLYIO_TAILSCALE_IP\", \"value\": \"100.90.171.110\"},
-      {\"name\": \"FLYIO_HTTP_URL\", \"value\": \"https://api2.staktrakr.com/data/retail/providers.json\"}
+    "pullImage": true,
+    "prune": true,
+    "env": [
+      {"name": "TURSO_DATABASE_URL", "value": "<from-infisical>"},
+      {"name": "TURSO_AUTH_TOKEN", "value": "<from-infisical>"},
+      {"name": "METAL_PRICE_API_KEY", "value": "<from-infisical>"},
+      {"name": "GEMINI_API_KEY", "value": "<from-infisical>"},
+      {"name": "FIRECRAWL_BASE_URL", "value": "http://firecrawl-api:3002"},
+      {"name": "FLYIO_TAILSCALE_IP", "value": "100.90.171.110"},
+      {"name": "FLYIO_HTTP_URL", "value": "https://api2.staktrakr.com/data/retail/providers.json"}
     ]
-  }'"
+  }'
 ```
 
 For stacks without env vars (tailscale, tinyproxy):
 
 ```bash
-ssh -T portainer "curl -sk -X PUT \
-  '${PORTAINER_URL}/api/stacks/<STACK_ID>/git/redeploy?endpointId=${ENDPOINT_ID}' \
-  -H 'X-API-Key: ${PORTAINER_TOKEN}' \
-  -H 'Content-Type: application/json' \
-  -d '{\"pullImage\": true, \"prune\": true}'"
+curl -sk -X PUT \
+  "${PORTAINER_URL}/api/stacks/<STACK_ID>/git/redeploy?endpointId=${ENDPOINT_ID}" \
+  -H "X-API-Key: ${PORTAINER_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d '{"pullImage": true, "prune": true}'
 ```
 
 ## Stack IDs

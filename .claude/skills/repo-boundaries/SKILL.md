@@ -35,9 +35,9 @@ description: Use when doing any cross-repo work, deploying, or when unsure which
 
 | Action | Allowed from | Forbidden from |
 |--------|-------------|----------------|
-| Home poller redeploy | Portainer API (`PUT /api/stacks/7/git/redeploy`) via SSH | Direct file editing on VM, docker build on VM |
-| Tailscale/tinyproxy redeploy | Portainer API (stacks 8/5) via SSH | Direct docker run on VM |
-| Firecrawl redeploy | Portainer API (stack 4) via SSH | Direct docker run on VM |
+| Home poller redeploy | Portainer API (`PUT /api/stacks/7/git/redeploy?endpointId=3`) | Direct file editing on VM, SSH, docker CLI on VM |
+| Tailscale/tinyproxy redeploy | Portainer API (stacks 8/5) | Direct docker run on VM, SSH |
+| Firecrawl redeploy | Portainer API (stack 4) | Direct docker run on VM, SSH |
 | `fly deploy` (Fly.io container) | `StakTrakrApi/devops/fly-poller/` on this Mac only | StakTrakr repo, home VM, anywhere else |
 | `git push` to `api` branch (data files) | Fly.io container `run-publish.sh` only — via force-push | Local Mac, home VM, any GHA, manually |
 | `providers.json` URL fix | Direct push to `api` branch in `StakTrakrApi` | Any other method |
@@ -49,7 +49,7 @@ description: Use when doing any cross-repo work, deploying, or when unsure which
 
 ## Home VM (192.168.1.81) — Docker/Portainer Architecture
 
-> **Access:** `ssh -T homepoller '<cmd>'` (LAN) or `ssh -T homepoller-ts '<cmd>'` (Tailscale). See `homepoller-ssh` skill for full reference.
+> **Access:** Portainer REST API at `https://192.168.1.81:9443/api`. See `portainer` skill for full reference.
 
 Four Docker stacks on the `staktrakr-net` bridge network, managed by Portainer:
 

@@ -446,9 +446,7 @@ PRs should include:
 
 ## Test Credentials
 
-Test and sandbox credentials are managed via **Infisical** (self-hosted secrets manager) at `http://localhost:8700`.
-
-Start Infisical: `cd devops/infisical && docker compose up -d`
+Test and sandbox credentials are managed via **Infisical** (self-hosted secrets manager) at `http://192.168.1.47:8080` (Proxmox VM 107).
 
 Contains: Dropbox OAuth test app, metal price API sandbox keys, Numista, OXR, PCGS, smoke test URLs, MCP API keys.
 All MCP servers pull secrets from Infisical via `.mcp.json` environment variables.
@@ -512,9 +510,9 @@ The following MCP servers were live-tested on **2026-02-21**. Availability can v
   `mcp__firecrawl-local__firecrawl_search`, `mcp__firecrawl-local__firecrawl_scrape`,
   `mcp__firecrawl-local__firecrawl_crawl`, and `mcp__firecrawl-local__firecrawl_extract`.
   Note: `/agent` endpoint support depends on deployment mode; confirm availability in the current stack.
-- `infisical`: Self-hosted secrets manager at `http://localhost:8700`. Stores all API keys, OAuth
+- `infisical`: Self-hosted secrets manager at `http://192.168.1.47:8080` (Proxmox VM 107). Stores all API keys, OAuth
   credentials, and test secrets. Use `list-secrets`, `get-secret`, `create-secret`, `update-secret`.
-  Start with `cd devops/infisical && docker compose up -d`.
+  Machine identity: `ClaudeCode`. All secrets in `dev` environment.
 
 ### MCP Discovery Notes
 

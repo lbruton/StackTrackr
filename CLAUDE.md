@@ -77,9 +77,7 @@ Three feeds served from `lbruton/StakTrakrApi` **api branch** via GitHub Pages a
 
 **Critical:** `spot-history-YYYY.json` is a **seed file** (noon UTC daily), NOT live data.
 
-**Home poller:** Runs as Docker containers on home VM (192.168.1.81), managed by Portainer. Four stacks: home-poller, firecrawl, tinyproxy, tailscale-sidecar. Deploy via `sync-poller` skill (Portainer API). Dashboard at `http://192.168.1.81:3010` (HTTP) / `:3011` (HTTPS).
-
-**Home poller SSH:** `ssh -T homepoller '<cmd>'` (LAN) or `ssh -T homepoller-ts '<cmd>'` (Tailscale). Full reference in `homepoller-ssh` skill. User `stakpoller` has NOPASSWD sudo.
+**Portainer VM** (192.168.1.81): Runs all Docker stacks — home-poller, firecrawl, tinyproxy, tailscale-sidecar, plus other projects. Managed exclusively via Portainer REST API (`https://192.168.1.81:9443/api`) or web UI. No SSH, no docker CLI. See `portainer` skill for full reference. Deploy poller changes via `sync-poller` skill. Dashboard at `http://192.168.1.81:3010` (HTTP) / `:3011` (HTTPS).
 
 **Quick health check:**
 
@@ -89,9 +87,6 @@ curl -s https://api.staktrakr.com/data/api/manifest.json | python3 -c "
 import sys,json; from datetime import datetime,timezone; d=json.load(sys.stdin)
 age=(datetime.now(timezone.utc)-datetime.fromisoformat(d['generated_at'].replace('Z','+00:00'))).total_seconds()/60
 print(f'Market: {age:.0f}m ago  {\"OK\" if age<=30 else \"STALE\"}')"
-
-# Home poller containers
-ssh -T homepoller 'docker ps --filter network=staktrakr-net --format "table {{.Names}}\t{{.Status}}"'
 
 # Fly.io logs
 fly logs --app staktrakr | grep -E 'spot|run-spot' | tail -5
@@ -131,7 +126,7 @@ Team: `f876864d-ff80-4231-ae6c-a8e5cb69aca4`
 
 ## Project Skills
 
-In `.claude/skills/`: `api-infrastructure`, `bb-test`, `brainstorming`, `browserbase-test-maintenance`, `bug-report`, `coding-standards`, `devops-dashboard`, `finishing-a-development-branch`, `gsd`, `homepoller-ssh`, `markdown-standards`, `release`, `repo-boundaries`, `retail-poller`, `retail-provider-fix`, `scan-mentions`, `seed-sync`, `ship`, `sync-poller`, `ui-mockup`, `wiki-audit`, `wiki-search`, `wiki-sweep`, `wiki-update`.
+In `.claude/skills/`: `api-infrastructure`, `bb-test`, `brainstorming`, `browserbase-test-maintenance`, `bug-report`, `coding-standards`, `devops-dashboard`, `finishing-a-development-branch`, `gsd`, `markdown-standards`, `release`, `repo-boundaries`, `retail-poller`, `retail-provider-fix`, `scan-mentions`, `seed-sync`, `ship`, `sync-poller`, `ui-mockup`, `wiki-audit`, `wiki-search`, `wiki-sweep`, `wiki-update`.
 
 Note: `/prime` is now a user-level skill (`~/.claude/skills/prime/`) that works across all projects.
 
