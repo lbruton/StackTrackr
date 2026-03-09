@@ -1,5 +1,5 @@
 {
-  "nextIndex": 7,
+  "nextIndex": 8,
   "rotation": [
     "api-consumption.md",
     "backup-restore.md",
@@ -46,6 +46,14 @@
       "verified": [
         "patch/3.33.61"
       ]
+    },
+    {
+      "date": "2026-03-09",
+      "page": "service-worker.md",
+      "track": "frontend",
+      "status": "inaccuracy_found",
+      "finding": "Wiki lists External API hosts as metalpriceapi.com, metals-api.com, gold-api.com, numista.com but sw.js API_HOSTS array contains subdomains: api.metalpriceapi.com, metals-api.com, api.gold-api.com, en.numista.com",
+      "verified": []
     }
   ]
 }
