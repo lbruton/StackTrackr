@@ -126,7 +126,7 @@ Team: `f876864d-ff80-4231-ae6c-a8e5cb69aca4`
 
 ## Project Skills
 
-In `.claude/skills/`: `api-infrastructure`, `bb-test`, `brainstorming`, `browserbase-test-maintenance`, `bug-report`, `coding-standards`, `finishing-a-development-branch`, `firecrawl-infra`, `gsd`, `release`, `repo-boundaries`, `retail-poller`, `retail-provider-fix`, `seed-sync`, `ship`, `start-patch`, `sw-cache`, `sync-instructions`, `wiki-audit`, `wiki-search`, `wiki-sweep`, `wiki-update`.
+In `.claude/skills/`: `api-infrastructure`, `bb-test`, `brainstorming`, `browserbase-test-maintenance`, `bug-report`, `coding-standards`, `finishing-a-development-branch`, `firecrawl-infra`, `gsd`, `release`, `repo-boundaries`, `retail-poller`, `retail-provider-fix`, `seed-sync`, `ship`, `start-patch`, `sw-cache`, `sync-instructions`, `wiki-audit`, `wiki-sweep`, `wiki-update`.
 
 User-level infrastructure skills: `home-infrastructure`, `cloud-infrastructure`, `proxmox`, `secrets`.
 
