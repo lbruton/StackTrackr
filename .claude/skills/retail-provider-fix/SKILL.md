@@ -25,7 +25,7 @@ fly ssh console -a staktrakr -C "curl -s -X POST http://localhost:3002/v1/scrape
     print('WARNING:',w); print('LEN:',len(md)); print(md[:5000])\""
 ```
 
-For home poller on the Portainer VM, use the Portainer REST API to exec into the container or check logs — see `portainer` skill.
+For home poller on the Portainer VM, use the Portainer REST API to exec into the container or check logs — see `home-infrastructure` skill.
 
 ---
 

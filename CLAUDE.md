@@ -77,7 +77,7 @@ Three feeds served from `lbruton/StakTrakrApi` **api branch** via GitHub Pages a
 
 **Critical:** `spot-history-YYYY.json` is a **seed file** (noon UTC daily), NOT live data.
 
-**Portainer VM** (192.168.1.81): Runs all Docker stacks — home-poller, firecrawl, tinyproxy, tailscale-sidecar, plus other projects. Managed exclusively via Portainer REST API (`https://192.168.1.81:9443/api`) or web UI. No SSH, no docker CLI. See `portainer` skill for full reference. Deploy poller changes via `sync-poller` skill. Dashboard at `http://192.168.1.81:3010` (HTTP) / `:3011` (HTTPS).
+**Portainer VM**: Runs all Docker stacks — home-poller, firecrawl, tinyproxy, tailscale-sidecar, plus other projects. Managed exclusively via Portainer REST API or web UI. No SSH, no docker CLI. See `home-infrastructure` skill for IPs, stack registry, and API reference. Dashboard at port 3010 (HTTP) / 3011 (HTTPS).
 
 **Quick health check:**
 
@@ -126,7 +126,9 @@ Team: `f876864d-ff80-4231-ae6c-a8e5cb69aca4`
 
 ## Project Skills
 
-In `.claude/skills/`: `api-infrastructure`, `bb-test`, `brainstorming`, `browserbase-test-maintenance`, `bug-report`, `coding-standards`, `devops-dashboard`, `finishing-a-development-branch`, `firecrawl-infra`, `gsd`, `markdown-standards`, `release`, `repo-boundaries`, `retail-poller`, `retail-provider-fix`, `scan-mentions`, `seed-sync`, `ship`, `start-patch`, `sw-cache`, `sync-instructions`, `sync-poller`, `ui-mockup`, `wiki-audit`, `wiki-search`, `wiki-sweep`, `wiki-update`.
+In `.claude/skills/`: `api-infrastructure`, `bb-test`, `brainstorming`, `browserbase-test-maintenance`, `bug-report`, `coding-standards`, `finishing-a-development-branch`, `firecrawl-infra`, `gsd`, `release`, `repo-boundaries`, `retail-poller`, `retail-provider-fix`, `seed-sync`, `ship`, `start-patch`, `sw-cache`, `sync-instructions`, `wiki-audit`, `wiki-search`, `wiki-sweep`, `wiki-update`.
+
+User-level infrastructure skills: `home-infrastructure`, `cloud-infrastructure`, `proxmox`, `secrets`.
 
 Note: `/prime` is now a user-level skill (`~/.claude/skills/prime/`) that works across all projects.
 

@@ -49,7 +49,7 @@ description: Use when doing any cross-repo work, deploying, or when unsure which
 
 ## Home VM (192.168.1.81) — Docker/Portainer Architecture
 
-> **Access:** Portainer REST API at `https://192.168.1.81:9443/api`. See `portainer` skill for full reference.
+> **Access:** Portainer REST API — see `home-infrastructure` skill for full reference (IP, API key, endpoints).
 
 Four Docker stacks on the `staktrakr-net` bridge network, managed by Portainer:
 
