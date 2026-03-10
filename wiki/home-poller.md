@@ -2,7 +2,7 @@
 title: Home Poller (Docker/Portainer)
 category: infrastructure
 owner: staktrakr
-lastUpdated: v3.33.63
+lastUpdated: v3.33.66
 date: 2026-03-10
 sourceFiles:
   - devops/pollers/docker-compose.home.yml
@@ -13,6 +13,8 @@ sourceFiles:
   - devops/pollers/home-poller/metrics-exporter.js
   - devops/pollers/home-poller/check-flyio.sh
   - devops/pollers/home-poller/run-home.sh
+  - devops/pollers/shared/cf-clearance.js
+  - devops/pollers/shared/price-extract.js
 relatedPages:
   - poller-parity
   - cron-schedule
@@ -141,10 +143,10 @@ The Tailscale sidecar (`tailscale-staktrakr`) runs in its own container. Tinypro
 | Property | Value |
 |----------|-------|
 | Image | `ghcr.io/thephaseless/byparr:latest` |
-| Internal URL | `http://byparr:8191` (Docker DNS, no host ports) |
+| Internal URL | `http://staktrakr-byparr:8191` (Docker DNS via container name, no host ports) |
 | Purpose | Phase 2 fallback for CF-protected vendors (Bullion Exchanges, JM Bullion) |
 | Network | `staktrakr-net` bridge only — not exposed to host |
-| Shared memory | `/dev/shm` mounted from host (required by Chromium) |
+| Shared memory | `/dev/shm` mounted from host (required by Camoufox Firefox) |
 
 ### 3-Phase Scraping Pipeline
 
@@ -154,9 +156,11 @@ The Tailscale sidecar (`tailscale-staktrakr`) runs in its own container. Tinypro
 |-------|--------|--------------|
 | 0 | Playwright direct | Always attempted first |
 | 1 | Firecrawl | Phase 0 fails or returns empty |
-| 2 | CF sidecar + Playwright with cookie | Phase 0/1 return HTTP 403 |
+| 2 | CF sidecar (Byparr) | Phase 0+1 both return no price (including 200 Cloudflare JS-challenge pages) |
 
-Phase 2 calls `getCFClearanceCookie(url)` from `shared/cf-clearance.js`, injects the returned `cf_clearance` cookie and matching `User-Agent` into a Playwright browser context, then re-scrapes. Results written to Turso with `source: "cf-clearance"`.
+Phase 2 calls `getCFClearanceCookie(url)` from `shared/cf-clearance.js`, which POSTs to Byparr's FlareSolverr-compatible `POST /v1` endpoint. Byparr returns the page HTML (`solution.response`) along with the `cf_clearance` cookie. The HTML is tag-stripped and parsed directly — **no second Playwright request** is needed. Results written to Turso with `source: "cf-clearance"`.
+
+> **Why HTML-first:** Byparr uses Camoufox (Firefox) to solve the challenge. Re-requesting the page via Playwright/Chromium would cause a TLS fingerprint mismatch (Firefox fingerprint on the `cf_clearance` cookie, Chromium browser making the request). Using Byparr's already-fetched HTML avoids this entirely.
 
 ### Enabling / Disabling
 
@@ -233,7 +237,7 @@ Injected via Portainer stack env vars (must be passed on every redeploy):
 | `FLYIO_HTTP_URL` | Yes | `https://api2.staktrakr.com/data/retail/providers.json` |
 | `GEMINI_API_KEY` | No | Enables vision pipeline |
 | `VISION_ENABLED` | No | Set to `1` to enable vision pipeline |
-| `CF_CLEARANCE_SCRAPER_URL` | No | Defaults to `http://byparr:8191` (Docker DNS) |
+| `CF_CLEARANCE_SIDECAR_URL` | No | Defaults to `http://staktrakr-byparr:8191` (Docker DNS via container name) |
 | `CF_CLEARANCE_ENABLED` | No | Set to `1` (default) to enable Phase 2; `0` to disable |
 | `CF_CLEARANCE_TIMEOUT_MS` | No | Sidecar request timeout; defaults to `30000` (30 s) |
 
