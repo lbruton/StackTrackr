@@ -557,7 +557,10 @@ async function scrapeViaCFClearance(url, providerId, coin) {
   // This avoids a second Playwright request (which would have a TLS/browser
   // fingerprint mismatch: Byparr uses Firefox/Camoufox, Playwright uses Chromium).
   if (cfData.responseHtml) {
-    const rawText = cfData.responseHtml.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
+    const rawText = cfData.responseHtml
+      .replace(/<(script|style|head)[^>]*>[\s\S]*?<\/(script|style|head)>/gi, " ")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ");
     const cleaned = preprocessMarkdown(rawText, providerId);
     const inStock = detectStockStatus(cleaned, coin.weight_oz || 1, providerId);
     const price = extractPrice(cleaned, coin.metal, coin.weight_oz || 1, providerId);
