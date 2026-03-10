@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.62] - 2026-03-10
+
+### Fixed — STAK-463: 7-Day Trend Chart Endpoint Spike Detection and Roll-Forward Drift
+
+- **Fixed**: Endpoint spikes (day 0 / day 6) in the 7-day trend chart now caught by lookahead/lookback peer comparison (10% threshold), preventing anomalous first/last data points from distorting the chart (STAK-463)
+- **Fixed**: Cross-vendor median guard lowered from 3 to 2 vendors for endpoint slots, with stricter 20% threshold, so sparse endpoint coverage no longer lets outliers slip through (STAK-463)
+- **Fixed**: OOS carry-forward no longer drifts — when a vendor is out-of-stock but the scraper still returns a price, the last in-stock price is used as the carry anchor instead, keeping dotted lines flat (STAK-463)
+
+---
+
 ## [3.33.61] - 2026-03-10
 
 ### Added — STAK-462: CF-Clearance-Scraper sidecar for home poller
