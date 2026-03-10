@@ -512,8 +512,16 @@ const PROVIDER_CONFIG = {
     waitUntil: "domcontentloaded",  // fast — no need for networkidle
   },
   herobullion: {
-    waitUntil: "domcontentloaded",  // fast — no need for networkidle
-    waitAfter: 2_000,              // light JS hydration wait
+    phase: "firecrawl",            // Phase 0 innerText loses pipe-table structure →
+                                   // firstTableRowFirstPrice() returns null → firstInRangePriceProse()
+                                   // grabs "As Low As" bulk price before the 1-unit table price.
+                                   // Firecrawl markdown has | pipe | tables — extraction works correctly.
+    waitFor: 3_000,
+  },
+  gainesvillecoins: {
+    phase: "firecrawl",            // Phase 0 Playwright direct always times out (15s wasted per coin).
+                                   // Firecrawl succeeds reliably — skip Phase 0 entirely.
+    waitFor: 3_000,
   },
   summitmetals: {
     // defaults are fine — phase0 + networkidle
@@ -640,17 +648,18 @@ async function scrapeViaCFClearance(url, providerId, coin) {
     });
     await page.goto(url, { waitUntil: "networkidle", timeout: cfg.timeout || 40000 });
     if (cfg.waitFor > 0) await page.waitForTimeout(cfg.waitFor);
-    // Capture JSON-LD BEFORE closing browser — evaluate returns once page is ready.
-    // Strip nav/header/footer first (same effect as Firecrawl onlyMainContent:true)
-    // to avoid spot tickers and site-wide navigation being included in innerText,
-    // which causes firstInRangePriceProse() to grab wrong prices on BE pages.
+    // Capture JSON-LD BEFORE removing nav elements — some vendors embed
+    // <script type="application/ld+json"> inside <header>/<footer>; removing first
+    // would make querySelectorAll return empty. Strip nav/header/footer after capturing
+    // to prevent spot tickers from polluting innerText (Firecrawl onlyMainContent equivalent).
     const [text, jsonLdScripts] = await page.evaluate(() => {
+      const scripts = Array.from(
+        document.querySelectorAll('script[type="application/ld+json"]'),
+        s => s.textContent
+      );
       document.querySelectorAll("nav, header, footer, [role='navigation'], [role='banner']")
         .forEach(el => el.remove());
-      return [
-        document.body.innerText,
-        Array.from(document.querySelectorAll('script[type="application/ld+json"]'), s => s.textContent),
-      ];
+      return [document.body.innerText, scripts];
     });
     await browser.close();
     browser = null;
@@ -818,10 +827,20 @@ async function scrapeWithPlaywrightDirect(url, providerId, coin) {
       await page.waitForTimeout(phase0Wait);
     }
 
-    const [text, jsonLdScripts] = await page.evaluate(() => [
-      document.body.innerText,
-      Array.from(document.querySelectorAll('script[type="application/ld+json"]'), s => s.textContent),
-    ]);
+    // Capture JSON-LD BEFORE removing nav elements (same as scrapeViaCFClearance Phase 2).
+    // Some vendors embed <script type="application/ld+json"> inside <header>/<footer>;
+    // removing those elements first would return empty scripts. After capturing, strip
+    // nav/header/footer to prevent spot tickers from polluting innerText and causing
+    // firstInRangePriceProse() to match the spot price instead of the product price.
+    const [text, jsonLdScripts] = await page.evaluate(() => {
+      const scripts = Array.from(
+        document.querySelectorAll('script[type="application/ld+json"]'),
+        s => s.textContent
+      );
+      document.querySelectorAll("nav, header, footer, [role='navigation'], [role='banner']")
+        .forEach(el => el.remove());
+      return [document.body.innerText, scripts];
+    });
     const cleaned = preprocessMarkdown(text, providerId);
     const stock = detectStockStatus(cleaned, coin.weight_oz || 1, providerId);
 

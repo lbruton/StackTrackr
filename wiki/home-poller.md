@@ -2,7 +2,7 @@
 title: Home Poller (Docker/Portainer)
 category: infrastructure
 owner: staktrakr
-lastUpdated: v3.33.66
+lastUpdated: v3.33.67
 date: 2026-03-10
 sourceFiles:
   - devops/pollers/shared/price-extract.js
@@ -167,12 +167,17 @@ Phase 2 calls `getCFClearanceCookie(url)` from `shared/cf-clearance.js`, which P
 
 After scraping, `price-extract.js` extracts the wire/ACH price via:
 
-1. **JSON-LD first** — `extractJsonLdPrice()` reads `<script type="application/ld+json">` Product schemas (`offers.price`). This is the authoritative price set by the merchant and avoids spot ticker / related-product false positives. Applies in Phase 0 (Playwright direct) and Phase 2 (CF-clearance) paths.
-2. **Pipe-table first row** — `firstTableRowFirstPrice()` — standard pricing grid layout.
+1. **JSON-LD first** — `extractJsonLdPrice()` reads `<script type="application/ld+json">` Product schemas (`offers.price`). Authoritative price set by the merchant; avoids spot ticker / related-product false positives. Applies in Phase 0 and Phase 2.
+2. **Pipe-table first row** — `firstTableRowFirstPrice()` — standard pricing grid layout. Only matches Firecrawl markdown (which produces `| $price |` pipe tables). Phase 0 plain `innerText` has no pipe characters — vendors that need table-based extraction must use `phase: "firecrawl"` in `PROVIDER_CONFIG`.
 3. **Prose price scan** — `firstInRangePriceProse()` — first `$XX.XX` value in the metal's price range (SPA fallback).
 4. **As Low As** — `asLowAsPrices()` — bulk-discount price as last resort.
 
-**Known false-positive risk:** APMEX spot ticker shows daily price *changes* (e.g. palladium ±$11) which can fall in the goldback range ($5–$25). Provident's spot ticker gold price ($5,100+) falls within the platinum range ($500–$6,000). JSON-LD extraction resolves both by reading the authoritative `offers.price` before scanning prose.
+**Nav stripping (Phase 0 + Phase 2):** Before capturing `innerText`, Phase 0 (`scrapeWithPlaywrightDirect`) removes `nav, header, footer, [role='navigation'], [role='banner']` from the DOM — the same treatment applied in Phase 2 (`scrapeViaCFClearance`). This prevents site-wide spot price tickers (e.g. Provident Metals gold ticker ~$5,320) from appearing before the product price in the text stream and being matched by `firstInRangePriceProse`.
+
+**Vendor routing (PROVIDER_CONFIG):** Vendors where Phase 0 `innerText` extraction is structurally insufficient use `phase: "firecrawl"`:
+- `herobullion` — "As Low As" bulk price appears before the 1-unit table; pipe-table extraction via Firecrawl returns the correct 1-unit price.
+- `gainesvillecoins` — Phase 0 Playwright always times out; Firecrawl succeeds reliably.
+- `apmex`, `monumentmetals`, `jmbullion`, `bullionexchanges` — already Firecrawl-preferred (JS-rendering, bot-detection, or table-parsing requirements).
 
 ### Enabling / Disabling
 
