@@ -499,6 +499,10 @@ const renderActiveFilters = () => {
   
   container.style.display = '';
 
+  // ⚡ Bolt: Use DocumentFragment to batch DOM insertions for filter chips.
+  // Instead of triggering a reflow/repaint for every single chip appended to the container,
+  // we build them off-DOM in a fragment and append them all at once. O(N) -> O(1) reflows.
+  const fragment = document.createDocumentFragment();
   chips.forEach((f, i) => {
     const chip = document.createElement('span');
     chip.className = 'filter-chip';
@@ -666,7 +670,7 @@ const renderActiveFilters = () => {
       }
     };
 
-    container.appendChild(chip);
+    fragment.appendChild(chip);
   });
 
   // Add clear button if there are any chips (check for both active and summary chips)
@@ -678,8 +682,10 @@ const renderActiveFilters = () => {
     clearButton.onclick = () => {
       clearAllFilters();
     };
-    container.appendChild(clearButton);
+    fragment.appendChild(clearButton);
   }
+
+  container.appendChild(fragment);
 };
 
 /**
