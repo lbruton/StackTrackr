@@ -1,18 +1,21 @@
-// Byparr sidecar client
-// =====================
-// Communicates with the ghcr.io/thephaseless/byparr container.
-// Byparr uses the FlareSolverr-compatible API (identical schema).
+// Byparr sidecar client — FlareSolverr-compatible API
+// =====================================================
+// Communicates with ghcr.io/thephaseless/byparr:latest.
+// Container name: staktrakr-byparr (set in docker-compose.home.yml).
 //
-// Endpoint:
+// Endpoint (verified 2026-03-10 against live bullionexchanges.com):
 //   POST /v1
 //   Body:    { "cmd": "request.get", "url": "https://...", "maxTimeout": 30000 }
-//   Returns: { "status": "ok", "solution": { "cookies": [{ "name": "cf_clearance", "value": "..." }], "userAgent": "..." } }
-//   Health:  GET /health → 200 OK
+//   Returns: { "status": "ok", "solution": {
+//               "cookies": [{ "name": "cf_clearance", "value": "..." }, ...],
+//               "userAgent": "<ua-string>" }}
+//   Health:  GET /health → { "msg": "Byparr is working!", "version": "..." }
 //
+// Override URL via CF_CLEARANCE_SIDECAR_URL env var.
 // Docs: https://github.com/ThePhaseless/Byparr
 
-const CF_CLEARANCE_SCRAPER_URL =
-  process.env.CF_CLEARANCE_SCRAPER_URL ?? "http://byparr:8191";
+const CF_CLEARANCE_SIDECAR_URL =
+  process.env.CF_CLEARANCE_SIDECAR_URL ?? "http://staktrakr-byparr:8191";
 const CF_CLEARANCE_ENABLED = process.env.CF_CLEARANCE_ENABLED ?? "1";
 const CF_CLEARANCE_TIMEOUT_MS = process.env.CF_CLEARANCE_TIMEOUT_MS ?? "30000";
 
@@ -33,7 +36,7 @@ export async function getCFClearanceCookie(url) {
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const response = await fetch(`${CF_CLEARANCE_SCRAPER_URL}/v1`, {
+    const response = await fetch(`${CF_CLEARANCE_SIDECAR_URL}/v1`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ cmd: "request.get", url, maxTimeout: timeoutMs }),
