@@ -5,6 +5,7 @@ owner: staktrakr
 lastUpdated: v3.33.66
 date: 2026-03-10
 sourceFiles:
+  - devops/pollers/shared/price-extract.js
   - devops/pollers/docker-compose.home.yml
   - devops/pollers/home-poller/Dockerfile
   - devops/pollers/home-poller/dashboard.js
@@ -161,6 +162,17 @@ The Tailscale sidecar (`tailscale-staktrakr`) runs in its own container. Tinypro
 Phase 2 calls `getCFClearanceCookie(url)` from `shared/cf-clearance.js`, which POSTs to Byparr's FlareSolverr-compatible `POST /v1` endpoint. Byparr returns the page HTML (`solution.response`) along with the `cf_clearance` cookie. The HTML is tag-stripped and parsed directly — **no second Playwright request** is needed. Results written to Turso with `source: "cf-clearance"`.
 
 > **Why HTML-first:** Byparr uses Camoufox (Firefox) to solve the challenge. Re-requesting the page via Playwright/Chromium would cause a TLS fingerprint mismatch (Firefox fingerprint on the `cf_clearance` cookie, Chromium browser making the request). Using Byparr's already-fetched HTML avoids this entirely.
+
+### Price Extraction Strategy (`extractPrice` + JSON-LD)
+
+After scraping, `price-extract.js` extracts the wire/ACH price via:
+
+1. **JSON-LD first** — `extractJsonLdPrice()` reads `<script type="application/ld+json">` Product schemas (`offers.price`). This is the authoritative price set by the merchant and avoids spot ticker / related-product false positives. Applies in Phase 0 (Playwright direct) and Phase 2 (CF-clearance) paths.
+2. **Pipe-table first row** — `firstTableRowFirstPrice()` — standard pricing grid layout.
+3. **Prose price scan** — `firstInRangePriceProse()` — first `$XX.XX` value in the metal's price range (SPA fallback).
+4. **As Low As** — `asLowAsPrices()` — bulk-discount price as last resort.
+
+**Known false-positive risk:** APMEX spot ticker shows daily price *changes* (e.g. palladium ±$11) which can fall in the goldback range ($5–$25). Provident's spot ticker gold price ($5,100+) falls within the platinum range ($500–$6,000). JSON-LD extraction resolves both by reading the authoritative `offers.price` before scanning prose.
 
 ### Enabling / Disabling
 

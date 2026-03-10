@@ -248,6 +248,47 @@ function detectStockStatus(markdown, expectedWeightOz = 1, providerId = "") {
 }
 
 /**
+ * Extract price from JSON-LD Product schema (`offers.price`).
+ *
+ * Checks first — before any regex-based extraction — because JSON-LD is
+ * the authoritative structured price set by the merchant, and avoids
+ * false positives from spot ticker values appearing earlier in innerText.
+ *
+ * @param {string[]} jsonLdScripts  textContent of each ld+json script tag
+ * @param {string}   metal
+ * @param {number}   weightOz
+ * @returns {number|null}
+ */
+function extractJsonLdPrice(jsonLdScripts, metal, weightOz = 1) {
+  if (!jsonLdScripts || jsonLdScripts.length === 0) return null;
+  const perOz = METAL_PRICE_RANGE_PER_OZ[metal];
+  if (!perOz) return null;
+  const min = perOz.min * weightOz;
+  const max = perOz.max * weightOz;
+  for (const script of jsonLdScripts) {
+    try {
+      const data = JSON.parse(script);
+      const items = Array.isArray(data) ? data : [data];
+      for (const item of items) {
+        // @type may be a string or an array per JSON-LD spec
+        const typeVal = item["@type"];
+        const types = Array.isArray(typeVal) ? typeVal : [typeVal];
+        if (!types.includes("Product")) continue;
+        const offers = item.offers;
+        if (!offers) continue;
+        const offerList = Array.isArray(offers) ? offers : [offers];
+        for (const offer of offerList) {
+          // Strip thousands separators before parsing — "1,200.00" must not become 1
+          const price = parseFloat(String(offer.price ?? "").replace(/,/g, ""));
+          if (!isNaN(price) && price >= min && price <= max) return price;
+        }
+      }
+    } catch { /* invalid JSON — skip */ }
+  }
+  return null;
+}
+
+/**
  * Extract the lowest plausible per-coin price from scraped markdown.
  *
  * Strategy order varies by provider to avoid picking up related-product prices:
@@ -599,11 +640,28 @@ async function scrapeViaCFClearance(url, providerId, coin) {
     });
     await page.goto(url, { waitUntil: "networkidle", timeout: cfg.timeout || 40000 });
     if (cfg.waitFor > 0) await page.waitForTimeout(cfg.waitFor);
-    const text = await page.innerText("body");
+    // Capture JSON-LD BEFORE closing browser — evaluate returns once page is ready.
+    // Strip nav/header/footer first (same effect as Firecrawl onlyMainContent:true)
+    // to avoid spot tickers and site-wide navigation being included in innerText,
+    // which causes firstInRangePriceProse() to grab wrong prices on BE pages.
+    const [text, jsonLdScripts] = await page.evaluate(() => {
+      document.querySelectorAll("nav, header, footer, [role='navigation'], [role='banner']")
+        .forEach(el => el.remove());
+      return [
+        document.body.innerText,
+        Array.from(document.querySelectorAll('script[type="application/ld+json"]'), s => s.textContent),
+      ];
+    });
     await browser.close();
     browser = null;
     const cleaned = preprocessMarkdown(text, providerId);
     const inStock = detectStockStatus(cleaned, coin.weight_oz || 1, providerId);
+    // JSON-LD is authoritative — avoids related-product / spot ticker false positives.
+    const jsonLdPrice = extractJsonLdPrice(jsonLdScripts, coin.metal, coin.weight_oz || 1);
+    if (jsonLdPrice !== null) {
+      log(`[cf-clearance] success via jsonLd: ${providerId} price=${jsonLdPrice}`);
+      return { price: jsonLdPrice, inStock: inStock.inStock, source: "cf-clearance" };
+    }
     const price = extractPrice(cleaned, coin.metal, coin.weight_oz || 1, providerId);
     if (price !== null) {
       log(`[cf-clearance] success (playwright): ${providerId} price=${price.price}`);
@@ -760,9 +818,21 @@ async function scrapeWithPlaywrightDirect(url, providerId, coin) {
       await page.waitForTimeout(phase0Wait);
     }
 
-    const text = await page.evaluate(() => document.body.innerText);
+    const [text, jsonLdScripts] = await page.evaluate(() => [
+      document.body.innerText,
+      Array.from(document.querySelectorAll('script[type="application/ld+json"]'), s => s.textContent),
+    ]);
     const cleaned = preprocessMarkdown(text, providerId);
     const stock = detectStockStatus(cleaned, coin.weight_oz || 1, providerId);
+
+    // JSON-LD is authoritative — check before regex fallbacks to avoid
+    // grabbing spot ticker deltas or related-product prices from innerText.
+    const jsonLdPrice = extractJsonLdPrice(jsonLdScripts, coin.metal, coin.weight_oz || 1);
+    if (jsonLdPrice !== null) {
+      log(`  extractPrice ${providerId}: matched=jsonLd price=$${jsonLdPrice.toFixed(2)}`);
+      return { price: jsonLdPrice, inStock: stock.inStock, source: "playwright-direct" };
+    }
+
     const extracted = extractPrice(cleaned, coin.metal, coin.weight_oz || 1, providerId);
     const price = extracted ? extracted.price : null;
     if (extracted) log(`  extractPrice ${providerId}: matched=${extracted.matchedBy} price=$${extracted.price.toFixed(2)}`);
