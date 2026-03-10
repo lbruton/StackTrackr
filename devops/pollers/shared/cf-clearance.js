@@ -63,6 +63,8 @@ export async function getCFClearanceCookie(url) {
     return {
       cfClearance: cfCookie.value,
       userAgent: data.solution.userAgent,
+      // HTML Byparr already fetched — lets caller skip a second browser request
+      responseHtml: data.solution.response ?? null,
     };
   } catch (err) {
     console.warn("[cf-clearance] sidecar error: " + err.message);

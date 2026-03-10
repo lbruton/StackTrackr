@@ -552,6 +552,24 @@ async function scrapeViaCFClearance(url, providerId, coin) {
     warn(`[cf-clearance] no cookie returned for ${providerId}`);
     return null;
   }
+
+  // Byparr already fetched the page — use its response HTML directly.
+  // This avoids a second Playwright request (which would have a TLS/browser
+  // fingerprint mismatch: Byparr uses Firefox/Camoufox, Playwright uses Chromium).
+  if (cfData.responseHtml) {
+    const rawText = cfData.responseHtml.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
+    const cleaned = preprocessMarkdown(rawText, providerId);
+    const inStock = detectStockStatus(cleaned, coin.weight_oz || 1, providerId);
+    const price = extractPrice(cleaned, coin.metal, coin.weight_oz || 1, providerId);
+    if (price !== null) {
+      log(`[cf-clearance] success (html): ${providerId} price=${price.price}`);
+      return { price: price.price, inStock: inStock.inStock, source: "cf-clearance" };
+    }
+    warn(`[cf-clearance] no price extracted from html for ${providerId}`);
+    return null;
+  }
+
+  // Fallback: launch Playwright with the cookie if Byparr didn't return response HTML
   let browser;
   try {
     const cfg = providerCfg(providerId);
@@ -585,7 +603,7 @@ async function scrapeViaCFClearance(url, providerId, coin) {
     const inStock = detectStockStatus(cleaned, coin.weight_oz || 1, providerId);
     const price = extractPrice(cleaned, coin.metal, coin.weight_oz || 1, providerId);
     if (price !== null) {
-      log(`[cf-clearance] success: ${providerId} price=${price.price}`);
+      log(`[cf-clearance] success (playwright): ${providerId} price=${price.price}`);
       return { price: price.price, inStock: inStock.inStock, source: "cf-clearance" };
     }
     warn(`[cf-clearance] no price extracted for ${providerId}`);
