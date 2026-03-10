@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.66] - 2026-03-10
+
+### Fixed — STAK-462: Fix cf-clearance.js endpoint for Byparr sidecar
+
+- **Fixed**: `cf-clearance.js` now calls Byparr's FlareSolverr-compatible `POST /v1` endpoint with correct hostname (`staktrakr-byparr:8191`) — previous version targeted the wrong sidecar type (`cf-clearance-scraper:5000`), causing all Byparr bypass attempts to fail with "fetch failed" (STAK-462)
+
+---
+
 ## [3.33.65] - 2026-03-10
 
 ### Fixed — STAK-462: Byparr Phase 2 fallback for CF invisible challenge

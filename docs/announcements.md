@@ -1,6 +1,6 @@
 ## What's New
 
-- **Retail Price Reliability (v3.33.61&ndash;v3.33.65)**: Improved scraping success rate for Bullion Exchanges and JM Bullion — Cloudflare-blocked requests now fall back to a Byparr (Camoufox) cookie-based bypass, reducing missed prices from these vendors (STAK-462).
+- **Retail Price Reliability (v3.33.61&ndash;v3.33.66)**: Improved scraping success rate for Bullion Exchanges and JM Bullion — Cloudflare-blocked requests now fall back to a Byparr (Camoufox) cookie-based bypass. Fixed sidecar API endpoint so CF cookies are actually retrieved (STAK-462).
 - **Market Price Chart Fixes (v3.33.62)**: 7-day trend charts now correctly detect anomalous first/last data points and carry OOS prices as flat dotted lines instead of drifting trends (STAK-463).
 - **DiffModal Complete Overhaul (v3.33.56&ndash;v3.33.60)**: Full card-based cloud sync review — summary dashboard, per-item conflict cards with click-to-pick field resolution, 7 settings categories with rich chip renderers, and ZIP backup restore now routes through DiffModal instead of silently overwriting (STAK-451, STAK-454, STAK-455, STAK-457).
 - **Dropbox Multi-Account UX (v3.33.55)**: Connected Dropbox account email and display name shown in Cloud settings. New Switch Account button forces re-authentication to prevent auto-connecting the wrong account (STAK-449).

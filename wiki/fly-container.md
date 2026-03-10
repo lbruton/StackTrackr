@@ -2,8 +2,8 @@
 title: Fly.io Container
 category: infrastructure
 owner: staktrakr
-lastUpdated: v3.33.57
-date: 2026-03-07
+lastUpdated: v3.33.66
+date: 2026-03-10
 sourceFiles:
   - devops/pollers/remote-poller/Dockerfile
   - devops/pollers/remote-poller/fly.toml
@@ -95,6 +95,12 @@ Written dynamically by `docker-entrypoint.sh` at container start. `CRON_SCHEDULE
 ### Phase 1: Firecrawl with proxy (fallback)
 
 Only runs if Phase 0 fails (403, timeout, or no price). Routes through `HOME_PROXY_URL` (tinyproxy on home VM via Tailscale) for residential IP. ~20 targets need this (~20s avg).
+
+### Phase 2: CF-clearance bypass (home-poller only)
+
+The shared `price-extract.js` includes a Phase 2 fallback for Cloudflare-protected vendors (`cf_clearance_fallback: true` in `providers.json`, currently `bullionexchanges` and `jmbullion`). This path calls a Byparr sidecar (`CF_CLEARANCE_SIDECAR_URL`, default `http://staktrakr-byparr:8191`) to harvest a `cf_clearance` cookie and parse the page HTML.
+
+**On Fly.io this path silently no-ops** — there is no Byparr sidecar deployed on the Fly.io container. The `getCFClearanceCookie()` call fails with a network error, the fallback returns null, and the SKU falls through to T3/T4. Byparr is a home-poller–only component.
 
 ### Abort/timeout skipRetry
 
