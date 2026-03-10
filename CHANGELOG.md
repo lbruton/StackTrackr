@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.61] - 2026-03-10
+
+### Added — STAK-462: CF-Clearance-Scraper sidecar for home poller
+
+- **Added**: CF-Clearance-Scraper Docker sidecar as Phase 2 fallback in home poller scraping pipeline — Cloudflare-blocked vendors (Bullion Exchanges, JM Bullion) now attempt a Zendriver-based cookie bypass before recording terminal 403 failures (STAK-462)
+
+---
+
 ## [3.33.60] - 2026-03-08
 
 ### Fixed — STAK-457: ZIP Backup Restore Routes Through DiffModal
