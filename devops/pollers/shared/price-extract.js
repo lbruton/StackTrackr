@@ -270,12 +270,16 @@ function extractJsonLdPrice(jsonLdScripts, metal, weightOz = 1) {
       const data = JSON.parse(script);
       const items = Array.isArray(data) ? data : [data];
       for (const item of items) {
-        if (item["@type"] !== "Product") continue;
+        // @type may be a string or an array per JSON-LD spec
+        const typeVal = item["@type"];
+        const types = Array.isArray(typeVal) ? typeVal : [typeVal];
+        if (!types.includes("Product")) continue;
         const offers = item.offers;
         if (!offers) continue;
         const offerList = Array.isArray(offers) ? offers : [offers];
         for (const offer of offerList) {
-          const price = parseFloat(offer.price);
+          // Strip thousands separators before parsing — "1,200.00" must not become 1
+          const price = parseFloat(String(offer.price ?? "").replace(/,/g, ""));
           if (!isNaN(price) && price >= min && price <= max) return price;
         }
       }
