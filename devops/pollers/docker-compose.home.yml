@@ -47,7 +47,10 @@ services:
         max-file: "3"
 
   byparr:
-    image: ghcr.io/thephaseless/byparr:latest
+    build:
+      context: ./byparr
+      dockerfile: Dockerfile
+      target: app
     container_name: staktrakr-byparr
     restart: unless-stopped
     environment:
