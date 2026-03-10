@@ -1254,10 +1254,11 @@ const _filterHistorySpikes = (entries, vendorIds) => {
         prices[vid][t] = lastKnown;
         estimated[vid][t] = true;
       } else if (val != null && isOOS) {
-        // OOS but has a price (e.g. last scraped) — use it, mark estimated
-        prices[vid][t] = val;
+        // OOS but scraper returned a price — prefer last in-stock anchor for carry-forward
+        // so the dotted line stays flat at the last real price, not drifting with OOS prices
+        prices[vid][t] = lastKnown != null ? lastKnown : val;
         estimated[vid][t] = true;
-        lastKnown = val;
+        // Do NOT update lastKnown — keep last in-stock price as the carry anchor
       } else {
         // No data at all
         prices[vid][t] = null;
@@ -1290,12 +1291,53 @@ const _filterHistorySpikes = (entries, vendorIds) => {
     }
   }
 
+  // Pass 1b: Endpoint spike detection (t=0 and t=length-1 have no symmetric neighbors)
+  // Compare each endpoint against the average of the nearest 2 real interior data points.
+  // Uses 2× the neighbor tolerance (10%) since we're comparing one side only.
+  const endpointTol = neighborTol * 2;
+  for (const vid of vendorIds) {
+    const arr = prices[vid];
+    const est = estimated[vid];
+    const n = arr.length;
+    // Leading endpoint (t=0): look ahead for 2 real non-estimated data points
+    if (!est[0] && arr[0] != null) {
+      const peers = [];
+      for (let j = 1; j < n && peers.length < 2; j++) {
+        if (!est[j] && arr[j] != null) peers.push(arr[j]);
+      }
+      if (peers.length >= 2) {
+        const peerAvg = (peers[0] + peers[1]) / 2;
+        if (peerAvg !== 0 && Math.abs(arr[0] - peerAvg) / peerAvg > endpointTol) {
+          arr[0] = null;
+          est[0] = false;
+        }
+      }
+    }
+    // Trailing endpoint (t=n-1): look back for 2 real non-estimated data points
+    if (!est[n - 1] && arr[n - 1] != null) {
+      const peers = [];
+      for (let j = n - 2; j >= 0 && peers.length < 2; j--) {
+        if (!est[j] && arr[j] != null) peers.push(arr[j]);
+      }
+      if (peers.length >= 2) {
+        const peerAvg = (peers[0] + peers[1]) / 2;
+        if (peerAvg !== 0 && Math.abs(arr[n - 1] - peerAvg) / peerAvg > endpointTol) {
+          arr[n - 1] = null;
+          est[n - 1] = false;
+        }
+      }
+    }
+  }
+
   // Pass 2: Cross-vendor median consensus (only on non-estimated points)
   for (let t = 0; t < entries.length; t++) {
+    const isEndpoint = (t === 0 || t === entries.length - 1);
     const valid = vendorIds
       .map((vid) => ({ vid, price: prices[vid][t], est: estimated[vid][t] }))
       .filter((x) => x.price != null && !x.est);
-    if (valid.length < 3) continue;
+    // Endpoints: allow 2 vendors and tighter threshold (20%); interior: 3 vendors, 40%
+    if (valid.length < (isEndpoint ? 2 : 3)) continue;
+    const threshold = isEndpoint ? medianThreshold * 0.5 : medianThreshold;
     const sorted = valid.map((x) => x.price).sort((a, b) => a - b);
     const mid = Math.floor(sorted.length / 2);
     const median = sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
@@ -1303,7 +1345,7 @@ const _filterHistorySpikes = (entries, vendorIds) => {
     let flagged = 0;
     const candidates = [];
     for (const { vid, price } of valid) {
-      if (Math.abs(price - median) / median > medianThreshold) {
+      if (Math.abs(price - median) / median > threshold) {
         candidates.push(vid);
         flagged++;
       }

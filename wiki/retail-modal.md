@@ -2,8 +2,8 @@
 title: Retail Modal
 category: frontend
 owner: staktrakr
-lastUpdated: v3.33.60
-date: 2026-03-09
+lastUpdated: v3.33.62
+date: 2026-03-10
 sourceFiles:
   - js/retail-view-modal.js
   - js/retail.js
@@ -265,6 +265,8 @@ Two-pass anomaly filter that nulls scraper spike prices before charting. Preserv
 
 **Pass 2 — Cross-vendor median consensus (safety net):** For each window with 3+ vendors, any vendor deviating more than `RETAIL_ANOMALY_THRESHOLD` (default 40%) from the median is nulled. Guard: if all vendors would be flagged, none are (prevents false consensus collapse).
 
+> **Note:** `_flagAnomalies` is the intraday-only pipeline. The 7-day trend card charts in `retail.js` use a separate `_filterHistorySpikes()` function with its own three-pass logic — see the **7-Day Trend Card Chart** section below.
+
 Anomalous chart prices are set to `null` so Chart.js gaps over them via `spanGaps: true`. Table cells with anomalous values render with strikethrough at reduced opacity.
 
 ### `_buildIntradayChart(slug)`
@@ -427,6 +429,56 @@ Both `_retailViewModalChart` and `_retailViewIntradayChart` must be explicitly d
 `openRetailViewModal` reads `RETAIL_COIN_META[slug]` and returns early if not found. Dynamic slugs (Goldbacks, manifest-added coins) are resolved via `getRetailCoinMeta(slug)` in `retail.js`, but the modal uses the raw `RETAIL_COIN_META` constant directly. If a new slug from the manifest is not in that constant and has no Goldback pattern match, the modal will silently refuse to open.
 
 As of v3.33.57, `RETAIL_COIN_META` includes 15 hardcoded entries covering all standard coins plus the three Australian silver coins (Kangaroo, Koala, Kookaburra). The manifest's `coins_meta` field provides runtime metadata but is not persisted to localStorage — on page reload before the manifest re-fetches, only the hardcoded entries are available.
+
+---
+
+---
+
+## 7-Day Trend Card Chart (`retail.js`)
+
+The **market card** expanded view renders a 7-day per-vendor trend chart using `_initMarketCardChart(slug, detailsEl)`. This is separate from the retail-view-modal history tab — it lives entirely in `retail.js` and operates on `retailPriceHistory[slug]`.
+
+### Pipeline
+
+```
+retailPriceHistory[slug].slice(-7)     -> last7[]  (7 daily entries, oldest first)
+         |
+         v
+  _filterHistorySpikes(last7, vendors) -> { prices, estimated }
+  (three-pass spike + OOS filter)
+         |
+         v
+  _interpolateGaps(prices[vid], estimated[vid])  -> { filled, interp }
+  (linear interpolation for null gaps only;
+   OOS carry-forward values are already present and are NOT re-interpolated)
+         |
+         v
+  Chart.js line chart  (dashed/dimmed segments where interp[i] === true)
+```
+
+### `_filterHistorySpikes(entries, vendorIds)`
+
+Three-pass filter applied before chart rendering:
+
+**Pass 0 — OOS carry-forward (data extraction):** For each vendor per day:
+- In-stock with price → real data point; updates `lastKnown`
+- OOS with prior in-stock price → carry `lastKnown` forward, mark `estimated = true`; **`lastKnown` is NOT updated** — the carry anchor always remains the last confirmed in-stock price, keeping dotted lines flat
+- OOS with no prior in-stock price → use scraped price as fallback (no `lastKnown` available)
+- No data → `null`
+
+**Pass 1 — Temporal spike detection:** For `t=1` to `t=length-2` (interior points only), flags points deviating more than `RETAIL_SPIKE_NEIGHBOR_TOLERANCE` (5%) from the average of stable neighbors. Skips estimated (OOS carry) points.
+
+**Pass 1b — Endpoint spike detection (v3.33.62+):** For `t=0` and `t=length-1`, compares against the average of the nearest 2 real interior data points. Threshold: `2× RETAIL_SPIKE_NEIGHBOR_TOLERANCE` (10%). Catches anomalous first/last data points that Pass 1 cannot reach.
+
+**Pass 2 — Cross-vendor median consensus:** For interior positions: requires 3+ vendors, 40% threshold. For endpoint positions: requires 2+ vendors, 20% threshold (stricter, to catch edge spikes that slipped Pass 1b due to single-vendor coverage).
+
+### `_interpolateGaps(data, preEstimated)`
+
+Linearly interpolates only `null` entries in the price array. OOS carry-forward values are already non-null after Pass 0, so they are preserved as flat. Trailing/leading nulls (vendor not present on those days) are left as-is — no extrapolation beyond the vendor's known data range.
+
+### Dotted line rendering
+
+Chart.js `segment.borderDash` callback: if either endpoint of a segment has `interp[i] === true`, the segment renders dashed (`[4, 3]`) at 50% opacity. This applies to both OOS carry-forward and linearly interpolated gap fills.
 
 ---
 
