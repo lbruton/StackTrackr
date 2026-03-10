@@ -2,7 +2,7 @@
 title: Home Poller (Docker/Portainer)
 category: infrastructure
 owner: staktrakr
-lastUpdated: v3.33.61
+lastUpdated: v3.33.63
 date: 2026-03-10
 sourceFiles:
   - devops/pollers/docker-compose.home.yml
@@ -65,7 +65,7 @@ Five Portainer-managed stacks on the `staktrakr-net` bridge network:
 | Stack | Container | Purpose | Ports | Stack ID |
 |-------|-----------|---------|-------|----------|
 | home-poller | `staktrakr-home-poller` | Retail/spot/goldback pollers + dashboard + metrics | 3010, 3011, 9100 | 7 |
-| cf-clearance-scraper | `staktrakr-cf-clearance` | Cloudflare bypass sidecar (Zendriver, returns `cf_clearance` cookie) | internal only | — |
+| byparr | `staktrakr-byparr` | Cloudflare bypass sidecar (Camoufox Firefox, returns `cf_clearance` cookie) | internal only | — |
 | firecrawl | `firecrawl-api` + workers | Web scraping engine (Firecrawl self-hosted) | 3002 | 4 |
 | tinyproxy | `tinyproxy-staktrakr` | HTTP proxy for Fly.io residential IP routing | 8888 | 5 |
 | tailscale | `tailscale-staktrakr` | Tailscale network namespace (tinyproxy shares it) | — | 8 |
@@ -136,12 +136,12 @@ The Tailscale sidecar (`tailscale-staktrakr`) runs in its own container. Tinypro
 
 ## CF-Clearance-Scraper Sidecar
 
-`staktrakr-cf-clearance` runs `ghcr.io/xewdy444/cf-clearance-scraper:latest` — a headless Chromium sidecar (Zendriver fork) that solves Cloudflare challenges and returns a valid `cf_clearance` cookie.
+`staktrakr-byparr` runs `ghcr.io/thephaseless/byparr:latest` — a Camoufox (hardened Firefox) sidecar that solves Cloudflare challenges and returns a valid `cf_clearance` cookie.
 
 | Property | Value |
 |----------|-------|
-| Image | `ghcr.io/xewdy444/cf-clearance-scraper:latest` |
-| Internal URL | `http://cf-clearance-scraper:5000` (Docker DNS, no host ports) |
+| Image | `ghcr.io/thephaseless/byparr:latest` |
+| Internal URL | `http://byparr:8191` (Docker DNS, no host ports) |
 | Purpose | Phase 2 fallback for CF-protected vendors (Bullion Exchanges, JM Bullion) |
 | Network | `staktrakr-net` bridge only — not exposed to host |
 | Shared memory | `/dev/shm` mounted from host (required by Chromium) |
@@ -233,7 +233,7 @@ Injected via Portainer stack env vars (must be passed on every redeploy):
 | `FLYIO_HTTP_URL` | Yes | `https://api2.staktrakr.com/data/retail/providers.json` |
 | `GEMINI_API_KEY` | No | Enables vision pipeline |
 | `VISION_ENABLED` | No | Set to `1` to enable vision pipeline |
-| `CF_CLEARANCE_SCRAPER_URL` | No | Defaults to `http://cf-clearance-scraper:5000` (Docker DNS) |
+| `CF_CLEARANCE_SCRAPER_URL` | No | Defaults to `http://byparr:8191` (Docker DNS) |
 | `CF_CLEARANCE_ENABLED` | No | Set to `1` (default) to enable Phase 2; `0` to disable |
 | `CF_CLEARANCE_TIMEOUT_MS` | No | Sidecar request timeout; defaults to `30000` (30 s) |
 
@@ -340,6 +340,6 @@ rm -f /tmp/retail-poller.lock
 | Container crash loop | `docker logs --tail 50 staktrakr-home-poller` — check entrypoint errors |
 | Tailscale sidecar down | `docker logs tailscale-staktrakr` — check for auth issues |
 | Tinyproxy unreachable from Fly.io | Verify tailscale sidecar is up, tinyproxy shares its network namespace |
-| CF sidecar not resolving 403s | Check `CF_CLEARANCE_ENABLED=1` on home-poller; `docker logs staktrakr-cf-clearance` for Zendriver errors |
+| CF sidecar not resolving 403s | Check `CF_CLEARANCE_ENABLED=1` on home-poller; `docker logs staktrakr-byparr` for Camoufox errors |
 | CF sidecar crashes on start | Verify `/dev/shm` volume is mounted in compose; container needs shared memory for Chromium |
 | Phase 2 never attempted | Confirm vendor has `cf_clearance_fallback: true` in `PROVIDER_CONFIG` (`shared/price-extract.js`) |
