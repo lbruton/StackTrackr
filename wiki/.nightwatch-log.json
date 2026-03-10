@@ -1,5 +1,5 @@
 {
-  "nextIndex": 8,
+  "nextIndex": 9,
   "rotation": [
     "api-consumption.md",
     "backup-restore.md",
@@ -53,6 +53,14 @@
       "track": "frontend",
       "status": "inaccuracy_found",
       "finding": "Wiki lists External API hosts as metalpriceapi.com, metals-api.com, gold-api.com, numista.com but sw.js API_HOSTS array contains subdomains: api.metalpriceapi.com, metals-api.com, api.gold-api.com, en.numista.com",
+      "verified": []
+    },
+    {
+      "date": "2026-03-10",
+      "page": "storage-patterns.md",
+      "track": "frontend",
+      "status": "inaccuracy_found",
+      "finding": "Wiki claims SYNC_SCOPE_KEYS only has 8 keys (metalInventory, itemTags, displayCurrency, appTheme, inlineChipConfig, filterChipCategoryConfig, viewModalSectionConfig, chipMinCount), but js/constants.js shows it includes many more keys like cardViewStyle, desktopCardView, defaultSortColumn, etc.",
       "verified": []
     }
   ]
