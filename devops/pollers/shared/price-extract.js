@@ -616,10 +616,17 @@ async function scrapeViaCFClearance(url, providerId, coin) {
     await page.goto(url, { waitUntil: "networkidle", timeout: cfg.timeout || 40000 });
     if (cfg.waitFor > 0) await page.waitForTimeout(cfg.waitFor);
     // Capture JSON-LD BEFORE closing browser — evaluate returns once page is ready.
-    const [text, jsonLdScripts] = await page.evaluate(() => [
-      document.body.innerText,
-      Array.from(document.querySelectorAll('script[type="application/ld+json"]'), s => s.textContent),
-    ]);
+    // Strip nav/header/footer first (same effect as Firecrawl onlyMainContent:true)
+    // to avoid spot tickers and site-wide navigation being included in innerText,
+    // which causes firstInRangePriceProse() to grab wrong prices on BE pages.
+    const [text, jsonLdScripts] = await page.evaluate(() => {
+      document.querySelectorAll("nav, header, footer, [role='navigation'], [role='banner']")
+        .forEach(el => el.remove());
+      return [
+        document.body.innerText,
+        Array.from(document.querySelectorAll('script[type="application/ld+json"]'), s => s.textContent),
+      ];
+    });
     await browser.close();
     browser = null;
     const cleaned = preprocessMarkdown(text, providerId);
