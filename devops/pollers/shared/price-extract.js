@@ -512,8 +512,16 @@ const PROVIDER_CONFIG = {
     waitUntil: "domcontentloaded",  // fast — no need for networkidle
   },
   herobullion: {
-    waitUntil: "domcontentloaded",  // fast — no need for networkidle
-    waitAfter: 2_000,              // light JS hydration wait
+    phase: "firecrawl",            // Phase 0 innerText loses pipe-table structure →
+                                   // firstTableRowFirstPrice() returns null → firstInRangePriceProse()
+                                   // grabs "As Low As" bulk price before the 1-unit table price.
+                                   // Firecrawl markdown has | pipe | tables — extraction works correctly.
+    waitFor: 3_000,
+  },
+  gainesvillecoins: {
+    phase: "firecrawl",            // Phase 0 Playwright direct always times out (15s wasted per coin).
+                                   // Firecrawl succeeds reliably — skip Phase 0 entirely.
+    waitFor: 3_000,
   },
   summitmetals: {
     // defaults are fine — phase0 + networkidle
@@ -818,10 +826,18 @@ async function scrapeWithPlaywrightDirect(url, providerId, coin) {
       await page.waitForTimeout(phase0Wait);
     }
 
-    const [text, jsonLdScripts] = await page.evaluate(() => [
-      document.body.innerText,
-      Array.from(document.querySelectorAll('script[type="application/ld+json"]'), s => s.textContent),
-    ]);
+    // Strip nav/header/footer before capturing innerText — same as scrapeViaCFClearance Phase 2.
+    // Site-wide navigation on many vendors (Provident, SDB, etc.) contains a spot price ticker
+    // (e.g. Gold $5,320.00) that appears before the product price in the text stream.
+    // firstInRangePriceProse() would otherwise match the spot ticker instead of the product price.
+    const [text, jsonLdScripts] = await page.evaluate(() => {
+      document.querySelectorAll("nav, header, footer, [role='navigation'], [role='banner']")
+        .forEach(el => el.remove());
+      return [
+        document.body.innerText,
+        Array.from(document.querySelectorAll('script[type="application/ld+json"]'), s => s.textContent),
+      ];
+    });
     const cleaned = preprocessMarkdown(text, providerId);
     const stock = detectStockStatus(cleaned, coin.weight_oz || 1, providerId);
 

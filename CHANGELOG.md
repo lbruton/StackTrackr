@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.67] - 2026-03-10
+
+### Fixed — STAK-467: Phase 0 price extraction false positives
+
+- **Fixed**: Strip `nav/header/footer` from page before capturing `innerText` in Phase 0 Playwright direct — prevents spot price tickers in site headers (e.g. Provident Metals gold ticker ~$5,320) from being matched instead of the actual product price (STAK-467)
+- **Fixed**: Hero Bullion moved to Firecrawl path — Phase 0 plain text lacks pipe characters so `firstTableRowFirstPrice` always returns null, falling through to `firstInRangePriceProse` which matched the "As Low As" bulk discount price instead of the 1-unit table price (STAK-467)
+- **Fixed**: Gainesville Coins moved to Firecrawl path — Phase 0 Playwright direct always times out (15s wasted per coin per run); Firecrawl succeeds reliably (STAK-467)
+
+---
+
 ## [3.33.66] - 2026-03-10
 
 ### Fixed — STAK-462: Fix cf-clearance.js endpoint for Byparr sidecar
