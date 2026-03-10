@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.65] - 2026-03-10
+
+### Fixed — STAK-462: Byparr Phase 2 fallback for CF invisible challenge
+
+- **Fixed**: Price scraper now triggers Byparr CF bypass when Firecrawl returns a 200 Cloudflare JS-challenge page (no price) — previously only fired on 403. Covers bullionexchanges and jmbullion invisible-challenge pattern (STAK-462)
+
+---
+
 ## [3.33.64] - 2026-03-10
 
 ### Fixed — STAK-462: Switch Byparr to upstream GHCR image

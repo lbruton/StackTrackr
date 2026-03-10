@@ -1019,6 +1019,34 @@ async function main() {
       }
     }
 
+    // ── Phase 2 fallback: CF-clearance for invisible Cloudflare challenges ──────
+    // Cloudflare's JS challenge returns 200 (not 403), so the in-scrapeUrl 403
+    // trigger never fires. If Phase 0+1 both returned no price for a
+    // cf_clearance_fallback vendor, attempt Byparr now as a last resort.
+    if (price === null && inStock) {
+      const cfg = providerCfg(provider.id);
+      if (cfg.cf_clearance_fallback && CF_CLEARANCE_ENABLED_FLAG) {
+        log(`  [cf-clearance] ${provider.id}: no price from Phase 0/1 — trying Byparr bypass`);
+        cfAttempts++;
+        try {
+          const phase2 = await scrapeViaCFClearance(urls[0], provider.id, coin);
+          if (phase2 !== null) {
+            price = phase2.price;
+            source = phase2.source;
+            inStock = phase2.inStock;
+            finalUrl = urls[0];
+            cfSuccess++;
+            log(`  ✓ ${coinSlug}/${provider.id}: $${price.toFixed(2)} (${source})`);
+          } else {
+            cfFailures++;
+          }
+        } catch (cfErr) {
+          cfFailures++;
+          warn(`  ✗ ${provider.id} cf-clearance error: ${cfErr.message.slice(0, 100)}`);
+        }
+      }
+    }
+
     // Log terminal state if not already logged
     if (price === null && inStock) {
       warn(`  ? ${coinSlug}/${provider.id}: all URLs exhausted, no price found`);
