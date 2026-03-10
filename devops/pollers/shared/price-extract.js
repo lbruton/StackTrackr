@@ -648,17 +648,18 @@ async function scrapeViaCFClearance(url, providerId, coin) {
     });
     await page.goto(url, { waitUntil: "networkidle", timeout: cfg.timeout || 40000 });
     if (cfg.waitFor > 0) await page.waitForTimeout(cfg.waitFor);
-    // Capture JSON-LD BEFORE closing browser — evaluate returns once page is ready.
-    // Strip nav/header/footer first (same effect as Firecrawl onlyMainContent:true)
-    // to avoid spot tickers and site-wide navigation being included in innerText,
-    // which causes firstInRangePriceProse() to grab wrong prices on BE pages.
+    // Capture JSON-LD BEFORE removing nav elements — some vendors embed
+    // <script type="application/ld+json"> inside <header>/<footer>; removing first
+    // would make querySelectorAll return empty. Strip nav/header/footer after capturing
+    // to prevent spot tickers from polluting innerText (Firecrawl onlyMainContent equivalent).
     const [text, jsonLdScripts] = await page.evaluate(() => {
+      const scripts = Array.from(
+        document.querySelectorAll('script[type="application/ld+json"]'),
+        s => s.textContent
+      );
       document.querySelectorAll("nav, header, footer, [role='navigation'], [role='banner']")
         .forEach(el => el.remove());
-      return [
-        document.body.innerText,
-        Array.from(document.querySelectorAll('script[type="application/ld+json"]'), s => s.textContent),
-      ];
+      return [document.body.innerText, scripts];
     });
     await browser.close();
     browser = null;
@@ -826,17 +827,19 @@ async function scrapeWithPlaywrightDirect(url, providerId, coin) {
       await page.waitForTimeout(phase0Wait);
     }
 
-    // Strip nav/header/footer before capturing innerText — same as scrapeViaCFClearance Phase 2.
-    // Site-wide navigation on many vendors (Provident, SDB, etc.) contains a spot price ticker
-    // (e.g. Gold $5,320.00) that appears before the product price in the text stream.
-    // firstInRangePriceProse() would otherwise match the spot ticker instead of the product price.
+    // Capture JSON-LD BEFORE removing nav elements (same as scrapeViaCFClearance Phase 2).
+    // Some vendors embed <script type="application/ld+json"> inside <header>/<footer>;
+    // removing those elements first would return empty scripts. After capturing, strip
+    // nav/header/footer to prevent spot tickers from polluting innerText and causing
+    // firstInRangePriceProse() to match the spot price instead of the product price.
     const [text, jsonLdScripts] = await page.evaluate(() => {
+      const scripts = Array.from(
+        document.querySelectorAll('script[type="application/ld+json"]'),
+        s => s.textContent
+      );
       document.querySelectorAll("nav, header, footer, [role='navigation'], [role='banner']")
         .forEach(el => el.remove());
-      return [
-        document.body.innerText,
-        Array.from(document.querySelectorAll('script[type="application/ld+json"]'), s => s.textContent),
-      ];
+      return [document.body.innerText, scripts];
     });
     const cleaned = preprocessMarkdown(text, providerId);
     const stock = detectStockStatus(cleaned, coin.weight_oz || 1, providerId);
