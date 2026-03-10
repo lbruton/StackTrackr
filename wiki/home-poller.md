@@ -2,9 +2,10 @@
 title: Home Poller (Docker/Portainer)
 category: infrastructure
 owner: staktrakr
-lastUpdated: v3.33.63
+lastUpdated: v3.33.66
 date: 2026-03-10
 sourceFiles:
+  - devops/pollers/shared/price-extract.js
   - devops/pollers/docker-compose.home.yml
   - devops/pollers/home-poller/Dockerfile
   - devops/pollers/home-poller/dashboard.js
@@ -157,6 +158,17 @@ The Tailscale sidecar (`tailscale-staktrakr`) runs in its own container. Tinypro
 | 2 | CF sidecar + Playwright with cookie | Phase 0/1 return HTTP 403 |
 
 Phase 2 calls `getCFClearanceCookie(url)` from `shared/cf-clearance.js`, injects the returned `cf_clearance` cookie and matching `User-Agent` into a Playwright browser context, then re-scrapes. Results written to Turso with `source: "cf-clearance"`.
+
+### Price Extraction Strategy (`extractPrice` + JSON-LD)
+
+After scraping, `price-extract.js` extracts the wire/ACH price via:
+
+1. **JSON-LD first** — `extractJsonLdPrice()` reads `<script type="application/ld+json">` Product schemas (`offers.price`). This is the authoritative price set by the merchant and avoids spot ticker / related-product false positives. Applies in Phase 0 (Playwright direct) and Phase 2 (CF-clearance) paths.
+2. **Pipe-table first row** — `firstTableRowFirstPrice()` — standard pricing grid layout.
+3. **Prose price scan** — `firstInRangePriceProse()` — first `$XX.XX` value in the metal's price range (SPA fallback).
+4. **As Low As** — `asLowAsPrices()` — bulk-discount price as last resort.
+
+**Known false-positive risk:** APMEX spot ticker shows daily price *changes* (e.g. palladium ±$11) which can fall in the goldback range ($5–$25). Provident's spot ticker gold price ($5,100+) falls within the platinum range ($500–$6,000). JSON-LD extraction resolves both by reading the authoritative `offers.price` before scanning prose.
 
 ### Enabling / Disabling
 
