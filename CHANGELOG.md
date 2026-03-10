@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.64] - 2026-03-10
+
+### Fixed — STAK-462: Switch Byparr to upstream GHCR image
+
+- **Fixed**: Replaced vendored Byparr source build with `ghcr.io/thephaseless/byparr:latest` image pull — eliminates build-time Camoufox download and Docker multi-stage entrypoint issues (STAK-462)
+
+---
+
 ## [3.33.63] - 2026-03-10
 
 ### Fixed — STAK-462: Switch CF bypass sidecar to Byparr
