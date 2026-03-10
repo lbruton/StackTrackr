@@ -24,6 +24,7 @@ import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { openTursoDb, writeSnapshot, windowFloor, startRunLog, finishRunLog, recordFailure } from "./db.js";
 import { loadProviders } from "./provider-db.js";
+import { getCFClearanceCookie } from "./cf-clearance.js";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 
@@ -42,6 +43,10 @@ const PLAYWRIGHT_LAUNCH = process.env.PLAYWRIGHT_LAUNCH === "1";
 const DATA_DIR = resolve(process.env.DATA_DIR || join(__dirname, "../../data"));
 const DRY_RUN = process.env.DRY_RUN === "1";
 const COIN_FILTER = process.env.COINS ? process.env.COINS.split(",").map(s => s.trim()) : null;
+const CF_CLEARANCE_ENABLED_FLAG = process.env.CF_CLEARANCE_ENABLED !== "0";
+let cfAttempts = 0;
+let cfSuccess = 0;
+let cfFailures = 0;
 // Cox WiFi tinyproxy (port 8888) — residential proxy via Tailscale.
 // Set as Fly.io secret: fly secrets set HOME_PROXY_URL=http://100.112.198.50:8888
 const HOME_PROXY_URL = process.env.HOME_PROXY_URL || null;
@@ -426,6 +431,7 @@ const PROVIDER_DEFAULTS = {
   onlyMainContent: true,       // Firecrawl onlyMainContent flag
   retryOn408: true,            // allow retry on Firecrawl 408 timeout
   fractionalExempt: false,     // skip fractional_weight nav false-positive check
+  cf_clearance_fallback: false, // attempt Phase 2 CF-clearance sidecar on 403
   proxy: {},                   // per-poller proxy routing
 };
 
@@ -447,6 +453,7 @@ const PROVIDER_CONFIG = {
     timeout: 40_000,
     onlyMainContent: false,     // React pages return empty with onlyMainContent
     retryOn408: false,          // retrying won't help — skip to save ~40s
+    cf_clearance_fallback: true,
     fractionalExempt: true,     // mega-menu lists fractional coins on every page
   },
   bullionexchanges: {
@@ -454,6 +461,7 @@ const PROVIDER_CONFIG = {
     waitFor: 15_000,            // React pricing grid needs 12-15s to fully hydrate
     timeout: 70_000,            // extended timeout for 15s waitFor + round-trip
     fractionalExempt: true,     // Related Products section lists fractional variants
+    cf_clearance_fallback: true,
     proxy: {
       home: null,               // home poller is on residential IP — no proxy needed
       fly: null,                // Fly.io uses its own IP (93%+ success rate)
@@ -537,7 +545,60 @@ async function scrapeViaProxy(url, waitFor = 15000, timeout = 40000) {
   }
 }
 
-async function scrapeUrl(url, providerId = "", attempt = 1) {
+async function scrapeViaCFClearance(url, providerId, coin) {
+  log(`[cf-clearance] attempt: ${providerId} ${url}`);
+  const cfData = await getCFClearanceCookie(url);
+  if (!cfData) {
+    warn(`[cf-clearance] no cookie returned for ${providerId}`);
+    return null;
+  }
+  let browser;
+  try {
+    const cfg = providerCfg(providerId);
+    const { chromium } = await import("playwright-core");
+    browser = await chromium.launch({ args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"] });
+    const context = await browser.newContext({
+      userAgent: cfData.userAgent,
+      extraHTTPHeaders: { "Accept-Language": "en-US,en;q=0.9" },
+    });
+    const urlObj = new URL(url);
+    await context.addCookies([{
+      name: "cf_clearance",
+      value: cfData.cfClearance,
+      domain: urlObj.hostname,
+      path: "/",
+      httpOnly: false,
+      secure: true,
+    }]);
+    const page = await context.newPage();
+    await page.route("**/*", (route) => {
+      const type = route.request().resourceType();
+      if (["image", "font", "stylesheet", "media"].includes(type)) route.abort();
+      else route.continue();
+    });
+    await page.goto(url, { waitUntil: "networkidle", timeout: cfg.timeout || 40000 });
+    if (cfg.waitFor > 0) await page.waitForTimeout(cfg.waitFor);
+    const text = await page.innerText("body");
+    await browser.close();
+    browser = null;
+    const cleaned = preprocessMarkdown(text, providerId);
+    const inStock = detectStockStatus(cleaned, coin.weight_oz || 1, providerId);
+    const price = extractPrice(cleaned, coin.metal, coin.weight_oz || 1, providerId);
+    if (price !== null) {
+      log(`[cf-clearance] success: ${providerId} price=${price.price}`);
+      return { price: price.price, inStock: inStock.inStock, source: "cf-clearance" };
+    }
+    warn(`[cf-clearance] no price extracted for ${providerId}`);
+    return null;
+  } catch (err) {
+    warn(`[cf-clearance] failure: ${providerId} error=${err.message}`);
+    return null;
+  } finally {
+    if (browser) await browser.close().catch(() => {});
+  }
+}
+
+async function scrapeUrl(url, providerId = "", attempt = 1, coin = null) {
   const controller = new AbortController();
   const scrapeTimeout = providerCfg(providerId).timeout;
   const timer = setTimeout(() => controller.abort(), scrapeTimeout);
@@ -571,6 +632,16 @@ async function scrapeUrl(url, providerId = "", attempt = 1) {
       // 403 = bot detection / IP block. Retrying Firecrawl (same IP) won't help;
       // skip retries — terminal failure for this target.
       if (response.status === 403) {
+        const cfg = providerCfg(providerId);
+        if (cfg.cf_clearance_fallback && CF_CLEARANCE_ENABLED_FLAG) {
+          cfAttempts++;
+          const phase2 = await scrapeViaCFClearance(url, providerId, coin);
+          if (phase2 !== null) {
+            cfSuccess++;
+            return phase2;
+          }
+          cfFailures++;
+        }
         throw Object.assign(
           new Error(`HTTP 403 (blocked): ${text.slice(0, 200)}`),
           { skipRetry: true }
@@ -599,7 +670,7 @@ async function scrapeUrl(url, providerId = "", attempt = 1) {
     if (!err.skipRetry && attempt < RETRY_ATTEMPTS) {
       warn(`Retry ${attempt}/${RETRY_ATTEMPTS} for ${url}: ${err.message}`);
       await sleep(RETRY_DELAY_MS * attempt);
-      return scrapeUrl(url, providerId, attempt + 1);
+      return scrapeUrl(url, providerId, attempt + 1, coin);
     }
     throw err;
   } finally {
@@ -855,7 +926,17 @@ async function main() {
               warn(`  \u2717 ${provider.id} fly-proxy error: ${proxyErr.message.slice(0, 80)}, falling back`);
             }
           }
-          markdown = await scrapeUrl(url, provider.id);
+          const scrapeResult = await scrapeUrl(url, provider.id, 1, coin);
+          // Phase 2 (CF-clearance) returns an object directly — short-circuit markdown path
+          if (scrapeResult !== null && typeof scrapeResult === "object") {
+            price = scrapeResult.price;
+            source = scrapeResult.source;
+            inStock = scrapeResult.inStock;
+            finalUrl = url;
+            log(`  ✓ ${coinSlug}/${provider.id}: $${price.toFixed(2)} (${source})`);
+            break;
+          }
+          markdown = scrapeResult;
           const cleaned = preprocessMarkdown(markdown, provider.id);
           const stock = detectStockStatus(cleaned, coin.weight_oz || 1, provider.id);
 
@@ -894,7 +975,17 @@ async function main() {
             log(`  ↻ ${coinSlug}/${provider.id} [url${i}]: retrying with extended waitFor...`);
             await jitter();
             try {
-              const retryMd = await scrapeUrl(url, provider.id, 1);
+              const retryRaw = await scrapeUrl(url, provider.id, 1, coin);
+              // Phase 2 result object — short-circuit retry markdown path
+              if (retryRaw !== null && typeof retryRaw === "object") {
+                price = retryRaw.price;
+                source = retryRaw.source;
+                inStock = retryRaw.inStock;
+                finalUrl = url;
+                log(`  ✓ ${coinSlug}/${provider.id}: $${price.toFixed(2)} (${source})`);
+                break;
+              }
+              const retryMd = retryRaw;
               const retryCleaned = preprocessMarkdown(retryMd, provider.id);
               const retryStock = detectStockStatus(retryCleaned, coin.weight_oz || 1, provider.id);
               const retryExtracted = extractPrice(retryCleaned, coin.metal, coin.weight_oz || 1, provider.id);
@@ -983,7 +1074,7 @@ async function main() {
   const ok = scrapeResults.filter(r => r.ok).length;
   const fail = scrapeResults.length - ok;
 
-  log(`Done: ${ok}/${scrapeResults.length} prices captured, ${fail} failures`);
+  log(`Done: ${ok}/${scrapeResults.length} prices captured, ${fail} failures, cf-clearance: ${cfAttempts} attempts ${cfSuccess} ok ${cfFailures} failed`);
 
   // Finish run log entry in Turso
   if (db && runId) {
