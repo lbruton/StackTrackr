@@ -54,6 +54,10 @@ export async function getCFClearanceCookie(url) {
     }
 
     const data = await response.json();
+    if (!data.cf_clearance) {
+      console.warn("[cf-clearance] unexpected response shape:", JSON.stringify(data).slice(0, 200));
+      return null;
+    }
     return {
       cfClearance: data.cf_clearance,
       userAgent: data.user_agent,
