@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.63] - 2026-03-10
+
+### Fixed — STAK-462: Switch CF bypass sidecar to Byparr
+
+- **Fixed**: Replaced `xewdy444/cf-clearance-scraper` sidecar with `Byparr` (Camoufox Firefox engine) — better Cloudflare Bot Management evasion rate and correctly resolves GHCR pull auth issues (STAK-462)
+
+---
+
 ## [3.33.62] - 2026-03-10
 
 ### Fixed — STAK-463: 7-Day Trend Chart Endpoint Spike Detection and Roll-Forward Drift
