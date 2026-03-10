@@ -52,6 +52,8 @@ services:
     restart: unless-stopped
     environment:
       LOG_LEVEL: info
+    ports:
+      - "8191:8191"   # Exposed for Fly.io → Tailscale → Byparr CF bypass
     volumes:
       - /dev/shm:/dev/shm
     logging:
