@@ -63,7 +63,7 @@ When you change a file, update every wiki page listed in its row.
 
 ## API Infrastructure
 
-> **Poller code ownership:** All poller scripts live in `StakTrakr/devops/pollers/` (shared core + home-poller + remote-poller). Home VM deploys via Portainer API from git. Fly.io container still deploys from `StakTrakrApi/devops/fly-poller/` (transitioning). See `repo-boundaries` skill for full ownership map.
+> **Poller code ownership:** All poller scripts live in `StakTrakr/devops/pollers/` (shared core + home-poller + remote-poller). Home VM deploys via Portainer API from git. Fly.io deploys from `devops/pollers/remote-poller/` in this same repo — `StakTrakrApi/devops/fly-poller/` no longer exists. See `repo-boundaries` skill for full ownership map.
 
 **Runbook:** See wiki/ for current runbooks: [`health.md`](wiki/health.md), [`fly-container.md`](wiki/fly-container.md), [`spot-pipeline.md`](wiki/spot-pipeline.md).
 
