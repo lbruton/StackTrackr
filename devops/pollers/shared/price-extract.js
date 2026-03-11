@@ -602,9 +602,10 @@ async function scrapeViaCFClearance(url, providerId, coin) {
     return null;
   }
 
-  // Byparr already fetched the page — use its response HTML directly.
-  // This avoids a second Playwright request (which would have a TLS/browser
-  // fingerprint mismatch: Byparr uses Firefox/Camoufox, Playwright uses Chromium).
+  // Byparr already fetched the page — try its response HTML first (fast path).
+  // For server-rendered pages this avoids a second Playwright request. For SPAs
+  // (e.g. Bullion Exchanges Magento PWA) the HTML is just the app shell with no
+  // prices — fall through to Playwright with the cookie so the SPA can hydrate.
   if (cfData.responseHtml) {
     const rawText = cfData.responseHtml
       .replace(/<(script|style|head)[^>]*>[\s\S]*?<\/(script|style|head)>/gi, " ")
@@ -617,12 +618,14 @@ async function scrapeViaCFClearance(url, providerId, coin) {
       log(`[cf-clearance] success (html): ${providerId} price=${price.price}`);
       return { price: price.price, inStock: inStock.inStock, source: "cf-clearance" };
     }
-    warn(`[cf-clearance] no price extracted from html for ${providerId}`);
-    return null;
+    warn(`[cf-clearance] no price from Byparr HTML for ${providerId} — falling through to Playwright`);
+    // Don't return null — fall through to Playwright with the cookie.
+    // SPA pages need a real browser to hydrate their pricing grids.
   }
 
-  // Fallback: launch Playwright with the cookie if Byparr didn't return response HTML.
-  // Requires a valid cf_clearance cookie — skip if Byparr didn't provide one.
+  // Fallback: launch Playwright with the cf_clearance cookie.
+  // Reached when (a) Byparr had no response HTML, or (b) HTML was present but
+  // extraction failed (SPA app shell). Requires a valid cookie.
   if (!cfData.cfClearance) {
     warn(`[cf-clearance] no cookie and no usable HTML for ${providerId}`);
     return null;
