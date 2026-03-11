@@ -2,8 +2,8 @@
 title: Data Model
 category: frontend
 owner: staktrakr
-lastUpdated: v3.33.59
-date: 2026-03-07
+lastUpdated: v3.33.69
+date: 2026-03-11
 sourceFiles:
   - js/constants.js
   - js/utils.js
@@ -14,7 +14,7 @@ relatedPages:
 ---
 # Data Model
 
-> **Last updated:** v3.33.59 — 2026-03-07
+> **Last updated:** v3.33.69 — 2026-03-11
 > **Source files:** `js/constants.js`, `js/utils.js`, `js/types.js`
 
 ## Overview
@@ -331,6 +331,7 @@ All keys currently registered in `js/constants.js`. `cleanupStorage()` enforces 
 | `chipBlacklist` | JSON array | Hidden chip values |
 | `inlineChipConfig` | JSON object | Inline chip display configuration |
 | `chipSortOrder` | String | Chip sort order preference |
+| `disposedFilterMode` | String | `"hide"` \| `"show"` \| `"only"` — three-state toggle for disposed/sold items visibility in the inventory table (STAK-388) |
 | `apiProviderOrder` | JSON array | API provider display order |
 | `providerPriority` | JSON object | API provider priority map |
 | `filterChipCategoryConfig` | JSON object | Filter chip category configuration |

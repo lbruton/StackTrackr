@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.69] - 2026-03-11
+
+### Fixed — STAK-470: Storage hygiene + silent settings-only sync merge
+
+- **Fixed**: `disposedFilterMode` not registered in `ALLOWED_STORAGE_KEYS` — `cleanupStorage()` silently deleted the disposed filter preference on every page reload, resetting it to "hide" (STAK-470)
+- **Fixed**: Raw `localStorage` calls for disposed filter in `events.js` replaced with `loadDataSync`/`saveDataSync` to follow project storage conventions (STAK-470)
+- **Fixed**: Version upgrades that add new `SYNC_SCOPE_KEYS` no longer trigger a phantom DiffModal — one-sided settings key diffs (key exists on only one side) are now auto-merged silently during cloud sync polling, with a push scheduled to propagate local-only keys back to the remote (STAK-470)
+
+---
+
 ## [3.33.68] - 2026-03-11
 
 ### Fixed — STAK-469: Catalog Data not saving for items without Numista number

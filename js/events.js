@@ -693,8 +693,18 @@ const setupSearchAndChipListeners = () => {
     wireChipSortToggle('chipSortOrder', 'settingsChipSortOrder');
   }
 
-  // Disposed filter three-state toggle (STAK-388)
-  const savedDisposedMode = localStorage.getItem('disposedFilterMode') || 'hide';
+  // Disposed filter three-state toggle (STAK-388, STAK-470)
+  // Migration shim: pre-v3.33.69 stored raw strings ("hide"/"show"/"only") via
+  // localStorage.setItem. loadDataSync JSON.parse fails on these, silently
+  // resetting to default. Detect raw strings and re-encode via saveDataSync.
+  var _rawDisposed = localStorage.getItem('disposedFilterMode');
+  var savedDisposedMode = 'hide';
+  if (_rawDisposed === 'hide' || _rawDisposed === 'show' || _rawDisposed === 'only') {
+    savedDisposedMode = _rawDisposed;
+    if (typeof saveDataSync === 'function') saveDataSync('disposedFilterMode', _rawDisposed);
+  } else if (typeof loadDataSync === 'function') {
+    savedDisposedMode = loadDataSync('disposedFilterMode', 'hide') || 'hide';
+  }
   document.querySelectorAll('#disposedFilterGroup .chip-sort-btn').forEach(function(b) {
     b.classList.toggle('active', b.dataset.disposedMode === savedDisposedMode);
   });
@@ -706,7 +716,7 @@ const setupSearchAndChipListeners = () => {
       b.classList.remove('active');
     });
     btn.classList.add('active');
-    localStorage.setItem('disposedFilterMode', btn.dataset.disposedMode);
+    if (typeof saveDataSync === 'function') saveDataSync('disposedFilterMode', btn.dataset.disposedMode);
     if (typeof renderTable === 'function') renderTable();
     if (typeof renderActiveFilters === 'function') renderActiveFilters();
   });

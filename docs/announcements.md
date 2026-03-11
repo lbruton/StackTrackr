@@ -1,5 +1,6 @@
 ## What's New
 
+- **Storage &amp; Sync Hygiene (v3.33.69)**: Fixed disposed filter preference resetting on every page reload. Version upgrades no longer trigger phantom cloud sync diff popups &mdash; settings-only key diffs from new versions are auto-merged silently (STAK-470).
 - **Catalog Data Fix (v3.33.68)**: Fixed a bug where Catalog Data fields (diameter, thickness, country, etc.) were silently discarded on save for items without a Numista number (STAK-469).
 - **Retail Price Accuracy (v3.33.67)**: Fixed Provident Metals picking up spot ticker instead of product price; fixed Hero Bullion returning bulk "As Low As" price instead of 1-unit table price; Gainesville Coins no longer wastes 15s on a Playwright timeout per coin (STAK-467).
 - **Retail Price Reliability (v3.33.61&ndash;v3.33.66)**: Improved scraping success rate for Bullion Exchanges and JM Bullion — Cloudflare-blocked requests now fall back to a Byparr (Camoufox) cookie-based bypass. Fixed sidecar API endpoint so CF cookies are actually retrieved (STAK-462).
