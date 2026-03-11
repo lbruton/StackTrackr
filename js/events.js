@@ -694,7 +694,17 @@ const setupSearchAndChipListeners = () => {
   }
 
   // Disposed filter three-state toggle (STAK-388, STAK-470)
-  const savedDisposedMode = (typeof loadDataSync === 'function' ? loadDataSync('disposedFilterMode', 'hide') : 'hide') || 'hide';
+  // Migration shim: pre-v3.33.69 stored raw strings ("hide"/"show"/"only") via
+  // localStorage.setItem. loadDataSync JSON.parse fails on these, silently
+  // resetting to default. Detect raw strings and re-encode via saveDataSync.
+  var _rawDisposed = localStorage.getItem('disposedFilterMode');
+  var savedDisposedMode = 'hide';
+  if (_rawDisposed === 'hide' || _rawDisposed === 'show' || _rawDisposed === 'only') {
+    savedDisposedMode = _rawDisposed;
+    if (typeof saveDataSync === 'function') saveDataSync('disposedFilterMode', _rawDisposed);
+  } else if (typeof loadDataSync === 'function') {
+    savedDisposedMode = loadDataSync('disposedFilterMode', 'hide') || 'hide';
+  }
   document.querySelectorAll('#disposedFilterGroup .chip-sort-btn').forEach(function(b) {
     b.classList.toggle('active', b.dataset.disposedMode === savedDisposedMode);
   });
