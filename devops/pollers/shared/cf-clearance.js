@@ -14,8 +14,9 @@
 // Override URL via CF_CLEARANCE_SIDECAR_URL env var.
 // Docs: https://github.com/ThePhaseless/Byparr
 
+// Accept both SIDECAR_URL (canonical) and SCRAPER_URL (legacy Fly.io secret)
 const CF_CLEARANCE_SIDECAR_URL =
-  process.env.CF_CLEARANCE_SIDECAR_URL ?? "http://staktrakr-byparr:8191";
+  process.env.CF_CLEARANCE_SIDECAR_URL ?? process.env.CF_CLEARANCE_SCRAPER_URL ?? "http://staktrakr-byparr:8191";
 const CF_CLEARANCE_ENABLED = process.env.CF_CLEARANCE_ENABLED ?? "1";
 const CF_CLEARANCE_TIMEOUT_MS = process.env.CF_CLEARANCE_TIMEOUT_MS ?? "30000";
 
