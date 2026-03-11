@@ -1040,9 +1040,6 @@ const parseItemFormFields = (isEditing, existingItem) => {
  * @returns {Object} Numista data fields with source tracking
  */
 const parseNumistaDataFields = (isEditing, existingItem, catalog = '') => {
-  // When N# is being cleared while editing, wipe all Numista metadata (STAK-309)
-  if (isEditing && !catalog) return {};
-
   const get = (id) => (document.getElementById(id)?.value?.trim() ?? '');
   const prev = (isEditing && existingItem?.numistaData) ? existingItem.numistaData : {};
 
