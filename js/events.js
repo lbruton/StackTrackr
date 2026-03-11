@@ -693,8 +693,8 @@ const setupSearchAndChipListeners = () => {
     wireChipSortToggle('chipSortOrder', 'settingsChipSortOrder');
   }
 
-  // Disposed filter three-state toggle (STAK-388)
-  const savedDisposedMode = localStorage.getItem('disposedFilterMode') || 'hide';
+  // Disposed filter three-state toggle (STAK-388, STAK-470)
+  const savedDisposedMode = (typeof loadDataSync === 'function' ? loadDataSync('disposedFilterMode', 'hide') : 'hide') || 'hide';
   document.querySelectorAll('#disposedFilterGroup .chip-sort-btn').forEach(function(b) {
     b.classList.toggle('active', b.dataset.disposedMode === savedDisposedMode);
   });
@@ -706,7 +706,7 @@ const setupSearchAndChipListeners = () => {
       b.classList.remove('active');
     });
     btn.classList.add('active');
-    localStorage.setItem('disposedFilterMode', btn.dataset.disposedMode);
+    if (typeof saveDataSync === 'function') saveDataSync('disposedFilterMode', btn.dataset.disposedMode);
     if (typeof renderTable === 'function') renderTable();
     if (typeof renderActiveFilters === 'function') renderActiveFilters();
   });

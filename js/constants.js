@@ -290,7 +290,7 @@ const CERT_LOOKUP_URLS = {
  * Updated: 2026-02-12 - STACK-38/STACK-31: Responsive card view + mobile layout
  */
 
-const APP_VERSION = "3.33.68";
+const APP_VERSION = "3.33.69";
 
 /**
  * Numista metadata cache TTL: 30 days in milliseconds.
@@ -911,6 +911,7 @@ const ALLOWED_STORAGE_KEYS = [
   "providerPriority",
   "filterChipCategoryConfig",
   "chipSortOrder",
+  "disposedFilterMode",                    // string: "hide"|"show"|"only" — disposed items filter preference (STAK-388)
   GOLDBACK_PRICES_KEY,
   GOLDBACK_PRICE_HISTORY_KEY,
   RETAIL_PRICES_KEY,

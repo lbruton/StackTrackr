@@ -2422,6 +2422,39 @@ async function pullWithPreview(remoteMeta) {
             return;
           }
 
+          // STAK-470: If inventory has no changes but settings changes are ALL
+          // one-sided (key exists on only one side), this is a version upgrade —
+          // one device has newer SYNC_SCOPE_KEYS the other doesn't know about.
+          // Auto-merge silently: apply remote-only keys locally, keep local-only
+          // keys (they'll be pushed on next sync). No DiffModal needed.
+          if (_mNoChanges && !_mNoSettingsChanges) {
+            var _allOneSided = manifestSettingsDiff.changed.every(function(c) {
+              return c.localVal === null || c.remoteVal === null;
+            });
+            if (_allOneSided) {
+              var _appliedCount = 0;
+              for (var _si = 0; _si < manifestSettingsDiff.changed.length; _si++) {
+                var _sc = manifestSettingsDiff.changed[_si];
+                if (_sc.remoteVal !== null && _sc.localVal === null) {
+                  try { localStorage.setItem(_sc.key, _sc.remoteVal); _appliedCount++; } catch (_) { /* ignore */ }
+                }
+              }
+              syncSetLastPull({
+                syncId: remoteMeta ? remoteMeta.syncId : null,
+                timestamp: remoteMeta ? remoteMeta.timestamp : Date.now(),
+                rev: remoteMeta ? remoteMeta.rev : null,
+              });
+              console.warn('[CloudSync] STAK-470: Version-upgrade settings diff — auto-merged ' + _appliedCount + ' remote-only keys, ' + (manifestSettingsDiff.changed.length - _appliedCount) + ' local-only keys kept');
+              logCloudSyncActivity('auto_sync_pull', 'success', 'Version-upgrade settings merged silently (' + _appliedCount + ' applied, ' + (manifestSettingsDiff.changed.length - _appliedCount) + ' local-only)');
+              updateSyncStatusIndicator('idle', 'just now');
+              // Push to update remote manifest with local-only keys
+              if (_appliedCount < manifestSettingsDiff.changed.length && typeof scheduleSyncPush === 'function') {
+                scheduleSyncPush();
+              }
+              return;
+            }
+          }
+
           // STAK-402 + STAK-412: Verify the manifest diff is complete by checking
           // whether the expected post-apply count matches the remote item count.
           // The manifest changelog only records changes the pushing device made — it
