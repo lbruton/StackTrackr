@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.33.68] - 2026-03-11
+
+### Fixed — STAK-469: Catalog Data not saving for items without Numista number
+
+- **Fixed**: Catalog Data fields (diameter, thickness, country, composition, shape, etc.) silently discarded on save for any item without a Numista number — removed overly aggressive early return in `parseNumistaDataFields()` that wiped all metadata when the N# field was empty, even for items that never had one (STAK-469)
+
+---
+
 ## [3.33.67] - 2026-03-10
 
 ### Fixed — STAK-467: Phase 0 price extraction false positives
