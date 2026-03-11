@@ -20,11 +20,13 @@ const CF_CLEARANCE_ENABLED = process.env.CF_CLEARANCE_ENABLED ?? "1";
 const CF_CLEARANCE_TIMEOUT_MS = process.env.CF_CLEARANCE_TIMEOUT_MS ?? "30000";
 
 /**
- * Harvest a cf_clearance cookie from the Byparr sidecar for the given URL.
+ * Harvest a cf_clearance cookie (and pre-fetched HTML) from the Byparr sidecar.
  *
  * @param {string} url - Vendor product URL to solve CF challenge for
- * @returns {Promise<{ cfClearance: string, userAgent: string } | null>}
- *   Returns cookie+UA on success, null if disabled or sidecar unavailable.
+ * @returns {Promise<{ cfClearance: string|null, userAgent: string, responseHtml: string|null } | null>}
+ *   Returns solution on success (cfClearance may be null if Cloudflare didn't
+ *   set a cookie, but responseHtml may still contain usable page content).
+ *   Returns null only if disabled or sidecar unavailable.
  */
 export async function getCFClearanceCookie(url) {
   if (CF_CLEARANCE_ENABLED !== "1") {
@@ -56,12 +58,19 @@ export async function getCFClearanceCookie(url) {
 
     const cfCookie = data.solution.cookies?.find((c) => c.name === "cf_clearance");
     if (!cfCookie?.value) {
-      console.warn("[cf-clearance] no cf_clearance cookie in solution");
-      return null;
+      // Cloudflare may not set a cookie (managed challenge / Turnstile), but
+      // Byparr still fetched the page — return the HTML so the caller can
+      // extract prices directly without needing a cookie+Playwright round-trip.
+      if (data.solution.response) {
+        console.log("[cf-clearance] no cookie, but have response HTML — returning for direct extraction");
+      } else {
+        console.warn("[cf-clearance] no cf_clearance cookie and no response HTML");
+        return null;
+      }
     }
 
     return {
-      cfClearance: cfCookie.value,
+      cfClearance: cfCookie?.value ?? null,
       userAgent: data.solution.userAgent,
       // HTML Byparr already fetched — lets caller skip a second browser request
       responseHtml: data.solution.response ?? null,

@@ -598,7 +598,7 @@ async function scrapeViaCFClearance(url, providerId, coin) {
   log(`[cf-clearance] attempt: ${providerId} ${url}`);
   const cfData = await getCFClearanceCookie(url);
   if (!cfData) {
-    warn(`[cf-clearance] no cookie returned for ${providerId}`);
+    warn(`[cf-clearance] sidecar unavailable for ${providerId}`);
     return null;
   }
 
@@ -621,7 +621,12 @@ async function scrapeViaCFClearance(url, providerId, coin) {
     return null;
   }
 
-  // Fallback: launch Playwright with the cookie if Byparr didn't return response HTML
+  // Fallback: launch Playwright with the cookie if Byparr didn't return response HTML.
+  // Requires a valid cf_clearance cookie — skip if Byparr didn't provide one.
+  if (!cfData.cfClearance) {
+    warn(`[cf-clearance] no cookie and no usable HTML for ${providerId}`);
+    return null;
+  }
   let browser;
   try {
     const cfg = providerCfg(providerId);
