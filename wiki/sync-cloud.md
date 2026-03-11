@@ -2,8 +2,8 @@
 title: Cloud Sync
 category: frontend
 owner: staktrakr
-lastUpdated: v3.33.59
-date: 2026-03-07
+lastUpdated: v3.33.69
+date: 2026-03-11
 sourceFiles:
   - js/cloud-sync.js
   - js/cloud-storage.js
@@ -13,7 +13,7 @@ relatedPages:
 ---
 # Cloud Sync
 
-> **Last updated:** v3.33.59 — 2026-03-07
+> **Last updated:** v3.33.69 — 2026-03-11
 > **Source files:** `js/cloud-sync.js`, `js/cloud-storage.js`
 
 ---
@@ -255,6 +255,20 @@ pullWithPreview(remoteMeta)
   ├─ Manifest-first path (preferred):
   │    ├─ Download /sync/staktrakr-sync.stmanifest
   │    ├─ decryptManifest() → build diff from changelog entries
+  │    ├─ Compare settings: DiffEngine.compareSettings(localSettings, manifest.settings)
+  │    │
+  │    ├─ STAK-387: No item changes AND no settings changes
+  │    │    → syncSetLastPull() + return silently (no vault download, no modal)
+  │    │
+  │    ├─ STAK-470: No item changes BUT settings changes are ALL one-sided
+  │    │    (every changed key has localVal === null OR remoteVal === null)
+  │    │    → auto-merge silently:
+  │    │         · remote-only keys (remoteVal set, localVal null) → localStorage.setItem()
+  │    │         · local-only keys (localVal set, remoteVal null) → kept as-is
+  │    │    → syncSetLastPull() + updateSyncStatusIndicator('idle')
+  │    │    → if any local-only keys remain → scheduleSyncPush() to propagate them
+  │    │    → return (no DiffModal shown)
+  │    │
   │    ├─ await new Promise(resolveModal):
   │    │    DiffModal.show() with manifest diff
   │    │    └─ onApply: _deferredVaultRestore().finally(resolveModal)
@@ -302,6 +316,11 @@ Runs as part of push and pull, non-fatally:
 ## Conflict Resolution
 
 **Default: DiffModal always shown** — `handleRemoteChange()` routes all remote changes directly to `pullWithPreview()`, which presents the DiffModal. The user chooses Apply or Cancel regardless of whether the local device has unsaved changes.
+
+**Exceptions — silent auto-merge (no DiffModal):** Two cases inside the manifest-first path resolve without user interaction:
+
+1. **STAK-387 — no changes at all:** Manifest confirms no item changes and no settings changes. Pull is recorded silently; no vault download.
+2. **STAK-470 — version-upgrade settings drift:** No item changes, but every settings difference is one-sided (the key exists on only one side). This pattern indicates one device has a newer `SYNC_SCOPE_KEYS` set from a version upgrade. Remote-only keys are applied to localStorage immediately; local-only keys are kept and a `scheduleSyncPush()` is queued to propagate them to the remote. No DiffModal is shown. If any changed key has a genuine value on both sides (a real conflict), the STAK-470 branch is skipped and the DiffModal is shown normally.
 
 `syncHasLocalChanges()` returns true if `lastPush.timestamp > lastPull.timestamp` — meaning the local device has pushed changes that predated the remote update, so both sides have diverged. This flag is checked internally within the pull/preview flow.
 
@@ -540,6 +559,23 @@ scheduleSyncPush(); // for inventory changes
 **Root cause:** The Layer 0 pre-push check (added in STAK-398) downloads and inspects remote metadata before every push. When the user chose to overwrite, the resulting `pushSyncVault()` call hit Layer 0, detected the same unacknowledged remote change the user had just dismissed, and re-routed to `handleRemoteChange()` — triggering the conflict flow again in a loop.
 
 **Fix (v3.33.32):** A module-level one-shot flag `_syncConflictUserOverride` is set `true` at call sites that represent explicit user intent to overwrite. At the start of the Layer 0 try block the flag is snapshot-and-cleared; if the snapshot is `true` the conflict check is bypassed and the push proceeds. See the "Keep Mine / Push My Data — conflict bypass flag" section under Conflict Resolution for full details.
+
+---
+
+## Version-Upgrade Settings Drift Auto-Merge (STAK-470, v3.33.69)
+
+**Symptom:** After a version upgrade, the DiffModal appeared on first sync showing only settings changes with no inventory differences. Every listed change was one-sided: a key introduced by the new version existed on one device but not the other. The user had to manually click Apply to proceed even though no meaningful conflict existed.
+
+**Root cause:** `pullWithPreview()` fell through both the STAK-387 silent-return block (which required no settings changes at all) and straight into DiffModal. There was no path to handle the specific case where all settings diffs are the result of `SYNC_SCOPE_KEYS` additions or removals introduced by a version bump.
+
+**Fix (STAK-470, v3.33.69):** A new branch between the STAK-387 block and the DiffModal check inspects the settings diff when there are no item changes. If every entry in `manifestSettingsDiff.changed` is one-sided (`localVal === null` or `remoteVal === null`), the diff is classified as version-upgrade drift and resolved automatically:
+
+- Remote-only keys (`remoteVal` set, `localVal` null) are written to localStorage.
+- Local-only keys (`localVal` set, `remoteVal` null) are kept. If any local-only keys remain, `scheduleSyncPush()` is called to propagate them to the remote manifest.
+- `syncSetLastPull()` is called and the status indicator is updated to `'idle'`.
+- No DiffModal is shown.
+
+If any key has genuine values on both sides (a real conflict), `_allOneSided` is `false` and the branch is skipped entirely — the DiffModal shows as usual.
 
 ---
 

@@ -2,8 +2,8 @@
 title: Storage Patterns
 category: frontend
 owner: staktrakr
-lastUpdated: v3.33.59
-date: 2026-03-07
+lastUpdated: v3.33.69
+date: 2026-03-11
 sourceFiles:
   - js/utils.js
   - js/constants.js
@@ -13,7 +13,7 @@ relatedPages:
 ---
 # Storage Patterns
 
-> **Last updated:** v3.33.59 — 2026-03-07
+> **Last updated:** v3.33.69 — 2026-03-11
 > **Source files:** `js/utils.js`, `js/constants.js`
 
 ## Overview
@@ -242,6 +242,7 @@ All permitted keys are defined in `ALLOWED_STORAGE_KEYS` in `js/constants.js`. A
 | `"inlineChipConfig"` | JSON array | Inline chip display config |
 | `"filterChipCategoryConfig"` | JSON array | Filter chip category config |
 | `"chipSortOrder"` | string | Chip sort order |
+| `"disposedFilterMode"` | string | `"hide"` \| `"show"` \| `"only"` — disposed items filter preference (STAK-388) |
 | `"chipMinCount"` | number string | Min count for filter chips |
 | `"chipMaxCount"` | number string | Max count for filter chips |
 | `"chipCustomGroups"` | JSON object | Custom chip groupings |
