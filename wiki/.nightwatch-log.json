@@ -1,5 +1,5 @@
 {
-  "nextIndex": 8,
+  "nextIndex": 9,
   "rotation": [
     "api-consumption.md",
     "backup-restore.md",
@@ -53,6 +53,14 @@
       "track": "frontend",
       "status": "inaccuracy_found",
       "finding": "Wiki lists External API hosts as metalpriceapi.com, metals-api.com, gold-api.com, numista.com but sw.js API_HOSTS array contains subdomains: api.metalpriceapi.com, metals-api.com, api.gold-api.com, en.numista.com",
+      "verified": []
+    },
+    {
+      "date": "2026-03-11",
+      "page": "storage-patterns.md",
+      "track": "frontend",
+      "status": "inaccuracy_found",
+      "finding": "INACCURACY FOUND:\nPage: storage-patterns.md\nSection: API Reference > saveData(key, data) — async\nWiki claims: \"const saveData = async (key, data) => {\n  try {\n    const raw = JSON.stringify(data);\n    const out = __compressIfNeeded(raw);\n    localStorage.setItem(key, out);\n  } catch(e) {\n    console.error('saveData failed', e);\n  }\n};\"\nCode shows: \"const saveData = async (key, data) => {\n  try {\n    const raw = JSON.stringify(data);\n    const out = __compressIfNeeded(raw);\n    localStorage.setItem(key, out);\n    if (key === 'metalInventory') {\n      localStorage.setItem('cloud_sync_local_modified', new Date().toISOString());\n    }\n  } catch(e) {\n    console.error('saveData failed', e);\n    if (e && e.name === 'QuotaExceededError' && typeof showToast === 'function') {\n      showToast('Storage is full — some data could not be saved. Try clearing unused spot history or image cache.', 'error');\n    }\n  }\n};\"\nFile: js/utils.js",
       "verified": []
     }
   ]
