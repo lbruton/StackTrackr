@@ -551,6 +551,13 @@ const formatDisplayDate = (dateStr) => {
 };
 
 /**
+ * Cache for Intl.NumberFormat instances to prevent expensive reinstantiation
+ * during large DOM renders.
+ * @type {Map<string, Intl.NumberFormat>}
+ */
+const _numberFormatCache = new Map();
+
+/**
  * Formats a number as a currency string using the default currency
  *
  * @param {number|string} value - Number to format
@@ -564,10 +571,15 @@ const formatCurrency = (value, currency = (typeof displayCurrency !== 'undefined
   const rate = (typeof getExchangeRate === 'function') ? getExchangeRate(currency) : 1;
   const converted = num * rate;
   try {
-    return new Intl.NumberFormat(undefined, {
-      style: "currency",
-      currency,
-    }).format(converted);
+    let formatter = _numberFormatCache.get(currency);
+    if (!formatter) {
+      formatter = new Intl.NumberFormat(undefined, {
+        style: "currency",
+        currency,
+      });
+      _numberFormatCache.set(currency, formatter);
+    }
+    return formatter.format(converted);
   } catch (e) {
     // Fallback for environments without Intl support
     return `${currency} ${converted.toFixed(2)}`;
@@ -604,7 +616,13 @@ const saveDisplayCurrency = (code) => {
 const getCurrencySymbol = (currency) => {
   const code = currency || (typeof displayCurrency !== 'undefined' ? displayCurrency : 'USD');
   try {
-    const parts = new Intl.NumberFormat('en', { style: 'currency', currency: code }).formatToParts(0);
+    const cacheKey = 'en-' + code;
+    let formatter = _numberFormatCache.get(cacheKey);
+    if (!formatter) {
+      formatter = new Intl.NumberFormat('en', { style: 'currency', currency: code });
+      _numberFormatCache.set(cacheKey, formatter);
+    }
+    const parts = formatter.formatToParts(0);
     const sym = parts.find(p => p.type === 'currency');
     return sym ? sym.value : code;
   } catch (e) { return code; }
@@ -3096,6 +3114,7 @@ if (typeof window !== 'undefined') {
   window.loadDisplayCurrency = loadDisplayCurrency;
   window.saveDisplayCurrency = saveDisplayCurrency;
   window.getCurrencySymbol = getCurrencySymbol;
+  window.formatCurrency = formatCurrency;
   window.updateModalCurrencyUI = updateModalCurrencyUI;
   window.getExchangeRate = getExchangeRate;
   window.loadExchangeRates = loadExchangeRates;
