@@ -551,7 +551,7 @@ const formatDisplayDate = (dateStr) => {
 };
 
 // Cache Intl.NumberFormat instances to reduce instantiation overhead
-// Key format: 'locale-currencyCode' to prevent collisions
+// Key format: 'default-USD', 'en-EUR' — locale prefix + uppercase currency code
 const numberFormatCache = new Map();
 
 /**
@@ -568,12 +568,13 @@ const formatCurrency = (value, currency = (typeof displayCurrency !== 'undefined
   const rate = (typeof getExchangeRate === 'function') ? getExchangeRate(currency) : 1;
   const converted = num * rate;
   try {
-    const cacheKey = `default-${currency}`;
+    const upperCurrency = currency.toUpperCase();
+    const cacheKey = `default-${upperCurrency}`;
     let formatter = numberFormatCache.get(cacheKey);
     if (!formatter) {
       formatter = new Intl.NumberFormat(undefined, {
         style: "currency",
-        currency,
+        currency: upperCurrency,
       });
       numberFormatCache.set(cacheKey, formatter);
     }
@@ -612,7 +613,7 @@ const saveDisplayCurrency = (code) => {
  * @returns {string} Currency symbol (e.g. "$", "€", "£", "₽")
  */
 const getCurrencySymbol = (currency) => {
-  const code = currency || (typeof displayCurrency !== 'undefined' ? displayCurrency : 'USD');
+  const code = (currency || (typeof displayCurrency !== 'undefined' ? displayCurrency : 'USD')).toUpperCase();
   try {
     const cacheKey = `en-${code}`;
     let formatter = numberFormatCache.get(cacheKey);
