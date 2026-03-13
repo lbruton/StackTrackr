@@ -1017,40 +1017,71 @@ const renderCloudBackupList = (provider, backups) => {
   if (!(listEl instanceof HTMLElement)) return;
 
   listEl.style.display = '';
+  listEl.innerHTML = '';
 
   // Single flat list — manual + sync merged, sorted newest first
-  var html = '';
   if (!backups || backups.length === 0) {
-    html += '<div class="cloud-backup-empty">No backups found</div>';
-  } else {
-    html += backups.map(function (b) {
-      var d = new Date(b.server_modified);
-      var dateStr = d.toLocaleDateString([], { month: 'short', day: 'numeric' }) +
-        ' ' + d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-      var sizeStr = b.size < 1024 ? b.size + ' B' :
-        b.size < 1048576 ? (b.size / 1024).toFixed(0) + ' KB' :
-          (b.size / 1048576).toFixed(1) + ' MB';
-      var isManual = b.name.indexOf(MANUAL_BACKUP_PREFIX) === 0;
-      var typeLabel = isManual ? 'Manual' : 'Sync';
-      var safeProvider = sanitizeHtml(provider);
-      var safeFilename = sanitizeHtml(b.name);
-      return '<div class="cloud-backup-row">' +
-        '<button class="cloud-backup-entry" data-provider="' + safeProvider +
-          '" data-filename="' + safeFilename + '" data-size="' + b.size + '">' +
-          '<span class="cloud-backup-type" style="min-width:3rem">' + typeLabel + '</span>' +
-          '<span class="cloud-backup-name" title="' + safeFilename + '">' + sanitizeHtml(dateStr) + '</span>' +
-          '<span class="cloud-backup-size">' + sanitizeHtml(sizeStr) + '</span>' +
-        '</button>' +
-        '<button class="cloud-backup-delete-btn" data-provider="' + safeProvider +
-          '" data-filename="' + safeFilename + '" title="Delete this backup from cloud storage" aria-label="Delete ' + safeFilename + '">' +
-          '&times;' +
-        '</button>' +
-      '</div>';
-    }).join('');
+    const emptyDiv = document.createElement('div');
+    emptyDiv.className = 'cloud-backup-empty';
+    emptyDiv.textContent = 'No backups found';
+    listEl.appendChild(emptyDiv);
+    return;
   }
 
-  // nosemgrep: javascript.browser.security.insecure-innerhtml.insecure-innerhtml
-  listEl.innerHTML = html;
+  const fragment = document.createDocumentFragment();
+
+  backups.forEach(function (b) {
+    const d = new Date(b.server_modified);
+    const dateStr = d.toLocaleDateString([], { month: 'short', day: 'numeric' }) +
+      ' ' + d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    const sizeStr = b.size < 1024 ? b.size + ' B' :
+      b.size < 1048576 ? (b.size / 1024).toFixed(0) + ' KB' :
+        (b.size / 1048576).toFixed(1) + ' MB';
+    const isManual = b.name.indexOf(MANUAL_BACKUP_PREFIX) === 0;
+    const typeLabel = isManual ? 'Manual' : 'Sync';
+
+    const rowDiv = document.createElement('div');
+    rowDiv.className = 'cloud-backup-row';
+
+    const entryBtn = document.createElement('button');
+    entryBtn.className = 'cloud-backup-entry';
+    entryBtn.dataset.provider = provider;
+    entryBtn.dataset.filename = b.name;
+    entryBtn.dataset.size = b.size;
+
+    const typeSpan = document.createElement('span');
+    typeSpan.className = 'cloud-backup-type';
+    typeSpan.style.minWidth = '3rem';
+    typeSpan.textContent = typeLabel;
+
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'cloud-backup-name';
+    nameSpan.title = b.name;
+    nameSpan.textContent = dateStr;
+
+    const sizeSpan = document.createElement('span');
+    sizeSpan.className = 'cloud-backup-size';
+    sizeSpan.textContent = sizeStr;
+
+    entryBtn.appendChild(typeSpan);
+    entryBtn.appendChild(nameSpan);
+    entryBtn.appendChild(sizeSpan);
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'cloud-backup-delete-btn';
+    deleteBtn.dataset.provider = provider;
+    deleteBtn.dataset.filename = b.name;
+    deleteBtn.title = 'Delete this backup from cloud storage';
+    deleteBtn.setAttribute('aria-label', 'Delete ' + b.name);
+    deleteBtn.textContent = '×';
+
+    rowDiv.appendChild(entryBtn);
+    rowDiv.appendChild(deleteBtn);
+
+    fragment.appendChild(rowDiv);
+  });
+
+  listEl.appendChild(fragment);
 };
 
 /**

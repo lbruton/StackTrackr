@@ -22,3 +22,7 @@
 **Vulnerability:** Mutation XSS (mXSS) risk from using custom DOM-based HTML escaping (`div.textContent = str; return div.innerHTML;`).
 **Learning:** Browsers can mutate HTML during the parsing process, introducing mXSS vulnerabilities when using properties like `innerHTML` and `textContent` sequentially. The regex-based `escapeHtml` function provided globally in `js/utils.js` prevents these parsing anomalies.
 **Prevention:** Avoid custom DOM-based HTML escaping. Always use the globally available, regex-based `escapeHtml` function defined in `js/utils.js`.
+## 2024-05-30 - Replace innerHTML with DocumentFragment and DOM creation
+**Vulnerability:** innerHTML string construction in `renderCloudBackupList` logic even when partially sanitized.
+**Learning:** Using `innerHTML` with dynamically constructed strings (even using `sanitizeHtml()`) is prone to errors, mutations XSS, and triggers SAST warnings (`nosemgrep`). Creating elements and modifying `.textContent` directly avoids HTML injection.
+**Prevention:** Avoid `innerHTML` entirely for dynamic data. Construct DOM trees using `document.createElement`, setting properties natively, and grouping using `DocumentFragment` for performance.
