@@ -876,7 +876,8 @@ const _buildRetailCard = (slug, meta, priceData) => {
         link.addEventListener("click", (e) => {
           e.preventDefault();
           const popup = window.open(vendorUrl, `retail_vendor_${key}`, "width=1250,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no");
-          if (!popup) window.open(vendorUrl, "_blank");
+          if (popup) popup.opener = null;
+          else window.open(vendorUrl, "_blank", "noopener,noreferrer");
         });
         nameEl.appendChild(link);
       } else {

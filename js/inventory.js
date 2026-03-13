@@ -4185,6 +4185,7 @@ document.addEventListener('click', (e) => {
       if (!popup) {
         appAlert(`Popup blocked! Please allow popups or manually visit:\n${url}`);
       } else {
+        popup.opener = null;
         popup.focus();
       }
     }
@@ -4207,6 +4208,7 @@ document.addEventListener('click', (e) => {
       if (!popup) {
         appAlert(`Popup blocked! Please allow popups or manually visit:\n${url}`);
       } else {
+        popup.opener = null;
         popup.focus();
       }
     }

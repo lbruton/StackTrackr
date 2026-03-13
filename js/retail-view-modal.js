@@ -100,7 +100,8 @@ const _buildVendorLegend = (slug) => {
       item.addEventListener("click", (e) => {
         e.preventDefault();
         const popup = window.open(vendorUrl, `retail_vendor_${vendorId}`, "width=1250,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no");
-        if (!popup) window.open(vendorUrl, "_blank");
+        if (popup) popup.opener = null;
+        else window.open(vendorUrl, "_blank", "noopener,noreferrer");
       });
     }
 

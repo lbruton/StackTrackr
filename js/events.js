@@ -2049,11 +2049,12 @@ const setupNoteAndModalListeners = () => {
 
   optionalListener(document.getElementById('goldbackExchangeRateLink'), "click", (e) => {
     e.preventDefault();
-    window.open(
+    const popup = window.open(
       'https://www.goldback.com/exchange-rates/',
       'goldback_rates',
       'width=1250,height=800,scrollbars=yes,resizable=yes,toolbar=no,location=no,menubar=no,status=no',
     );
+    if (popup) popup.opener = null;
   }, "Goldback exchange rates link");
 
   optionalListener(document.getElementById('spotLookupCloseBtn'), "click", () => {
