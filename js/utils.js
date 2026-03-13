@@ -94,9 +94,9 @@ const getAppTitle = (baseTitle = "StakTrakr") => {
  */
 const getFooterDomain = () => {
   const host = window.location.hostname.toLowerCase();
-  if (host.includes("staktrakr.com")) return "staktrakr.com";
-  if (host.includes("stackrtrackr.com")) return "stackrtrackr.com";
-  if (host.includes("stackertrackr.com")) return "stackertrackr.com";
+  if (host === "staktrakr.com" || host.endsWith(".staktrakr.com")) return "staktrakr.com";
+  if (host === "stackrtrackr.com" || host.endsWith(".stackrtrackr.com")) return "stackrtrackr.com";
+  if (host === "stackertrackr.com" || host.endsWith(".stackertrackr.com")) return "stackertrackr.com";
   return "staktrakr.com";
 };
 
@@ -911,15 +911,17 @@ const stripNonAlphanumeric = (str = "", { allowHyphen = false, allowSlash = fals
  * @param {string} str - Input string
  * @returns {string} Cleaned string
  */
-const cleanString = (str = "") =>
-  str
-    .toString()
-    .replace(/<[^>]*>/g, "")
+const cleanString = (str = "") => {
+  let s = str.toString();
+  let prev;
+  do { prev = s; s = s.replace(/<[^>]*>/g, ''); } while (s !== prev);
+  return s
     .normalize("NFD")
     .replace(/\p{Diacritic}/gu, "")
     .replace(/[\u0000-\u001F\u007F]/g, "")
     .replace(/\s+/g, " ")
     .trim();
+};
 
 /**
  * Sanitizes all string properties of an object by stripping non-alphanumeric characters.
@@ -1228,10 +1230,11 @@ const sanitizeImportedItem = (item) => {
 
   // Normalize and sanitize string fields
   const basicFields = ['name', 'type', 'purchaseLocation', 'storageLocation'];
-  const cleanMultilineString = (str = '') =>
-    str
-      .toString()
-      .replace(/<[^>]*>/g, '')
+  const cleanMultilineString = (str = '') => {
+    let s = str.toString();
+    let prev;
+    do { prev = s; s = s.replace(/<[^>]*>/g, ''); } while (s !== prev);
+    return s
       .normalize('NFD')
       .replace(/\p{Diacritic}/gu, '')
       .replace(/[\u0000-\u0008\u000B-\u001F\u007F]/g, '')
@@ -1239,6 +1242,7 @@ const sanitizeImportedItem = (item) => {
       .replace(/[ \t]+/g, ' ')
       .replace(/ *\n */g, '\n')
       .trim();
+  };
   for (const field of basicFields) {
     sanitized[field] = cleanString(sanitized[field]);
   }
