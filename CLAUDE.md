@@ -119,9 +119,9 @@ fly logs --app staktrakr | grep -E 'spot|run-spot' | tail -5
 
 **Deprecated tests:** `tests/depreciated/` contains archived Playwright `.spec.js` files and legacy Browserbase TypeScript tests (`tests/depreciated/browserbase-legacy/`). These are kept as reference only — do not add to or run them.
 
-## Linear
+## Issue Tracking
 
-Team: `f876864d-ff80-4231-ae6c-a8e5cb69aca4`
+Issues tracked in DocVault vault. Prefix: `STAK` (see `issue` skill).
 
 **Jules PRs**: always draft, always context-blind. Verify PR targets `dev` not `main`. Run `/pr-resolve` before approving.
 
