@@ -550,6 +550,10 @@ const formatDisplayDate = (dateStr) => {
   return `${month}/${day}/${yy}`;
 };
 
+// Cache Intl.NumberFormat instances to reduce instantiation overhead
+// Key format: 'locale-currencyCode' to prevent collisions
+const numberFormatCache = new Map();
+
 /**
  * Formats a number as a currency string using the default currency
  *
@@ -564,10 +568,16 @@ const formatCurrency = (value, currency = (typeof displayCurrency !== 'undefined
   const rate = (typeof getExchangeRate === 'function') ? getExchangeRate(currency) : 1;
   const converted = num * rate;
   try {
-    return new Intl.NumberFormat(undefined, {
-      style: "currency",
-      currency,
-    }).format(converted);
+    const cacheKey = `default-${currency}`;
+    let formatter = numberFormatCache.get(cacheKey);
+    if (!formatter) {
+      formatter = new Intl.NumberFormat(undefined, {
+        style: "currency",
+        currency,
+      });
+      numberFormatCache.set(cacheKey, formatter);
+    }
+    return formatter.format(converted);
   } catch (e) {
     // Fallback for environments without Intl support
     return `${currency} ${converted.toFixed(2)}`;
@@ -604,7 +614,13 @@ const saveDisplayCurrency = (code) => {
 const getCurrencySymbol = (currency) => {
   const code = currency || (typeof displayCurrency !== 'undefined' ? displayCurrency : 'USD');
   try {
-    const parts = new Intl.NumberFormat('en', { style: 'currency', currency: code }).formatToParts(0);
+    const cacheKey = `en-${code}`;
+    let formatter = numberFormatCache.get(cacheKey);
+    if (!formatter) {
+      formatter = new Intl.NumberFormat('en', { style: 'currency', currency: code });
+      numberFormatCache.set(cacheKey, formatter);
+    }
+    const parts = formatter.formatToParts(0);
     const sym = parts.find(p => p.type === 'currency');
     return sym ? sym.value : code;
   } catch (e) { return code; }
