@@ -509,8 +509,7 @@ function openOrCreateCache(cachePath) {
         source       TEXT NOT NULL,
         confidence   INTEGER,
         is_failed    INTEGER NOT NULL DEFAULT 0,
-        in_stock     INTEGER NOT NULL DEFAULT 1,
-        UNIQUE(coin_slug, vendor, window_start)
+        in_stock     INTEGER NOT NULL DEFAULT 1
       );
       CREATE INDEX idx_coin_window ON price_snapshots(coin_slug, window_start);
       CREATE INDEX idx_window ON price_snapshots(window_start);
@@ -580,36 +579,27 @@ async function main() {
       return;
     }
 
-    // Upsert rows — keep the most recent scraped_at per (coin_slug, vendor, window_start).
-    // Both pollers write the same vendors to Turso; the UNIQUE constraint deduplicates
-    // but we must keep the LATEST price, not silently drop the second poller's data.
+    // Insert all Turso rows into cache — no UNIQUE constraint, no deduplication.
+    // The cache is a dumb mirror of Turso. aggregateWindows() handles deduplication
+    // by keeping the latest scraped_at per vendor per time bucket.
     if (tursoRows.length > 0) {
-      const upsertStmt = db.prepare(`
+      const insertStmt = db.prepare(`
         INSERT INTO price_snapshots (
           scraped_at, window_start, coin_slug, vendor, price,
           source, confidence, is_failed, in_stock
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ON CONFLICT(coin_slug, vendor, window_start)
-        DO UPDATE SET
-          scraped_at = excluded.scraped_at,
-          price      = excluded.price,
-          source     = excluded.source,
-          confidence = excluded.confidence,
-          in_stock   = excluded.in_stock,
-          is_failed  = excluded.is_failed
-        WHERE excluded.scraped_at > price_snapshots.scraped_at
       `);
-      const upsertMany = db.transaction((rows) => {
+      const insertMany = db.transaction((rows) => {
         for (const row of rows) {
-          upsertStmt.run(
+          insertStmt.run(
             row.scraped_at, row.window_start, row.coin_slug, row.vendor,
             row.price, row.source, row.confidence || null,
             0, row.in_stock !== undefined ? row.in_stock : 1
           );
         }
       });
-      upsertMany(tursoRows);
-      log(`Upserted ${tursoRows.length} rows into cache (latest scraped_at wins)`);
+      insertMany(tursoRows);
+      log(`Inserted ${tursoRows.length} rows into cache`);
     }
 
     // Prune old data (keep 31 days)
