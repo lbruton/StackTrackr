@@ -136,23 +136,51 @@ function vendorMap(rows) {
  * includes per-vendor prices for individual chart lines.
  * Excludes out-of-stock vendors (in_stock = 0).
  */
+/**
+ * Aggregate raw snapshot rows into hourly consensus windows.
+ *
+ * Merges vendor data across BOTH pollers (Fly.io :00 and home :30) within
+ * the same hourly bucket so each window has all 8-9 vendors, not just the
+ * 1-3 from a single poll. When a vendor has multiple prices in the same
+ * hour, the most recent one wins (latest scraped_at).
+ *
+ * This is the intraday equivalent of aggregateDailyRows — consensus data
+ * only, never raw per-poll passthrough.
+ */
 function aggregateWindows(allRows) {
-  const byWindow = new Map();
+  const byBucket = new Map();
   for (const row of allRows) {
     if (row.price === null || row.in_stock !== 1) continue;  // Skip OOS
-    if (!byWindow.has(row.window_start)) byWindow.set(row.window_start, { prices: [], vendors: {} });
-    const entry = byWindow.get(row.window_start);
-    entry.prices.push(row.price);
-    entry.vendors[row.vendor] = Math.round(row.price * 100) / 100;
+    // Round down to the hour boundary for merging both pollers
+    const d = new Date(row.window_start);
+    d.setUTCMinutes(0, 0, 0);
+    const bucketKey = d.toISOString();
+    if (!byBucket.has(bucketKey)) byBucket.set(bucketKey, { vendors: {} });
+    const entry = byBucket.get(bucketKey);
+    const existing = entry.vendors[row.vendor];
+    // Keep the most recent price per vendor per hour (latest scraped_at wins)
+    if (!existing || row.scraped_at > existing.scraped_at) {
+      entry.vendors[row.vendor] = {
+        price: Math.round(row.price * 100) / 100,
+        scraped_at: row.scraped_at,
+      };
+    }
   }
   const result = [];
-  for (const [window, { prices, vendors }] of byWindow) {
+  for (const [bucket, { vendors }] of byBucket) {
+    const prices = Object.values(vendors).map((v) => v.price);
+    if (prices.length === 0) continue;
     const sorted = [...prices].sort((a, b) => a - b);
+    // Flatten vendors to simple { vendorId: price } for the API
+    const vendorPrices = {};
+    for (const [vendorId, v] of Object.entries(vendors)) {
+      vendorPrices[vendorId] = v.price;
+    }
     result.push({
-      window,
-      median:  Math.round(sorted[Math.floor(sorted.length / 2)] * 100) / 100,
-      low:     Math.round(sorted[0] * 100) / 100,
-      vendors,
+      window: bucket,
+      median: Math.round(sorted[Math.floor(sorted.length / 2)] * 100) / 100,
+      low:    Math.round(sorted[0] * 100) / 100,
+      vendors: vendorPrices,
     });
   }
   return result.sort((a, b) => a.window.localeCompare(b.window));
