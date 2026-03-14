@@ -12331,6 +12331,9 @@ th {
   align-items: center;
   gap: 10px;
 }
+.market-header-view-row {
+  margin-top: 8px;
+}
 .market-header-controls-right {
   display: flex;
   align-items: center;

@@ -1720,10 +1720,11 @@ const _renderMarketListView = () => {
 
   // Reset expand button before any early-return path
   const expandBtn = safeGetElement("marketExpandAllBtn");
-  if (expandBtn) expandBtn.textContent = "Expand All";
+  if (expandBtn) expandBtn.title = "Expand All";
 
-  // Trend mode toggle pill (STAK-464)
-  const controlsRight = listHeader ? listHeader.querySelector(".market-header-controls-right") : null;
+  // Trend mode toggle pill (STAK-464) — inject into view-row controls-right
+  const viewRow = listHeader ? listHeader.querySelector(".market-header-view-row") : null;
+  const controlsRight = viewRow ? viewRow.querySelector(".market-header-controls-right") : null;
   if (controlsRight) {
     const existing = controlsRight.querySelector(".market-trend-toggle");
     if (existing) existing.remove();
@@ -1737,12 +1738,7 @@ const _renderMarketListView = () => {
       btn.addEventListener("click", () => _setRetailTrendMode(mode));
       trendToggle.appendChild(btn);
     });
-    const sortWrap = controlsRight.querySelector(".market-sort-wrap");
-    if (sortWrap) {
-      controlsRight.insertBefore(trendToggle, sortWrap);
-    } else {
-      controlsRight.prepend(trendToggle);
-    }
+    controlsRight.insertBefore(trendToggle, controlsRight.firstChild);
   }
 
   if (_retailSyncInProgress) {
@@ -1841,7 +1837,7 @@ const _initMarketListViewListeners = () => {
       else d.setAttribute("open", "");
       d.dispatchEvent(new Event("toggle"));
     });
-    expandBtn.textContent = allOpen ? "Expand All" : "Collapse All";
+    expandBtn.title = allOpen ? "Expand All" : "Collapse All";
   });
 
   const pillContainer = safeGetElement("marketFilterPills");
