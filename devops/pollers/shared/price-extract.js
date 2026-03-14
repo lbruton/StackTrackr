@@ -259,6 +259,12 @@ function detectStockStatus(markdown, expectedWeightOz = 1, providerId = "") {
  * @param {number}   weightOz
  * @returns {number|null}
  */
+// Sentinel returned by extractJsonLdPrice when JSON-LD has a valid Product
+// with price=0 — signals "real product page, no price (OOS)". Callers must
+// check for this to avoid falling through to HTML extraction which would
+// grab ticker/carousel prices from a zero-priced product page (STAK-475 P1).
+const JSONLD_ZERO_PRICE = Symbol("jsonld-zero-price");
+
 function extractJsonLdPrice(jsonLdScripts, metal, weightOz = 1) {
   if (!jsonLdScripts || jsonLdScripts.length === 0) return null;
   const perOz = METAL_PRICE_RANGE_PER_OZ[metal];
@@ -280,6 +286,10 @@ function extractJsonLdPrice(jsonLdScripts, metal, weightOz = 1) {
         for (const offer of offerList) {
           // Strip thousands separators before parsing — "1,200.00" must not become 1
           const price = parseFloat(String(offer.price ?? "").replace(/,/g, ""));
+          // price=0 means the product exists but has no price (OOS).
+          // Return sentinel so callers mark OOS instead of falling through
+          // to HTML extraction which grabs unrelated page prices.
+          if (!isNaN(price) && price === 0) return JSONLD_ZERO_PRICE;
           if (!isNaN(price) && price >= min && price <= max) return price;
         }
       }
@@ -675,6 +685,10 @@ async function scrapeViaCFClearance(url, providerId, coin) {
     const inStock = detectStockStatus(cleaned, coin.weight_oz || 1, providerId);
     // JSON-LD is authoritative — avoids related-product / spot ticker false positives.
     const jsonLdPrice = extractJsonLdPrice(jsonLdScripts, coin.metal, coin.weight_oz || 1);
+    if (jsonLdPrice === JSONLD_ZERO_PRICE) {
+      log(`[cf-clearance] ${providerId}: JSON-LD price=0 → OOS, skipping HTML extraction`);
+      return { price: null, inStock: false, source: "cf-clearance" };
+    }
     if (jsonLdPrice !== null) {
       log(`[cf-clearance] success via jsonLd: ${providerId} price=${jsonLdPrice}`);
       return { price: jsonLdPrice, inStock: inStock.inStock, source: "cf-clearance" };
@@ -855,6 +869,10 @@ async function scrapeWithPlaywrightDirect(url, providerId, coin) {
     // JSON-LD is authoritative — check before regex fallbacks to avoid
     // grabbing spot ticker deltas or related-product prices from innerText.
     const jsonLdPrice = extractJsonLdPrice(jsonLdScripts, coin.metal, coin.weight_oz || 1);
+    if (jsonLdPrice === JSONLD_ZERO_PRICE) {
+      log(`  ${providerId}: JSON-LD price=0 → OOS, skipping HTML extraction`);
+      return { price: null, inStock: false, source: "playwright-direct" };
+    }
     if (jsonLdPrice !== null) {
       log(`  extractPrice ${providerId}: matched=jsonLd price=$${jsonLdPrice.toFixed(2)}`);
       return { price: jsonLdPrice, inStock: stock.inStock, source: "playwright-direct" };
