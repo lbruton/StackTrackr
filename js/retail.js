@@ -171,6 +171,22 @@ let _retailSyncError = false;
 /** Active sparkline Chart instances keyed by slug — destroyed before re-render to prevent Canvas reuse errors */
 const _retailSparklines = new Map();
 
+/** Current trend display mode: "7d" (default) or "intraday" */
+let _retailTrendMode = "7d";
+
+const _loadRetailTrendMode = () => {
+  const stored = loadDataSync(RETAIL_TREND_MODE_KEY, null);
+  if (stored === "intraday") _retailTrendMode = "intraday";
+};
+
+const _setRetailTrendMode = (mode) => {
+  _retailTrendMode = mode;
+  saveDataSync(RETAIL_TREND_MODE_KEY, mode);
+  _marketChartInstances.forEach((chart) => chart.destroy());
+  _marketChartInstances.clear();
+  _renderMarketListView();
+};
+
 // ---------------------------------------------------------------------------
 // Persistence
 // ---------------------------------------------------------------------------
@@ -729,6 +745,24 @@ const _computeRetailTrend = (slug) => {
   return { dir: "flat", pct: "0.0" };
 };
 
+const _computeIntradayTrend = (slug) => {
+  const intraday = retailIntradayData[slug];
+  if (!intraday || !Array.isArray(intraday.windows_24h) || intraday.windows_24h.length < 2) return null;
+  const windows = intraday.windows_24h;
+  const earliest = Number(windows[0].median);
+  const latest = Number(windows[windows.length - 1].median);
+  if (!isFinite(earliest) || !isFinite(latest) || earliest === 0) return null;
+  const change = ((latest - earliest) / earliest) * 100;
+  const pct = Math.abs(change).toFixed(1);
+  if (change > 0.2) return { dir: "up", pct };
+  if (change < -0.2) return { dir: "down", pct };
+  return { dir: "flat", pct: "0.0" };
+};
+
+const _getActiveTrend = (slug) => {
+  return _retailTrendMode === "intraday" ? _computeIntradayTrend(slug) : _computeRetailTrend(slug);
+};
+
 
 /**
  * Builds a single coin price card element.
@@ -1082,7 +1116,7 @@ const _buildMarketListCard = (slug, meta, priceData, historyData) => {
   card.appendChild(statsCol);
 
   // === Trend badge — playground: .market-card-trend .up/.down/.flat ===
-  const trend = _computeRetailTrend(slug);
+  const trend = _getActiveTrend(slug);
   const trendDir = trend ? trend.dir : "flat";
   const trendCol = document.createElement("div");
   trendCol.className = `market-card-trend ${trendDir}`;
@@ -1178,12 +1212,15 @@ const _buildMarketListCard = (slug, meta, priceData, historyData) => {
   const tArrow = trend ? ({ up: "\u2191", down: "\u2193", flat: "\u2192" }[trend.dir]) : "\u2192";
   const tSign = trend ? (trend.dir === "up" ? "+" : trend.dir === "down" ? "\u2212" : "") : "";
   const tPct = trend ? trend.pct : "0.0";
-  summary.textContent = `7-Day Trend \u00A0${tArrow} ${tSign}${tPct}%`;
+  const trendLabel = _retailTrendMode === "intraday" ? "Intraday Trend" : "7-Day Trend";
+  summary.textContent = `${trendLabel} \u00A0${tArrow} ${tSign}${tPct}%`;
   details.appendChild(summary);
   const chartContainer = document.createElement("div");
   chartContainer.className = "market-chart-container";
   const history = retailPriceHistory[slug];
-  if (!history || history.length < 2) {
+  const intradayWindows = retailIntradayData[slug] && Array.isArray(retailIntradayData[slug].windows_24h) ? retailIntradayData[slug].windows_24h : [];
+  const hasChartData = (history && history.length >= 2) || intradayWindows.length >= 2;
+  if (!hasChartData) {
     const msg = document.createElement("p");
     msg.className = "text-muted market-chart-empty";
     msg.textContent = "Not enough data for chart";
@@ -1196,7 +1233,11 @@ const _buildMarketListCard = (slug, meta, priceData, historyData) => {
   details.appendChild(chartContainer);
   details.addEventListener("toggle", () => {
     if (details.open) {
-      _initMarketCardChart(slug, details);
+      if (_retailTrendMode === "intraday") {
+        _initMarketCardIntradayChart(slug, details);
+      } else {
+        _initMarketCardChart(slug, details);
+      }
     } else if (_marketChartInstances.has(slug)) {
       _marketChartInstances.get(slug).destroy();
       _marketChartInstances.delete(slug);
@@ -1488,6 +1529,99 @@ const _initMarketCardChart = (slug, detailsEl) => {
   _marketChartInstances.set(slug, chart);
 };
 
+const _initMarketCardIntradayChart = (slug, detailsEl) => {
+  if (typeof Chart === "undefined") return;
+  if (_marketChartInstances.has(slug)) return;
+  const canvas = detailsEl.querySelector(`#market-chart-${slug}`);
+  if (!(canvas instanceof HTMLCanvasElement)) return;
+
+  if (typeof window.retailBucketWindows !== "function") return;
+
+  const intraday = retailIntradayData[slug];
+  const windows = intraday && Array.isArray(intraday.windows_24h) ? intraday.windows_24h : [];
+  if (windows.length < 2) return;
+
+  const filled = window.retailForwardFillVendors(window.retailBucketWindows(windows));
+  let bucketed;
+  try {
+    bucketed = window.retailFlagAnomalies(filled);
+  } catch (e) {
+    debugLog("[retail] _flagAnomalies threw — anomaly detection skipped: " + e.message, "warn");
+    bucketed = filled;
+  }
+  if (bucketed.length < 2) return;
+
+  const labels = bucketed.map((w) => {
+    const d = w.window ? new Date(w.window) : null;
+    return typeof window.retailFmtIntradayTime === "function" ? window.retailFmtIntradayTime(d) : (d ? d.toISOString().slice(11, 16) : "");
+  });
+
+  const knownVendors = typeof RETAIL_VENDOR_NAMES !== "undefined" ? Object.keys(RETAIL_VENDOR_NAMES) : [];
+  const activeVendors = knownVendors.filter((v) =>
+    bucketed.some((w) => (w.vendors && w.vendors[v] != null) || (w._anomalyOriginals && w._anomalyOriginals[v] != null))
+  );
+
+  const datasets = activeVendors.length > 0
+    ? activeVendors.map((vendorId) => {
+        const _vd = getVendorDisplay(vendorId);
+        const color = RETAIL_VENDOR_COLORS[vendorId] || "#94a3b8";
+        const carriedIndices = new Set();
+        bucketed.forEach((w, i) => {
+          if (w._carriedVendors && w._carriedVendors.has(vendorId)) carriedIndices.add(i);
+        });
+        return {
+          label: _vd.name,
+          data: bucketed.map((w) => (w.vendors && w.vendors[vendorId] != null ? w.vendors[vendorId] : null)),
+          borderColor: color,
+          backgroundColor: "transparent",
+          borderWidth: 1.5,
+          pointRadius: 0,
+          pointHoverRadius: 3,
+          tension: 0.2,
+          spanGaps: true,
+          _carriedIndices: carriedIndices,
+        };
+      })
+    : [{
+        label: "Median",
+        data: bucketed.map((w) => w.median),
+        borderColor: "#3b82f6",
+        backgroundColor: "transparent",
+        borderWidth: 1.5,
+        pointRadius: 0,
+        pointHoverRadius: 3,
+        tension: 0.3,
+      }];
+
+  const chart = new Chart(canvas, {
+    type: "line",
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: "index", intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => {
+              if (ctx.raw == null) return null;
+              const carried = ctx.dataset._carriedIndices && ctx.dataset._carriedIndices.has(ctx.dataIndex);
+              return `${ctx.dataset.label}: ${carried ? "~" : ""}$${Number(ctx.raw).toFixed(2)}`;
+            },
+          },
+        },
+      },
+      scales: {
+        x: { ticks: { maxTicksLimit: 12, autoSkip: true, maxRotation: 0, font: { size: 10 } } },
+        y: { ticks: { callback: (v) => `$${Number(v).toFixed(0)}` } },
+      },
+      animation: false,
+    },
+  });
+  _marketChartInstances.set(slug, chart);
+};
+
 /**
  * Filters and sorts the slug list for market list view.
  * @param {string} query - Search query (case-insensitive substring)
@@ -1539,8 +1673,8 @@ const _getFilteredSortedSlugs = (query, sortKey) => {
         return pb - pa;
       }
       case "trend": {
-        const ta = _computeRetailTrend(a);
-        const tb = _computeRetailTrend(b);
+        const ta = _getActiveTrend(a);
+        const tb = _getActiveTrend(b);
         const va = ta ? parseFloat(ta.pct) * (ta.dir === "down" ? -1 : 1) : 0;
         const vb = tb ? parseFloat(tb.pct) * (tb.dir === "down" ? -1 : 1) : 0;
         return vb - va;
@@ -1587,6 +1721,29 @@ const _renderMarketListView = () => {
   // Reset expand button before any early-return path
   const expandBtn = safeGetElement("marketExpandAllBtn");
   if (expandBtn) expandBtn.textContent = "Expand All";
+
+  // Trend mode toggle pill (STAK-464)
+  const controlsRight = listHeader ? listHeader.querySelector(".market-header-controls-right") : null;
+  if (controlsRight) {
+    const existing = controlsRight.querySelector(".market-trend-toggle");
+    if (existing) existing.remove();
+    const trendToggle = document.createElement("div");
+    trendToggle.className = "market-trend-toggle";
+    ["7d", "intraday"].forEach((mode) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "market-trend-toggle-btn" + (_retailTrendMode === mode ? " market-trend-toggle-btn--active" : "");
+      btn.textContent = mode === "7d" ? "7-Day" : "Intraday";
+      btn.addEventListener("click", () => _setRetailTrendMode(mode));
+      trendToggle.appendChild(btn);
+    });
+    const sortWrap = controlsRight.querySelector(".market-sort-wrap");
+    if (sortWrap) {
+      controlsRight.insertBefore(trendToggle, sortWrap);
+    } else {
+      controlsRight.prepend(trendToggle);
+    }
+  }
 
   if (_retailSyncInProgress) {
     emptyState.style.display = "none";
@@ -1900,6 +2057,7 @@ const initRetailPrices = () => {
   loadRetailPrices();
   loadRetailPriceHistory();
   loadRetailIntradayData();
+  _loadRetailTrendMode();
   loadRetailProviders();
   loadRetailAvailability();
   _initMarketListViewListeners();
