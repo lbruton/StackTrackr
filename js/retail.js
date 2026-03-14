@@ -1501,6 +1501,25 @@ const _initMarketCardChart = (slug, detailsEl) => {
         pointRadius: 3,
         tension: 0.3,
       }];
+
+  // Goldback reference baseline (STAK-474) — flat line at goldback.com price
+  if (typeof getGoldbackVendorPrice === "function") {
+    const gbPrice = getGoldbackVendorPrice(slug);
+    if (gbPrice && gbPrice.price != null) {
+      datasets.push({
+        label: "Goldback",
+        data: last7.map(() => gbPrice.price),
+        borderColor: "#d4a017",
+        backgroundColor: "transparent",
+        borderWidth: 1,
+        borderDash: [6, 4],
+        pointRadius: 0,
+        pointHoverRadius: 2,
+        tension: 0,
+      });
+    }
+  }
+
   const chart = new Chart(canvas, {
     type: "line",
     data: { labels: last7.map((e) => e.date), datasets },
@@ -1580,11 +1599,15 @@ const _initMarketCardIntradayChart = (slug, detailsEl) => {
           borderColor: color,
           backgroundColor: "transparent",
           borderWidth: 1.5,
-          pointRadius: 0,
-          pointHoverRadius: 3,
+          pointRadius: (ctx) => carriedIndices.has(ctx.dataIndex) ? 0 : 0,
+          pointHoverRadius: (ctx) => carriedIndices.has(ctx.dataIndex) ? 2 : 3,
           tension: 0.2,
           spanGaps: true,
           _carriedIndices: carriedIndices,
+          segment: {
+            borderDash: (ctx) => (carriedIndices.has(ctx.p0DataIndex) || carriedIndices.has(ctx.p1DataIndex)) ? [4, 3] : [],
+            borderColor: (ctx) => (carriedIndices.has(ctx.p0DataIndex) || carriedIndices.has(ctx.p1DataIndex)) ? color + "50" : color,
+          },
         };
       })
     : [{
