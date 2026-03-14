@@ -757,6 +757,10 @@ if (typeof window !== "undefined") {
   window._forwardFillVendors = _forwardFillVendors;
   window._flagAnomalies = _flagAnomalies;
   window._buildIntradayTable = _buildIntradayTable;
+  window.retailBucketWindows = _bucketWindows;
+  window.retailForwardFillVendors = _forwardFillVendors;
+  window.retailFlagAnomalies = _flagAnomalies;
+  window.retailFmtIntradayTime = _fmtIntradayTime;
 }
 
 // =============================================================================
