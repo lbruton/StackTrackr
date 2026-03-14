@@ -374,6 +374,9 @@ const currentMonthKey = () => {
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}`;
 };
 
+// Cache Intl.DateTimeFormat instances to reduce instantiation overhead
+const dateTimeFormatCache = new Map();
+
 /**
  * Formats a date/timestamp for display using the user's timezone preference (STACK-63).
  * When timezone is "auto" (default), uses the browser's local timezone — identical to previous behavior.
@@ -401,15 +404,33 @@ const formatTimestamp = (date, options = {}) => {
     hour: '2-digit', minute: '2-digit',
     ...(resolvedTz ? { timeZone: resolvedTz } : {})
   };
+
+  const finalOptions = { ...defaults, ...options };
+  // Create a stable cache key by sorting option keys
+  const cacheKey = Object.keys(finalOptions).sort().map(k => `${k}:${finalOptions[k]}`).join('|');
+
   try {
-    return d.toLocaleString(undefined, { ...defaults, ...options });
+    let formatter = dateTimeFormatCache.get(cacheKey);
+    if (!formatter) {
+      formatter = new Intl.DateTimeFormat(undefined, finalOptions);
+      dateTimeFormatCache.set(cacheKey, formatter);
+    }
+    return formatter.format(d);
   } catch (err) {
     if (err instanceof RangeError) {
       // Invalid IANA timezone in localStorage — fall back to auto and clear bad value
       try { localStorage.removeItem(TIMEZONE_KEY); } catch (_) { /* ignore */ }
       const safeDefaults = { ...defaults };
       delete safeDefaults.timeZone;
-      return d.toLocaleString(undefined, { ...safeDefaults, ...options });
+      const safeOptions = { ...safeDefaults, ...options };
+      const safeCacheKey = Object.keys(safeOptions).sort().map(k => `${k}:${safeOptions[k]}`).join('|');
+
+      let safeFormatter = dateTimeFormatCache.get(safeCacheKey);
+      if (!safeFormatter) {
+        safeFormatter = new Intl.DateTimeFormat(undefined, safeOptions);
+        dateTimeFormatCache.set(safeCacheKey, safeFormatter);
+      }
+      return safeFormatter.format(d);
     }
     throw err;
   }
