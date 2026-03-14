@@ -1486,10 +1486,11 @@ const _initMarketCardChart = (slug, detailsEl) => {
           pointBackgroundColor: (ctx) => interp[ctx.dataIndex] ? "transparent" : baseColor,
           tension: 0.3,
           spanGaps: true,
-          segment: {
-            borderDash: (ctx) => (interp[ctx.p0DataIndex] || interp[ctx.p1DataIndex]) ? [4, 3] : [],
-            borderColor: (ctx) => (interp[ctx.p0DataIndex] || interp[ctx.p1DataIndex]) ? baseColor + "50" : baseColor,
-          },
+          // TODO: re-enable dashed segments once API serves 30-min aggregates (STAK-474)
+          // segment: {
+          //   borderDash: (ctx) => (interp[ctx.p0DataIndex] || interp[ctx.p1DataIndex]) ? [4, 3] : [],
+          //   borderColor: (ctx) => (interp[ctx.p0DataIndex] || interp[ctx.p1DataIndex]) ? baseColor + "50" : baseColor,
+          // },
         };
       }).filter(Boolean)
     : [{
@@ -1604,10 +1605,11 @@ const _initMarketCardIntradayChart = (slug, detailsEl) => {
           tension: 0.2,
           spanGaps: true,
           _carriedIndices: carriedIndices,
-          segment: {
-            borderDash: (ctx) => (carriedIndices.has(ctx.p0DataIndex) || carriedIndices.has(ctx.p1DataIndex)) ? [4, 3] : [],
-            borderColor: (ctx) => (carriedIndices.has(ctx.p0DataIndex) || carriedIndices.has(ctx.p1DataIndex)) ? color + "50" : color,
-          },
+          // TODO: re-enable dashed segments once API serves 30-min aggregates (STAK-474)
+          // segment: {
+          //   borderDash: (ctx) => (carriedIndices.has(ctx.p0DataIndex) || carriedIndices.has(ctx.p1DataIndex)) ? [4, 3] : [],
+          //   borderColor: (ctx) => (carriedIndices.has(ctx.p0DataIndex) || carriedIndices.has(ctx.p1DataIndex)) ? color + "50" : color,
+          // },
         };
       })
     : [{
