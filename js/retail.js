@@ -748,9 +748,12 @@ const _computeRetailTrend = (slug) => {
 const _computeIntradayTrend = (slug) => {
   const intraday = retailIntradayData[slug];
   if (!intraday || !Array.isArray(intraday.windows_24h) || intraday.windows_24h.length < 2) return null;
-  const windows = intraday.windows_24h;
-  const earliest = Number(windows[0].median);
-  const latest = Number(windows[windows.length - 1].median);
+  // Use the same pipeline as the chart for consistency
+  if (typeof window.retailBucketWindows !== "function") return null;
+  const bucketed = window.retailBucketWindows(intraday.windows_24h);
+  if (bucketed.length < 2) return null;
+  const earliest = Number(bucketed[0].median);
+  const latest = Number(bucketed[bucketed.length - 1].median);
   if (!isFinite(earliest) || !isFinite(latest) || earliest === 0) return null;
   const change = ((latest - earliest) / earliest) * 100;
   const pct = Math.abs(change).toFixed(1);
@@ -1535,7 +1538,9 @@ const _initMarketCardIntradayChart = (slug, detailsEl) => {
   const canvas = detailsEl.querySelector(`#market-chart-${slug}`);
   if (!(canvas instanceof HTMLCanvasElement)) return;
 
-  if (typeof window.retailBucketWindows !== "function") return;
+  if (typeof window.retailBucketWindows !== "function" ||
+      typeof window.retailForwardFillVendors !== "function" ||
+      typeof window.retailFlagAnomalies !== "function") return;
 
   const intraday = retailIntradayData[slug];
   const windows = intraday && Array.isArray(intraday.windows_24h) ? intraday.windows_24h : [];
@@ -1605,7 +1610,7 @@ const _initMarketCardIntradayChart = (slug, detailsEl) => {
         tooltip: {
           callbacks: {
             label: (ctx) => {
-              if (ctx.raw == null) return null;
+              if (ctx.raw === null) return `${ctx.dataset.label}: Out of stock`;
               const carried = ctx.dataset._carriedIndices && ctx.dataset._carriedIndices.has(ctx.dataIndex);
               return `${ctx.dataset.label}: ${carried ? "~" : ""}$${Number(ctx.raw).toFixed(2)}`;
             },
@@ -1734,6 +1739,7 @@ const _renderMarketListView = () => {
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className = "market-trend-toggle-btn" + (_retailTrendMode === mode ? " market-trend-toggle-btn--active" : "");
+      btn.setAttribute("aria-pressed", _retailTrendMode === mode ? "true" : "false");
       btn.textContent = mode === "7d" ? "7-Day" : "Intraday";
       btn.addEventListener("click", () => _setRetailTrendMode(mode));
       trendToggle.appendChild(btn);
