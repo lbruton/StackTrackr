@@ -473,6 +473,10 @@ function sleep(ms) {
 // proxy.{pollerId}: "fly" = route through Fly.io proxy, "home" = route through
 //   home residential proxy, null = use poller's own IP.
 
+// phase values:
+//   "phase0"             → Phase 0 (Playwright-direct) first, then Firecrawl, then CF-clearance fallback
+//   "firecrawl"          → Skip Phase 0, Firecrawl first, then CF-clearance fallback
+//   "cf-clearance-first" → Byparr/CF-clearance first, then Firecrawl fallback (for CF-protected vendors)
 const PROVIDER_DEFAULTS = {
   phase: "phase0",             // try Phase 0 (Playwright-direct) first
   waitFor: 0,                  // Firecrawl waitFor (ms) — 0 = no extra wait
@@ -499,7 +503,7 @@ const PROVIDER_CONFIG = {
     retryOn408: false,          // page either renders in time or doesn't
   },
   jmbullion: {
-    phase: "firecrawl",         // Bot detection + prose table needs Firecrawl
+    phase: "cf-clearance-first", // Byparr first (100% success), Firecrawl fallback
     waitFor: 10_000,
     timeout: 40_000,
     onlyMainContent: false,     // React pages return empty with onlyMainContent
@@ -508,7 +512,7 @@ const PROVIDER_CONFIG = {
     fractionalExempt: true,     // mega-menu lists fractional coins on every page
   },
   bullionexchanges: {
-    phase: "firecrawl",         // Cloudflare bot management — needs stealth
+    phase: "cf-clearance-first", // Byparr first (100% success), Firecrawl fallback
     waitFor: 15_000,            // React pricing grid needs 12-15s to fully hydrate
     timeout: 70_000,            // extended timeout for 15s waitFor + round-trip
     fractionalExempt: true,     // Related Products section lists fractional variants
@@ -987,6 +991,57 @@ async function main() {
     let finalUrl = urls[0];
     const _retriedUrls = new Set();
 
+    // ── Phase CF-First: Byparr/CF-clearance first (for cf-clearance-first vendors) ─
+    // For vendors where Byparr has 100% success rate (BE, JM), skip the 70s Firecrawl
+    // timeout entirely. If Byparr fails, fall through to Phase 0/1 as safety net.
+    const cfg = providerCfg(provider.id);
+    if (cfg.phase === "cf-clearance-first" && CF_CLEARANCE_ENABLED_FLAG) {
+      log(`  [cf-first] ${provider.id}: trying Byparr first`);
+      cfAttempts++;
+      const cfResult = await scrapeViaCFClearance(urls[0], provider.id, coin);
+      if (cfResult !== null && cfResult.price !== null) {
+        cfSuccess++;
+        price = cfResult.price;
+        source = cfResult.source;
+        inStock = cfResult.inStock;
+        finalUrl = urls[0];
+        log(`  ✓ ${coinSlug}/${provider.id}: $${price.toFixed(2)} (cf-first${!inStock ? ", OOS" : ""})`);
+        scrapeResults.push({
+          coinSlug, coin, providerId: provider.id, url: finalUrl,
+          price, source, inStock, ok: true, error: null,
+        });
+        if (db) {
+          await writeSnapshot(db, {
+            scrapedAt, windowStart: winStart, coinSlug,
+            vendor: provider.id, price, source,
+            isFailed: false, inStock,
+          });
+        }
+        if (targetIdx < targets.length - 1) { await jitter(); }
+        continue;
+      }
+      // Byparr returned null or no price — OOS with no price is still useful
+      if (cfResult !== null && cfResult.price === null && !cfResult.inStock) {
+        cfSuccess++;
+        log(`  ✓ ${coinSlug}/${provider.id}: OOS detected (cf-first, no price)`);
+        scrapeResults.push({
+          coinSlug, coin, providerId: provider.id, url: finalUrl,
+          price: null, source: cfResult.source, inStock: false, ok: true, error: null,
+        });
+        if (db) {
+          await writeSnapshot(db, {
+            scrapedAt, windowStart: winStart, coinSlug,
+            vendor: provider.id, price: null, source: cfResult.source,
+            isFailed: false, inStock: false,
+          });
+        }
+        if (targetIdx < targets.length - 1) { await jitter(); }
+        continue;
+      }
+      cfFailures++;
+      log(`  ↻ ${coinSlug}/${provider.id}: cf-first failed — falling through to Phase 0/1`);
+    }
+
     // ── Phase 0: Try Playwright direct (no proxy, 15s timeout) ──────────────
     // Fast first-pass — succeeds for ~65/88 targets in <5s. If it gets a price,
     // skip Firecrawl entirely. Skip for PLAYWRIGHT_ONLY_PROVIDERS (they need
@@ -1159,8 +1214,8 @@ async function main() {
     // Cloudflare's JS challenge returns 200 (not 403), so the in-scrapeUrl 403
     // trigger never fires. If Phase 0+1 both returned no price for a
     // cf_clearance_fallback vendor, attempt Byparr now as a last resort.
-    if (price === null && inStock) {
-      const cfg = providerCfg(provider.id);
+    // Skip for cf-clearance-first vendors — they already tried Byparr at the top.
+    if (price === null && inStock && cfg.phase !== "cf-clearance-first") {
       if (cfg.cf_clearance_fallback && CF_CLEARANCE_ENABLED_FLAG) {
         log(`  [cf-clearance] ${provider.id}: no price from Phase 0/1 — trying Byparr bypass`);
         cfAttempts++;
