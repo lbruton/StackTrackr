@@ -137,28 +137,30 @@ function vendorMap(rows) {
  * Excludes out-of-stock vendors (in_stock = 0).
  */
 /**
- * Aggregate raw snapshot rows into hourly consensus windows.
+ * Aggregate raw snapshot rows into consensus time-bucket windows.
  *
  * Merges vendor data across BOTH pollers (Fly.io :00 and home :30) within
- * the same hourly bucket so each window has all 8-9 vendors, not just the
+ * the same time bucket so each window has all 8-9 vendors, not just the
  * 1-3 from a single poll. When a vendor has multiple prices in the same
- * hour, the most recent one wins (latest scraped_at).
+ * bucket, the most recent one wins (latest scraped_at).
  *
- * This is the intraday equivalent of aggregateDailyRows — consensus data
- * only, never raw per-poll passthrough.
+ * @param {Array} allRows  Raw price_snapshots rows (must include scraped_at)
+ * @param {number} bucketMinutes  Bucket size in minutes: 15, 30, or 60
+ * @returns {Array<{window: string, median: number, low: number, vendors: Object}>}
  */
-function aggregateWindows(allRows) {
+function aggregateWindows(allRows, bucketMinutes = 60) {
   const byBucket = new Map();
   for (const row of allRows) {
     if (row.price === null || row.in_stock !== 1) continue;  // Skip OOS
-    // Round down to the hour boundary for merging both pollers
+    // Round down to the bucket boundary
     const d = new Date(row.window_start);
-    d.setUTCMinutes(0, 0, 0);
+    const mins = d.getUTCMinutes();
+    d.setUTCMinutes(mins - (mins % bucketMinutes), 0, 0);
     const bucketKey = d.toISOString();
     if (!byBucket.has(bucketKey)) byBucket.set(bucketKey, { vendors: {} });
     const entry = byBucket.get(bucketKey);
     const existing = entry.vendors[row.vendor];
-    // Keep the most recent price per vendor per hour (latest scraped_at wins)
+    // Keep the most recent price per vendor per bucket (latest scraped_at wins)
     if (!existing || row.scraped_at > existing.scraped_at) {
       entry.vendors[row.vendor] = {
         price: Math.round(row.price * 100) / 100,
@@ -790,9 +792,10 @@ async function main() {
       }
     }
 
-    // 24h windows time series — aggregate across all windows
+    // 24h windows time series — aggregate into 30-min consensus buckets
+    // Merges both pollers (:00 Fly.io + :30 home) into one bucket with all vendors
     const recentRows = readRecentWindows(db, slug, 96);
-    const windows24h = aggregateWindows(recentRows);
+    const windows24h = aggregateWindows(recentRows, 30);
 
     writeApiFile(`${slug}/latest.json`, {
       slug,
