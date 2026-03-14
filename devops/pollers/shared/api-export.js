@@ -137,22 +137,26 @@ function vendorMap(rows) {
  * Excludes out-of-stock vendors (in_stock = 0).
  */
 /**
- * Aggregate raw snapshot rows into consensus time-bucket windows.
+ * Aggregate raw snapshot rows into consensus time-bucket windows with
+ * carry-forward so every window has all vendors.
  *
- * Merges vendor data across BOTH pollers (Fly.io :00 and home :30) within
- * the same time bucket so each window has all 8-9 vendors, not just the
- * 1-3 from a single poll. When a vendor has multiple prices in the same
- * bucket, the most recent one wins (latest scraped_at).
+ * 1. Bucket rows by time (30-min default) — merge both pollers.
+ * 2. Walk buckets chronologically, carrying forward each vendor's last
+ *    known price into any window where that vendor has no new data.
+ * 3. Recompute median/low from the FULL vendor set (carried + fresh).
+ *
+ * Result: every window always has all vendors. Fresh data overwrites
+ * carried data. The API serves complete, clean consensus windows.
  *
  * @param {Array} allRows  Raw price_snapshots rows (must include scraped_at)
  * @param {number} bucketMinutes  Bucket size in minutes: 15, 30, or 60
  * @returns {Array<{window: string, median: number, low: number, vendors: Object}>}
  */
-function aggregateWindows(allRows, bucketMinutes = 60) {
+function aggregateWindows(allRows, bucketMinutes = 30) {
+  // Step 1: Bucket rows — keep most recent price per vendor per bucket
   const byBucket = new Map();
   for (const row of allRows) {
     if (row.price === null || row.in_stock !== 1) continue;  // Skip OOS
-    // Round down to the bucket boundary
     const d = new Date(row.window_start);
     const mins = d.getUTCMinutes();
     d.setUTCMinutes(mins - (mins % bucketMinutes), 0, 0);
@@ -160,7 +164,6 @@ function aggregateWindows(allRows, bucketMinutes = 60) {
     if (!byBucket.has(bucketKey)) byBucket.set(bucketKey, { vendors: {} });
     const entry = byBucket.get(bucketKey);
     const existing = entry.vendors[row.vendor];
-    // Keep the most recent price per vendor per bucket (latest scraped_at wins)
     if (!existing || row.scraped_at > existing.scraped_at) {
       entry.vendors[row.vendor] = {
         price: Math.round(row.price * 100) / 100,
@@ -168,16 +171,30 @@ function aggregateWindows(allRows, bucketMinutes = 60) {
       };
     }
   }
+
+  // Step 2: Sort buckets chronologically, then carry forward
+  const sortedKeys = [...byBucket.keys()].sort();
+  const lastSeen = {};  // vendorId → { price, scraped_at }
+
   const result = [];
-  for (const [bucket, { vendors }] of byBucket) {
-    const prices = Object.values(vendors).map((v) => v.price);
+  for (const bucket of sortedKeys) {
+    const { vendors } = byBucket.get(bucket);
+
+    // Update lastSeen with any fresh data in this bucket
+    for (const [vendorId, data] of Object.entries(vendors)) {
+      lastSeen[vendorId] = data;
+    }
+
+    // Build the full vendor map: fresh data + carried-forward
+    const vendorPrices = {};
+    for (const [vendorId, data] of Object.entries(lastSeen)) {
+      vendorPrices[vendorId] = data.price;
+    }
+
+    const prices = Object.values(vendorPrices);
     if (prices.length === 0) continue;
     const sorted = [...prices].sort((a, b) => a - b);
-    // Flatten vendors to simple { vendorId: price } for the API
-    const vendorPrices = {};
-    for (const [vendorId, v] of Object.entries(vendors)) {
-      vendorPrices[vendorId] = v.price;
-    }
+
     result.push({
       window: bucket,
       median: Math.round(sorted[Math.floor(sorted.length / 2)] * 100) / 100,
@@ -185,7 +202,7 @@ function aggregateWindows(allRows, bucketMinutes = 60) {
       vendors: vendorPrices,
     });
   }
-  return result.sort((a, b) => a.window.localeCompare(b.window));
+  return result;
 }
 
 /**
